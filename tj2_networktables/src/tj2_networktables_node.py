@@ -34,6 +34,7 @@ class TJ2NetworkTables(object):
         while not rospy.is_shutdown():
             self.clock_rate.sleep()
             timestamp = self.nt.getEntry("odom/time").getDouble(0.0)
+            self.nt.putNumber("command/time", rospy.Time.now().to_sec())
             print timestamp
 
 

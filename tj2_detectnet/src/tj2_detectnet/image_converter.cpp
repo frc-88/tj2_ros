@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "db_detectnet/image_converter.h"
+#include "tj2_detectnet/image_converter.h"
 
 #include <jetson-utils/cudaColorspace.h>
 #include <jetson-utils/cudaMappedMemory.h>
