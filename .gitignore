@@ -1,3 +1,6 @@
+# specific files
+tj2_detectnet/models/dodobot_objects/mb2-ssd-lite.onnx.1.1.7103.GPU.FP16.engine
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
