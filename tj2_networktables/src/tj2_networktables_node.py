@@ -43,6 +43,8 @@ class TJ2NetworkTables(object):
         
         self.clock_rate = rospy.Rate(50.0)
 
+        rospy.loginfo("Network tables init complete")
+
     def run(self):
         self.wait_for_time()
 
@@ -63,7 +65,9 @@ class TJ2NetworkTables(object):
 
         quaternion = tf_conversions.transformations.quaternion_from_euler(0, 0, t)
 
-        self.odom_msg.header.stamp = timestamp
+        ros_time = rospy.Time(timestamp)
+
+        self.odom_msg.header.stamp = ros_time
         self.odom_msg.pose.pose.position.x = x
         self.odom_msg.pose.pose.position.y = y
         self.odom_msg.pose.pose.orientation.x = quaternion[0]
@@ -78,7 +82,7 @@ class TJ2NetworkTables(object):
         self.odom_pub.publish(self.odom_msg)
 
         if self.publish_odom_tf:
-            self.tf_msg.header.stamp = timestamp
+            self.tf_msg.header.stamp = ros_time
             self.tf_msg.transform.translation.x = x
             self.tf_msg.transform.translation.y = y
             self.tf_msg.transform.rotation.x = quaternion[0]
@@ -92,11 +96,13 @@ class TJ2NetworkTables(object):
         return self.nt.getEntry("odom/time").getDouble(0.0)
     
     def wait_for_time(self):
+        rospy.loginfo("Waiting for remote time")
         while self.remote_start_time == 0.0:
             self.remote_start_time = self.get_remote_time()
             self.clock_rate.sleep()
             if rospy.is_shutdown():
                 return
+        rospy.loginfo("Remote time found")
         self.local_start_time = rospy.Time.now().to_sec()
     
     def get_time(self):
