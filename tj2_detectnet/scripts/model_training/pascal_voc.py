@@ -223,11 +223,15 @@ class PascalVOCFrame:
 
         return root
 
-    def write(self, path):
+    def write(self, path=None):
+        if path is None:
+            name = os.path.splitext(self.filename)[0]
+            dirname = os.path.dirname(self.path)
+            path = os.path.join(dirname, name + ".xml")
         root = self.to_xml()
         et = etree.ElementTree(root)
         et.write(path, pretty_print=True)
-        return root
+        return root, path
 
     def pprint(self):
         print(etree.tostring(self.to_xml(), pretty_print=True).decode())
