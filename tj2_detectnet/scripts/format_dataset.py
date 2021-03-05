@@ -5,12 +5,9 @@ import shutil
 import random
 
 from get_image_size import get_image_metadata, Image
-from pascal_voc import PascalVOCFrame
-
-ANNOTATIONS = "Annotations"
-IMAGESETS = "ImageSets/Main"
-JPEGIMAGES = "JPEGImages"
-LABELS = "labels.txt"
+from pascal_voc import PascalVOCFrame, PascalVOCObject
+from utils import ANNOTATIONS, IMAGESETS, JPEGIMAGES, LABELS
+from utils import makedirs, build_image_sets
 
 
 def find_labeled_images(source_dir):
@@ -76,23 +73,39 @@ def read_class_labels(path):
     return classes
 
 
-def generate_label_file(image_metadata: Image, classes, image_path, source_path, database_name):
+def generate_label_file(image_metadata: Image, classes, image_path, source_path, database_name, resize_ratios):
     source_frame = PascalVOCFrame.from_path(source_path)
     if image_metadata.width != source_frame.width or image_metadata.height != source_frame.height:
         print(f"WARNING: Source xml image size doesn't match actual image. "
               f"Overriding with true image size. "
               f"({image_metadata.width}, {image_metadata.height}) != ({source_frame.width}, {source_frame.height}) "
               f"in {source_path}")
+    width = image_metadata.width
+    height = image_metadata.height
+
     dest_frame = PascalVOCFrame.from_frame(source_frame)
-    dest_frame.width = image_metadata.width
-    dest_frame.height = image_metadata.height
+    dest_frame.width = width
+    dest_frame.height = height
     dest_frame.folder = os.path.basename(os.path.dirname(image_path))
     dest_frame.filename = os.path.basename(image_path)
     dest_frame.path = image_path
     dest_frame.database = database_name
 
-    for obj in dest_frame.objects:
+    dest_frame.objects = []
+    for obj in source_frame.objects:
         assert obj.name in classes, f"{obj.name} not an available class name: {classes}"
+        new_obj = PascalVOCObject.from_obj(obj)
+        new_obj.bndbox = [
+            int(obj.bndbox[0] * resize_ratios[0]),
+            int(obj.bndbox[1] * resize_ratios[1]),
+            int(obj.bndbox[2] * resize_ratios[0]),
+            int(obj.bndbox[3] * resize_ratios[1]),
+        ]
+        if new_obj.is_out_of_bounds(width, height):
+            continue
+        new_obj.truncated = new_obj.is_truncated(width, height)
+        new_obj.constrain_bndbox(width, height)
+        dest_frame.add_object(new_obj)
 
     return dest_frame
 
@@ -107,10 +120,57 @@ def write_labels_file(dest_dir, classes):
         file.write(contents)
 
 
-def write_image_as_jpg(old_image_path, new_image_path):
-    image = PIL.Image.open(old_image_path)
-    rgb_image = image.convert("RGB")
-    rgb_image.save(new_image_path)
+MAX_WIDTH = 1280
+MAX_HEIGHT = 720
+
+
+def write_image_as_jpg(image_metadata, old_image_path, new_image_path, dry_run=True):
+    width = image_metadata.width
+    height = image_metadata.height
+    size_is_ok = width <= MAX_WIDTH and height <= MAX_HEIGHT
+    ext_is_ok = os.path.splitext(old_image_path)[1].lower() == ".jpg"
+    file_exists = os.path.isfile(new_image_path)
+
+    ratio = 1.0
+
+    if ext_is_ok and size_is_ok:
+        if not dry_run and not file_exists:
+            shutil.copyfile(old_image_path, new_image_path)
+    else:
+        if width > MAX_WIDTH or height > MAX_HEIGHT:
+            ratio = min(MAX_WIDTH / width, MAX_HEIGHT / height)
+            new_size = int(width * ratio), int(height * ratio)
+            print(f"Resizing {new_image_path} from {(width, height)} to {new_size}")
+        else:
+            new_size = None
+
+        if not dry_run and not file_exists:
+            image = PIL.Image.open(old_image_path)
+            rgb_image = image.convert("RGB")
+            if new_size is not None:
+                rgb_image = rgb_image.resize(new_size, PIL.Image.ANTIALIAS)
+            rgb_image.save(new_image_path)
+
+    return ratio, ratio
+
+
+def write_image_xml_pair(dataset, database_name, classes, jpegimages_dir, annotations_dir, image_path, xml_path,
+                         dry_run=True):
+    image_filename = os.path.basename(image_path)
+    image_name, image_ext = os.path.splitext(image_filename)
+    dest_image_path = os.path.join(jpegimages_dir, image_name + ".jpg")
+    image_metadata = get_image_metadata(image_path)
+    resize_ratios = write_image_as_jpg(image_metadata, image_path, dest_image_path, dry_run)
+    print(f"Image: {image_path} -> {dest_image_path}")
+
+    xml_filename = os.path.basename(xml_path)
+    frame_id = os.path.splitext(xml_filename)[0]
+    dest_xml_path = os.path.join(annotations_dir, xml_filename)
+    voc_frame = generate_label_file(image_metadata, classes, dest_image_path, xml_path, database_name, resize_ratios)
+    dataset[frame_id] = voc_frame
+    if not dry_run:
+        voc_frame.write(dest_xml_path)
+    print(f"Annotation: {xml_path} -> {dest_xml_path}")
 
 
 def build_dataset(database_name, labeled_images, classes, dest_dir, dry_run=True):
@@ -143,130 +203,14 @@ def build_dataset(database_name, labeled_images, classes, dest_dir, dry_run=True
 
     dataset = {}
     for xml_path, image_path in labeled_images:
-        image_filename = os.path.basename(image_path)
-        image_name, image_ext = os.path.splitext(image_filename)
-        dest_image_path = os.path.join(jpegimages_dir, image_name + ".jpg")
-        image_metadata = get_image_metadata(image_path)
-        if not os.path.isfile(dest_image_path):
-            if not dry_run:
-                if image_ext.lower() == ".jpg":
-                    shutil.copyfile(image_path, dest_image_path)
-                else:
-                    write_image_as_jpg(image_path, dest_image_path)
-            print(f"Image: {image_path} -> {dest_image_path}")
-
-        xml_filename = os.path.basename(xml_path)
-        frame_id = os.path.splitext(xml_filename)[0]
-        dest_xml_path = os.path.join(annotations_dir, xml_filename)
-        voc_frame = generate_label_file(image_metadata, classes, dest_image_path, xml_path, database_name)
-        dataset[frame_id] = voc_frame
-        if not dry_run:
-            voc_frame.write(dest_xml_path)
-        print(f"Annotation: {xml_path} -> {dest_xml_path}")
+        write_image_xml_pair(dataset, database_name, classes,
+                             jpegimages_dir, annotations_dir,
+                             image_path, xml_path, dry_run)
 
     if not dry_run:
         write_labels_file(dest_dir, classes)
 
     return dataset
-
-
-def randomly_select(count, input_list, output_list):
-    assert count <= len(input_list), f"{count} > {len(input_list)}"
-
-    for _ in range(count):
-        obj = random.choice(input_list)
-        index = input_list.index(obj)
-        output_list.append(input_list.pop(index))
-
-
-def build_image_sets(database, dest_dir, dry_run=True):
-    # given a percentage of test, train, and validation, group all xml-image pairs into one of these categories
-    # assign each image a label (the first label that appears in the xml)
-    # for each label, randomly select images into each category until there are no unselected images left
-    # write the names of these grouping into text files in the destination directory
-
-    # annotations_dir = os.path.join(dest_dir, ANNOTATIONS)
-    imagesets_dir = os.path.join(dest_dir, IMAGESETS)
-    # jpegimages_dir = os.path.join(dest_dir, JPEGIMAGES)
-
-    train_path = os.path.join(imagesets_dir, "train.txt")
-    val_path = os.path.join(imagesets_dir, "val.txt")
-    trainval_path = os.path.join(imagesets_dir, "trainval.txt")
-    test_path = os.path.join(imagesets_dir, "test.txt")
-
-    test_ratio = 0.15
-    train_ratio = 0.8
-    validation_ratio = 0.05
-    assert abs(1.0 - (test_ratio + train_ratio + validation_ratio)) < 1E-8, test_ratio + train_ratio + validation_ratio
-
-    label_unique_mapping = {}
-    for frame_id, frame in database.items():
-        # use first object to characterize image for sorting
-        if len(frame.objects) == 0:
-            class_name = "BACKGROUND"
-        else:
-            class_name = frame.objects[0].name
-        if class_name not in label_unique_mapping:
-            label_unique_mapping[class_name] = []
-        label_unique_mapping[class_name].append(frame_id)
-
-    test_image_ids = []
-    train_image_ids = []
-    validation_image_ids = []
-    for class_name, frame_ids in label_unique_mapping.items():
-        class_count = len(frame_ids)
-        test_count = int(class_count * test_ratio)
-        train_count = int(class_count * train_ratio)
-        validation_count = int(class_count * validation_ratio)
-
-        randomly_select(test_count, frame_ids, test_image_ids)
-        randomly_select(train_count, frame_ids, train_image_ids)
-        randomly_select(validation_count, frame_ids, validation_image_ids)
-        for _ in range(len(frame_ids)):  # dump any remaining frames into the training set
-            train_image_ids.append(frame_ids.pop())
-
-        assert len(frame_ids) == 0, len(frame_ids)
-        assert len(test_image_ids) > 0
-        assert len(train_image_ids) > 0
-        assert len(validation_image_ids) > 0
-
-        print(
-            f"Label {class_name} count: {class_count}\n"
-            f"\tTest: {test_count}\t{len(test_image_ids)}\n"
-            f"\tTrain: {train_count}\t{len(train_image_ids)}\n"
-            f"\tValidation: {validation_count}\t{len(validation_image_ids)}")
-
-    test_count = len(test_image_ids)
-    train_count = len(train_image_ids)
-    validation_count = len(validation_image_ids)
-    total_count = test_count + train_count + validation_count
-    print(
-        f"Total {total_count}:\n"
-        f"\tTest: {test_count}\t{test_count / total_count:0.2f}\n"
-        f"\tTrain: {train_count}\t{train_count / total_count:0.2f}\n"
-        f"\tValidation: {validation_count}\t{validation_count / total_count:0.2f}"
-    )
-    if not dry_run:
-        with open(train_path, 'w') as file:
-            file.write("\n".join(train_image_ids))
-        with open(val_path, 'w') as file:
-            file.write("\n".join(validation_image_ids))
-        with open(trainval_path, 'w') as file:
-            file.write("\n".join(train_image_ids))
-            file.write("\n")
-            file.write("\n".join(validation_image_ids))
-        with open(test_path, 'w') as file:
-            file.write("\n".join(test_image_ids))
-
-
-def makedirs(dest_dir):
-    annotations_dir = os.path.join(dest_dir, ANNOTATIONS)
-    imagesets_dir = os.path.join(dest_dir, IMAGESETS)
-    jpegimages_dir = os.path.join(dest_dir, JPEGIMAGES)
-    dirs = [annotations_dir, imagesets_dir, jpegimages_dir]
-    for directory in dirs:
-        if not os.path.isdir(directory):
-            os.makedirs(directory)
 
 
 def format_frc900_dataset(source_dir, dest_dir, class_label_path, database_name, dry_run=True):
