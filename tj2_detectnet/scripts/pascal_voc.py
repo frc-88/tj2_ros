@@ -30,6 +30,17 @@ class PascalVOCObject:
         self.truncated = 0
         self.bndbox = [0, 0, 0, 0]  # [xmin, ymin, xmax, ymax]
 
+    def constrain_bndbox(self, width, height):
+        if self.bndbox[0] < 0:
+            self.bndbox[0] = 0
+        if self.bndbox[1] < 0:
+            self.bndbox[1] = 0
+        if self.bndbox[2] > width:
+            self.bndbox[2] = width
+        if self.bndbox[3] > height:
+            self.bndbox[3] = height
+        assert self.bndbox_is_ok()
+
     @classmethod
     def from_obj(cls, obj):
         self = cls()
@@ -39,6 +50,9 @@ class PascalVOCObject:
         self.truncated = obj.truncated
         for index in range(len(self.bndbox)):
             self.bndbox[index] = obj.bndbox[index]
+
+        assert self.bndbox_is_ok()
+
         return self
 
     @classmethod
@@ -55,6 +69,8 @@ class PascalVOCObject:
         xmax = int(find_xml_prop(bndbox, "xmax"))
         ymax = int(find_xml_prop(bndbox, "ymax"))
         self.bndbox = [xmin, ymin, xmax, ymax]
+
+        assert self.bndbox_is_ok()
 
         return self
 
@@ -77,6 +93,8 @@ class PascalVOCObject:
         self.bndbox[1] = 0
         self.bndbox[2] = width
         self.bndbox[3] = height
+
+        assert self.bndbox_is_ok()
 
         return self
 
@@ -101,18 +119,38 @@ class PascalVOCObject:
         self.bndbox[2] = int(x1 * width)  # xmax
         self.bndbox[3] = int(y1 * height)  # ymax
 
+        assert self.bndbox_is_ok()
+
         self.truncated = self.is_truncated(width, height)
 
         return self
 
+    def bndbox_is_ok(self):
+        if self.bndbox[0] > self.bndbox[2]:
+            return False
+        if self.bndbox[1] > self.bndbox[3]:
+            return False
+        return True
+
     def is_truncated(self, width, height):
-        if self.bndbox[0] == 0:
+        if self.bndbox[0] <= 0:
             return True
-        if self.bndbox[1] == 0:
+        if self.bndbox[1] <= 0:
             return True
-        if self.bndbox[2] == width:
+        if self.bndbox[2] >= width:
             return True
-        if self.bndbox[3] == height:
+        if self.bndbox[3] >= height:
+            return True
+        return False
+
+    def is_out_of_bounds(self, width, height):
+        if self.bndbox[0] >= width:
+            return True
+        if self.bndbox[1] >= height:
+            return True
+        if self.bndbox[2] <= 0:
+            return True
+        if self.bndbox[3] <= 0:
             return True
         return False
 
@@ -136,6 +174,7 @@ class PascalVOCFrame:
         self.folder = ""
         self.filename = ""
         self.path = ""
+        self.frame_path = ""
 
         self.database = "Unknown"
 
@@ -148,12 +187,17 @@ class PascalVOCFrame:
 
         self.objects = []
 
+    @property
+    def frame_id(self):
+        return os.path.splitext(self.filename)[0]
+
     @classmethod
     def from_frame(cls, frame):
         self = cls()
         self.folder = frame.folder
         self.filename = frame.filename
         self.path = frame.path
+        self.frame_path = frame.frame_path
 
         self.database = frame.database
 
@@ -175,6 +219,7 @@ class PascalVOCFrame:
         tree = etree.parse(path)
         verified = tree.getroot().get("verified")
         self.verified = verified == "yes"
+        self.frame_path = path
 
         self.folder = find_xml_prop(tree, "folder")
         self.filename = find_xml_prop(tree, "filename")
