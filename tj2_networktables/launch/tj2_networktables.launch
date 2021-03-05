@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables_node.py" output="screen" required="true">
-    </node>
+    <group ns="tj2">
+        <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables_node.py" output="screen" required="true">
+            <param name="publish_odom_tf" value="true"/>
+        </node>
+    </group>
 </launch>
