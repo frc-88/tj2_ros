@@ -1,6 +1,7 @@
 import re
 import os
 import PIL.Image
+import cv2
 import shutil
 import random
 
@@ -11,7 +12,7 @@ from utils import makedirs, build_image_sets
 
 
 def find_labeled_images(source_dir):
-    # iterate through FRC team 900's image dataset
+    # iterate through image dataset
     # find all VOC xml files
     # find corresponding images
 
@@ -93,7 +94,12 @@ def generate_label_file(image_metadata: Image, classes, image_path, source_path,
 
     dest_frame.objects = []
     for obj in source_frame.objects:
-        assert obj.name in classes, f"{obj.name} not an available class name: {classes}"
+        # TODO: remove special case for incorrect labels
+        if obj.name == "powercell":
+            obj.name = "power_cell"
+        if obj.name != "power_cell":
+            continue
+        # assert obj.name in classes, f"{obj.name} not an available class name: {classes}"
         new_obj = PascalVOCObject.from_obj(obj)
         new_obj.bndbox = [
             int(obj.bndbox[0] * resize_ratios[0]),
@@ -124,34 +130,45 @@ MAX_WIDTH = 1280
 MAX_HEIGHT = 720
 
 
-def write_image_as_jpg(image_metadata, old_image_path, new_image_path, dry_run=True):
+def get_resize_ratio(image_metadata):
     width = image_metadata.width
     height = image_metadata.height
     size_is_ok = width <= MAX_WIDTH and height <= MAX_HEIGHT
+
+    if not size_is_ok:
+        ratio = min(MAX_WIDTH / width, MAX_HEIGHT / height)
+    else:
+        ratio = 1.0
+
+    return ratio
+
+
+def write_image_as_jpg(image_metadata, old_image_path, new_image_path, resize_ratio, dry_run=True):
+    width = image_metadata.width
+    height = image_metadata.height
     ext_is_ok = os.path.splitext(old_image_path)[1].lower() == ".jpg"
     file_exists = os.path.isfile(new_image_path)
 
-    ratio = 1.0
-
-    if ext_is_ok and size_is_ok:
+    if ext_is_ok and resize_ratio == 1.0:
         if not dry_run and not file_exists:
             shutil.copyfile(old_image_path, new_image_path)
     else:
         if width > MAX_WIDTH or height > MAX_HEIGHT:
-            ratio = min(MAX_WIDTH / width, MAX_HEIGHT / height)
-            new_size = int(width * ratio), int(height * ratio)
+            new_size = int(width * resize_ratio), int(height * resize_ratio)
             print(f"Resizing {new_image_path} from {(width, height)} to {new_size}")
         else:
             new_size = None
 
         if not dry_run and not file_exists:
-            image = PIL.Image.open(old_image_path)
-            rgb_image = image.convert("RGB")
+            image = cv2.imread(old_image_path)
             if new_size is not None:
-                rgb_image = rgb_image.resize(new_size, PIL.Image.ANTIALIAS)
-            rgb_image.save(new_image_path)
-
-    return ratio, ratio
+                image = cv2.resize(image, new_size)
+            cv2.imwrite(new_image_path, image)
+            # image = PIL.Image.open(old_image_path)
+            # rgb_image = image.convert("RGB")
+            # if new_size is not None:
+            #     rgb_image = rgb_image.resize(new_size, PIL.Image.ANTIALIAS)
+            # rgb_image.save(new_image_path)
 
 
 def write_image_xml_pair(dataset, database_name, classes, jpegimages_dir, annotations_dir, image_path, xml_path,
@@ -160,17 +177,24 @@ def write_image_xml_pair(dataset, database_name, classes, jpegimages_dir, annota
     image_name, image_ext = os.path.splitext(image_filename)
     dest_image_path = os.path.join(jpegimages_dir, image_name + ".jpg")
     image_metadata = get_image_metadata(image_path)
-    resize_ratios = write_image_as_jpg(image_metadata, image_path, dest_image_path, dry_run)
-    print(f"Image: {image_path} -> {dest_image_path}")
+    resize_ratio = get_resize_ratio(image_metadata)
 
     xml_filename = os.path.basename(xml_path)
     frame_id = os.path.splitext(xml_filename)[0]
     dest_xml_path = os.path.join(annotations_dir, xml_filename)
-    voc_frame = generate_label_file(image_metadata, classes, dest_image_path, xml_path, database_name, resize_ratios)
+    voc_frame = generate_label_file(image_metadata, classes, dest_image_path, xml_path, database_name,
+                                    (resize_ratio, resize_ratio))
+    if len(voc_frame.objects) == 0:
+        print(f"No class labels from list found in {xml_path}")
+        return
+
     dataset[frame_id] = voc_frame
     if not dry_run:
         voc_frame.write(dest_xml_path)
     print(f"Annotation: {xml_path} -> {dest_xml_path}")
+
+    write_image_as_jpg(image_metadata, image_path, dest_image_path, resize_ratio, dry_run)
+    print(f"Image: {image_path} -> {dest_image_path}")
 
 
 def build_dataset(database_name, labeled_images, classes, dest_dir, dry_run=True):
@@ -213,7 +237,7 @@ def build_dataset(database_name, labeled_images, classes, dest_dir, dry_run=True
     return dataset
 
 
-def format_frc900_dataset(source_dir, dest_dir, class_label_path, database_name, dry_run=True):
+def format_dataset(source_dirs, dest_dir, class_label_path, database_name, dry_run=True):
     # find all xmls with an image pair
     # find the class labels
     # move images and xmls to destination directory
@@ -222,17 +246,21 @@ def format_frc900_dataset(source_dir, dest_dir, class_label_path, database_name,
     dest_dir = os.path.join(dest_dir, database_name)
     makedirs(dest_dir)
 
-    labeled_images = find_labeled_images(source_dir)
+    labeled_images = []
+    for source_dir in source_dirs:
+        labeled_images.extend(find_labeled_images(source_dir))
     classes = read_class_labels(class_label_path)
     dataset = build_dataset(database_name, labeled_images, classes, dest_dir, dry_run)
     build_image_sets(dataset, dest_dir, dry_run)
 
 
 def main():
-    format_frc900_dataset(
-        "/home/ben/tensorflow_workspace/2020Game/data/videos",
+    format_dataset(
+        ["/home/ben/tensorflow_workspace/2020Game/data/videos",
+         "/home/ben/Desktop/output/tj2_02-27-2021_2"],
         "/home/ben/jetson-inference/python/training/detection/ssd/data",
-        "/home/ben/tensorflow_workspace/2020Game/data/2020Game_label_map.pbtxt",
+        # "/home/ben/tensorflow_workspace/2020Game/data/2020Game_label_map.pbtxt",
+        "/home/ben/Desktop/output/labels.pbtxt",
         "tj2_2020_voc_image_database",
         dry_run=False)
 

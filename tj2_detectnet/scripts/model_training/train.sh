@@ -1,5 +1,5 @@
-#DATABASE=/home/ben/jetson-inference/python/training/detection/ssd/data/tj2_2020_voc_image_database
-DATABASE=/home/ben/jetson-inference/python/training/detection/ssd/data/tj2_2020_voc_image_database_artificial_warps
+DATABASE=/home/ben/jetson-inference/python/training/detection/ssd/data/tj2_2020_voc_image_database
+#DATABASE=/home/ben/jetson-inference/python/training/detection/ssd/data/tj2_2020_voc_image_database_artificial_warps
 OUTPUT=/home/ben/jetson-inference/python/training/detection/ssd/models/tj2_2020_game
 #BASE_NET=mb1-ssd
 #BASE_NET=mb1-lite-ssd
@@ -15,7 +15,7 @@ tmux send -t train "/usr/bin/python3 /home/ben/jetson-inference/python/training/
 	--data=$DATABASE \
 	--model-dir=$OUTPUT \
 	--net=$BASE_NET \
-	--batch-size=24 --epochs=120 \
+	--batch-size=24 --epochs=150 \
 	--dataset-type=voc \
 	--pretrained-ssd=$PRETRAINED_NET \
 	--num-workers=1" ENTER
