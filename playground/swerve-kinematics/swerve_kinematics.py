@@ -37,6 +37,8 @@ class SwerveKinematics:
             self.inverse_kinematics.append([0.0, 1.0, x])
         self.inverse_kinematics = np.array(self.inverse_kinematics)
         self.forward_kinematics = np.linalg.pinv(self.inverse_kinematics)
+        print(self.inverse_kinematics.tolist())
+        print(self.forward_kinematics.tolist())
 
     def module_to_chassis_speeds(self, module_speeds):
         module_states_matrix = []
@@ -58,7 +60,7 @@ class SwerveKinematics:
 
     def estimate_pose(self, dt):
         if dt <= 0.0:
-            return
+            return self.state
 
         dx = self.state.vx * dt
         dy = self.state.vy * dt
