@@ -6,7 +6,8 @@ import tf_conversions
 
 from std_msgs.msg import Float64
 from nav_msgs.msg import Odometry
-import geometry_msgs.msg
+from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import Twist
 
 from networktables import NetworkTables
 
@@ -27,13 +28,17 @@ class TJ2NetworkTables(object):
         self.base_frame_name = rospy.get_param("~base_frame", "base_link")
         self.odom_frame_name = rospy.get_param("~odom_frame", "odom")
 
+        self.num_modules = rospy.get_param("~num_modules", 4)
+
         self.odom_pub = rospy.Publisher("odom", Odometry, queue_size=50)
         self.odom_msg = Odometry()
         self.odom_msg.header.frame_id = self.odom_frame_name
         self.odom_msg.child_frame_id = self.base_frame_name
 
+        self.twist_sub = rospy.Subscriber("cmd_vel", Twist, queue_size=50)
+
         self.br = tf2_ros.TransformBroadcaster()
-        self.tf_msg = geometry_msgs.msg.TransformStamped()
+        self.tf_msg = TransformStamped()
         self.tf_msg.header.frame_id = self.odom_frame_name
         self.tf_msg.child_frame_id = self.base_frame_name
 
@@ -49,21 +54,32 @@ class TJ2NetworkTables(object):
         self.wait_for_time()
 
         while not rospy.is_shutdown():
-            self.clock_rate.sleep()
-            timestamp = self.get_time()
-            self.nt.putNumber("command/time", rospy.Time.now().to_sec())
-            
-            self.publish_odom(timestamp)
+            self.clock_rate.sleep()            
+            self.publish_odom()
     
-    def publish_odom(self, timestamp):
+    def twist_callback(self, msg):
+        remote_time = self.get_local_time_as_remote()
+        self.nt.putNumber("command/time", remote_time)
+        self.nt.putNumber("command/linear_x", msg.linear.x)
+        self.nt.putNumber("command/linear_y", msg.linear.y)
+        self.nt.putNumber("command/angular_z", msg.angular.z)
+    
+    def publish_modules(self):
+        for module_num in range(self.num_modules):
+            wheel_speed = nt.getEntry("modules/%s/wheel" % module_num).getDouble(0.0)
+            azimuth = nt.getEntry("modules/%s/azimuth" % module_num).getDouble(0.0)
+            azimuth = math.radians(azimuth)
+
+    def publish_odom(self):
+        timestamp = self.get_remote_time_as_local()
         x = self.nt.getEntry("odom/x").getDouble(0.0)
         y = self.nt.getEntry("odom/y").getDouble(0.0)
-        t = self.nt.getEntry("odom/t").getDouble(0.0)
+        theta = self.nt.getEntry("odom/t").getDouble(0.0)
         vx = self.nt.getEntry("odom/vx").getDouble(0.0)
         vy = self.nt.getEntry("odom/vy").getDouble(0.0)
         vt = self.nt.getEntry("odom/vt").getDouble(0.0)
 
-        quaternion = tf_conversions.transformations.quaternion_from_euler(0, 0, t)
+        quaternion = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, theta)
 
         ros_time = rospy.Time(timestamp)
 
@@ -93,8 +109,27 @@ class TJ2NetworkTables(object):
             self.br.sendTransform(self.tf_msg)
         
     def get_remote_time(self):
-        return self.nt.getEntry("odom/time").getDouble(0.0)
+        """
+        Gets RoboRIO's timestamp based on the Swerve/odom/time entry in seconds
+        """
+        return self.nt.getEntry("odom/time").getDouble(0.0) * 1E-6
     
+    def get_local_time(self):
+        return rospy.Time.now().to_sec()
+
+    def check_time_offsets(self, remote_timestamp):
+        if remote_timestamp < self.prev_timestamp:  # remote has restarted
+            self.remote_start_time = timestamp
+            self.local_start_time = self.get_local_time()
+            rospy.loginfo("Remote clock jumped back. Resetting offset")
+        self.prev_timestamp = remote_timestamp
+
+    def get_local_time_as_remote(self):
+        local_timestamp = self.get_local_time()
+        remote_timestamp = self.get_remote_time()
+        self.check_time_offsets(remote_timestamp)
+        return local_timestamp - self.local_start_time + self.remote_start_time
+
     def wait_for_time(self):
         rospy.loginfo("Waiting for remote time")
         while self.remote_start_time == 0.0:
@@ -103,16 +138,15 @@ class TJ2NetworkTables(object):
             if rospy.is_shutdown():
                 return
         rospy.loginfo("Remote time found")
-        self.local_start_time = rospy.Time.now().to_sec()
+        self.local_start_time = self.get_local_time()
     
-    def get_time(self):
-        timestamp = self.get_remote_time()
-        if timestamp < self.prev_timestamp:  # remote has restarted
-            self.remote_start_time = timestamp
-            self.local_start_time = rospy.Time.now().to_sec()
-            rospy.loginfo("Remote clock jumped back. Resetting offset")
-        self.prev_timestamp = timestamp
-        return timestamp - self.remote_start_time + self.local_start_time
+    def get_remote_time_as_local(self):
+        """
+        Gets the RoboRIO's time relative to ROS time epoch
+        """
+        remote_timestamp = self.get_remote_time()
+        self.check_time_offsets(remote_timestamp)
+        return remote_timestamp - self.remote_start_time + self.local_start_time
 
 
 
