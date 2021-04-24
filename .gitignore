@@ -3,6 +3,8 @@ tj2_detectnet/models/dodobot_objects/mb2-ssd-lite.onnx.1.1.7103.GPU.FP16.engine
 tj2_detectnet/scripts/video_dataset/output 
 .idea/
 
+*.csv
+
 .DS_Store
 
 # Byte-compiled / optimized / DLL files

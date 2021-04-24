@@ -50,6 +50,9 @@ class SwerveKinematics:
             module_states_matrix.append(vx)
             module_states_matrix.append(vy)
 
+        #     print(vx, vy)
+        # print()
+
         module_states_matrix = np.array(module_states_matrix)
         chassis_vector = np.dot(self.forward_kinematics, module_states_matrix)
         self.state.vx = chassis_vector[0]
