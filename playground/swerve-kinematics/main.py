@@ -1,77 +1,73 @@
+import csv
+import time
+import math
+from datetime import datetime
+
 import math
 import numpy as np
 import matplotlib.pyplot as plt
 from swerve_kinematics import SwerveKinematics
-from swerve_log_parser import SwerveLogParser
+from module_states import ModuleStates
+from swerve_plotter import SwervePlotter
 
-positions = [
-    [-0.9159166667, 0.5204583333],
-    [-0.9159166667, -0.5204583333],
-    [0.9159166667, -0.5204583333],
-    [0.9159166667, 0.5204583333],
-]
+def main():
+    
 
-# path = "/home/woz4tetra/Desktop/swerve-1.txt"
-path = "/home/woz4tetra/Desktop/swerve-figure-8.txt"
+    positions = [
+        [-0.9159166667, 0.5204583333],
+        [-0.9159166667, -0.5204583333],
+        [0.9159166667, -0.5204583333],
+        [0.9159166667, 0.5204583333],
+    ]
 
-parser = SwerveLogParser(4, path)
+    swerve = SwerveKinematics(positions)
 
-# module_states = np.array([
-#     [math.radians(147.48039562500003), 2.654882421144346],
-#     [math.radians(-147.30468075), 2.4725700248691274],
-#     [math.radians(-26.27931375000003), 2.4520560757574454],
-#     [math.radians(31.552610625), 2.6558563771378134],
-# ])
+    num_modules = 4
+    module_states = ModuleStates(num_modules)
 
-swerve = SwerveKinematics(positions)
+    plotter = SwervePlotter(20.0, 20.0)
 
-calculated_pose = [[], []]
-calculated_speeds = [[], []]
-calculated_pose_times = []
-recorded_pose = [[], []]
 
-prev_time = parser.states[0][0]
-for timestamp, module_states in parser.states:
-    chassis_speeds = swerve.module_to_chassis_speeds(module_states.state)
-    dt = timestamp - prev_time
-    prev_time = timestamp
+    chassis_trans_speed = 1.25
+    chassis_trans_angle = 0.0
+    chassis_rot_speed = 0.0
 
-    state = swerve.estimate_pose(dt)
-    calculated_pose[0].append(state.x)
-    calculated_pose[1].append(state.y)
-    calculated_pose_times.append(timestamp)
-    calculated_speeds[0].append(state.vx)
-    calculated_speeds[1].append(state.vy)
+    log_row = []
 
-recorded_x = 0.0
-recorded_y = 0.0
-for row in parser.logged_poses:
-    dx = row[0]
-    dy = row[1]
-    recorded_x += dx
-    recorded_y += dy
+    while True:
+        
 
-    recorded_pose[0].append(recorded_x)
-    recorded_pose[1].append(recorded_y)
+        log_row = [timestamp, x, y, t, vx, vy, vt]
 
-print(swerve.state)
+        for module_num in range(num_modules):
+            wheel_speed, azimuth = get_module(nt, module_num)
+            module_states.set(module_num, wheel_speed, azimuth)
+            # print(wheel_speed, azimuth)
 
-plt.figure(1)
-plt.xlim(-5.0, 5.0)
-plt.ylim(-5.0, 5.0)
-plt.plot(calculated_pose[0], calculated_pose[1], color="blue", marker="x", linestyle="-", label="calculated")
-plt.plot(recorded_pose[0], recorded_pose[1], color="red", marker="x", linestyle="-", label="recorded")
-plt.xlabel("X m/s")
-plt.ylabel("Y m/s")
-plt.title("Calculated vs. logged position")
-plt.legend()
+            log_row.append(module_num)
+            log_row.append(wheel_speed)
+            log_row.append(azimuth)
+            
+        chassis_speeds = swerve.module_to_chassis_speeds(module_states.state)
+        state = swerve.estimate_pose(dt)
 
-plt.figure(2)
-plt.plot(calculated_pose_times, calculated_speeds[0], color="blue", marker="x", linestyle="-", label="vx")
-plt.plot(calculated_pose_times, calculated_speeds[1], color="red", marker="x", linestyle="-", label="vy")
-plt.xlabel("timestamp (sec)")
-plt.ylabel("velocity (m/s)")
-plt.title("Chassis velocities over time")
-plt.legend()
+        plotter.append_measured_state(x, y)
+        plotter.append_calculated_state(state.x, state.y)
+        # print(timestamp, state.x - x, state.y - y)
+        # print(vx, vy, vt)
+        # print(t)
+        plotter.pause()
 
-plt.show()
+        # command_motors(nt, timestamp, 1.25, 0.0, 0.0)
+        # vx = chassis_trans_speed * math.cos(chassis_trans_angle)
+        # vy = chassis_trans_speed * math.sin(chassis_trans_angle)
+        # chassis_trans_angle += 0.15
+        # if chassis_trans_angle > math.pi * 2:
+        #     chassis_trans_angle = 0.0
+        
+        # command_motors(nt, timestamp, vx, vy, chassis_rot_speed)
+
+        writer.writerow(log_row)
+        time.sleep(0.01)
+
+main()
