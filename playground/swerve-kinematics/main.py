@@ -7,55 +7,41 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from swerve_kinematics import SwerveKinematics
-from module_states import ModuleStates
 from swerve_plotter import SwervePlotter
+from swerve_networktables import SwerveNetworkTables
+from swerve_log_parser import SwerveLogParser
 
-def main():
-    
+def get_config():
+    WIDTH = 10.991 * 2.0 / 12.0
+    LENGTH = 12.491 * 2.0 / 12.0
 
     positions = [
-        [-0.9159166667, 0.5204583333],
-        [-0.9159166667, -0.5204583333],
-        [0.9159166667, -0.5204583333],
-        [0.9159166667, 0.5204583333],
+        [-WIDTH / 2, LENGTH / 2],
+        [-WIDTH / 2, -LENGTH / 2],
+        [WIDTH / 2, -LENGTH / 2],
+        [WIDTH / 2, LENGTH / 2],
     ]
-
+    num_modules = len(positions)
     swerve = SwerveKinematics(positions)
-
-    num_modules = 4
-    module_states = ModuleStates(num_modules)
-
     plotter = SwervePlotter(20.0, 20.0)
 
+    return swerve, plotter, num_modules
+
+def live():    
+    swerve_nt = SwerveNetworkTables(num_modules)
+    swerve, plotter, num_modules = get_config()
 
     chassis_trans_speed = 1.25
     chassis_trans_angle = 0.0
     chassis_rot_speed = 0.0
 
-    log_row = []
-
     while True:
-        
+        swerve_nt.update()            
+        chassis_speeds = swerve.module_to_chassis_speeds(swerve_nt.module_states.state)
+        state = swerve.estimate_pose(swerve_nt.dt())
 
-        log_row = [timestamp, x, y, t, vx, vy, vt]
-
-        for module_num in range(num_modules):
-            wheel_speed, azimuth = get_module(nt, module_num)
-            module_states.set(module_num, wheel_speed, azimuth)
-            # print(wheel_speed, azimuth)
-
-            log_row.append(module_num)
-            log_row.append(wheel_speed)
-            log_row.append(azimuth)
-            
-        chassis_speeds = swerve.module_to_chassis_speeds(module_states.state)
-        state = swerve.estimate_pose(dt)
-
-        plotter.append_measured_state(x, y)
+        plotter.append_measured_state(swerve_nt.x, swerve_nt.y)
         plotter.append_calculated_state(state.x, state.y)
-        # print(timestamp, state.x - x, state.y - y)
-        # print(vx, vy, vt)
-        # print(t)
         plotter.pause()
 
         # command_motors(nt, timestamp, 1.25, 0.0, 0.0)
@@ -64,10 +50,41 @@ def main():
         # chassis_trans_angle += 0.15
         # if chassis_trans_angle > math.pi * 2:
         #     chassis_trans_angle = 0.0
-        
         # command_motors(nt, timestamp, vx, vy, chassis_rot_speed)
 
-        writer.writerow(log_row)
         time.sleep(0.01)
 
-main()
+def logged():
+    path = "2021-04-24T16-50-07--353709.csv"
+    # path = "2021-04-24T16-51-00--079020.csv"
+    # path = "2021-04-24T16-51-32--525400.csv"
+    # path = "2021-04-24T16-51-44--394209.csv"
+
+    swerve, plotter, num_modules = get_config()
+    parser = SwerveLogParser(num_modules, path)
+
+    prev_time = None
+    for timestamp, logged_state, module_state in parser.iter():
+        if timestamp == 0.0:
+            continue
+        if prev_time is None:
+            prev_time = timestamp
+            input()
+            continue
+        
+        dt = (timestamp - prev_time) * 1E-6
+        prev_time = timestamp
+        
+        chassis_speeds = swerve.module_to_chassis_speeds(module_state.state)
+        state = swerve.estimate_pose(dt)
+
+        plotter.append_measured_state(logged_state[0], logged_state[1])
+        plotter.set_measured_arrow(logged_state[2])
+
+        plotter.append_calculated_state(state.x, state.y)
+        plotter.set_calculated_arrow(state.t)
+        plotter.pause()
+
+
+# live()
+logged()
