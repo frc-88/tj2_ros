@@ -38,7 +38,10 @@ def live():
     while True:
         swerve_nt.update()            
         chassis_speeds = swerve.module_to_chassis_speeds(swerve_nt.module_states.state)
-        state = swerve.estimate_pose(swerve_nt.dt())
+        dt = swerve_nt.dt()
+        if dt is None:
+            continue
+        state = swerve.estimate_pose(dt)
 
         plotter.append_measured_state(swerve_nt.x, swerve_nt.y)
         plotter.append_calculated_state(state.x, state.y)
