@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <include file="$(find tj2_networktables)/launch/tj2_networktables.launch"/>
+    <!-- <include file="$(find tj2_camera)/launch/tj2_camera.launch"/> -->
+    <!-- <include file="$(find tj2_detectnet)/launch/tj2_detectnet.launch"/> -->
+
+    <node pkg="tf" type="static_transform_publisher" name="base_to_footprint" args="0.0 0.0 0.254 0 0 0 1 base_link base_footprint 33" />
+    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_camera" args="0.2032 0.0 0.254 0 0 0 1 base_footprint camera_link 33" />
+    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_laser" args="-0.0553 0.116 0.253 0 0 0 1 base_footprint laser 33" />
+
+</launch>
