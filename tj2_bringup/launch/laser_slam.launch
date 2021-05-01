@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch"/>
+    <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
+</launch>

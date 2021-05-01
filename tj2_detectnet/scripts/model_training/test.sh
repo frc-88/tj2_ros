@@ -7,17 +7,19 @@ MODEL=$MODEL_DIR/tj2-2020-mb2-ssd-lite.onnx
 
 LABELS=$MODEL_DIR/labels.txt
 #INPUT=/dev/video0
-#INPUT=/home/ben/tensorflow_workspace/2020Game/data/videos/5172_POV-Great_Northern_2020_Quals_22.mp4
-INPUT=/home/ben/tensorflow_workspace/2020Game/data/videos/5172_POV-Great_Northern_2020_Quals_60.mp4
+INPUT=/home/ben/tensorflow_workspace/2020Game/data/videos/5172_POV-Great_Northern_2020_Quals_22.mp4
+#INPUT=/home/ben/tensorflow_workspace/2020Game/data/videos/5172_POV-Great_Northern_2020_Quals_60.mp4
 #INPUT=/home/ben/tensorflow_workspace/2020Game/data/videos/Monterrey_Regional_2020_Practice15.mp4
 #INPUT=/home/ben/tensorflow_workspace/2020Game/data/videos/VID_20200215_145921.mp4
 #INPUT=/home/ben/tensorflow_workspace/2020Game/data/videos/video_day2.mp4
+#INPUT=/home/ben/object-recognition/detectnet_training/data/2021_Game_Objects_Training_Data/tj2_02-27-2021_2.mp4
+#INPUT=/home/ben/jetson-inference/python/training/detection/ssd/data/tj2_2020_voc_image_database/JPEGImages/tj2_02-27-2021_2_100.jpg
 
-OUTPUT=display://0
-#OUTPUT=/home/ben/Desktop/output.png
+#OUTPUT=display://0
+OUTPUT=/home/ben/Desktop/output.png
 #OUTPUT=/home/ben/Desktop/output.mp4
 
-THRESHOLD=0.3
+THRESHOLD=0.5
 
 # relevant fix for running video on x86 systems:
 # https://github.com/dusty-nv/jetson-inference/issues/810

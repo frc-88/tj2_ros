@@ -37,7 +37,7 @@ def naive_target_pipeline(image, lower, upper):
     contour_image = cv2.dilate(contour_image, None, iterations=4)
     # contour_image = cv2.erode(contour_image, None, iterations=4)
 
-    contours, hierarchy = cv2.findContours(contour_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    _, contours, hierarchy = cv2.findContours(contour_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     contours_area = []
     # calculate area and filter into new array
@@ -154,7 +154,7 @@ def get_filenames(dirname):
     paths = []
     for dirpath, dirnames, filenames in os.walk(dirname):
         for filename in sorted_alphanumeric(filenames):
-            if filename.endswith(".png"):
+            if filename.endswith(".png") and not filename.startswith("."):
                 paths.append(os.path.join(dirname, filename))
     return paths
 
@@ -162,7 +162,8 @@ def get_filenames(dirname):
 def find_paths():
     global PATHS, FILE_INDEX
     dirname = "tj2_02-27-2021_2"
-    basedir = "/Users/Woz4tetra/Documents/Code/2021-Robot-ROS/tj2_detectnet/scripts/video_dataset/output"
+    # basedir = "/Users/Woz4tetra/Documents/Code/2021-Robot-ROS/tj2_detectnet/scripts/video_dataset/output"
+    basedir = "/home/ben/Desktop/output"
 
     PATHS = get_filenames(os.path.join(basedir, dirname))
 
@@ -221,8 +222,8 @@ def process_all_images():
 
 
 def main():
-    process_all_images()
-    # cycle_through_images()
+    # process_all_images()
+    cycle_through_images()
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import rospy
+import math
 
 import tf2_ros
 import tf_conversions
@@ -10,6 +11,9 @@ from geometry_msgs.msg import TransformStamped
 from geometry_msgs.msg import Twist
 
 from networktables import NetworkTables
+
+from tj2_networktables.msg import SwerveModule
+
 
 
 class TJ2NetworkTables(object):
@@ -35,7 +39,15 @@ class TJ2NetworkTables(object):
         self.odom_msg.header.frame_id = self.odom_frame_name
         self.odom_msg.child_frame_id = self.base_frame_name
 
-        self.twist_sub = rospy.Subscriber("cmd_vel", Twist, queue_size=50)
+        self.twist_sub = rospy.Subscriber("cmd_vel", Twist, self.twist_callback, queue_size=50)
+
+        self.odom_pub = rospy.Publisher("odom", Odometry, queue_size=50)
+
+        self.module_states = []
+        self.module_publishers = []
+        for module_num in range(self.num_modules):
+            self.module_states.append(SwerveModule())
+            self.module_publishers.append(rospy.Publisher("swerve_modules/%s" % (module_num + 1), SwerveModule, queue_size=10))
 
         self.br = tf2_ros.TransformBroadcaster()
         self.tf_msg = TransformStamped()
@@ -45,6 +57,7 @@ class TJ2NetworkTables(object):
         self.remote_start_time = 0.0
         self.local_start_time = 0.0
         self.prev_timestamp = 0.0
+        self.prev_odom_timestamp = 0.0
         
         self.clock_rate = rospy.Rate(50.0)
 
@@ -66,12 +79,22 @@ class TJ2NetworkTables(object):
     
     def publish_modules(self):
         for module_num in range(self.num_modules):
-            wheel_speed = nt.getEntry("modules/%s/wheel" % module_num).getDouble(0.0)
-            azimuth = nt.getEntry("modules/%s/azimuth" % module_num).getDouble(0.0)
+            wheel_velocity = self.nt.getEntry("modules/%s/wheel" % (module_num + 1)).getDouble(0.0)
+            azimuth = self.nt.getEntry("modules/%s/azimuth" % (module_num + 1)).getDouble(0.0)
             azimuth = math.radians(azimuth)
+            
+            module_state = self.module_states[module_num]
+            module_state.velocity = wheel_velocity
+            module_state.azimuth = azimuth
+
+            publisher = self.module_publishers[module_num]
+            publisher.publish(module_state)
 
     def publish_odom(self):
         timestamp = self.get_remote_time_as_local()
+        if self.prev_odom_timestamp == timestamp:
+            return
+        
         x = self.nt.getEntry("odom/x").getDouble(0.0)
         y = self.nt.getEntry("odom/y").getDouble(0.0)
         theta = self.nt.getEntry("odom/t").getDouble(0.0)
@@ -108,6 +131,8 @@ class TJ2NetworkTables(object):
 
             self.br.sendTransform(self.tf_msg)
         
+        self.publish_modules()
+        
     def get_remote_time(self):
         """
         Gets RoboRIO's timestamp based on the Swerve/odom/time entry in seconds
@@ -119,7 +144,7 @@ class TJ2NetworkTables(object):
 
     def check_time_offsets(self, remote_timestamp):
         if remote_timestamp < self.prev_timestamp:  # remote has restarted
-            self.remote_start_time = timestamp
+            self.remote_start_time = remote_timestamp
             self.local_start_time = self.get_local_time()
             rospy.loginfo("Remote clock jumped back. Resetting offset")
         self.prev_timestamp = remote_timestamp
@@ -128,7 +153,9 @@ class TJ2NetworkTables(object):
         local_timestamp = self.get_local_time()
         remote_timestamp = self.get_remote_time()
         self.check_time_offsets(remote_timestamp)
-        return local_timestamp - self.local_start_time + self.remote_start_time
+        remote_time = local_timestamp - self.local_start_time + self.remote_start_time
+        remote_time *= 1E6
+        return remote_time
 
     def wait_for_time(self):
         rospy.loginfo("Waiting for remote time")

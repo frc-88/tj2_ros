@@ -92,9 +92,11 @@ def main():
     # filename = "tj2_02-27-2021_1.mkv"
     # filename = "tj2_02-27-2021_2.mkv"
     filenames = ["tj2_02-27-2021_%s.mkv" % x for x in range(3, 13)]
+    # dirname = "/Users/Woz4tetra/Google Drive/Projects/TJ2 ROS/2021 Game Objects Training Data/%s"
+    dirname = "/home/ben/object-recognition/detectnet_training/data/2021_Game_Objects_Training_Data/%s"
 
     for filename in filenames:
-        path = "/Users/Woz4tetra/Google Drive/Projects/TJ2 ROS/2021 Game Objects Training Data/%s" % filename
+        path = dirname % filename
         output_dir = "./output"
 
         process_video(path, output_dir)
