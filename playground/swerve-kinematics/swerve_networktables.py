@@ -1,5 +1,7 @@
 import csv
+import math
 from networktables import NetworkTables
+from datetime import datetime
 
 from module_states import ModuleStates
 
@@ -34,6 +36,8 @@ class SwerveNetworkTables:
         self.timestamp = self.nt.getEntry("odom/time").getDouble(0.0)
         if self.timestamp == 0.0:
             return
+        if self.prev_time is None:
+            self.prev_time = self.timestamp
 
         self.x = self.nt.getEntry("odom/x").getDouble(0.0)
         self.y = self.nt.getEntry("odom/y").getDouble(0.0)
@@ -60,13 +64,16 @@ class SwerveNetworkTables:
             # print(wheel_speed, azimuth)
     
     def dt(self):
-        return (self.timestamp - self.prev_time) * 1E-6
+        if self.prev_time is None or self.timestamp is None:
+            return None
+        else:
+            return (self.timestamp - self.prev_time) * 1E-6
 
     def start_log(self):
         now = datetime.now()
         filename = now.strftime("%Y-%m-%dT%H-%M-%S--%f.csv")
         self.log_file = open(filename, 'w', newline='')
-        self.writer = csv.writer(log_file)
+        self.writer = csv.writer(self.log_file)
 
     def log(self):
         if self.writer is None:
