@@ -28,8 +28,8 @@ def get_config():
     return swerve, plotter, num_modules
 
 def live():    
-    swerve_nt = SwerveNetworkTables(num_modules)
     swerve, plotter, num_modules = get_config()
+    swerve_nt = SwerveNetworkTables(num_modules)
 
     chassis_trans_speed = 1.25
     chassis_trans_angle = 0.0
@@ -38,7 +38,10 @@ def live():
     while True:
         swerve_nt.update()            
         chassis_speeds = swerve.module_to_chassis_speeds(swerve_nt.module_states.state)
-        state = swerve.estimate_pose(swerve_nt.dt())
+        dt = swerve_nt.dt()
+        if dt is None:
+            continue
+        state = swerve.estimate_pose(dt)
 
         plotter.append_measured_state(swerve_nt.x, swerve_nt.y)
         plotter.append_calculated_state(state.x, state.y)
@@ -86,5 +89,5 @@ def logged():
         plotter.pause()
 
 
-# live()
-logged()
+live()
+# logged()
