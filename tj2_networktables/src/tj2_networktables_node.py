@@ -32,6 +32,8 @@ class TJ2NetworkTables(object):
         self.base_frame_name = rospy.get_param("~base_frame", "base_link")
         self.odom_frame_name = rospy.get_param("~odom_frame", "odom")
 
+        self.remote_units_conversion = rospy.get_param("~remote_units_conversion", 0.3048)  # WPILib uses a mix of meters, feet, inches...
+
         self.num_modules = rospy.get_param("~num_modules", 4)
 
         self.odom_pub = rospy.Publisher("odom", Odometry, queue_size=50)
@@ -73,13 +75,14 @@ class TJ2NetworkTables(object):
     def twist_callback(self, msg):
         remote_time = self.get_local_time_as_remote()
         self.nt.putNumber("command/time", remote_time)
-        self.nt.putNumber("command/linear_x", msg.linear.x)
-        self.nt.putNumber("command/linear_y", msg.linear.y)
-        self.nt.putNumber("command/angular_z", msg.angular.z)
+        self.nt.putNumber("command/linear_x", msg.linear.x / self.remote_units_conversion)
+        self.nt.putNumber("command/linear_y", msg.linear.y / self.remote_units_conversion)
+        self.nt.putNumber("command/angular_z", math.degrees(msg.angular.z))
     
     def publish_modules(self):
         for module_num in range(self.num_modules):
             wheel_velocity = self.nt.getEntry("modules/%s/wheel" % (module_num + 1)).getDouble(0.0)
+            wheel_velocity *= self.remote_units_conversion
             azimuth = self.nt.getEntry("modules/%s/azimuth" % (module_num + 1)).getDouble(0.0)
             azimuth = math.radians(azimuth)
             
@@ -94,6 +97,7 @@ class TJ2NetworkTables(object):
         timestamp = self.get_remote_time_as_local()
         if self.prev_odom_timestamp == timestamp:
             return
+        self.prev_odom_timestamp = timestamp
         
         x = self.nt.getEntry("odom/x").getDouble(0.0)
         y = self.nt.getEntry("odom/y").getDouble(0.0)
@@ -101,6 +105,13 @@ class TJ2NetworkTables(object):
         vx = self.nt.getEntry("odom/vx").getDouble(0.0)
         vy = self.nt.getEntry("odom/vy").getDouble(0.0)
         vt = self.nt.getEntry("odom/vt").getDouble(0.0)
+
+        x *= self.remote_units_conversion
+        y *= self.remote_units_conversion
+        # theta = math.radians(theta)
+        vx *= self.remote_units_conversion
+        vy *= self.remote_units_conversion
+        # vt = math.radians(vt)
 
         quaternion = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, theta)
 
