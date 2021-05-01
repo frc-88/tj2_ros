@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import os
 import sys
 import signal
@@ -88,7 +88,8 @@ class TJ2LaserSlam:
     
     def generate_map_name(self, name_format):
         date_str = datetime.now().strftime(self.date_format)
-        name = name_format.format_map(defaultdict(str, date=date_str))
+        # name = name_format.format_map(defaultdict(str, date=date_str))
+        name = name_format.format(date=date_str)
         return name
     
     def run(self):
