@@ -13,7 +13,14 @@ from geometry_msgs.msg import Twist
 from networktables import NetworkTables
 
 from tj2_networktables.msg import SwerveModule
+from tj2_networktables.srv import OdomReset, OdomResetResponse
 
+from robot_state import Pose2d
+
+
+class OdomState:
+    def __init__(self):
+        pass
 
 
 class TJ2NetworkTables(object):
@@ -33,6 +40,11 @@ class TJ2NetworkTables(object):
         self.odom_frame_name = rospy.get_param("~odom_frame", "odom")
 
         self.remote_units_conversion = rospy.get_param("~remote_units_conversion", 0.3048)  # WPILib uses a mix of meters, feet, inches...
+        self.cmd_vel_timeout = rospy.get_param("~cmd_vel_timeout", 0.5)
+        self.min_linear_x_cmd = rospy.get_param("~min_linear_x_cmd", 0.05)
+        self.min_linear_y_cmd = rospy.get_param("~min_linear_y_cmd", 0.05)
+        self.min_angular_z_cmd = rospy.get_param("~min_angular_z_cmd", 0.1)
+        self.zero_epsilon = rospy.get_param("~zero_epsilon", 0.001)
 
         self.num_modules = rospy.get_param("~num_modules", 4)
 
@@ -60,25 +72,61 @@ class TJ2NetworkTables(object):
         self.local_start_time = 0.0
         self.prev_timestamp = 0.0
         self.prev_odom_timestamp = 0.0
+        self.prev_twist_timestamp = rospy.Time.now()
+
+        self.start_pose = Pose2d()
+        self.robot_pose = Pose2d()
+        self.robot_vel = Pose2d()
         
         self.clock_rate = rospy.Rate(50.0)
+
+        self.odom_reset_service_name = "odom_reset_service"
+        rospy.loginfo("Setting up service %s" % self.odom_reset_service_name)
+        self.odom_reset_service_name_srv = rospy.Service(self.odom_reset_service_name, OdomReset, self.odom_reset_callback)
+        rospy.loginfo("%s service is ready" % self.odom_reset_service_name)
 
         rospy.loginfo("Network tables init complete")
 
     def run(self):
         self.wait_for_time()
 
+        self.publish_cmd_vel(ignore_timeout=True)  # clear networktables cmd_vel once
         while not rospy.is_shutdown():
             self.clock_rate.sleep()            
             self.publish_odom()
+            self.publish_cmd_vel()
     
     def twist_callback(self, msg):
+        self.robot_vel.x = msg.linear.x
+        self.robot_vel.y = msg.linear.y
+        self.robot_vel.theta = msg.angular.z
+
+        if self.zero_epsilon < abs(self.robot_vel.x) < self.min_linear_x_cmd:
+            self.robot_vel.x = self.min_linear_x_cmd
+        if self.zero_epsilon < abs(self.robot_vel.y) < self.min_linear_y_cmd:
+            self.robot_vel.y = self.min_linear_y_cmd
+        if self.zero_epsilon < abs(self.robot_vel.theta) < self.min_angular_z_cmd:
+            self.robot_vel.theta = self.min_angular_z_cmd
+        
+        if abs(self.robot_vel.x) < self.zero_epsilon:
+            self.robot_vel.x = 0.0
+        if abs(self.robot_vel.y) < self.zero_epsilon:
+            self.robot_vel.y = 0.0
+        if abs(self.robot_vel.theta) < self.zero_epsilon:
+            self.robot_vel.theta = 0.0
+        
+        self.prev_twist_timestamp = rospy.Time.now()
+    
+    def publish_cmd_vel(self, ignore_timeout=False):
+        dt = (rospy.Time.now() - self.prev_twist_timestamp).to_sec()
+        if not ignore_timeout and dt > self.cmd_vel_timeout:
+            return
         remote_time = self.get_local_time_as_remote()
         self.nt.putNumber("command/time", remote_time)
-        self.nt.putNumber("command/linear_x", msg.linear.x / self.remote_units_conversion)
-        self.nt.putNumber("command/linear_y", msg.linear.y / self.remote_units_conversion)
-        self.nt.putNumber("command/angular_z", math.degrees(msg.angular.z))
-    
+        self.nt.putNumber("command/linear_x", self.robot_vel.x / self.remote_units_conversion)
+        self.nt.putNumber("command/linear_y", self.robot_vel.y / self.remote_units_conversion)
+        self.nt.putNumber("command/angular_z", math.degrees(self.robot_vel.theta))
+
     def publish_modules(self):
         for module_num in range(self.num_modules):
             wheel_velocity = self.nt.getEntry("modules/%s/wheel" % (module_num + 1)).getDouble(0.0)
@@ -113,13 +161,19 @@ class TJ2NetworkTables(object):
         vy *= self.remote_units_conversion
         # vt = math.radians(vt)
 
-        quaternion = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, theta)
+        self.robot_pose.x = x
+        self.robot_pose.y = y
+        self.robot_pose.theta = theta
+
+        adj_robot_pose = self.robot_pose - self.start_pose
+
+        quaternion = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, adj_robot_pose.theta)
 
         ros_time = rospy.Time(timestamp)
 
         self.odom_msg.header.stamp = ros_time
-        self.odom_msg.pose.pose.position.x = x
-        self.odom_msg.pose.pose.position.y = y
+        self.odom_msg.pose.pose.position.x = adj_robot_pose.x
+        self.odom_msg.pose.pose.position.y = adj_robot_pose.y
         self.odom_msg.pose.pose.orientation.x = quaternion[0]
         self.odom_msg.pose.pose.orientation.y = quaternion[1]
         self.odom_msg.pose.pose.orientation.z = quaternion[2]
@@ -133,8 +187,8 @@ class TJ2NetworkTables(object):
 
         if self.publish_odom_tf:
             self.tf_msg.header.stamp = ros_time
-            self.tf_msg.transform.translation.x = x
-            self.tf_msg.transform.translation.y = y
+            self.tf_msg.transform.translation.x = adj_robot_pose.x
+            self.tf_msg.transform.translation.y = adj_robot_pose.y
             self.tf_msg.transform.rotation.x = quaternion[0]
             self.tf_msg.transform.rotation.y = quaternion[1]
             self.tf_msg.transform.rotation.z = quaternion[2]
@@ -186,7 +240,14 @@ class TJ2NetworkTables(object):
         self.check_time_offsets(remote_timestamp)
         return remote_timestamp - self.remote_start_time + self.local_start_time
 
+    def odom_reset_callback(self, req):
+        self.start_pose = Pose2d.from_state(self.robot_pose)
+        self.start_pose.x += req.x
+        self.start_pose.y += req.y
+        self.start_pose.theta += req.t
+        rospy.loginfo("Resetting odometry to x: %0.3f, y: %0.3f, theta: %0.3f" % (req.x, req.y, req.t))
 
+        return OdomResetResponse(True)
 
 if __name__ == "__main__":
     node = TJ2NetworkTables()
