@@ -12,14 +12,16 @@ from swerve_networktables import SwerveNetworkTables
 from swerve_log_parser import SwerveLogParser
 
 def get_config():
-    WIDTH = 10.991 * 2.0 / 12.0
-    LENGTH = 12.491 * 2.0 / 12.0
+    # WIDTH = 10.991 / 12.0
+    # LENGTH = 12.491 / 12.0
+    WIDTH = 12.150 / 12.0
+    LENGTH = 12.150 / 12.0
 
     positions = [
-        [-WIDTH / 2, LENGTH / 2],
-        [-WIDTH / 2, -LENGTH / 2],
-        [WIDTH / 2, -LENGTH / 2],
-        [WIDTH / 2, LENGTH / 2],
+        [WIDTH / 2.0, LENGTH / 2.0],
+        [WIDTH / 2.0, -LENGTH / 2.0],
+        [-WIDTH / 2.0, -LENGTH / 2.0],
+        [-WIDTH / 2.0, LENGTH / 2.0],
     ]
     num_modules = len(positions)
     swerve = SwerveKinematics(positions)
@@ -41,10 +43,16 @@ def live():
         dt = swerve_nt.dt()
         if dt is None:
             continue
+        if swerve_nt.x is None:
+            continue
         state = swerve.estimate_pose(dt)
 
         plotter.append_measured_state(swerve_nt.x, swerve_nt.y)
+        plotter.set_measured_arrow(swerve_nt.t)
+
         plotter.append_calculated_state(state.x, state.y)
+        plotter.set_calculated_arrow(state.t)
+
         plotter.pause()
 
         # command_motors(nt, timestamp, 1.25, 0.0, 0.0)
