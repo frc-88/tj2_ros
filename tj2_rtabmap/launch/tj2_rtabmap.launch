@@ -43,7 +43,7 @@
             <param name="wait_for_transform_duration" type="double" value="0.1"/>
             <!-- <param name="odom_sensor_sync" type="bool" value="true"/> -->
 
-            <!-- <remap from="odom" to="/dodobot/odom"/> -->
+            <!-- <remap from="odom" to="/tj2/odom"/> -->
 
             <remap from="rgb/image"       to="/camera/color/image_raw"/>
             <remap from="depth/image"     to="/camera/aligned_depth_to_color/image_raw"/>
