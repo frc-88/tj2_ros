@@ -45,4 +45,4 @@ systemctl enable ${LAUNCH_SERVICE_NAME}
 systemctl restart ${SERVICE_NAME}
 systemctl restart ${LAUNCH_SERVICE_NAME}
 
-echo "dodobot-Diff-Swerve-ROS systemd service installation complete"
+echo "Diff-Swerve-ROS systemd service installation complete"
