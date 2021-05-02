@@ -9,6 +9,8 @@ rtabmap-ros
 realsense2-camera
 image-geometry
 vision-msgs
+gmapping
+amcl
 )
 
 package_list=""

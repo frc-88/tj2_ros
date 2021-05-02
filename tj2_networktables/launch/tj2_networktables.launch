@@ -3,6 +3,7 @@
     <group ns="tj2">
         <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables_node.py" output="screen" required="true">
             <param name="publish_odom_tf" value="true"/>
+            <param name="cmd_vel_timeout" value="2.0"/>
         </node>
     </group>
 </launch>
