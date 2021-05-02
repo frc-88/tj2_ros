@@ -65,7 +65,7 @@ class SwerveKinematics:
 
         dx = self.state.vx * dt
         dy = self.state.vy * dt
-        dtheta = self.state.vt * dt
+        dtheta = -self.state.vt * dt
 
         sin_dtheta = np.sin(dtheta)
         cos_dtheta = np.cos(dtheta)
