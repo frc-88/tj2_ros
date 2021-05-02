@@ -1,3 +1,4 @@
+import math
 import numpy as np
 
 class SwerveState:
@@ -37,8 +38,8 @@ class SwerveKinematics:
             self.inverse_kinematics.append([0.0, 1.0, x])
         self.inverse_kinematics = np.array(self.inverse_kinematics)
         self.forward_kinematics = np.linalg.pinv(self.inverse_kinematics)
-        print(self.inverse_kinematics.tolist())
-        print(self.forward_kinematics.tolist())
+        # print(self.inverse_kinematics.tolist())
+        # print(self.forward_kinematics.tolist())
 
     def module_to_chassis_speeds(self, module_speeds):
         module_states_matrix = []
@@ -51,10 +52,9 @@ class SwerveKinematics:
             module_states_matrix.append(vx)
 
         module_states_matrix = np.array(module_states_matrix)
-        # print(module_states_matrix)
         chassis_vector = np.dot(self.forward_kinematics, module_states_matrix)
-        self.state.vx = chassis_vector[0]
-        self.state.vy = chassis_vector[1]
+        self.state.vy = chassis_vector[0]
+        self.state.vx = chassis_vector[1]
         self.state.vt = chassis_vector[2]
 
         return self.state
@@ -67,8 +67,11 @@ class SwerveKinematics:
         dy = self.state.vy * dt
         dtheta = self.state.vt * dt
 
-        sin_theta = np.sin(dtheta)
-        cos_theta = np.cos(dtheta)
+        sin_dtheta = np.sin(dtheta)
+        cos_dtheta = np.cos(dtheta)
+
+        sin_theta = np.sin(self.state.t + dtheta)
+        cos_theta = np.cos(self.state.t + dtheta)
 
         if abs(dtheta) < 1e-9:
             # Transformation from twist to pose can be indeterminant when angular velocity is zero.
@@ -77,9 +80,9 @@ class SwerveKinematics:
             c1 = 0.5 * dtheta
             c2 = -0.5 * dtheta
         else:
-            s = sin_theta / dtheta
-            c1 = (1 - cos_theta) / dtheta
-            c2 = (cos_theta - 1) / dtheta
+            s = sin_dtheta / dtheta
+            c1 = (1 - cos_dtheta) / dtheta
+            c2 = (cos_dtheta - 1) / dtheta
 
         # Matrix format:
         # [

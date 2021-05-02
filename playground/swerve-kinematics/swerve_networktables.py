@@ -36,8 +36,6 @@ class SwerveNetworkTables:
         self.timestamp = self.nt.getEntry("odom/time").getDouble(0.0)
         if self.timestamp == 0.0:
             return
-        if self.prev_time is None:
-            self.prev_time = self.timestamp
 
         self.x = self.nt.getEntry("odom/x").getDouble(0.0)
         self.y = self.nt.getEntry("odom/y").getDouble(0.0)
@@ -55,19 +53,22 @@ class SwerveNetworkTables:
         self.x -= self.x0
         self.y -= self.y0
         self.t -= self.t0
-
-        self.prev_time = self.timestamp
         
         for module_num in range(self.num_modules):
             azimuth, wheel_speed = self.get_module(module_num)
-            self.module_states.set(module_num, wheel_speed, azimuth)
+            self.module_states.set(module_num, azimuth, wheel_speed)
             # print(wheel_speed, azimuth)
     
     def dt(self):
-        if self.prev_time is None or self.timestamp is None:
+        if self.timestamp is None:
             return None
         else:
-            return (self.timestamp - self.prev_time) * 1E-6
+            if self.prev_time is None:
+                self.prev_time = self.timestamp
+                return None
+            dt = (self.timestamp - self.prev_time) * 1E-6
+            self.prev_time = self.timestamp
+            return dt
 
     def start_log(self):
         now = datetime.now()
@@ -89,6 +90,7 @@ class SwerveNetworkTables:
         
     
     def get_module(self, module_num):
+        module_num += 1
         wheel_speed = self.nt.getEntry("modules/%s/wheel" % module_num).getDouble(0.0)
         azimuth = self.nt.getEntry("modules/%s/azimuth" % module_num).getDouble(0.0)
         azimuth = math.radians(azimuth)
