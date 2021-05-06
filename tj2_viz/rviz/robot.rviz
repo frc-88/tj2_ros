@@ -8,10 +8,6 @@ Panels:
         - /Status1
         - /TF1
         - /TF1/Frames1
-        - /LaserScan1
-        - /Path1
-        - /Path2
-        - /PoseWithCovariance1
       Splitter Ratio: 0.5
     Tree Height: 323
   - Class: rviz/Selection
@@ -32,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -58,34 +54,93 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        swerve_wheel_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        swerve_wheel_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        swerve_wheel_3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        swerve_wheel_4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
     - Class: rviz/TF
       Enabled: true
       Frame Timeout: 15
       Frames:
-        All Enabled: false
+        All Enabled: true
         base_footprint:
           Value: true
         base_link:
           Value: true
-        laser:
-          Value: false
-        map:
+        camera_link:
           Value: true
-        odom:
+        laser:
+          Value: true
+        swerve_wheel_1:
+          Value: true
+        swerve_wheel_2:
+          Value: true
+        swerve_wheel_3:
+          Value: true
+        swerve_wheel_4:
           Value: true
       Marker Alpha: 1
-      Marker Scale: 10
+      Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          odom:
-            base_link:
-              base_footprint:
-                laser:
-                  {}
+        base_link:
+          base_footprint:
+            camera_link:
+              {}
+            laser:
+              {}
+            swerve_wheel_1:
+              {}
+            swerve_wheel_2:
+              {}
+            swerve_wheel_3:
+              {}
+            swerve_wheel_4:
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -157,6 +212,7 @@ Visualization Manager:
         Polygon: true
         PoseArray: true
         PoseWithCovariance: true
+        RobotModel: true
         TF: true
         Value: true
       Zoom Factor: 1
@@ -339,7 +395,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: base_footprint
     Frame Rate: 30
   Name: root
   Tools:
@@ -363,7 +419,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 75.6095962524414
+      Distance: 1.9456000328063965
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -371,17 +427,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -5.19486141204834
-        Y: 2.8572256565093994
-        Z: 1.5988609790802002
+        X: 0
+        Y: 0
+        Z: 0
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.370397686958313
+      Pitch: 0.5503982901573181
       Target Frame: <Fixed Frame>
-      Yaw: 1.3372365236282349
+      Yaw: 0.9953980445861816
     Saved: ~
 Window Geometry:
   Camera:

@@ -3,7 +3,4 @@
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch"/>
     <!-- <include file="$(find tj2_camera)/launch/tj2_camera.launch"/> -->
     <!-- <include file="$(find tj2_detectnet)/launch/tj2_detectnet.launch"/> -->
-
-    <node pkg="tf" type="static_transform_publisher" name="base_to_footprint" args="0.0 0.0 -0.254 0 0 0 1 base_link base_footprint 33" />
-
 </launch>

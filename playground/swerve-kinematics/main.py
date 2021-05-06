@@ -49,6 +49,7 @@ def live():
 
         plotter.append_measured_state(swerve_nt.x, swerve_nt.y)
         plotter.set_measured_arrow(swerve_nt.t)
+        print("X: %0.4f\tY: %0.4f\tT:%0.4f" % (swerve_nt.x, swerve_nt.y, swerve_nt.t))
 
         plotter.append_calculated_state(state.x, state.y)
         plotter.set_calculated_arrow(state.t)
