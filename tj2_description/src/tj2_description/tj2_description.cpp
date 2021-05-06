@@ -5,6 +5,8 @@ TJ2Description::TJ2Description(ros::NodeHandle* nodehandle):nh(*nodehandle)
 {
     ros::param::param<int>("~num_modules", num_modules, 4);
 
+    wheel_subs = new vector<ros::Subscriber>();
+
     wheel_joints_msg.header.frame_id = "base_link";
     for (int index = 0; index < num_modules; index++)
     {
@@ -12,15 +14,17 @@ TJ2Description::TJ2Description(ros::NodeHandle* nodehandle):nh(*nodehandle)
         wheel_joints_msg.name.push_back("base_link_to_wheel_" + wheel_name + "_joint");
         wheel_joints_msg.position.push_back(0.0);
 
-        wheel_subs.push_back(
+        wheel_subs->push_back(
             nh.subscribe<tj2_networktables::SwerveModule>(
                 "swerve_modules/" + wheel_name, 50,
-                boost::bind(&TJ2Description::module_callback, *this, _1, index)
+                boost::bind(&TJ2Description::module_callback, this, _1, index)
             )
         );
     }
-
+    
     wheel_joint_pub = nh.advertise<sensor_msgs::JointState>("wheel_joint_state", 10);
+    
+    ROS_INFO("tj2_description is ready!");
 }
 
 void TJ2Description::module_callback(const tj2_networktables::SwerveModuleConstPtr& msg, int module_index)

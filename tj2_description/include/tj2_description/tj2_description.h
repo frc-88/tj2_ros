@@ -18,7 +18,7 @@ private:
     ros::Publisher wheel_joint_pub;
 
     // Subscribers
-    vector<ros::Subscriber> wheel_subs;
+    vector<ros::Subscriber>* wheel_subs;
 
     // Joint messages
     sensor_msgs::JointState wheel_joints_msg;
