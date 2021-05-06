@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# INTERFACE=eth0
-INTERFACE=wlan0
+INTERFACE=eth0
+# INTERFACE=wlan0
 HOST_MACHINE=`ifconfig ${INTERFACE} | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
 # HOST_MACHINE=`hostname`.local
 

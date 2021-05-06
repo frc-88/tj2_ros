@@ -7,6 +7,10 @@
         <color rgba="0 0.369 0.722 1"/>
     </material>
 
+    <material name="red">
+        <color rgba="0.722 0.369 0 1"/>
+    </material>
+
     <link name="base_link">
         <visual>
             <origin xyz="0 0 0" rpy="0 0 1.5708"/>
@@ -32,7 +36,7 @@
             <geometry>
                 <mesh filename="package://tj2_description/meshes/wheel.stl"/>
             </geometry>
-            <material name="blue"/>
+            <material name="red"/>
         </visual>
     </link>
 
@@ -76,7 +80,7 @@
     <joint name="base_link_to_wheel_2_joint" type="continuous">
         <parent link="base_footprint"/>
         <child link="swerve_wheel_2"/>
-        <origin xyz="-0.154305  -0.154305  0.044"/>
+        <origin xyz="0.154305  0.154305  0.044"/>
         <axis xyz="0 0 1"/>
     </joint>
     
@@ -90,7 +94,7 @@
     <joint name="base_link_to_wheel_4_joint" type="continuous">
         <parent link="base_footprint"/>
         <child link="swerve_wheel_4"/>
-        <origin xyz="0.154305  0.154305  0.044"/>
+        <origin xyz="-0.154305  -0.154305  0.044"/>
         <axis xyz="0 0 1"/>
     </joint>
     

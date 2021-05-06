@@ -131,7 +131,7 @@ class TJ2NetworkTables(object):
             
             module_state = self.module_states[module_num]
             module_state.velocity = wheel_velocity
-            module_state.azimuth = azimuth
+            module_state.azimuth = -azimuth
 
             publisher = self.module_publishers[module_num]
             publisher.publish(module_state)
