@@ -12,16 +12,16 @@
     </material>
 
     <link name="base_link">
-    </link>
-
-    <link name="base_footprint">
         <visual>
-            <origin xyz="0 0 -0.117" rpy="0 0 1.5708"/>
+            <origin xyz="0 0 0" rpy="0 0 1.5708"/>
             <geometry>
                 <mesh filename="package://tj2_description/meshes/chassis.stl"/>
             </geometry>
             <material name="blue"/>
         </visual>
+    </link>
+
+    <link name="base_footprint">
     </link>
 
     <joint name="base_link_to_footprint" type="fixed">
