@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch"/>
+    <include file="$(find tj2_description)/launch/tj2_description.launch"/>
     <!-- <include file="$(find tj2_camera)/launch/tj2_camera.launch"/> -->
     <!-- <include file="$(find tj2_detectnet)/launch/tj2_detectnet.launch"/> -->
 </launch>
