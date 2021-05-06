@@ -1,0 +1,97 @@
+<robot name="dodobot">
+    <material name="white">
+        <color rgba="1 1 1 1"/>
+    </material>
+
+    <material name="blue">
+        <color rgba="0 0.369 0.722 1"/>
+    </material>
+
+    <link name="base_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 1.5708"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/chassis.stl"/>
+            </geometry>
+            <material name="blue"/>
+        </visual>
+    </link>
+
+    <link name="base_footprint">
+    </link>
+
+    <joint name="base_link_to_footprint" type="fixed">
+        <parent link="base_link"/>
+        <child link="base_footprint"/>
+        <origin xyz="0.0  0.0  -0.117"/>
+    </joint>
+
+    <link name="swerve_wheel_1">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/wheel.stl"/>
+            </geometry>
+            <material name="blue"/>
+        </visual>
+    </link>
+
+    <link name="swerve_wheel_2">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/wheel.stl"/>
+            </geometry>
+            <material name="blue"/>
+        </visual>
+    </link>
+
+    <link name="swerve_wheel_3">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/wheel.stl"/>
+            </geometry>
+            <material name="blue"/>
+        </visual>
+    </link>
+
+    <link name="swerve_wheel_4">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/wheel.stl"/>
+            </geometry>
+            <material name="blue"/>
+        </visual>
+    </link>
+
+    <joint name="base_link_to_wheel_1_joint" type="continuous">
+        <parent link="base_footprint"/>
+        <child link="swerve_wheel_1"/>
+        <origin xyz="-0.154305  0.154305  0.044"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <joint name="base_link_to_wheel_2_joint" type="continuous">
+        <parent link="base_footprint"/>
+        <child link="swerve_wheel_2"/>
+        <origin xyz="-0.154305  -0.154305  0.044"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+    
+    <joint name="base_link_to_wheel_3_joint" type="continuous">
+        <parent link="base_footprint"/>
+        <child link="swerve_wheel_3"/>
+        <origin xyz="0.154305  -0.154305  0.044"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <joint name="base_link_to_wheel_4_joint" type="continuous">
+        <parent link="base_footprint"/>
+        <child link="swerve_wheel_4"/>
+        <origin xyz="0.154305  0.154305  0.044"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+    
+</robot>

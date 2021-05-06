@@ -3,6 +3,7 @@ tj2_detectnet/models
 tj2_detectnet/scripts/video_dataset/output 
 tj2_laser_slam/maps
 .idea/
+.vscode/
 
 *.csv
 

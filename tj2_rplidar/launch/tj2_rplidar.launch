@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_laser" args="-0.0553 0.116 0.253 0 0 1 0 base_footprint laser 33" />
-    
     <group ns="laser">
         <node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
             <param name="serial_port"         type="string" value="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>  

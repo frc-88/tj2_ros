@@ -18,11 +18,6 @@ from tj2_networktables.srv import OdomReset, OdomResetResponse
 from robot_state import Pose2d
 
 
-class OdomState:
-    def __init__(self):
-        pass
-
-
 class TJ2NetworkTables(object):
     def __init__(self):
         self.node_name = "tj2_networktables"
