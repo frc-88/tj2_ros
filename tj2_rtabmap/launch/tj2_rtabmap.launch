@@ -8,7 +8,7 @@
     <arg     if="$(arg create_new_db)" name="rtabmap_args"  default="--delete_db_on_start"/>
     <arg unless="$(arg create_new_db)" name="rtabmap_args"  default=""/>
 
-    <!-- <include file="$(find db_config)/launch/rgbd_msgs.launch"/> -->
+    <!-- <include file="$(find tj2_rtabmap)/launch/rgbd_msgs.launch"/> -->
 
     <group ns="rtabmap">
         <!-- <node pkg="rtabmap_ros" type="rgbd_odometry" name="rgbd_odometry" output="screen">
@@ -26,9 +26,9 @@
         </node> -->
 
         <node name="rtabmap" pkg="rtabmap_ros" type="rtabmap" output="screen" args="$(arg rtabmap_args)">
-            <rosparam file="$(find db_config)/config/rtabmap/rtabmap_common.yaml" command="load"/>
-            <rosparam     if="$(arg localization)" file="$(find db_config)/config/rtabmap/rtabmap_localization.yaml" command="load"/>
-            <rosparam unless="$(arg localization)" file="$(find db_config)/config/rtabmap/rtabmap_mapping.yaml" command="load"/>
+            <rosparam file="$(find tj2_rtabmap)/config/rtabmap_common.yaml" command="load"/>
+            <rosparam     if="$(arg localization)" file="$(find tj2_rtabmap)/config/rtabmap_localization.yaml" command="load"/>
+            <rosparam unless="$(arg localization)" file="$(find tj2_rtabmap)/config/rtabmap_mapping.yaml" command="load"/>
 
             <param name="database_path"       type="string" value="$(arg database_path)"/>
             <param name="frame_id" type="string" value="base_link"/>
@@ -60,7 +60,7 @@
 
             <!-- laser -->
             <param name="subscribe_scan" type="bool" value="$(arg use_laser)"/>
-            <remap if="$(arg use_laser)" from="scan" to="/scan_filtered"/>
+            <remap if="$(arg use_laser)" from="scan" to="/laser/scan_filtered"/>
 
             <!-- 0=Vis, 1=Icp, 2=VisIcp, Icp is for laser scans -->
             <param     if="$(arg use_laser)" name="Reg/Strategy" type="string" value="2"/>

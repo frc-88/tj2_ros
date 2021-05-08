@@ -1,8 +1,8 @@
 # RTAB-Map's parameters: do "rosrun rtabmap rtabmap (double-dash)params" to see the list of available parameters.
 
-Rtabmap/DetectionRate: 1.5   # Detection rate (Hz). RTAB-Map will filter input images to satisfy this rate.
+Rtabmap/DetectionRate: 5.0   # Detection rate (Hz). RTAB-Map will filter input images to satisfy this rate.
 Rtabmap/TimeThr: 0   # Maximum time allowed for map update (ms) (0 means infinity). When map update time exceeds this fixed time threshold, some nodes in Working Memory (WM) are transferred to Long-Term Memory to limit the size of the WM and decrease the update time.
-Rtabmap/LoopThr: 0.08  # 0.11, Loop closing threshold
+Rtabmap/LoopThr: 0.11  # 0.11, Loop closing threshold
 
 RGBD/OptimizeFromGraphEnd: false   # Optimize graph from the newest node. If false, the graph is optimized from the oldest node of the current graph (this adds an overhead computation to detect to oldest node of the current graph, but it can be useful to preserve the map referential from the oldest node). Warning when set to false: when some nodes are transferred, the first referential of the local map may change, resulting in momentary changes in robot/map position (which are annoying in teleoperation).
 RGBD/LinearUpdate: 0.1   # Minimum linear displacement (m) to update the map. Rehearsal is done prior to this, so weights are still updated.
@@ -42,9 +42,9 @@ Reg/Force3DoF: true   # Force 3 degrees-of-freedom transform (3Dof: x,y and yaw)
 
 GridGlobal/MinSize:  20.0   # Minimum map size (m).
 
-Grid/CellSize:  0.025   # Resolution of the occupancy grid.
+Grid/CellSize:  0.075   # Resolution of the occupancy grid.
 Grid/RangeMin:  0.02   # Minimum range from sensor.
-Grid/RangeMax:  4.0   # Maximum range from sensor. 0=inf.
+Grid/RangeMax:  9.0   # Maximum range from sensor. 0=inf.
 Grid/3D: false   # A 3D occupancy grid is required if you want an OctoMap (3D ray tracing). Set to false if you want only a 2D map, the cloud will be projected on xy plane. A 2D map can be still generated if checked, but it requires more memory and time to generate it. Ignored if laser scan is 2D and /"%s/" is false.
 Grid/MaxGroundHeight:  0.0   # Maximum ground height (0=disabled). Should be set if /"%s/" is false.
 Grid/MinGroundHeight: 0.01  # Minimum ground height (0=disabled).
