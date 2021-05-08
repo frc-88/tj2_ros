@@ -73,28 +73,28 @@
     <joint name="base_link_to_wheel_1_joint" type="continuous">
         <parent link="base_footprint"/>
         <child link="swerve_wheel_1"/>
-        <origin xyz="-0.154305  0.154305  0.044"/>
+        <origin xyz="0.154305  0.154305  0.044"/>
         <axis xyz="0 0 1"/>
     </joint>
 
     <joint name="base_link_to_wheel_2_joint" type="continuous">
         <parent link="base_footprint"/>
         <child link="swerve_wheel_2"/>
-        <origin xyz="0.154305  0.154305  0.044"/>
+        <origin xyz="-0.154305  0.154305  0.044"/>
         <axis xyz="0 0 1"/>
     </joint>
     
     <joint name="base_link_to_wheel_3_joint" type="continuous">
         <parent link="base_footprint"/>
         <child link="swerve_wheel_3"/>
-        <origin xyz="0.154305  -0.154305  0.044"/>
+        <origin xyz="-0.154305  -0.154305  0.044"/>
         <axis xyz="0 0 1"/>
     </joint>
 
     <joint name="base_link_to_wheel_4_joint" type="continuous">
         <parent link="base_footprint"/>
         <child link="swerve_wheel_4"/>
-        <origin xyz="-0.154305  -0.154305  0.044"/>
+        <origin xyz="0.154305  -0.154305  0.044"/>
         <axis xyz="0 0 1"/>
     </joint>
     
