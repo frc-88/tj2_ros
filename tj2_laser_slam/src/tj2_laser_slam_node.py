@@ -73,6 +73,13 @@ class TJ2LaserSlam:
         )
         rospy.on_shutdown(self.shutdown_hook)
 
+        self.MAPPING = "mapping"
+        self.LOCALIZE = "localize"
+        self.MODES = [
+            self.MAPPING,
+            self.LOCALIZE,
+        ]
+
         self.rospack = rospkg.RosPack()
         self.package_dir = self.rospack.get_path(self.node_name)
         self.default_maps_dir = self.package_dir + "/maps"
@@ -82,6 +89,7 @@ class TJ2LaserSlam:
         self.map_dir = rospy.get_param("~map_dir", self.default_maps_dir)
         self.map_name = rospy.get_param("~map_name", "map-{date}")
         self.date_format = rospy.get_param("~date_format", "%Y-%m-%dT%H-%M-%S--%f")
+        self.map_saver_wait_time = rospy.get_param("~map_saver_wait_time", 10.0)
 
         map_name = self.generate_map_name(self.map_name)
         self.map_path = os.path.join(self.map_dir, map_name)
@@ -113,9 +121,12 @@ class TJ2LaserSlam:
         return name
     
     def run(self):
-        if self.mode == "mapping":
+        if self.mode not in self.MODES:
+            raise ValueError("Unknown mode '%s'. Valid modes: %s" % (self.mode, ", ".join(self.MODES)))
+
+        if self.mode == self.MAPPING:
             self.gmapping_launcher.start()
-        elif self.mode == "localize":
+        elif self.mode == self.LOCALIZE:
             self.amcl_launcher.start()
         
         rospy.spin()
@@ -126,14 +137,17 @@ class TJ2LaserSlam:
         self.map_saver_launcher.stop()
 
     def shutdown_hook(self):
-        rospy.loginfo("shutdown called")
-        if self.mode == "mapping":
-            rospy.loginfo("Saving map to %s. Waiting at least 10 seconds." % self.map_path)
-            self.map_saver_launcher.start()
-            self.map_saver_launcher.join(timeout=10.0)
-            rospy.loginfo("Map saved!")
-        
-        self.stop_all()
+        try:
+            rospy.loginfo("shutdown called")
+            if self.mode == self.MAPPING:
+                rospy.loginfo("Saving map to %s. Waiting %0.1f seconds for map saver to finish." % (
+                    self.map_path, self.map_saver_wait_time)
+                )
+                self.map_saver_launcher.start()
+                self.map_saver_launcher.join(timeout=self.map_saver_wait_time)
+                rospy.loginfo("Map saved!")
+        finally:
+            self.stop_all()
     
     # def signal_handler(self, sig, frame):
     #     self.shutdown_hook()
