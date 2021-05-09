@@ -3,6 +3,10 @@
     <arg name="post_processing_manager_name" value="post_processing_manager"/>
     <arg name="camera_manager_name" value="realsense2_camera_manager"/>
     
+    <node name="dynamic_reconfigure_load_rgb" pkg="dynamic_reconfigure" type="dynparam" output="screen" args="load /camera/rgb_camera $(find tj2_camera)/config/rgb_camera.yaml" />
+    <node name="dynamic_reconfigure_load_l500" pkg="dynamic_reconfigure" type="dynparam" output="screen" args="load /camera/l500_depth_sensor $(find tj2_camera)/config/l500_depth_sensor.yaml" />
+    <node name="dynamic_reconfigure_load_motion" pkg="dynamic_reconfigure" type="dynparam" output="screen" args="load /camera/motion_module $(find tj2_camera)/config/motion_module.yaml" />
+
     <group ns="camera">
         <node pkg="nodelet" type="nodelet" args="manager" name="post_processing_manager" output="screen"/>
 
@@ -50,12 +54,12 @@
         <arg name="enable_depth"             value="true"/>
         <arg name="depth_fps"                value="30"/>
 
-        <arg name="color_width"              value="1280"/>
-        <arg name="color_height"             value="720"/>
+        <arg name="color_width"              value="960"/>
+        <arg name="color_height"             value="540"/>
         <arg name="color_fps"                value="30"/>
 
-        <!-- <arg name="infra_width"              value="848"/> -->
-        <!-- <arg name="infra_height"             value="480"/> -->
+        <arg name="infra_width"              value="640"/>
+        <arg name="infra_height"             value="480"/>
         <arg name="enable_infra"            value="true"/>
         <!-- <arg name="enable_infra1"            value="false"/> -->
         <!-- <arg name="enable_infra2"            value="false"/> -->
@@ -63,8 +67,8 @@
 
         <arg name="enable_gyro"              value="true"/>
         <arg name="enable_accel"             value="true"/>
-        <arg name="gyro_fps"                 value="400"/>
-        <arg name="accel_fps"                value="400"/>
+        <arg name="gyro_fps"                 value="100"/>
+        <arg name="accel_fps"                value="100"/>
 
         <arg name="publish_tf"               value="true"/>
         <!-- <arg name="tf_publish_rate"          value="10"/> -->

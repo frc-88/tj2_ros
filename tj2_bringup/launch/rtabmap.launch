@@ -9,6 +9,7 @@
         <arg name="database_path" value="$(arg map_name)"/>
         <arg name="create_new_db" value="$(arg new_db)"/>
     </include>
-    <include if="$(arg use_laser)" file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
+    <!-- <include if="$(arg use_laser)" file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/> -->
+    <include if="$(arg use_laser)" file="$(find tj2_rplidar)/launch/tj2_rplidar_a3.launch"/>
     
 </launch>
