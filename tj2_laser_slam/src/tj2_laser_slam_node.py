@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import os
 import sys
+import time
 import signal
+import psutil
 import rospy
 import rospkg
 import threading
@@ -13,7 +15,8 @@ from collections import defaultdict
 class LaunchManager:
     roslaunch_exec = "/opt/ros/noetic/bin/roslaunch"
     def __init__(self, launch_path, *args, **kwargs):
-        
+        self.kill_timeout = 7.5
+
         args_list = []
         for arg in args:
             args_list.append(str(arg))
@@ -32,8 +35,26 @@ class LaunchManager:
         self.process = Popen(self.roslaunch_args, preexec_fn=os.setpgrp)  #, stdout=PIPE, stderr=PIPE)
     
     def stop(self):
-        if self.is_running():
-            self.process.send_signal(signal.SIGINT)
+        if not self.is_running():
+            return
+        self.process.send_signal(signal.SIGINT)
+        start_time = time.time()
+        while True:
+            if self.is_running():
+                break
+            if time.time() - start_time > self.kill_timeout:
+                rospy.logwarn("Process is still running after %0.2fs. Sending SIGKILL" % self.kill_timeout)
+                # self.process.send_signal(signal.SIGKILL)
+                self.kill_group()
+                break
+    
+    def kill_group(self):
+        parent = psutil.Process(self.process.pid)
+        for child in parent.children(recursive=True):
+            child.kill()
+            rospy.loginfo("Killing process %s" % child.pid)
+        parent.kill()
+        rospy.loginfo("Killing group process %s" % parent.pid)
     
     def join(self, timeout):
         self.process.wait()
