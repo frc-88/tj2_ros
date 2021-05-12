@@ -21,9 +21,7 @@
             
             <param name="max_distance"        type="int"    value="25"/>
         </node>
-
-        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
-            <rosparam command="load" file="$(find tj2_rplidar)/config/laser_filter.yaml" />
-        </node>
     </group>
+
+    <include file="$(find tj2_rplidar)/launch/laser_filter.launch"/>
 </launch>
