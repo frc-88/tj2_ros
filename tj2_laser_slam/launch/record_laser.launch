@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_record_laser"
+       args="record -o $(find tj2_laser_slam)/bags/laser
+            /tj2/odom
+            /laser/scan
+            /tj2/swerve_modules/1
+            /tj2/swerve_modules/2
+            /tj2/swerve_modules/3
+            /tj2/swerve_modules/4
+            " />
+</launch>
