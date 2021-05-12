@@ -15,7 +15,7 @@ from collections import defaultdict
 class LaunchManager:
     roslaunch_exec = "/opt/ros/noetic/bin/roslaunch"
     def __init__(self, launch_path, *args, **kwargs):
-        self.kill_timeout = 7.5
+        self.kill_timeout = 2.0
 
         args_list = []
         for arg in args:
@@ -57,7 +57,7 @@ class LaunchManager:
         rospy.loginfo("Killing group process %s" % parent.pid)
     
     def join(self, timeout):
-        self.process.wait()
+        self.process.wait(timeout=timeout)
     
     def is_running(self):
         return self.process is not None and self.process.poll() is None
@@ -89,7 +89,7 @@ class TJ2LaserSlam:
         self.map_dir = rospy.get_param("~map_dir", self.default_maps_dir)
         self.map_name = rospy.get_param("~map_name", "map-{date}")
         self.date_format = rospy.get_param("~date_format", "%Y-%m-%dT%H-%M-%S--%f")
-        self.map_saver_wait_time = rospy.get_param("~map_saver_wait_time", 10.0)
+        self.map_saver_wait_time = rospy.get_param("~map_saver_wait_time", 5.0)
 
         map_name = self.generate_map_name(self.map_name)
         self.map_path = os.path.join(self.map_dir, map_name)
