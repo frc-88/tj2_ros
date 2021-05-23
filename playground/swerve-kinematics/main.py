@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from swerve_kinematics import SwerveKinematics
 from swerve_plotter import SwervePlotter
+from module_plotter import ModulePlotter
 from swerve_networktables import SwerveNetworkTables
 from swerve_log_parser import SwerveLogParser
 
@@ -19,26 +20,34 @@ def get_config():
 
     positions = [
         [WIDTH / 2.0, LENGTH / 2.0],
-        [WIDTH / 2.0, -LENGTH / 2.0],
-        [-WIDTH / 2.0, -LENGTH / 2.0],
         [-WIDTH / 2.0, LENGTH / 2.0],
+        [-WIDTH / 2.0, -LENGTH / 2.0],
+        [WIDTH / 2.0, -LENGTH / 2.0],
     ]
     num_modules = len(positions)
     swerve = SwerveKinematics(positions)
-    plotter = SwervePlotter(20.0, 20.0)
+    swerve_plotter = SwervePlotter(20.0, 20.0)
+    module_plotter = ModulePlotter(positions, 4.0, 4.0)
 
-    return swerve, plotter, num_modules
+    return swerve, swerve_plotter, module_plotter, num_modules
 
 def live():    
-    swerve, plotter, num_modules = get_config()
+    swerve, swerve_plotter, module_plotter, num_modules = get_config()
     swerve_nt = SwerveNetworkTables(num_modules)
 
-    chassis_trans_speed = 1.25
+    chassis_trans_speed = 0.5
     chassis_trans_angle = 0.0
     chassis_rot_speed = 0.0
 
+    enable_swerve_plotter = True
+    # enable_swerve_plotter = False
+    enable_module_plotter = True
+    # enable_module_plotter = False
+
+    prev_cmd_time = time.time()
+
     while True:
-        swerve_nt.update()            
+        swerve_nt.update()
         chassis_speeds = swerve.module_to_chassis_speeds(swerve_nt.module_states.state)
         dt = swerve_nt.dt()
         if dt is None:
@@ -47,22 +56,36 @@ def live():
             continue
         state = swerve.estimate_pose(dt)
 
-        plotter.append_measured_state(swerve_nt.x, swerve_nt.y)
-        plotter.set_measured_arrow(swerve_nt.t)
-        print("X: %0.4f\tY: %0.4f\tT:%0.4f" % (swerve_nt.x, swerve_nt.y, swerve_nt.t))
+        if enable_swerve_plotter:
+            swerve_plotter.append_measured_state(swerve_nt.x, swerve_nt.y)
+            swerve_plotter.set_measured_arrow(swerve_nt.t)
 
-        plotter.append_calculated_state(state.x, state.y)
-        plotter.set_calculated_arrow(state.t)
+            swerve_plotter.append_calculated_state(state.x, state.y)
+            swerve_plotter.set_calculated_arrow(state.t)
 
-        plotter.pause()
+            swerve_plotter.pause()
+        if enable_module_plotter:
+            for module_num in range(swerve_nt.num_modules):
+                azimuth, wheel_speed = swerve_nt.module_states.get(module_num)
+                module_plotter.set_module_arrow(module_num, wheel_speed, azimuth)
+            #     print("%0.4f\t%0.4f" % (wheel_speed, azimuth), end="\t|\t")
+            # print()
+            module_plotter.pause()
+        # print("X: %0.4f\tY: %0.4f\tT:%0.4f" % (swerve_nt.x, swerve_nt.y, swerve_nt.t))
+        # print("X: %0.4f\tY: %0.4f\tT:%0.4f" % (state.x, state.y, state.t))
+        print("X: %0.4f\tY: %0.4f\tT:%0.4f" % (state.vx, state.vy, state.vt))
+        # for module_num in range(swerve_nt.num_modules):
+        #     azimuth, wheel_speed = swerve_nt.module_states.get(module_num)
+        #     print("%0.4f\t%0.4f" % (wheel_speed, azimuth), end="\t|\t")
+        # print()
 
-        # command_motors(nt, timestamp, 1.25, 0.0, 0.0)
-        # vx = chassis_trans_speed * math.cos(chassis_trans_angle)
-        # vy = chassis_trans_speed * math.sin(chassis_trans_angle)
-        # chassis_trans_angle += 0.15
-        # if chassis_trans_angle > math.pi * 2:
+        # chassis_trans_angle += 1.0
+        # if chassis_trans_angle > 360.0:
         #     chassis_trans_angle = 0.0
-        # command_motors(nt, timestamp, vx, vy, chassis_rot_speed)
+        # swerve_nt.command_motors(chassis_trans_speed, chassis_trans_angle, chassis_rot_speed)
+        if (time.time() - prev_cmd_time > 3.0):
+            swerve_nt.command_motors(0.0, 0.0, 5.0)
+            prev_cmd_time = time.time()
 
         time.sleep(0.01)
 

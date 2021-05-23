@@ -28,7 +28,7 @@ class TJ2NetworkTables(object):
         )
 
         NetworkTables.initialize(server="10.0.88.2")
-        self.nt = NetworkTables.getTable("Swerve")
+        self.nt = NetworkTables.getTable("swerveLibrary")
 
         self.publish_odom_tf = rospy.get_param("~publish_odom_tf", False)
         self.base_frame_name = rospy.get_param("~base_frame", "base_link")
@@ -56,7 +56,7 @@ class TJ2NetworkTables(object):
         self.module_publishers = []
         for module_num in range(self.num_modules):
             self.module_states.append(SwerveModule())
-            self.module_publishers.append(rospy.Publisher("swerve_modules/%s" % (module_num + 1), SwerveModule, queue_size=10))
+            self.module_publishers.append(rospy.Publisher("swerve_modules/%s" % module_num, SwerveModule, queue_size=10))
 
         self.br = tf2_ros.TransformBroadcaster()
         self.tf_msg = TransformStamped()
@@ -68,6 +68,10 @@ class TJ2NetworkTables(object):
         self.prev_timestamp = 0.0
         self.prev_odom_timestamp = 0.0
         self.prev_twist_timestamp = rospy.Time.now()
+
+        self.odom_table_key = "odometryState"
+        self.command_table_key = "commands"
+        self.module_table_key = "modules"
 
         self.start_pose = Pose2d()
         self.robot_pose = Pose2d()
@@ -117,21 +121,22 @@ class TJ2NetworkTables(object):
         if not ignore_timeout and dt > self.cmd_vel_timeout:
             return
         remote_time = self.get_local_time_as_remote()
-        self.nt.putNumber("command/time", remote_time)
-        self.nt.putNumber("command/linear_x", self.robot_vel.x / self.remote_units_conversion)
-        self.nt.putNumber("command/linear_y", self.robot_vel.y / self.remote_units_conversion)
-        self.nt.putNumber("command/angular_z", math.degrees(self.robot_vel.theta))
+        self.nt.putNumber(self.command_table_key + "/timestamp", remote_time)
+        self.nt.putNumber(self.command_table_key + "/translationSpeed", self.robot_vel.x / self.remote_units_conversion)
+        self.nt.putNumber(self.command_table_key + "/translationDirection", self.robot_vel.y / self.remote_units_conversion)
+        self.nt.putNumber(self.command_table_key + "/rotationVelocity", math.degrees(self.robot_vel.theta))
+        self.nt.putBoolean(self.command_table_key + "/isFieldCentric", False)
 
     def publish_modules(self):
         for module_num in range(self.num_modules):
-            wheel_velocity = self.nt.getEntry("modules/%s/wheel" % (module_num + 1)).getDouble(0.0)
+            wheel_velocity = self.nt.getEntry(self.module_table_key + "/%s/wheelVelocity" % module_num).getDouble(0.0)
             wheel_velocity *= self.remote_units_conversion
-            azimuth = self.nt.getEntry("modules/%s/azimuth" % (module_num + 1)).getDouble(0.0)
+            azimuth = self.nt.getEntry(self.module_table_key + "/%s/azimuthPosition" % module_num).getDouble(0.0)
             azimuth = math.radians(azimuth)
             
             module_state = self.module_states[module_num]
             module_state.velocity = wheel_velocity
-            module_state.azimuth = -azimuth
+            module_state.azimuth = azimuth
 
             publisher = self.module_publishers[module_num]
             publisher.publish(module_state)
@@ -142,12 +147,12 @@ class TJ2NetworkTables(object):
             return
         self.prev_odom_timestamp = timestamp
         
-        x = self.nt.getEntry("odom/x").getDouble(0.0)
-        y = self.nt.getEntry("odom/y").getDouble(0.0)
-        theta = self.nt.getEntry("odom/t").getDouble(0.0)
-        vx = self.nt.getEntry("odom/vx").getDouble(0.0)
-        vy = self.nt.getEntry("odom/vy").getDouble(0.0)
-        vt = self.nt.getEntry("odom/vt").getDouble(0.0)
+        x = self.nt.getEntry(self.odom_table_key + "/xPosition").getDouble(0.0)
+        y = self.nt.getEntry(self.odom_table_key + "/yPosition").getDouble(0.0)
+        theta = self.nt.getEntry(self.odom_table_key + "/theta").getDouble(0.0)
+        vx = self.nt.getEntry(self.odom_table_key + "/xVelocity").getDouble(0.0)
+        vy = self.nt.getEntry(self.odom_table_key + "/yVelocity").getDouble(0.0)
+        vt = self.nt.getEntry(self.odom_table_key + "/thetaVelocity").getDouble(0.0)
 
         x *= self.remote_units_conversion
         y *= self.remote_units_conversion
@@ -197,7 +202,7 @@ class TJ2NetworkTables(object):
         """
         Gets RoboRIO's timestamp based on the Swerve/odom/time entry in seconds
         """
-        return self.nt.getEntry("odom/time").getDouble(0.0) * 1E-6
+        return self.nt.getEntry("timestamp").getDouble(0.0) * 1E-6
     
     def get_local_time(self):
         return rospy.Time.now().to_sec()

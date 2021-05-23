@@ -6,6 +6,6 @@
         <arg name="mode" value="$(arg mode)"/>
         <arg name="map_name" value="$(arg map_name)"/>
     </include>
-    <!-- <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/> -->
-    <include file="$(find tj2_rplidar)/launch/tj2_rplidar_a3.launch"/>
+    <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
+    <!-- <include file="$(find tj2_rplidar)/launch/tj2_rplidar_a3.launch"/> -->
 </launch>

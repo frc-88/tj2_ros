@@ -1,5 +1,6 @@
 import csv
 import math
+import time
 from networktables import NetworkTables
 from datetime import datetime
 
@@ -9,7 +10,7 @@ from module_states import ModuleStates
 class SwerveNetworkTables:
     def __init__(self, num_modules):        
         NetworkTables.initialize(server="10.0.88.2")
-        self.nt = NetworkTables.getTable("Swerve")
+        self.nt = NetworkTables.getTable("swerveLibrary")
 
         self.num_modules = num_modules
         self.module_states = ModuleStates(self.num_modules)
@@ -33,16 +34,16 @@ class SwerveNetworkTables:
         self.start_log()
 
     def update(self):
-        self.timestamp = self.nt.getEntry("odom/time").getDouble(0.0)
+        self.timestamp = self.nt.getEntry("timestamp").getDouble(0.0)
         if self.timestamp == 0.0:
             return
 
-        self.x = self.nt.getEntry("odom/x").getDouble(0.0)
-        self.y = self.nt.getEntry("odom/y").getDouble(0.0)
-        self.t = self.nt.getEntry("odom/t").getDouble(0.0)
-        self.vx = self.nt.getEntry("odom/vx").getDouble(0.0)
-        self.vy = self.nt.getEntry("odom/vy").getDouble(0.0)
-        self.vt = self.nt.getEntry("odom/vt").getDouble(0.0)
+        self.x = self.nt.getEntry("odometryState/xPosition").getDouble(0.0)
+        self.y = self.nt.getEntry("odometryState/yPosition").getDouble(0.0)
+        self.t = math.radians(self.nt.getEntry("odometryState/theta").getDouble(0.0))
+        self.vx = self.nt.getEntry("odometryState/xVelocity").getDouble(0.0)
+        self.vy = self.nt.getEntry("odometryState/yVelocity").getDouble(0.0)
+        self.vt = math.radians(self.nt.getEntry("odometryState/thetaVelocity").getDouble(0.0))
 
         if self.x0 is None:
             self.x0 = self.x
@@ -57,7 +58,8 @@ class SwerveNetworkTables:
         for module_num in range(self.num_modules):
             azimuth, wheel_speed = self.get_module(module_num)
             self.module_states.set(module_num, azimuth, wheel_speed)
-            # print(wheel_speed, azimuth)
+        
+        self.log()
     
     def dt(self):
         if self.timestamp is None:
@@ -73,13 +75,13 @@ class SwerveNetworkTables:
     def start_log(self):
         now = datetime.now()
         filename = now.strftime("%Y-%m-%dT%H-%M-%S--%f.csv")
-        self.log_file = open(filename, 'w', newline='')
+        self.log_file = open("data/" + filename, 'w', newline='')
         self.writer = csv.writer(self.log_file)
 
     def log(self):
         if self.writer is None:
             return
-        log_row = [self.x, self.y, self.theta, self.vx, self.vy, self.vt]
+        log_row = [self.x, self.y, self.t, self.vx, self.vy, self.vt]
         for module_num in range(self.num_modules):
             azimuth, wheel_speed = self.module_states.get(module_num)
             log_row.append(module_num)
@@ -88,18 +90,16 @@ class SwerveNetworkTables:
 
         self.writer.writerow(log_row)
         
-    
     def get_module(self, module_num):
-        module_num += 1
-        wheel_speed = self.nt.getEntry("modules/%s/wheel" % module_num).getDouble(0.0)
-        azimuth = self.nt.getEntry("modules/%s/azimuth" % module_num).getDouble(0.0)
+        wheel_speed = self.nt.getEntry("modules/%s/wheelVelocity" % module_num).getDouble(0.0)
+        azimuth = self.nt.getEntry("modules/%s/azimuthPosition" % module_num).getDouble(0.0)
         azimuth = math.radians(azimuth)
         return azimuth, wheel_speed
 
 
-    def command_motors(self, timestamp, vx, vy, omega):
-        self.nt.getEntry("command/time").setNumber(int(timestamp))
-        self.nt.getEntry("command/linear_x").setNumber(vx)
-        self.nt.getEntry("command/linear_y").setNumber(vy)
-        self.nt.getEntry("command/angular_z").setNumber(omega)
+    def command_motors(self, speed, direction, omega):
+        self.nt.getEntry("commands/timestamp").setNumber(time.time())
+        self.nt.getEntry("commands/translationSpeed").setNumber(speed)
+        self.nt.getEntry("commands/translationDirection").setNumber(direction)
+        self.nt.getEntry("commands/rotationVelocity").setNumber(omega)
 
