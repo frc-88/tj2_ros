@@ -10,7 +10,7 @@ TJ2Description::TJ2Description(ros::NodeHandle* nodehandle):nh(*nodehandle)
     wheel_joints_msg.header.frame_id = "base_link";
     for (int index = 0; index < num_modules; index++)
     {
-        string wheel_name = to_string(index + 1);
+        string wheel_name = to_string(index);
         wheel_joints_msg.name.push_back("base_link_to_wheel_" + wheel_name + "_joint");
         wheel_joints_msg.position.push_back(0.0);
 

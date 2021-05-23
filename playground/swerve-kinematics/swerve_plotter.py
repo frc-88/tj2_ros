@@ -27,7 +27,6 @@ class SwervePlotter:
 
         self.ax = self.fig.add_subplot(111)
 
-
         self.measured_line = self.ax.plot([0.0], [0.0], marker='.', color='b', label="meas")[0]
         self.calculated_line = self.ax.plot([0.0], [0.0], marker='.', color='r', label="calc")[0]
         # self.heading_arrow = self.ax.arrow(0.0, 0.0, 0.25, 0.25, head_width=0.25, head_length=0.25, fc='gray', ec='gray')
@@ -78,7 +77,7 @@ class SwervePlotter:
         if self.calc_heading_arrow is not None:
             self.calc_heading_arrow.remove()
         self.calc_heading_arrow = self.get_heading_arrow(x0, y0, x1, y1, "r")
-
+    
     def clear(self):
         # plt.cla()
         self.ax.clear()
