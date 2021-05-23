@@ -156,10 +156,10 @@ class TJ2NetworkTables(object):
 
         x *= self.remote_units_conversion
         y *= self.remote_units_conversion
-        # theta = math.radians(theta)
+        theta = math.radians(theta)
         vx *= self.remote_units_conversion
         vy *= self.remote_units_conversion
-        # vt = math.radians(vt)
+        vt = math.radians(vt)
 
         self.robot_pose.x = x
         self.robot_pose.y = y
