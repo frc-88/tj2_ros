@@ -5,8 +5,8 @@ import math
 import tf2_ros
 import tf_conversions
 
-from std_msgs.msg import Float64
 from nav_msgs.msg import Odometry
+from sensor_msgs.msg import Imu
 from geometry_msgs.msg import TransformStamped
 from geometry_msgs.msg import Twist
 
@@ -33,6 +33,7 @@ class TJ2NetworkTables(object):
         self.publish_odom_tf = rospy.get_param("~publish_odom_tf", False)
         self.base_frame_name = rospy.get_param("~base_frame", "base_link")
         self.odom_frame_name = rospy.get_param("~odom_frame", "odom")
+        self.imu_frame_name = rospy.get_param("~imu_frame", "imu")
 
         self.remote_units_conversion = rospy.get_param("~remote_units_conversion", 0.3048)  # WPILib uses a mix of meters, feet, inches...
         self.cmd_vel_timeout = rospy.get_param("~cmd_vel_timeout", 0.5)
@@ -48,9 +49,43 @@ class TJ2NetworkTables(object):
         self.odom_msg.header.frame_id = self.odom_frame_name
         self.odom_msg.child_frame_id = self.base_frame_name
 
+        self.odom_msg.pose.covariance = [
+            1e-3, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 1e-3, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1e-3, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1e-3, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 1e-3, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 1e-3
+        ]
+        self.odom_msg.twist.covariance = [
+            1e-3, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 1e-3, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1e-3, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1e-3, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 1e-3, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 1e-3
+        ]
+
         self.twist_sub = rospy.Subscriber("cmd_vel", Twist, self.twist_callback, queue_size=50)
 
-        self.odom_pub = rospy.Publisher("odom", Odometry, queue_size=50)
+        self.imu_pub = rospy.Publisher("imu", Imu, queue_size=50)
+        self.imu_msg = Imu()
+        self.imu_msg.header.frame_id = self.imu_frame_name
+        self.imu_msg.orientation_covariance = [
+            1e-3, 0.0, 0.0,
+            0.0, 1e-3, 0.0,
+            0.0, 0.0, 1e-3
+        ]
+        self.imu_msg.angular_velocity_covariance = [
+            1e-3, 0.0, 0.0,
+            0.0, 1e-3, 0.0,
+            0.0, 0.0, 1e-3
+        ]
+        self.imu_msg.linear_acceleration_covariance = [
+            1e-3, 0.0, 0.0,
+            0.0, 1e-3, 0.0,
+            0.0, 0.0, 1e-3
+        ]
 
         self.module_states = []
         self.module_publishers = []
@@ -67,11 +102,13 @@ class TJ2NetworkTables(object):
         self.local_start_time = 0.0
         self.prev_timestamp = 0.0
         self.prev_odom_timestamp = 0.0
+        self.prev_imu_timestamp = 0.0
         self.prev_twist_timestamp = rospy.Time.now()
 
         self.odom_table_key = "odometryState"
         self.command_table_key = "commands"
         self.module_table_key = "modules"
+        self.imu_table_key = "gyro"
 
         self.start_pose = Pose2d()
         self.robot_pose = Pose2d()
@@ -94,6 +131,7 @@ class TJ2NetworkTables(object):
             self.clock_rate.sleep()            
             self.publish_odom()
             self.publish_cmd_vel()
+            self.publish_imu()
     
     def twist_callback(self, msg):
         self.robot_vel.x = msg.linear.x
@@ -197,7 +235,30 @@ class TJ2NetworkTables(object):
             self.br.sendTransform(self.tf_msg)
         
         self.publish_modules()
-        
+    
+    def publish_imu(self):
+        timestamp = self.get_remote_time_as_local()
+        if self.prev_imu_timestamp == timestamp:
+            return
+        self.prev_imu_timestamp = timestamp
+
+        ros_time = rospy.Time(timestamp)
+
+        yaw = self.nt.getEntry(self.imu_table_key + "/yaw").getDouble(0.0)
+        ang_vz = self.nt.getEntry(self.imu_table_key + "/yawRate").getDouble(0.0)
+        ax = self.nt.getEntry(self.imu_table_key + "/accelX").getDouble(0.0)
+        ay = self.nt.getEntry(self.imu_table_key + "/accelY").getDouble(0.0)
+
+        quaternion = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, yaw)
+
+        self.imu_msg.header.stamp = ros_time
+        self.imu_msg.orientation = quaternion
+        self.imu_msg.angular_velocity.z = ang_vz
+        self.imu_msg.linear_acceleration.x = ax
+        self.imu_msg.linear_acceleration.y = ay
+
+        self.imu_pub.publish(self.imu_msg)
+    
     def get_remote_time(self):
         """
         Gets RoboRIO's timestamp based on the Swerve/odom/time entry in seconds
