@@ -252,7 +252,10 @@ class TJ2NetworkTables(object):
         quaternion = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, yaw)
 
         self.imu_msg.header.stamp = ros_time
-        self.imu_msg.orientation = quaternion
+        self.imu_msg.orientation.x = quaternion[0]
+        self.imu_msg.orientation.y = quaternion[1]
+        self.imu_msg.orientation.z = quaternion[2]
+        self.imu_msg.orientation.w = quaternion[3]
         self.imu_msg.angular_velocity.z = ang_vz
         self.imu_msg.linear_acceleration.x = ax
         self.imu_msg.linear_acceleration.y = ay
