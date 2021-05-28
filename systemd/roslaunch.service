@@ -10,14 +10,12 @@ User=tj2
 Group=tj2
 ExecStart=/usr/local/bin/roslaunch.sh
 
-Restart=no
 Restart=always
 RestartSec=90
-StartLimitIntervalSec=90
 StartLimitBurst=3
 
 KillSignal=SIGINT
-TimeoutStopSec=3
+TimeoutStopSec=10
 FinalKillSignal=SIGKILL
 
 [Install]
