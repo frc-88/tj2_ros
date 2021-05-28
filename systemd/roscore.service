@@ -14,14 +14,12 @@ Group=tj2
 # roscore, and then exit, preventing conflicts with dependant services
 ExecStart=/usr/local/bin/roscore.sh
 
-# Restart=no
 Restart=always
 RestartSec=90
-StartLimitIntervalSec=90
 StartLimitBurst=3
 
 KillSignal=SIGINT
-TimeoutStopSec=3
+TimeoutStopSec=10
 FinalKillSignal=SIGKILL
 
 [Install]
