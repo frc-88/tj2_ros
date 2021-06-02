@@ -15,8 +15,8 @@ Group=tj2
 ExecStart=/usr/local/bin/roscore.sh
 
 Restart=always
-RestartSec=90
-StartLimitBurst=3
+RestartSec=300
+StartLimitBurst=30
 
 KillSignal=SIGINT
 TimeoutStopSec=10
