@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="bag_name" default=""/>
+    <include file="$(find tj2_bar_pipeline)/launch/tj2_bar_pipeline.launch"/>
+    <include file="$(find tj2_camera)/launch/play_bag.launch">
+        <arg name="bag_name" value="$(arg bag_name)"/>
+    </include>
+    <node name="image_viewer" pkg="rqt_image_view" type="rqt_image_view" output="screen" args="/tj2/pipeline_debug"/>
+</launch>
