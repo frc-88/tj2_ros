@@ -2,6 +2,6 @@
 <launch>
     <arg name="bag_name" default=""/>
     <param name="use_sim_time" value="true"/>
-    <node name="camera_bag" pkg="rosbag" type="play" output="screen" args="$(find tj2_camera)/bags/$(arg bag_name) --clock --pause --loop"/>
+    <node name="camera_bag" pkg="rosbag" type="play" output="screen" args="$(find tj2_camera)/bags/$(arg bag_name) --clock --pause"/>
     
 </launch>
