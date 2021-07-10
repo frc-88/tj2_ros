@@ -50,20 +50,20 @@ class TJ2NetworkTables(object):
         self.odom_msg.child_frame_id = self.base_frame_name
 
         self.odom_msg.pose.covariance = [
-            5e+1, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 5e+1, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 5e+1, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 5e+1, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 5e+1, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 5e+1
+            5e-2, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 5e-2, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 5e-2, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 5e-2, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 5e-2, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 5e-2
         ]
         self.odom_msg.twist.covariance = [
-            10e+1, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 10e+1, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 10e+1, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 10e+1, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 10e+1, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 10e+1
+            10e-2, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 10e-2, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 10e-2, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 10e-2, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 10e-2, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 10e-2
         ]
 
         self.twist_sub = rospy.Subscriber("cmd_vel", Twist, self.twist_callback, queue_size=50)
@@ -72,19 +72,19 @@ class TJ2NetworkTables(object):
         self.imu_msg = Imu()
         self.imu_msg.header.frame_id = self.imu_frame_name
         self.imu_msg.orientation_covariance = [
-            1e-5, 0.0, 0.0,
-            0.0, 1e-5, 0.0,
-            0.0, 0.0, 1e-5
+            100e-5, 0.0, 0.0,
+            0.0, 100e-5, 0.0,
+            0.0, 0.0, 100e-5
         ]
         self.imu_msg.angular_velocity_covariance = [
-            1e-5, 0.0, 0.0,
-            0.0, 1e-5, 0.0,
-            0.0, 0.0, 1e-5
+            10e-5, 0.0, 0.0,
+            0.0, 10e-5, 0.0,
+            0.0, 0.0, 10e-5
         ]
         self.imu_msg.linear_acceleration_covariance = [
-            5e-5, 0.0, 0.0,
-            0.0, 5e-5, 0.0,
-            0.0, 0.0, 5e-5
+            50e-5, 0.0, 0.0,
+            0.0, 50e-5, 0.0,
+            0.0, 0.0, 50e-5
         ]
 
         self.module_states = []
