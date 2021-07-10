@@ -5,26 +5,26 @@ map_frame: map
 map_update_interval: 0.5  # Publish new map (seconds)
 throttle_scans: 1  # 1 = no scans skipped
 
-# maxRange: 12.0 # Max sensor value
-# maxUrange: 12.0 # Usable region of the sensor
+maxRange: 12.0 # Max sensor value
+maxUrange: 12.0 # Usable region of the sensor
 # maxRange: 18.0 # Max sensor value
 # maxUrange: 18.0 # Usable region of the sensor
-maxRange: 24.0 # Max sensor value
-maxUrange: 24.0 # Usable region of the sensor
+# maxRange: 24.0 # Max sensor value
+# maxUrange: 24.0 # Usable region of the sensor
 particles: 70
 
 # minimumScore: 40
 
 # Update frequencies
-linearUpdate: 1.0
-angularUpdate: 0.5
-temporalUpdate: 0.02
-resampleThreshold: 0.7
+linearUpdate: 0.05
+angularUpdate: 0.05
+temporalUpdate: 0.01
+# resampleThreshold: 0.7
 
 srr: 0.01
-srt: 0.3
-str: 0.3
-stt: 0.3
+srt: 0.03
+str: 0.03
+stt: 0.03
 
 # Initial Map Size
 xmin: -15.0
