@@ -7,6 +7,8 @@ tj2_laser_slam/maps
 bags/
 
 *.csv
+*.jpg
+*.png
 
 .DS_Store
 

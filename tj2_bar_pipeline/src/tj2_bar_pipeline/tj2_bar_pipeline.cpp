@@ -76,25 +76,25 @@ void TJ2BarPipeline::rgbd_callback(const ImageConstPtr& color_image, const Image
     Canny(depth_cv_image_u8, dst, 50, 200, 3);
 
     // Copy edges to the images that will display the results in BGR
-    cvtColor(dst, cdst, COLOR_GRAY2BGR);
-    cdstP = cdst.clone();
+    cvtColor(dst, cdstP, COLOR_GRAY2BGR);
 
-    // Standard Hough Line Transform
-    vector<Vec2f> lines; // will hold the results of the detection
-    HoughLines(dst, lines, 1, CV_PI/180, 150, 0, 0 ); // runs the actual detection
-    // Draw the lines
-    for (size_t i = 0; i < lines.size(); i++)
-    {
-        float rho = lines[i][0], theta = lines[i][1];
-        Point pt1, pt2;
-        double a = cos(theta), b = sin(theta);
-        double x0 = a*rho, y0 = b*rho;
-        pt1.x = cvRound(x0 + 1000*(-b));
-        pt1.y = cvRound(y0 + 1000*(a));
-        pt2.x = cvRound(x0 - 1000*(-b));
-        pt2.y = cvRound(y0 - 1000*(a));
-        line(cdst, pt1, pt2, Scalar(0, 0, 255), 3, LINE_AA);
-    }
+    // cdst = cdstP.clone();
+    // // Standard Hough Line Transform
+    // vector<Vec2f> lines; // will hold the results of the detection
+    // HoughLines(dst, lines, 1, CV_PI/180, 150, 0, 0 ); // runs the actual detection
+    // // Draw the lines
+    // for (size_t i = 0; i < lines.size(); i++)
+    // {
+    //     float rho = lines[i][0], theta = lines[i][1];
+    //     Point pt1, pt2;
+    //     double a = cos(theta), b = sin(theta);
+    //     double x0 = a*rho, y0 = b*rho;
+    //     pt1.x = cvRound(x0 + 1000*(-b));
+    //     pt1.y = cvRound(y0 + 1000*(a));
+    //     pt2.x = cvRound(x0 - 1000*(-b));
+    //     pt2.y = cvRound(y0 - 1000*(a));
+    //     line(cdst, pt1, pt2, Scalar(0, 0, 255), 3, LINE_AA);
+    // }
 
     // Probabilistic Line Transform
     vector<Vec4i> linesP; // will hold the results of the detection
@@ -107,7 +107,8 @@ void TJ2BarPipeline::rgbd_callback(const ImageConstPtr& color_image, const Image
     }
 
     cv::Mat debug_img;
-    cv::vconcat(cdst, cdstP, debug_img);
+    // cv::vconcat(cdst, cdstP, debug_img);
+    cv::vconcat(color_cv_image, cdstP, debug_img);
 
     ROS_INFO_STREAM("linesP.size(): " << linesP.size());
 
