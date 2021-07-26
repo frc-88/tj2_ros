@@ -1,0 +1,6 @@
+numpy
+PyYAML
+pydub
+pyaudio
+scipy
+pynetworktables

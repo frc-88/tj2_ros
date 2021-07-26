@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-source /opt/ros/melodic/setup.sh
+source /home/${USER}/noetic_ws/install_isolated/setup.bash
 source /usr/local/bin/env.sh
 roscore & while ! echo exit | nc localhost 11311 > /dev/null; do sleep 1; done

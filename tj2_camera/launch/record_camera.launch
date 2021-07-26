@@ -8,6 +8,10 @@
        args="record -o $(find tj2_camera)/bags/realsense
         /camera/aligned_depth_to_color/camera_info
         /camera/aligned_depth_to_color/image_raw
+        /camera/depth/camera_info
+        /camera/depth/image_rect_raw
+        /camera/infra/camera_info
+        /camera/infra/image_raw
         /camera/color/camera_info
         /camera/color/image_raw
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+source /home/${USER}/packages_ros_ws/devel/setup.bash
+source /home/${USER}/noetic_ws/install_isolated/setup.bash
 source /home/${USER}/ros_ws/devel/setup.bash
 source /usr/local/bin/env.sh
 
