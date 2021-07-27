@@ -1,4 +1,5 @@
 <launch>
+    <param name="/tj2/robot_type" default="diff-swerve"/>
 
     <arg name="model" default="$(find tj2_description)/urdf/diffyjr.urdf.xml"/>
     <arg name="gui" default="false" />
