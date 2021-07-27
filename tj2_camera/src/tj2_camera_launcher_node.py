@@ -4,12 +4,14 @@ import rospkg
 
 from std_srvs.srv import Trigger, TriggerResponse
 
-from tj2_laser_slam.launch_manager import LaunchManager
+from launch_manager import LaunchManager
 
 
 class TJ2CameraLauncher:
     def __init__(self):
+        self.package_name = "tj2_camera"
         self.node_name = "tj2_camera_launcher"
+        self.service_ns_name = "/tj2"
         rospy.init_node(
             self.node_name
             # disable_signals=True
@@ -18,7 +20,7 @@ class TJ2CameraLauncher:
         rospy.on_shutdown(self.shutdown_hook)
 
         self.rospack = rospkg.RosPack()
-        self.package_dir = self.rospack.get_path(self.node_name)
+        self.package_dir = self.rospack.get_path(self.package_name)
         self.default_launches_dir = self.package_dir + "/launch"
 
         self.camera_launch_path = rospy.get_param("~camera_launch", self.default_launches_dir + "/tj2_camera.launch")
@@ -32,10 +34,10 @@ class TJ2CameraLauncher:
             self.record_launcher,
         ]
 
-        self.start_camera_srv = rospy.Service("start_camera", Trigger, self.start_camera_callback)
-        self.stop_camera_srv = rospy.Service("stop_camera", Trigger, self.stop_camera_callback)
-        self.start_record_srv = rospy.Service("start_record", Trigger, self.start_record_callback)
-        self.stop_record_srv = rospy.Service("stop_record", Trigger, self.stop_record_callback)
+        self.start_camera_srv = rospy.Service(self.service_ns_name + "/start_camera", Trigger, self.start_camera_callback)
+        self.stop_camera_srv = rospy.Service(self.service_ns_name + "/stop_camera", Trigger, self.stop_camera_callback)
+        self.start_record_srv = rospy.Service(self.service_ns_name + "/start_record", Trigger, self.start_record_callback)
+        self.stop_record_srv = rospy.Service(self.service_ns_name + "/stop_record", Trigger, self.stop_record_callback)
 
         rospy.loginfo("%s init complete" % self.node_name)
 
@@ -45,6 +47,7 @@ class TJ2CameraLauncher:
     
     def stop_camera_callback(self, req):
         stopped = self.camera_launcher.stop()
+        self.record_launcher.stop()
         return TriggerResponse(stopped, "Camera stopped" if stopped else "Camera is already stopped!")
     
     def start_record_callback(self, req):

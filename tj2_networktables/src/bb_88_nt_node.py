@@ -16,7 +16,7 @@ from tj2_networktables.srv import OdomReset, OdomResetResponse
 from robot_state import Pose2d
 
 
-class DiffSwerveNetworkTables(object):
+class BB88NetworkTables(object):
     def __init__(self):
         self.node_name = "bb_88_network_tables"
         rospy.init_node(
@@ -25,7 +25,8 @@ class DiffSwerveNetworkTables(object):
             # log_level=rospy.DEBUG
         )
 
-        NetworkTables.initialize(server="10.0.88.2")
+        # NetworkTables.initialize(server="10.0.88.2")
+        NetworkTables.initialize(server="192.168.0.42")
         self.nt = NetworkTables.getTable("coprocessor")
 
         self.publish_odom_tf = rospy.get_param("~publish_odom_tf", False)
@@ -91,6 +92,7 @@ class DiffSwerveNetworkTables(object):
             self.clock_rate.sleep()
             self.publish_odom()
             self.publish_driver_station()
+            self.update_heartbeat()
     
     def publish_driver_station(self):
         is_fms_attached = self.nt.getEntry(self.driver_station_table_key + "/isFMSAttached").getBoolean(False)
@@ -98,6 +100,8 @@ class DiffSwerveNetworkTables(object):
         if is_fms_attached:
             match_time = self.nt.getEntry(self.driver_station_table_key + "/getMatchTime").getDouble(-1.0)
             self.match_time_pub.publish(match_time)
+        else:
+            self.match_time_pub.publish(-1.0)
 
     def publish_odom(self):
         timestamp = self.get_remote_time_as_local()
@@ -154,14 +158,15 @@ class DiffSwerveNetworkTables(object):
             self.tf_msg.transform.rotation.w = quaternion[3]
 
             self.br.sendTransform(self.tf_msg)
-        
-        self.publish_modules()
     
+    def update_heartbeat(self):
+        self.nt.getEntry("client/timestamp").setNumber(self.get_local_time_as_remote())
+
     def get_remote_time(self):
         """
-        Gets RoboRIO's timestamp based on the Swerve/odom/time entry in seconds
+        Gets RoboRIO's timestamp based on the networktables entry in seconds
         """
-        return self.nt.getEntry("timestamp").getDouble(0.0) * 1E-6
+        return self.nt.getEntry("host/timestamp").getDouble(0.0) * 1E-6
     
     def get_local_time(self):
         return rospy.Time.now().to_sec()
@@ -209,7 +214,7 @@ class DiffSwerveNetworkTables(object):
         return OdomResetResponse(True)
 
 if __name__ == "__main__":
-    node = DiffSwerveNetworkTables()
+    node = BB88NetworkTables()
     try:
         node.run()
 
