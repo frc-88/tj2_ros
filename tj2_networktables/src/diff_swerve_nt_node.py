@@ -18,9 +18,9 @@ from tj2_networktables.srv import OdomReset, OdomResetResponse
 from robot_state import Pose2d
 
 
-class TJ2NetworkTables(object):
+class DiffSwerveNetworkTables(object):
     def __init__(self):
-        self.node_name = "tj2_networktables"
+        self.node_name = "diff_swerve_network_tables"
         rospy.init_node(
             self.node_name
             # disable_signals=True
@@ -316,7 +316,7 @@ class TJ2NetworkTables(object):
         return OdomResetResponse(True)
 
 if __name__ == "__main__":
-    node = TJ2NetworkTables()
+    node = DiffSwerveNetworkTables()
     try:
         node.run()
 

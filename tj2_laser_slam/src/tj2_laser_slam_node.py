@@ -1,66 +1,11 @@
 #!/usr/bin/env python3
 import os
-import sys
-import time
-import signal
-import psutil
 import rospy
 import rospkg
-import threading
 from datetime import datetime
-from subprocess import Popen, PIPE
 from collections import defaultdict
 
-
-class LaunchManager:
-    roslaunch_exec = "/opt/ros/noetic/bin/roslaunch"
-    def __init__(self, launch_path, *args, **kwargs):
-        self.kill_timeout = 2.0
-
-        args_list = []
-        for arg in args:
-            args_list.append(str(arg))
-        for name, value in kwargs.items():
-            args_list.append("%s:=%s" % (name, value))
-        
-        if len(args_list) > 0:
-            self.roslaunch_args = [self.roslaunch_exec, launch_path] + args_list
-        else:
-            self.roslaunch_args = [self.roslaunch_exec, launch_path]
-        
-        self.process = None
-    
-    def start(self):
-        rospy.loginfo("roslaunch args: %s" % self.roslaunch_args)
-        self.process = Popen(self.roslaunch_args, preexec_fn=os.setpgrp)  #, stdout=PIPE, stderr=PIPE)
-    
-    def stop(self):
-        if not self.is_running():
-            return
-        self.process.send_signal(signal.SIGINT)
-        start_time = time.time()
-        while True:
-            if self.is_running():
-                break
-            if time.time() - start_time > self.kill_timeout:
-                rospy.logwarn("Process is still running after %0.2fs. Sending SIGKILL" % self.kill_timeout)
-                # self.process.send_signal(signal.SIGKILL)
-                self.kill_group()
-                break
-    
-    def kill_group(self):
-        parent = psutil.Process(self.process.pid)
-        for child in parent.children(recursive=True):
-            child.kill()
-            rospy.loginfo("Killing process %s" % child.pid)
-        parent.kill()
-        rospy.loginfo("Killing group process %s" % parent.pid)
-    
-    def join(self, timeout):
-        self.process.wait(timeout=timeout)
-    
-    def is_running(self):
-        return self.process is not None and self.process.poll() is None
+from launch_manager import LaunchManager
 
 
 class TJ2LaserSlam:
