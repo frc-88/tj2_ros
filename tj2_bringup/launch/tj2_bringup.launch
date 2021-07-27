@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+    <param name="/tj2/robot_type" value="bb-88"/>
+    <!-- <arg param="/tj2/robot_type" value="diff-swerve"/> -->
+
     <arg name="odom_ekf" default="true"/>
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="publish_odom_tf" default="$(eval not arg('odom_ekf'))"/>

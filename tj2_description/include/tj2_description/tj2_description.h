@@ -13,6 +13,7 @@ private:
 
     // Parameters
     int num_modules;
+    string robot_type;
 
     // Publishers
     ros::Publisher wheel_joint_pub;
