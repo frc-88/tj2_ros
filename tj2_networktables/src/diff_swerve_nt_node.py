@@ -121,7 +121,7 @@ class DiffSwerveNetworkTables(object):
         self.odom_reset_service_name_srv = rospy.Service(self.odom_reset_service_name, OdomReset, self.odom_reset_callback)
         rospy.loginfo("%s service is ready" % self.odom_reset_service_name)
 
-        rospy.loginfo("Network tables init complete")
+        rospy.loginfo("%s init complete" % self.node_name)
 
     def run(self):
         self.wait_for_time()
