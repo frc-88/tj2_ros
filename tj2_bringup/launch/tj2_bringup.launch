@@ -4,7 +4,8 @@
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="publish_odom_tf" default="$(eval not arg('odom_ekf'))"/>
     </include>
-    <include file="$(find tj2_description)/launch/tj2_description.launch"/>
+    <!-- <include file="$(find tj2_description)/launch/tj2_description.launch"/> -->
+    <include file="$(find tj2_description)/launch/basic_transforms.launch"/>
     <include if="$(arg odom_ekf)" file="$(find tj2_ekf)/launch/tj2_ekf.launch"/>
     <include file="$(find tj2_camera)/launch/camera_launcher.launch"/>
     <!-- <include file="$(find tj2_state_machine)/launch/tj2_state_machine.launch"/> -->
