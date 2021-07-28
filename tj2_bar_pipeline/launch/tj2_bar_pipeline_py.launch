@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2">
+        <node name="tj2_bar_pipeline_py" pkg="tj2_bar_pipeline" type="tj2_bar_pipeline_node.py" output="screen" required="true">
+            <param name="depth_topic" value="/camera/depth/image_rect_raw"/>
+            <param name="info_topic" value="/camera/depth/camera_info"/>
+        </node>
+    </group>
+</launch>

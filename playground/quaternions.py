@@ -11,4 +11,4 @@ def quaternion_from_euler(roll, pitch, yaw):
     yaw = math.radians(yaw)
     print(tf_conversions.transformations.quaternion_from_euler(roll, pitch, yaw))
 
-quaternion_from_euler(70.0, 10.0, 90.0)
+quaternion_from_euler(10.0, -70.0, 90.0)
