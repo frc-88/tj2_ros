@@ -152,6 +152,7 @@ class TJ2BarPipeline(object):
         except CvBridgeError as e:
             rospy.logerr(e)
         else:
+            rospy.loginfo_throttle(2, "Publishing debug image")
             self.debug_image_pub.publish(image_msg)
             self.debug_info_pub.publish(self.camera_info)
 
@@ -159,7 +160,7 @@ class TJ2BarPipeline(object):
         pass
     
     def publish_bar_visualization(self, bars):
-        rospy.loginfo("%s potential bars in view" % len(bars))
+        rospy.loginfo_throttle(2, "%s potential bars in view" % len(bars))
         markers_msg = MarkerArray()
 
         for index, points in enumerate(bars):

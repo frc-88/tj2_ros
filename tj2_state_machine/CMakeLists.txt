@@ -15,10 +15,10 @@ catkin_python_setup() # added if there is a setup.py. In this case for the node
 
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#     FILES
-    
-# )
+add_service_files(
+    FILES
+    StartMatch.srv
+)
 
 # add_action_files(
 #     DIRECTORY action
@@ -42,7 +42,7 @@ include_directories(
 )
 
 # generate_dynamic_reconfigure_options(
-#     cfg/DodobotChassis.cfg
+#     
 # )
 
 catkin_package(
