@@ -123,11 +123,11 @@ class TJ2NetworkTables(object):
         vy = self.nt.getEntry(self.odom_table_key + "/yVelocity").getDouble(0.0)
         vt = self.nt.getEntry(self.odom_table_key + "/thetaVelocity").getDouble(0.0)
 
-        x *= self.remote_units_conversion
-        y *= self.remote_units_conversion
+        # x *= self.remote_units_conversion
+        # y *= self.remote_units_conversion
         theta = math.radians(theta)
-        vx *= self.remote_units_conversion
-        vy *= self.remote_units_conversion
+        # vx *= self.remote_units_conversion
+        # vy *= self.remote_units_conversion
         vt = math.radians(vt)
 
         self.robot_pose.x = x

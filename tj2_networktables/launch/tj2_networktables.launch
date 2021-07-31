@@ -3,7 +3,7 @@
     <arg name="publish_odom_tf" default="true"/>
 
     <group ns="tj2">
-        <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables_node.py" output="screen" required="true">
+        <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables_node.py" output="log" required="true">
             <!-- <param name="nt_host" value="192.168.0.16"/> -->
             <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
             <param name="cmd_vel_timeout" value="2.0"/>

@@ -360,24 +360,25 @@ class TJ2BarPipeline(object):
             maxLineGap=self.hough_lines_max_gap
         )
         result = []
-        for line in lines:
-            x1, y1, x2, y2 = line[0]
-            angle = math.atan2(y2 - y1, x2 - x1)
-            if not (self.line_angle_lower_threshold < angle < self.line_angle_upper_threshold):
-                continue
+        if lines is not None:
+            for line in lines:
+                x1, y1, x2, y2 = line[0]
+                angle = math.atan2(y2 - y1, x2 - x1)
+                if not (self.line_angle_lower_threshold < angle < self.line_angle_upper_threshold):
+                    continue
 
-            if x1 < self.roi_left and x2 < self.roi_left:
-                continue
-            if x1 > edges.shape[1] - self.roi_right and x2 > edges.shape[1] - self.roi_right:
-                continue
-            if y1 < self.roi_top and y2 < self.roi_top:
-                continue
-            if y1 > edges.shape[0] - self.roi_bottom and y2 > edges.shape[0] - self.roi_bottom:
-                continue
-            
-            result.append((x1, y1, x2, y2))
-            if debug_image is not None:
-                cv2.line(debug_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                if x1 < self.roi_left and x2 < self.roi_left:
+                    continue
+                if x1 > edges.shape[1] - self.roi_right and x2 > edges.shape[1] - self.roi_right:
+                    continue
+                if y1 < self.roi_top and y2 < self.roi_top:
+                    continue
+                if y1 > edges.shape[0] - self.roi_bottom and y2 > edges.shape[0] - self.roi_bottom:
+                    continue
+                
+                result.append((x1, y1, x2, y2))
+                if debug_image is not None:
+                    cv2.line(debug_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
         return result, debug_image
 
 
