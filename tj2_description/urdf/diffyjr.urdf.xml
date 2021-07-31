@@ -1,4 +1,4 @@
-<robot name="dodobot">
+<robot name="diffyjr">
     <material name="white">
         <color rgba="1 1 1 1"/>
     </material>

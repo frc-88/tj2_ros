@@ -6,6 +6,7 @@ import tf2_ros
 import tf_conversions
 
 from std_msgs.msg import Float64
+from std_msgs.msg import Bool
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped
 
@@ -25,8 +26,9 @@ class TJ2NetworkTables(object):
             # log_level=rospy.DEBUG
         )
 
-        # NetworkTables.initialize(server="10.0.88.2")
-        NetworkTables.initialize(server="192.168.0.42")
+        self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
+        
+        NetworkTables.initialize(server=self.nt_host)
         self.nt = NetworkTables.getTable("coprocessor")
 
         self.publish_odom_tf = rospy.get_param("~publish_odom_tf", False)
@@ -58,6 +60,7 @@ class TJ2NetworkTables(object):
         ]
 
         self.match_time_pub = rospy.Publisher("match_time", Float64, queue_size=5)
+        self.is_autonomous_pub = rospy.Publisher("is_autonomous", Bool, queue_size=5)
 
         self.br = tf2_ros.TransformBroadcaster()
         self.tf_msg = TransformStamped()
@@ -98,10 +101,12 @@ class TJ2NetworkTables(object):
     
     def publish_driver_station(self):
         is_fms_attached = self.nt.getEntry(self.driver_station_table_key + "/isFMSAttached").getBoolean(False)
+        is_autonomous = self.nt.getEntry(self.driver_station_table_key + "/isAutonomous").getBoolean(True)
 
         if self.fms_flag_ignored or is_fms_attached:
             match_time = self.nt.getEntry(self.driver_station_table_key + "/getMatchTime").getDouble(-1.0)
             self.match_time_pub.publish(match_time)
+            self.is_autonomous_pub.publish(is_autonomous)
         else:
             self.match_time_pub.publish(-1.0)
 
