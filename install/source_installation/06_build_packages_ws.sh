@@ -38,6 +38,7 @@ packages=(
     https://github.com/cra-ros-pkg/robot_localization
     https://github.com/ros-geographic-info/geographic_info.git
     https://github.com/ros-geographic-info/unique_identifier.git
+    https://github.com/ros-drivers/usb_cam.git
 )
 
 branches=(
@@ -66,6 +67,7 @@ branches=(
     noetic-devel
     master
     master
+    develop
 )
 
 len=${#packages[@]}
