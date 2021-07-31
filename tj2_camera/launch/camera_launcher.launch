@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <node pkg="tj2_camera" type="tj2_camera_launcher_node.py" name="tj2_camera_launcher" output="screen">
+    <node pkg="tj2_camera" type="tj2_camera_launcher_node.py" name="tj2_camera_launcher" output="log">
         
     </node>
 </launch>

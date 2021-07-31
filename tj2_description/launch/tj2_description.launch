@@ -14,7 +14,7 @@
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
     <group ns="tj2" >
-        <node name="tj2_description" pkg="tj2_description" type="tj2_description_node" output="screen">
+        <node name="tj2_description" pkg="tj2_description" type="tj2_description_node" output="log">
             <param name="num_modules" value="4" />
         </node>
     </group>
