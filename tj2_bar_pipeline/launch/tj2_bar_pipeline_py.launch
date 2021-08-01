@@ -4,6 +4,11 @@
         <node name="tj2_bar_pipeline_py" pkg="tj2_bar_pipeline" type="tj2_bar_pipeline_node.py" output="screen" required="true">
             <param name="depth_topic" value="/camera/depth/image_rect_raw"/>
             <param name="info_topic" value="/camera/depth/camera_info"/>
+            <param name="min_distance" value="0.5"/>
+            <param name="max_distance" value="1.5"/>
+            <param name="bar_z_lower_threshold" value="1.25"/>
+            <param name="bar_z_upper_threshold" value="1.65"/>
+            <param name="line_mask_width" value="1"/>
         </node>
     </group>
 </launch>

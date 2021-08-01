@@ -3,6 +3,7 @@ import rospy
 
 import cv2
 import math
+import time
 import datetime
 import numpy as np
 
@@ -44,15 +45,17 @@ class TJ2BarPipeline(object):
         self.min_distance = rospy.get_param("~min_distance", 0.5)
         self.max_distance = rospy.get_param("~max_distance", 5.0)
         self.contour_perimeter_threshold = rospy.get_param("~contour_perimeter_threshold", 200)
-        self.line_angle_lower_threshold = rospy.get_param("~line_angle_lower_threshold", -math.pi / 4)
-        self.line_angle_upper_threshold = rospy.get_param("~line_angle_upper_threshold", math.pi / 4)
+        self.line_angle_lower_threshold = rospy.get_param("~line_angle_lower_threshold", math.pi / 4)
+        self.line_angle_upper_threshold = rospy.get_param("~line_angle_upper_threshold", 3 * math.pi / 4)
         self.hough_lines_rho = rospy.get_param("~hough_lines_rho", 1.1)
         self.hough_lines_theta = rospy.get_param("~hough_lines_theta", math.pi / 360.0)
         self.hough_lines_threshold = rospy.get_param("~hough_lines_threshold", 100)
         self.hough_lines_min_length = rospy.get_param("~hough_lines_min_length", 100)
         self.hough_lines_max_gap = rospy.get_param("~hough_lines_max_gap", 100)
-        self.bar_z_lower_threshold = rospy.get_param("~bar_z_lower_threshold", 1.0)
+        self.bar_z_lower_threshold = rospy.get_param("~bar_z_lower_threshold", 0.5)
         self.bar_z_upper_threshold = rospy.get_param("~bar_z_upper_threshold", 5.0)
+        self.z_outlier_stddev = rospy.get_param("~z_outlier_stddev", 3.0)
+        self.line_mask_width = rospy.get_param("~line_mask_width", 1)
 
         self.roi_left = rospy.get_param("~roi_left", 0)
         self.roi_top = rospy.get_param("~roi_top", 20)
@@ -73,8 +76,8 @@ class TJ2BarPipeline(object):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         
-        self.debug_image_pub = rospy.Publisher("pipeline_debug/image_raw", Image, queue_size=1)
-        self.debug_info_pub = rospy.Publisher("pipeline_debug/camera_info", CameraInfo, queue_size=1)
+        self.debug_image_pub = rospy.Publisher("bar_pipeline_debug/image_raw", Image, queue_size=1)
+        self.debug_info_pub = rospy.Publisher("bar_pipeline_debug/camera_info", CameraInfo, queue_size=1)
         self.bar_marker_pub = rospy.Publisher("bar_markers", MarkerArray, queue_size=10)
         
         rospy.Subscriber(self.depth_topic, Image, self.depth_callback, queue_size=1)
@@ -104,7 +107,10 @@ class TJ2BarPipeline(object):
             rospy.logerr(e)
             return
         
+        t0 = time.time()
         bars, debug_image = self.pipeline(cv2_img, self.debug_image_pub.get_num_connections() > 0)
+        t1 = time.time()
+        rospy.loginfo_throttle(1, "Pipeline rate: %0.3f" % (1.0 / (t1 - t0)))
 
         self.publish_bars(bars)
         self.publish_bar_visualization(bars)
@@ -117,10 +123,12 @@ class TJ2BarPipeline(object):
 
         # convert to 0..255 range so OpenCV algorithms can process it
         # normalized = cv2.normalize(depth_bounded, None, 0, 255, cv2.NORM_MINMAX)
-        normalized = np.uint8(depth_bounded.astype(np.float64) * 255 / self.max_distance_mm)
+        normalized = self.normalize_depth(depth_bounded)
         if debug:
-            debug_image = np.copy(normalized)
-            debug_image = cv2.cvtColor(debug_image, cv2.COLOR_GRAY2BGR)
+            debug_image = self.normalize_depth(depth_image)
+            # debug_image = cv2.applyColorMap(debug_image, cv2.COLORMAP_JET)
+            debug_image = cv2.applyColorMap(debug_image, cv2.COLORMAP_OCEAN)
+            # debug_image = cv2.cvtColor(debug_image, cv2.COLOR_GRAY2BGR)
             cv2.rectangle(
                 debug_image,
                 (self.roi_left, self.roi_top),
@@ -137,11 +145,14 @@ class TJ2BarPipeline(object):
         contours_image, contours = self.contours(normalized)
 
         # identify lines in the image
-        lines, debug_image = self.houghlines(contours_image, debug_image)
-        clouds = self.hough_line_clouds(depth_bounded, lines)
+        lines, hough_debug_image = self.houghlines(contours_image, debug_image)
+        lines, clouds, debug_image = self.hough_line_clouds(depth_bounded, lines, hough_debug_image, debug_image)
         bars = self.bars_from_cloud(lines, clouds)
         
         return bars, debug_image
+
+    def normalize_depth(self, depth_image):
+        return np.uint8(depth_image.astype(np.float64) * 255 / self.max_distance_mm)
 
     def publish_debug_image(self, debug_image):
         if debug_image is None:
@@ -175,8 +186,8 @@ class TJ2BarPipeline(object):
             marker.pose.orientation.w = 1.0
 
             marker.scale.x = 0.025  # line width
-            marker.color = ColorRGBA(0.5, 0.5, 1.0, 1.0)
-            marker.lifetime = rospy.Duration(0.5)
+            marker.color = ColorRGBA(0.3, 0.3, 1.0, 1.0)
+            marker.lifetime = rospy.Duration(0.05)
 
             for point in points:
                 msg_point = Point()
@@ -184,6 +195,8 @@ class TJ2BarPipeline(object):
                 msg_point.y = point[1]
                 msg_point.z = point[2]
                 marker.points.append(msg_point)
+                if not (self.bar_z_lower_threshold <= msg_point.z <= self.bar_z_upper_threshold):
+                    marker.color = ColorRGBA(1.0, 0.3, 0.3, 1.0)
             
             markers_msg.markers.append(marker)
 
@@ -194,6 +207,8 @@ class TJ2BarPipeline(object):
         assert len(lines) == len(clouds)
         for index in range(len(lines)):
             cloud = clouds[index]
+            if len(cloud) == 0:
+                continue
             line = lines[index]
             bar_coordinates = []
             for point in self.best_fit_3d(line, cloud):
@@ -207,14 +222,14 @@ class TJ2BarPipeline(object):
                 camera_x, camera_y = result
                 # print("camera: \t%0.4f\t%0.4f\t%0.4f" % (camera_x, camera_y, camera_z))
 
-                result = self.camera_to_robot_frame(camera_x, camera_y, camera_z)
+                result = self.camera_to_robot_frame(camera_x, camera_y, camera_z, timeout=rospy.Duration(0.02))
                 if result is None:
                     rospy.logwarn("Unable to translate camera coordinates to robot frame. TF from camera to robot has been received.")
                     break
                 robot_x, robot_y, robot_z = result
 
-                if not (self.bar_z_lower_threshold <= robot_z <= self.bar_z_upper_threshold):
-                    break
+                # if not (self.bar_z_lower_threshold <= robot_z <= self.bar_z_upper_threshold):
+                #     break
 
                 bar_coordinates.append((robot_x, robot_y, robot_z))
                 # bar_coordinates.append((camera_x, camera_y, camera_z))
@@ -222,18 +237,11 @@ class TJ2BarPipeline(object):
                 bars.append(bar_coordinates)
         return bars
 
-    def best_fit_3d(self, line, cloud, z_outlier_stddev=1.5):
+    def best_fit_3d(self, line, cloud):
         # given a 3d cloud of points, return two 3d points that describes the best
         # fit line.
 
         x1, y1, x2, y2 = line
-
-        z_cloud = cloud[:, 2]
-        z_std = z_cloud.std()
-        z_dist = np.abs(z_cloud - z_cloud.mean())
-        not_outlier = z_dist < z_outlier_stddev * z_std
-
-        cloud = cloud[not_outlier]
 
         xy_fit = np.polyfit(cloud[:, 0], cloud[:, 1], 1)
         xz_fit = np.polyfit(cloud[:, 0], cloud[:, 2], 1)
@@ -245,7 +253,7 @@ class TJ2BarPipeline(object):
 
         return (x1, y1_fit, z1_fit), (x2, y2_fit, z2_fit)
     
-    def hough_line_clouds(self, depth_image, lines):
+    def hough_line_clouds(self, depth_image, lines, hough_debug_image, debug_image):
         # Using lines generated by houghlines, mask pixels that lay on the line.
         # For each column in the image, find the average value (pixel values outside the acceptable range).
         # Each value in the resulting array is a z distance along the discovered line.
@@ -255,10 +263,17 @@ class TJ2BarPipeline(object):
         nonzero_mask = np.uint8(nonzero_mask)
         
         clouds = []
-        for x1, y1, x2, y2 in lines:
+        filtered_lines = []
+        
+        total_mask = np.zeros_like(nonzero_mask)
+
+        for line in lines:
+            x1, y1, x2, y2 = line
             mask_image = np.zeros_like(nonzero_mask)
-            cv2.line(mask_image, (x1, y1), (x2, y2), (255, 255, 255), 1)
+            cv2.line(mask_image, (x1, y1), (x2, y2), (255, 255, 255), self.line_mask_width)
             target_mask = cv2.bitwise_and(mask_image, nonzero_mask)
+            if debug_image is not None:
+                total_mask = cv2.bitwise_or(total_mask, target_mask)
             
             masked_depth = cv2.bitwise_and(depth_image, depth_image, mask=target_mask)
 
@@ -275,8 +290,31 @@ class TJ2BarPipeline(object):
                 cloud.append((xn, yn, zn))
             if len(cloud) == 0:
                 continue
-            clouds.append(np.array(cloud))
-        return clouds
+
+            cloud = np.array(cloud)
+
+            if self.z_outlier_stddev is not None:
+                z_cloud = cloud[:, 2]
+                z_std = z_cloud.std()
+                z_dist = np.abs(z_cloud - z_cloud.mean())
+                not_outlier = z_dist < self.z_outlier_stddev * z_std
+
+                cloud = cloud[not_outlier]
+            if len(cloud) == 0:
+                continue
+            clouds.append(cloud)
+            filtered_lines.append(line)
+        
+        if debug_image is not None:
+            masked_debug = cv2.cvtColor(total_mask * 255, cv2.COLOR_GRAY2BGR)
+            masked_debug[:, :, 0] = 0
+            masked_debug[:, :, 1] = 0
+            debug_image = cv2.addWeighted(debug_image, 1.0, masked_debug, 1.0, 0.0)
+
+            # masked_debug = cv2.bitwise_and(debug_image, debug_image, mask=total_mask)
+            # debug_image = cv2.vconcat((masked_debug, hough_debug_image))
+            
+        return filtered_lines, clouds, debug_image
         
     def pixels_to_camera_frame(self, pixel_x, pixel_y, camera_z):
         if self.camera_model is None:
@@ -351,6 +389,8 @@ class TJ2BarPipeline(object):
 
 
     def houghlines(self, edges, debug_image):
+        if debug_image is not None:
+            debug_image = np.copy(debug_image)
         lines = cv2.HoughLinesP(
             edges,
             self.hough_lines_rho,
@@ -360,24 +400,33 @@ class TJ2BarPipeline(object):
             maxLineGap=self.hough_lines_max_gap
         )
         result = []
-        for line in lines:
-            x1, y1, x2, y2 = line[0]
-            angle = math.atan2(y2 - y1, x2 - x1)
-            if not (self.line_angle_lower_threshold < angle < self.line_angle_upper_threshold):
-                continue
+        if lines is not None:
+            for hough_line in lines:
+                line = hough_line[0]
+                x1, y1, x2, y2 = line
+                angle = math.atan2(y2 - y1, x2 - x1)
+                if not (self.line_angle_lower_threshold < angle < self.line_angle_upper_threshold or
+                        -self.line_angle_upper_threshold < angle < -self.line_angle_lower_threshold):
+                    line = None
 
-            if x1 < self.roi_left and x2 < self.roi_left:
-                continue
-            if x1 > edges.shape[1] - self.roi_right and x2 > edges.shape[1] - self.roi_right:
-                continue
-            if y1 < self.roi_top and y2 < self.roi_top:
-                continue
-            if y1 > edges.shape[0] - self.roi_bottom and y2 > edges.shape[0] - self.roi_bottom:
-                continue
-            
-            result.append((x1, y1, x2, y2))
-            if debug_image is not None:
-                cv2.line(debug_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                if x1 < self.roi_left and x2 < self.roi_left:
+                    line = None
+                if x1 > edges.shape[1] - self.roi_right and x2 > edges.shape[1] - self.roi_right:
+                    line = None
+                if y1 < self.roi_top and y2 < self.roi_top:
+                    line = None
+                if y1 > edges.shape[0] - self.roi_bottom and y2 > edges.shape[0] - self.roi_bottom:
+                    line = None
+                # y1 = edges.shape[0] - y1
+                # y2 = edges.shape[0] - y2
+                if line is not None:
+                    result.append((x1, y1, x2, y2))
+
+                if debug_image is not None:
+                    if line is not None:
+                        cv2.line(debug_image, (x1, y1), (x2, y2), (0, 255, 0), 3)
+                    else:
+                        cv2.line(debug_image, (x1, y1), (x2, y2), (0, 0, 255), 2)
         return result, debug_image
 
 
