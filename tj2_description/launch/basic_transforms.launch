@@ -1,3 +1,4 @@
 <launch>
     <node pkg="tf" type="static_transform_publisher" name="base_to_camera" args="-0.154 0.200 0.481  0.45451948 -0.35355339  0.61237244  0.54167522 base_link camera_link 33" />
+    <node pkg="tf" type="static_transform_publisher" name="base_to_laser" args="0.0 0.0 0.0  0.0 0.0 0.0 1.0 base_link laser 33" />
 </launch>
