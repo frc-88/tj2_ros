@@ -48,7 +48,7 @@ class TJ2LaserSlam:
         self.map_dir = rospy.get_param("~map_dir", self.default_maps_dir)
         self.map_name = rospy.get_param("~map_name", "map-{date}")
         self.date_format = rospy.get_param("~date_format", "%Y-%m-%dT%H-%M-%S--%f")
-        self.map_saver_wait_time = rospy.get_param("~map_saver_wait_time", 30.0)
+        self.map_saver_wait_time = rospy.get_param("~map_saver_wait_time", 14.0)
 
         self.set_map_paths()
 

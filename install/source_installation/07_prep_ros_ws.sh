@@ -2,7 +2,8 @@
 
 
 SOURCE_COMMAND='source ${HOME}/packages_ros_ws/devel/setup.bash
-source ${HOME}/ros_ws/devel/setup.bash'
+source ${HOME}/ros_ws/devel/setup.bash
+source ${HOME}/Diff-Swerve-ROS/systemd/env.sh'
 
 if ! grep -qz "$SOURCE_COMMAND" ~/.bashrc; then
     echo "Appending ros setup scripts to ~/.bashrc"
