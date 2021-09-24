@@ -33,20 +33,13 @@ bool TJ2DriverStation::robot_mode_callback(tj2_driver_station::SetRobotMode::Req
         return true;
     }
     _requested_mode = (RobotMode)req.mode;
-    ros::Time request_time = ros::Time::now();
-    ros::Duration request_timeout = ros::Duration(2.0);
-    while (ros::ok()) 
-    {
-        if (_current_mode == _requested_mode) {
-            resp.success = true;
-            resp.message = "";
-        }
-        if (ros::Time::now() - request_time > request_timeout) {
-            resp.success = false;
-            resp.message = "Failed to set mode!";
-        }
-
-        ros::Duration(0.05).sleep();
+    if (set_mode(_requested_mode)) {
+        resp.success = true;
+        resp.message = "";
+    }
+    else {
+        resp.success = false;
+        resp.message = "Failed to set mode!";
     }
     return true;
 }
@@ -90,6 +83,7 @@ bool TJ2DriverStation::set_mode(RobotMode mode)
     }
     ROS_INFO("Set mode to %d", mode);
     _current_mode = mode;
+    status_msg.mode = mode;
     return true;
 }
 
@@ -98,6 +92,8 @@ void TJ2DriverStation::process_events()
     if (!DS_Initialized()) {
         _is_robot_connected = false;
         _is_code_running = false;
+        status_msg.mode = NOMODE;
+        _current_mode = NOMODE;
     }
     else {
         DS_Event event;
@@ -209,6 +205,10 @@ int TJ2DriverStation::run()
             if (_current_mode != _requested_mode) {
                 set_mode(_requested_mode);
             }
+        }
+        else {
+            _requested_mode = (RobotMode)_start_mode;
+            _current_mode = NOMODE;
         }
     }
     close();
