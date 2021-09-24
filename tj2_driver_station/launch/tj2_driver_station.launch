@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="start_mode" default="0"/>
+    <group ns="tj2">
+        <node name="tj2_driver_station" pkg="tj2_driver_station" type="tj2_driver_station_node" output="screen" required="false">
+            <!-- TeleOp -->
+            <!-- <param name="start_mode" value="3" /> -->
+            <!-- No mode (disabled) -->
+            <!-- <param name="start_mode" value="0" /> -->
+            <param name="start_mode" value="$(arg start_mode)" />
+        </node>
+    </group>
+</launch>

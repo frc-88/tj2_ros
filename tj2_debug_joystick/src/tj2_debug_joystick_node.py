@@ -31,7 +31,8 @@ class TJ2DebugJoystick:
         self.linear_y_axis = int(rospy.get_param("~linear_y_axis", 0))
         self.angular_axis = int(rospy.get_param("~angular_axis", 2))
 
-        self.linear_scale = rospy.get_param("~linear_scale", 1.0)
+        self.linear_x_scale = rospy.get_param("~linear_x_scale", 1.0)
+        self.linear_y_scale = rospy.get_param("~linear_y_scale", 1.0)
         self.angular_scale = rospy.get_param("~angular_scale", 1.0)
 
         self.deadzone_joy_val = rospy.get_param("~deadzone_joy_val", 0.05)

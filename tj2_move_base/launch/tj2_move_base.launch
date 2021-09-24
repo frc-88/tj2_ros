@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log">
         <remap from="/cmd_vel" to="/tj2/cmd_vel"/>
         <remap from="/odom" to="/tj2/odom"/>
         <rosparam file="$(find tj2_move_base)/config/move_base_global_params.yaml" command="load"/>
