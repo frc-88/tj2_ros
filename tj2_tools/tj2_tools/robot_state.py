@@ -120,12 +120,15 @@ class State:
         dy = self.y - other.y
         return math.sqrt(dx * dx + dy * dy)
     
-    def heading(self, other):
-        if not isinstance(other, self.__class__):
-            raise ValueError("Can't get heading from %s to %s" % (self.__class__, other.__class__))
-        dx = self.x - other.x
-        dy = self.y - other.y
-        return math.atan2(dy, dx)
+    def heading(self, other=None):
+        if other is None:
+            return math.atan2(self.y, self.x)
+        else:
+            if not isinstance(other, self.__class__):
+                raise ValueError("Can't get heading from %s to %s" % (self.__class__, other.__class__))
+            dx = self.x - other.x
+            dy = self.y - other.y
+            return math.atan2(dy, dx)
     
     @classmethod
     def normalize_theta(cls, theta):
