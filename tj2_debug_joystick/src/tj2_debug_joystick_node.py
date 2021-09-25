@@ -34,6 +34,7 @@ class TJ2DebugJoystick:
         self.linear_x_axis = rospy.get_param("~linear_x_axis", "left/X").split("/")
         self.linear_y_axis = rospy.get_param("~linear_y_axis", "left/Y").split("/")
         self.angular_axis = rospy.get_param("~angular_axis", "right/X").split("/")
+        self.idle_axis = rospy.get_param("~idle_axis", "brake/L").split("/")
 
         self.linear_x_scale = rospy.get_param("~linear_x_scale", 1.0)
         self.linear_y_scale = rospy.get_param("~linear_y_scale", 1.0)
@@ -68,7 +69,7 @@ class TJ2DebugJoystick:
         elif self.joystick.did_button_down(("triggers", "R1")):
             rospy.loginfo(self.set_robot_mode(RobotStatus.DISABLED))
 
-        if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis)):
+        if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis, self.idle_axis)):
             self.disable_timer = rospy.Time.now()
             linear_x_val = self.joystick.deadband_axis(self.linear_x_axis, self.deadzone_joy_val, self.linear_x_scale)
             linear_y_val = self.joystick.deadband_axis(self.linear_y_axis, self.deadzone_joy_val, self.linear_y_scale)
