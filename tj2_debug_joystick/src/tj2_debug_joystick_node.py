@@ -24,7 +24,11 @@ class TJ2DebugJoystick:
         self.twist_command.linear.y = 0.0
         self.twist_command.angular.z = 0.0
 
-        self.cmd_vel_timeout = rospy.Time.now()
+        self.cmd_vel_timer = rospy.Time.now()
+        self.disable_timer = rospy.Time.now()
+
+        self.cmd_vel_timeout = rospy.Duration(0.5)
+        self.disable_timeout = rospy.Duration(30.0)
 
         # parameters from launch file
         self.linear_x_axis = rospy.get_param("~linear_x_axis", "left/X").split("/")
@@ -65,6 +69,7 @@ class TJ2DebugJoystick:
             rospy.loginfo(self.set_robot_mode(RobotStatus.DISABLED))
 
         if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis)):
+            self.disable_timer = rospy.Time.now()
             linear_x_val = self.joystick.deadband_axis(self.linear_x_axis, self.deadzone_joy_val, self.linear_x_scale)
             linear_y_val = self.joystick.deadband_axis(self.linear_y_axis, self.deadzone_joy_val, self.linear_y_scale)
             angular_val = self.joystick.deadband_axis(self.angular_axis, self.deadzone_joy_val, self.angular_scale)
@@ -80,19 +85,31 @@ class TJ2DebugJoystick:
             self.twist_command.linear.x = linear_x_val
             self.twist_command.linear.y = linear_y_val
             self.twist_command.angular.z = angular_val
-            self.cmd_vel_timeout = rospy.Time.now()
+            self.cmd_vel_timer = rospy.Time.now()
             return True
         else:
-            return rospy.Time.now() - self.cmd_vel_timeout < rospy.Duration(0.5)
+            return rospy.Time.now() - self.cmd_vel_timer < self.cmd_vel_timeout
 
     def run(self):
-        rospy.spin()
+        did_disable_timer_expire = False
+        while not rospy.is_shutdown():
+            # rospy.loginfo(rospy.Time.now() - self.disable_timer, self.disable_timeout, did_disable_timer_expire)
+            if rospy.Time.now() - self.disable_timer > self.disable_timeout:
+                if not did_disable_timer_expire:
+                    rospy.loginfo(self.set_robot_mode(RobotStatus.DISABLED))
+                    did_disable_timer_expire = True
+            else:
+                did_disable_timer_expire = False
+                
+            rospy.sleep(0.1)
+
+        # rospy.spin()
 
 
 if __name__ == "__main__":
     try:
         node = TJ2DebugJoystick()
-        rospy.spin()
+        node.run()
     except rospy.ROSInterruptException:
         pass
     rospy.loginfo("Exiting tj2_debug_joystick node")
