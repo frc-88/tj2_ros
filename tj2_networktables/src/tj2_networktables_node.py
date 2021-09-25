@@ -152,9 +152,9 @@ class TJ2NetworkTables(object):
             self.publish_imu()
     
     def twist_callback(self, msg):
-        self.robot_vel.x = msg.linear.x
-        self.robot_vel.y = msg.linear.y
-        self.robot_vel.theta = msg.angular.z
+        self.robot_vel.x = -msg.linear.x
+        self.robot_vel.y = -msg.linear.y
+        self.robot_vel.theta = -msg.angular.z
 
         if self.zero_epsilon < abs(self.robot_vel.x) < self.min_linear_x_cmd:
             self.robot_vel.x = self.min_linear_x_cmd
@@ -178,8 +178,8 @@ class TJ2NetworkTables(object):
             return
         remote_time = self.get_local_time_as_remote()
         self.nt.putNumber(self.command_table_key + "/timestamp", remote_time)
-        self.nt.putNumber(self.command_table_key + "/translationSpeed", self.robot_vel.x / self.remote_units_conversion)
-        self.nt.putNumber(self.command_table_key + "/translationDirection", self.robot_vel.y / self.remote_units_conversion)
+        self.nt.putNumber(self.command_table_key + "/translationSpeed", self.robot_vel.magnitude() / self.remote_units_conversion)
+        self.nt.putNumber(self.command_table_key + "/translationDirection", math.degrees(self.robot_vel.heading() % (2 * math.pi)))
         self.nt.putNumber(self.command_table_key + "/rotationVelocity", math.degrees(self.robot_vel.theta))
         self.nt.putBoolean(self.command_table_key + "/isFieldCentric", False)
 

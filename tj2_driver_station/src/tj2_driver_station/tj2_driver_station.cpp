@@ -216,9 +216,10 @@ int TJ2DriverStation::run()
                 set_mode(_requested_mode);
             }
         }
-        if (!_is_robot_connected || !_is_code_running) {
+        if (_current_mode != NOMODE && (!_is_robot_connected || !_is_code_running)) {
             // _requested_mode = (RobotMode)_start_mode;
             _requested_mode = NOMODE;
+            _current_mode = NOMODE;
             set_mode(NOMODE);
         }
     }
