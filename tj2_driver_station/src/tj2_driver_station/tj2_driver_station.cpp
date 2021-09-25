@@ -6,9 +6,12 @@ TJ2DriverStation::TJ2DriverStation(ros::NodeHandle* nodehandle) :
 {
     ros::param::param<string>("~frc_robot_address", _frc_robot_address, "10.0.88.2");
     ros::param::param<int>("~start_mode", _start_mode, 0);
+    ros::param::param<double>("~alive_time_threshold", _alive_time_threshold_param, 5.0);
     if (_start_mode == NOMODE) {
         _start_mode = DISABLED;
     }
+    _alive_time_threshold = ros::Duration(_alive_time_threshold_param);
+    _heartbeat_time = ros::Time(0);
     _current_mode = NOMODE;
 
     status_pub = nh.advertise<tj2_driver_station::RobotStatus>("robot_status", 20);
@@ -17,6 +20,7 @@ TJ2DriverStation::TJ2DriverStation(ros::NodeHandle* nodehandle) :
 
     _frc_protocol = DS_GetProtocolFRC_2020();
 
+    ROS_INFO("Connecting to robot at %s", _frc_robot_address.c_str());
     ROS_INFO("tj2_driver_station init done");
 }
 
@@ -99,6 +103,7 @@ void TJ2DriverStation::process_events()
         DS_Event event;
         while (DS_PollEvent(&event))
         {
+            _heartbeat_time = ros::Time::now();
             switch (event.type)
             {
                 case DS_JOYSTICK_COUNT_CHANGED: ROS_DEBUG("Number of joysticks: %d", DS_GetJoystickCount()); break;
@@ -144,6 +149,10 @@ void TJ2DriverStation::process_events()
     }
     
     status_pub.publish(status_msg);
+}
+bool TJ2DriverStation::is_alive()
+{
+    return ros::Time::now() - _heartbeat_time < _alive_time_threshold;
 }
 
 bool TJ2DriverStation::is_connected()
@@ -206,9 +215,11 @@ int TJ2DriverStation::run()
                 set_mode(_requested_mode);
             }
         }
-        else {
-            _requested_mode = (RobotMode)_start_mode;
+        if (!_is_robot_connected || !_is_code_running) {
+            // _requested_mode = (RobotMode)_start_mode;
+            _requested_mode = NOMODE;
             _current_mode = NOMODE;
+            status_msg.mode = NOMODE;
         }
     }
     close();
