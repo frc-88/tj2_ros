@@ -62,6 +62,7 @@ bool TJ2DriverStation::set_mode(RobotMode mode)
         return true;
     }
     switch (mode) {
+        case NOMODE:
         case DISABLED:
             DS_SetRobotEnabled(0);
             DS_SetEmergencyStopped(0);
@@ -218,8 +219,7 @@ int TJ2DriverStation::run()
         if (!_is_robot_connected || !_is_code_running) {
             // _requested_mode = (RobotMode)_start_mode;
             _requested_mode = NOMODE;
-            _current_mode = NOMODE;
-            status_msg.mode = NOMODE;
+            set_mode(NOMODE);
         }
     }
     close();
