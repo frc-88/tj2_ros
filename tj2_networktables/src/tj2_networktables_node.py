@@ -20,7 +20,7 @@ from tj2_networktables.msg import SwerveModule
 from tj2_tools.robot_state import Pose2d
 
 
-class TJ2NetworkTables(object):
+class TJ2NetworkTables:
     def __init__(self):
         self.node_name = "tj2_networktables"
         rospy.init_node(
