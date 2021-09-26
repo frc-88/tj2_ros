@@ -40,6 +40,8 @@ class RecursiveNamespace(SimpleNamespace):
         return self._get_nested_recurse(self, list(keys))
 
     def _get_nested_recurse(self, ns, keys):
+        if len(keys) == 0:
+            return ns
         key = keys.pop(0)
         value = ns[key]
         if isinstance(value, RecursiveNamespace) or type(value) == list or type(value) == tuple:
