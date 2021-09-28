@@ -46,9 +46,9 @@ class TJ2ClimberPipeline(object):
         self.max_distance = rospy.get_param("~max_distance", 1.5)
         
         self.roi_left = rospy.get_param("~roi_left", 0)
-        self.roi_top = rospy.get_param("~roi_top", 20)
+        self.roi_top = rospy.get_param("~roi_top", 0)
         self.roi_right = rospy.get_param("~roi_right", 0)
-        self.roi_bottom = rospy.get_param("~roi_bottom", 20)
+        self.roi_bottom = rospy.get_param("~roi_bottom", 0)
 
         self.depth_topic = rospy.get_param("~depth_topic", "depth/image_raw")
         self.info_topic = rospy.get_param("~info_topic", "depth/camera_info")
