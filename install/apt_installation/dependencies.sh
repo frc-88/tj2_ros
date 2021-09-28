@@ -13,7 +13,6 @@ gmapping
 amcl
 move-base-flex
 apriltag-ros
-rplidar-ros
 robot-localization
 )
 
