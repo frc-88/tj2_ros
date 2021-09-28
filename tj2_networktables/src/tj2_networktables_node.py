@@ -91,9 +91,11 @@ class TJ2NetworkTables(object):
         rospy.loginfo("%s init complete" % self.node_name)
 
     def run(self):
-        self.wait_for_time()
+        # self.wait_for_time()
 
         while not rospy.is_shutdown():
+            if self.remote_start_time == 0.0:
+                self.init_remote_time()
             self.clock_rate.sleep()
             self.publish_odom()
             self.publish_driver_station()
@@ -123,11 +125,11 @@ class TJ2NetworkTables(object):
         vy = self.nt.getEntry(self.odom_table_key + "/yVelocity").getDouble(0.0)
         vt = self.nt.getEntry(self.odom_table_key + "/thetaVelocity").getDouble(0.0)
 
-        x *= self.remote_units_conversion
-        y *= self.remote_units_conversion
+        # x *= self.remote_units_conversion
+        # y *= self.remote_units_conversion
         theta = math.radians(theta)
-        vx *= self.remote_units_conversion
-        vy *= self.remote_units_conversion
+        # vx *= self.remote_units_conversion
+        # vy *= self.remote_units_conversion
         vt = math.radians(vt)
 
         self.robot_pose.x = x
@@ -196,11 +198,14 @@ class TJ2NetworkTables(object):
     def wait_for_time(self):
         rospy.loginfo("Waiting for remote time")
         while self.remote_start_time == 0.0:
-            self.remote_start_time = self.get_remote_time()
+            self.init_remote_time()
             self.clock_rate.sleep()
             if rospy.is_shutdown():
                 return
         rospy.loginfo("Remote time found")
+    
+    def init_remote_time(self):
+        self.remote_start_time = self.get_remote_time()
         self.local_start_time = self.get_local_time()
     
     def get_remote_time_as_local(self):
