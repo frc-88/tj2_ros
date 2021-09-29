@@ -1,13 +1,13 @@
 #!/usr/bin/python3
-import math
 import time
 import rospy
-from pprint import pprint
 
 from dynamic_reconfigure.server import Server
-# from dynamic_reconfigure.client import Client
-from tj2_networktables.cfg import SwerveConstantsConfig
-from dynamic_reconfigure.encoding import decode_config, encode_config, encode_description, extract_params, get_tree, initial_config
+from tj2_networktables.cfg import AzimuthControllerConstantsConfig
+from tj2_networktables.cfg import ModuleConstantsConfig
+from tj2_networktables.cfg import MotorConstantsConfig
+from tj2_networktables.cfg import SensorConstantsConfig
+from tj2_networktables.cfg import WheelControllerConstantsConfig
 
 from networktables import NetworkTables
 
@@ -16,103 +16,112 @@ class ConstantsRelay:
     def __init__(self):
         self.node_name = "constants_relay"
         rospy.init_node(
-            self.node_name
+            self.node_name,
             # disable_signals=True
             # log_level=rospy.DEBUG
         )
 
-        self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
+        self.nt_host = rospy.get_param("~nt_host", "localhost")
+        self.num_modules = rospy.get_param("~num_modules", 4)
         
         NetworkTables.initialize(server=self.nt_host)
-        time.sleep(2.0)  # wait for table to populate
-        self.nt = NetworkTables.getTable("swerveLibrary")
+        self.base_key = "swerveLibrary"
+        self.nt = NetworkTables.getTable(self.base_key)
+        self.config_key = "configuration"
 
-        # self.nt.addEntryListener(self.ping_callback, key="pingResponse")
+        self.config_table = {}
+        module_tables = {}
+        for module_index in range(self.num_modules):
+            module_table = {
+                "": ModuleConstantsConfig,
+                "azimuthController": AzimuthControllerConstantsConfig,
+                "wheelController": WheelControllerConstantsConfig,
+                "motors": {
+                    "0": MotorConstantsConfig,
+                    "1": MotorConstantsConfig,
+                },
+                "sensors": SensorConstantsConfig
+            }
+            module_tables[module_index] = module_table
+        self.config_table["modules"] = module_tables
 
-        starter_table = self.build_tables("configuration//modules")
-
-        # print("starter_table")
-        # pprint(starter_table)
-        self.config_id_counter = 0
-
-        self.namespace = "/tj2/swerve_constants"
-        self.dyn_srv = Server(SwerveConstantsConfig, self.swerve_constants_callback, self.namespace)
-        self.dyn_srv.update_configuration(self.to_config(starter_table))
+        self.namespace = "/tj2/swerve_config"
+        self.path_table = self.decode_table(self.namespace, self.config_table)
+        self.servers = self.build_servers(self.path_table)
 
         rospy.loginfo("%s init complete" % self.node_name)
     
-    def to_config(self, table: dict):
-        self.config_id_counter = 0
-        config = {}
-        self._to_config_recurse(table, config)
-        config["name"] = "Default"
-        config["state"] = True
-        config["parent"] = 0
-        config["id"] = self.config_id_counter
-        config = {"groups": config}
-        
-        return config
-    
-    def _to_config_recurse(self, table, config):
-        self.config_id_counter += 1
-        config["groups"] = {}
-        config["parameters"] = {}
-        config["state"] = True
-        config["parent"] = 0
-        config["id"] = self.config_id_counter
+    def _recurse_table(self, namespace, table, decoded):
         for key, value in table.items():
+            sub_namespace = namespace + "/" + str(key)
             if type(value) == dict:
-                # if "groups" not in config:
-                #     config["groups"] = {}
-                self.config_id_counter += 1
-                config["groups"][key] = {
-                    "name": key,
-                    "state": True,
-                    "parent": config["id"],
-                    "id": self.config_id_counter,
-                }
-                self._to_config_recurse(value, config["groups"][key])
+                self._recurse_table(sub_namespace, value, decoded)
             else:
-                # if "parameters" not in config:
-                #     config["parameters"] = {}
-                config["parameters"][key] = value
-
-    def build_tables(self, base_key):
-        directory = {}
-        self._build_tables_recurse(self.nt, base_key, directory)
-        return directory
+                decoded[sub_namespace] = value
     
-    def _build_tables_recurse(self, table, base_key, directory):
-        sub_table = table.getSubTable(base_key)
-        for sub_key in sub_table.getSubTables():
-            full_key = base_key + "/" + sub_key
-            directory[sub_key] = {}
-            self._build_tables_recurse(table, full_key, directory[sub_key])
-        for sub_key in sub_table.getKeys():
-            full_key = base_key + "/" + sub_key
-            value = table.getEntry(full_key)
-            directory[sub_key] = value.get()
+    def decode_table(self, namespace, table):
+        decoded_table = {}
+        self._recurse_table(namespace, table, decoded_table)
+        return decoded_table
+        
+    def build_servers(self, table):
+        servers = {}
+        for path, config_cls in table.items():
+            rospy.loginfo("Creating server for %s" % path)
+            dyn_srv = Server(config_cls, lambda config, level, p=path: self.wrapped_callback(p, config, level), path)
+            servers[path] = dyn_srv
+        return servers
 
-    def swerve_constants_callback(self, config, level):
-        # rospy.loginfo("Level: %s" % level)
-        # rospy.loginfo("Config: %s" % config)
-        # print("config")
-        pprint(config)
-        encoded = encode_config(config)
-        print(encoded)
-        print(decode_config(encoded))
+    def wrapped_callback(self, path, config, level):
+        if level == -1:
+            return config
+        if not path.startswith(self.namespace):
+            return config
+        self.swerve_constants_callback(path, config)
         return config
+
+    def swerve_constants_callback(self, path, config):
+        sub_table = path[len(self.namespace) + 1:]  # exclude extra "/" in slice
+        sub_table = "/".join((self.config_key, sub_table))
+
+        rospy.loginfo("Setting %s to %s" % (sub_table, config))
+
+        config_cls = self.path_table[path]
+        for name, value_type in config_cls.type.items():
+            entry_path = sub_table + "/" + str(name)
+            if not self.nt.containsKey(entry_path):
+                rospy.logdebug("\tKey %s does not exist. Skipping" % entry_path)
+                continue
+
+            entry = self.nt.getEntry(entry_path)
+            value = config[name]
+            if entry.get() == value:
+                rospy.logdebug("\tKey %s is already the desired value. Skipping" % entry_path)
+                continue
+
+            rospy.logdebug("\tSet %s to %s" % (entry_path, value))
+            
+            if value_type == "double":
+                entry.setDouble(value + 1)
+            elif value_type == "int":
+                entry.setNumber(value)
+            elif value_type == "str":
+                entry.setString(value)
+            elif value_type == "bool":
+                entry.setBoolean(value)
+            else:
+                rospy.logwarn("Invalid config type: %s (%s)" % (value_type, name))
 
     def run(self):
         rospy.spin()
 
 if __name__ == "__main__":
     node = ConstantsRelay()
-    try:
-        node.run()
+    # try:
+    node.run()
 
-    except rospy.ROSInterruptException:
-        pass
+    # except rospy.ROSInterruptException:
+    #     pass
 
-    finally:
-        rospy.loginfo("Exiting %s node" % node.node_name)
+    # finally:
+    #     rospy.loginfo("Exiting %s node" % node.node_name)
