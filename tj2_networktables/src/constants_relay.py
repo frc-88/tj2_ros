@@ -40,7 +40,7 @@ class ConstantsRelay:
                     "0": MotorConstantsConfig,
                     "1": MotorConstantsConfig,
                 },
-                "sensors": SensorConstantsConfig
+                "sensor": SensorConstantsConfig
             }
             module_tables[module_index] = module_table
         self.config_table["modules"] = module_tables
@@ -102,7 +102,7 @@ class ConstantsRelay:
             rospy.logdebug("\tSet %s to %s" % (entry_path, value))
             
             if value_type == "double":
-                entry.setDouble(value + 1)
+                entry.setDouble(value)
             elif value_type == "int":
                 entry.setNumber(value)
             elif value_type == "str":
