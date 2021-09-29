@@ -39,7 +39,8 @@ class TJ2NetworkTables:
         self.odom_frame_name = rospy.get_param("~odom_frame", "odom")
         self.imu_frame_name = rospy.get_param("~imu_frame", "imu")
 
-        self.remote_units_conversion = rospy.get_param("~remote_units_conversion", 0.3048)  # WPILib uses a mix of meters, feet, inches...
+        self.remote_linear_units_conversion = rospy.get_param("~remote_linear_units_conversion", 0.3048)  # WPILib uses a mix of meters, feet, inches...
+        self.remote_angular_units_conversion = rospy.get_param("~remote_angular_units_conversion", math.pi / 180.0)  # WPILib uses a mix of radians and degrees...
         self.cmd_vel_timeout = rospy.get_param("~cmd_vel_timeout", 0.5)
         self.min_linear_x_cmd = rospy.get_param("~min_linear_x_cmd", 0.05)
         self.min_linear_y_cmd = rospy.get_param("~min_linear_y_cmd", 0.05)
@@ -178,7 +179,7 @@ class TJ2NetworkTables:
             return
         remote_time = self.get_local_time_as_remote()
         self.nt.putNumber(self.command_table_key + "/timestamp", remote_time)
-        self.nt.putNumber(self.command_table_key + "/translationSpeed", self.robot_vel.magnitude() / self.remote_units_conversion)
+        self.nt.putNumber(self.command_table_key + "/translationSpeed", self.robot_vel.magnitude() / self.remote_linear_units_conversion)
         self.nt.putNumber(self.command_table_key + "/translationDirection", math.degrees(self.robot_vel.heading() % (2 * math.pi)))
         self.nt.putNumber(self.command_table_key + "/rotationVelocity", math.degrees(self.robot_vel.theta))
         self.nt.putBoolean(self.command_table_key + "/isFieldCentric", False)
@@ -197,7 +198,7 @@ class TJ2NetworkTables:
     def publish_modules(self):
         for module_num in range(self.num_modules):
             wheel_velocity = self.nt.getEntry(self.module_table_key + "/%s/wheelVelocity" % module_num).getDouble(0.0)
-            wheel_velocity *= self.remote_units_conversion
+            wheel_velocity *= self.remote_linear_units_conversion
             azimuth = self.nt.getEntry(self.module_table_key + "/%s/azimuthPosition" % module_num).getDouble(0.0)
             azimuth = math.radians(azimuth)
             
@@ -221,12 +222,12 @@ class TJ2NetworkTables:
         vy = self.nt.getEntry(self.odom_table_key + "/yVelocity").getDouble(0.0)
         vt = self.nt.getEntry(self.odom_table_key + "/thetaVelocity").getDouble(0.0)
 
-        x *= self.remote_units_conversion
-        y *= self.remote_units_conversion
-        theta = math.radians(theta)
-        vx *= self.remote_units_conversion
-        vy *= self.remote_units_conversion
-        vt = math.radians(vt)
+        x *= self.remote_linear_units_conversion
+        y *= self.remote_linear_units_conversion
+        theta *= self.remote_angular_units_conversion
+        vx *= self.remote_linear_units_conversion
+        vy *= self.remote_linear_units_conversion
+        vt *= self.remote_angular_units_conversion
 
         self.robot_pose.x = x
         self.robot_pose.y = y
