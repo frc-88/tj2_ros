@@ -36,9 +36,14 @@ class ConstantsSetter:
     
     def set_all_clients(self, clients, tree):
         for nt_path, client in clients.items():
-            value = self.recursive_get(tree, list(nt_path.split("/")))
-            rospy.loginfo("Reading %s. It contains %s" % (nt_path, value))
-            client.update_configuration(value)
+            subtable = self.recursive_get(tree, list(nt_path.split("/")))
+            parameters = {}
+            for key, value in subtable.items():
+                if type(value) == dict:
+                    continue
+                parameters[key] = value
+            rospy.loginfo("Reading %s. It contains %s" % (nt_path, parameters))
+            client.update_configuration(parameters)
 
     def build_clients(self, namespace, directory):
         clients = {}

@@ -10,5 +10,12 @@
             <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
             <param name="cmd_vel_timeout" value="2.0"/>
         </node>
+
+        <node name="constants_setter" pkg="tj2_networktables" type="constants_setter.py" output="screen" required="false">
+            <param name="nt_host" value="$(arg robot_address)"/>
+        </node>
+        <node name="constants_relay" pkg="tj2_networktables" type="constants_relay.py" output="screen" required="true">
+            <param name="nt_host" value="$(arg robot_address)"/>
+        </node>
     </group>
 </launch>
