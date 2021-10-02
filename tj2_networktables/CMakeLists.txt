@@ -52,6 +52,7 @@ catkin_python_setup()
 add_message_files(
   FILES
   SwerveModule.msg
+  SwerveMotor.msg
 )
 
 ## Generate services in the 'srv' folder

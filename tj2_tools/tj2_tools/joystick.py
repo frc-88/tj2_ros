@@ -57,10 +57,14 @@ class Joystick:
             return results[0]
         else:
             return results
-
-    def deadband_axis(self, axis, deadband, scale=1.0):
+    
+    def get_axis(self, axis):
         index = self.get_index(self.axis_mapping, axis)
         value = self.curr_msg.axes[index]
+        return value
+
+    def deadband_axis(self, axis, deadband, scale=1.0):
+        value = self.get_axis(axis)
         if abs(value) < deadband:
             return 0.0
         joy_val = abs(value) - deadband

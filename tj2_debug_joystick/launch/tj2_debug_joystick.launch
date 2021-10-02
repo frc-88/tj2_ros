@@ -17,9 +17,9 @@
         <node name="tj2_debug_joystick" pkg="tj2_debug_joystick" type="tj2_debug_joystick_node.py" output="screen" required="false">
             <param name="deadzone_joy_val" value="$(arg deadzone_val)" />
             <param name="joystick_topic" value="/joy_throttled" />
-            <param name="linear_x_scale" value="0.69" />
-            <param name="linear_y_scale" value="0.69" />
-            <param name="angular_scale" value="6.0" />
+            <param name="linear_x_scale" value="4.48" />
+            <param name="linear_y_scale" value="4.48" />
+            <param name="angular_scale" value="6.14" />
 
             <rosparam param="button_mapping" file="$(find tj2_debug_joystick)/config/button_mapping.yaml" command="load"/>
             <rosparam param="axis_mapping" file="$(find tj2_debug_joystick)/config/axis_mapping.yaml" command="load"/>

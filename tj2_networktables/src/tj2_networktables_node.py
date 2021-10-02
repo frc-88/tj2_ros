@@ -139,6 +139,7 @@ class TJ2NetworkTables:
         rospy.loginfo("%s init complete" % self.node_name)
 
     def run(self):
+        self.nt.putBoolean(self.command_table_key + "/isFieldCentric", False)
         # self.wait_for_time()
 
         while not rospy.is_shutdown():
@@ -182,7 +183,6 @@ class TJ2NetworkTables:
         self.nt.putNumber(self.command_table_key + "/translationSpeed", self.robot_vel.magnitude() / self.remote_linear_units_conversion)
         self.nt.putNumber(self.command_table_key + "/translationDirection", math.degrees(self.robot_vel.heading() % (2 * math.pi)))
         self.nt.putNumber(self.command_table_key + "/rotationVelocity", math.degrees(self.robot_vel.theta))
-        self.nt.putBoolean(self.command_table_key + "/isFieldCentric", False)
 
     def publish_driver_station(self):
         is_fms_attached = self.nt.getEntry(self.driver_station_table_key + "/isFMSAttached").getBoolean(False)
@@ -197,17 +197,34 @@ class TJ2NetworkTables:
 
     def publish_modules(self):
         for module_num in range(self.num_modules):
-            wheel_velocity = self.nt.getEntry(self.module_table_key + "/%s/wheelVelocity" % module_num).getDouble(0.0)
-            wheel_velocity *= self.remote_linear_units_conversion
-            azimuth = self.nt.getEntry(self.module_table_key + "/%s/azimuthPosition" % module_num).getDouble(0.0)
-            azimuth = math.radians(azimuth)
-            
             module_state = self.module_states[module_num]
-            module_state.velocity = wheel_velocity
-            module_state.azimuth = azimuth
+
+            module_state.wheel_velocity = self.remote_linear_units_conversion * self.get_module_entry(module_num, "wheelVelocity")
+            module_state.azimuth_position = math.radians(self.get_module_entry(module_num, "azimuthPosition"))
+            module_state.azimuth_velocity = math.radians(self.get_module_entry(module_num, "azimuthVelocity"))
+
+            module_state.command_wheel_velocity = self.remote_linear_units_conversion * self.get_module_entry(module_num, "commandWheelVelocity")
+            module_state.command_azimuth_position = math.radians(self.get_module_entry(module_num, "commandAzimuthPosition"))
+            module_state.command_azimuth_velocity = math.radians(self.get_module_entry(module_num, "commandAzimuthVelocity"))
+
+            module_state.target_wheel_velocity = self.remote_linear_units_conversion * self.get_module_entry(module_num, "targetWheelVelocity")
+            module_state.target_azimuth_position = math.radians(self.get_module_entry(module_num, "targetAzimuthPosition"))
+            module_state.target_azimuth_velocity = math.radians(self.get_module_entry(module_num, "targetAzimuthVelocity"))
+
+            module_state.location_x = self.remote_linear_units_conversion * self.get_module_entry(module_num, "locationX")
+            module_state.location_y = self.remote_linear_units_conversion * self.get_module_entry(module_num, "locationY")
+
+            for index, module_motor in enumerate((module_state.motor_lo_0, module_state.motor_hi_1)):
+                module_motor.velocity = self.get_module_entry(module_num, "motor%s/%s" % (str(index), "velocity"))
+                module_motor.command_velocity = self.get_module_entry(module_num, "motor%s/%s" % (str(index), "commandVelocity"))
+                module_motor.command_voltage = self.get_module_entry(module_num, "motor%s/%s" % (str(index), "commandVoltage"))
+                module_motor.current_draw = self.get_module_entry(module_num, "motor%s/%s" % (str(index), "currentDraw"))
 
             publisher = self.module_publishers[module_num]
             publisher.publish(module_state)
+        
+    def get_module_entry(self, module_num, key):
+        return self.nt.getEntry("/".join((self.module_table_key, str(module_num), str(key)))).getDouble(0.0)
 
     def publish_odom(self):
         timestamp = self.get_remote_time_as_local()
