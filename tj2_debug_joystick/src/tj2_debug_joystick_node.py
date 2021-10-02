@@ -35,10 +35,14 @@ class TJ2DebugJoystick:
         self.linear_y_axis = rospy.get_param("~linear_y_axis", "left/Y").split("/")
         self.angular_axis = rospy.get_param("~angular_axis", "right/X").split("/")
         self.idle_axis = rospy.get_param("~idle_axis", "brake/L").split("/")
+        self.speed_selector_axis = rospy.get_param("~speed_selector_axis", "dpad/vertical").split("/")
 
-        self.linear_x_scale = rospy.get_param("~linear_x_scale", 1.0)
-        self.linear_y_scale = rospy.get_param("~linear_y_scale", 1.0)
-        self.angular_scale = rospy.get_param("~angular_scale", 1.0)
+        self.linear_x_scale_max = rospy.get_param("~linear_x_scale", 1.0)
+        self.linear_y_scale_max = rospy.get_param("~linear_y_scale", 1.0)
+        self.angular_scale_max = rospy.get_param("~angular_scale", 1.0)
+        self.linear_x_scale = self.linear_x_scale_max
+        self.linear_y_scale = self.linear_y_scale_max
+        self.angular_scale = self.angular_scale_max
 
         self.deadzone_joy_val = rospy.get_param("~deadzone_joy_val", 0.05)
         self.joystick_topic = rospy.get_param("~joystick_topic", "/joy")
@@ -47,6 +51,10 @@ class TJ2DebugJoystick:
         assert self.button_mapping is not None
         self.axis_mapping = rospy.get_param("~axis_mapping", None)
         assert self.axis_mapping is not None
+
+        self.speed_mode = 0
+        self.speed_multipliers = [0.1, 0.25, 0.5, 1.0]
+        self.set_speed_mode(0)
 
         # services
         self.set_robot_mode = rospy.ServiceProxy("robot_mode", SetRobotMode)
@@ -77,7 +85,25 @@ class TJ2DebugJoystick:
 
             if self.set_twist(linear_x_val, linear_y_val, angular_val):
                 self.cmd_vel_pub.publish(self.twist_command)
+        
+        if self.joystick.did_axis_change(self.speed_selector_axis):
+            axis_value = self.joystick.get_axis(self.speed_selector_axis)
+            if axis_value > 0:
+                self.set_speed_mode(self.speed_mode + 1)
+            elif axis_value < 0:
+                self.set_speed_mode(self.speed_mode - 1)
 
+    def set_speed_mode(self, value):
+        self.speed_mode = value
+        if self.speed_mode < 0:
+            self.speed_mode = 0
+        elif self.speed_mode >= len(self.speed_multipliers):
+            self.speed_mode = len(self.speed_multipliers) - 1
+        rospy.loginfo("Set speed mode to %s" % self.speed_mode)
+        multiplier = self.speed_multipliers[self.speed_mode]
+        self.linear_x_scale = multiplier * self.linear_x_scale_max
+        self.linear_y_scale = multiplier * self.linear_y_scale_max
+        self.angular_scale = multiplier * self.angular_scale_max
 
     def set_twist(self, linear_x_val, linear_y_val, angular_val):
         if (self.twist_command.linear.x != linear_x_val or 
