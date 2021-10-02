@@ -9,10 +9,10 @@ while true; do
     if [ ! -z ${HOST_MACHINE} ]; then
         break
     fi
-    HOST_MACHINE=`ifconfig wlan0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
-    if [ ! -z ${HOST_MACHINE} ]; then
-        break
-    fi
+    # HOST_MACHINE=`ifconfig wlan0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
+    # if [ ! -z ${HOST_MACHINE} ]; then
+    #     break
+    # fi
     sleep 0.5
     if [ $SECONDS -gt $stop_time ]; then
         break
