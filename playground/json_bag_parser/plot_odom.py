@@ -27,7 +27,7 @@ def main():
     print("Press Q in the plot window then ^C in the terminal window to exit")
     path = sys.argv[1]
 
-    simulate_real_time = False
+    simulate_real_time = True
 
     plt.ion()
     fig = plt.figure(constrained_layout=True, figsize=(10.0, 10.0))
@@ -58,7 +58,10 @@ def main():
                     real_start_time = time.time()
                 sim_time = timestamp - sim_start_time
                 real_time = time.time() - real_start_time
-
+                
+                if simulate_real_time and sim_time - real_time < 0.0:
+                    continue
+                
                 if x_limits is None or y_limits is None:
                     x_limits = [0.0, 0.0]
                     y_limits = [0.0, 0.0]
