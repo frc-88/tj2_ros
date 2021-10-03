@@ -58,6 +58,7 @@ class TJ2DebugJoystick:
 
         # services
         self.set_robot_mode = rospy.ServiceProxy("robot_mode", SetRobotMode)
+        self.current_mode = None
 
         # publishing topics
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
@@ -72,10 +73,10 @@ class TJ2DebugJoystick:
     def joystick_msg_callback(self, msg):
         self.joystick.update(msg)
         
-        if all(self.joystick.check_list(self.joystick.did_button_down, ("triggers", "L1"), ("menu", "Start"))):
-            rospy.loginfo(self.set_robot_mode(RobotStatus.TELEOP))
+        if all(self.joystick.check_list(self.joystick.is_button_down, ("triggers", "L1"), ("menu", "Start"))):
+            self.set_mode(RobotStatus.TELEOP)
         elif any(self.joystick.check_list(self.joystick.did_button_down, ("triggers", "L1"), ("triggers", "R1"))):
-            rospy.loginfo(self.set_robot_mode(RobotStatus.DISABLED))
+            self.set_mode(RobotStatus.DISABLED)
 
         if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis, self.idle_axis)):
             self.disable_timer = rospy.Time.now()
@@ -92,6 +93,11 @@ class TJ2DebugJoystick:
                 self.set_speed_mode(self.speed_mode + 1)
             elif axis_value < 0:
                 self.set_speed_mode(self.speed_mode - 1)
+
+    def set_mode(self, mode):
+        if self.current_mode == mode:
+            return
+        rospy.loginfo("Set robot mode to %s. %s" % (self.current_mode, self.set_robot_mode(mode)))
 
     def set_speed_mode(self, value):
         self.speed_mode = value

@@ -83,6 +83,7 @@ private:
     string _imu_table_key;
     string _driver_station_table_key;
     string _client_table_key;
+    string _set_odom_table_key;
 
     NT_Entry _remote_timestamp_entry;
 
