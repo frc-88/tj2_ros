@@ -40,6 +40,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _imu_table_key = "gyro/";
     _driver_station_table_key = "DriverStation/";
     _client_table_key = "ROS/";
+    _set_odom_table_key = _client_table_key + "setOdom/";
 
     _remote_timestamp_entry = nt::GetEntry(_nt, _base_key + "timestamp");
 
@@ -76,6 +77,15 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _fms_attached_entry = nt::GetEntry(_nt, _base_key + _driver_station_table_key + "isFMSAttached");
     _is_autonomous_entry = nt::GetEntry(_nt, _base_key + _driver_station_table_key + "isAutonomous");
     _match_time_entry = nt::GetEntry(_nt, _base_key + _driver_station_table_key + "getMatchTime");
+
+    _set_odom_time_entry = nt::GetEntry(_nt, _base_key + _set_odom_table_key + "timestamp");
+    _set_odom_y_entry = nt::GetEntry(_nt, _base_key + _set_odom_table_key + "xPosition");
+    _set_odom_x_entry = nt::GetEntry(_nt, _base_key + _set_odom_table_key + "yPosition");
+    _set_odom_t_entry = nt::GetEntry(_nt, _base_key + _set_odom_table_key + "theta");
+    nt::SetEntryFlags(_set_odom_time_entry, NT_PERSISTENT);
+    nt::SetEntryFlags(_set_odom_y_entry, NT_PERSISTENT);
+    nt::SetEntryFlags(_set_odom_x_entry, NT_PERSISTENT);
+    nt::SetEntryFlags(_set_odom_t_entry, NT_PERSISTENT);
 
     _prev_remote_timestamp = 0.0;
     _local_start_time = 0.0;
@@ -117,13 +127,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _odom_msg.twist.covariance[21] = 10e-2;
     _odom_msg.twist.covariance[28] = 10e-2;
     _odom_msg.twist.covariance[35] = 10e-2;
-
-    _start_x = 0.0;
-    _start_y = 0.0;
-    _start_theta = 0.0;
-    _odom_x = 0.0;
-    _odom_y = 0.0;
-    _odom_theta = 0.0;
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
     _prev_twist_timestamp = get_local_time();
@@ -256,14 +259,6 @@ void TJ2NetworkTables::publish_odom()
     vx *= _remote_linear_units_conversion;
     vy *= _remote_linear_units_conversion;
     vt *= _remote_angular_units_conversion;
-
-    _odom_x = x;
-    _odom_y = y;
-    _odom_theta = theta;
-
-    x -= _start_x;
-    y -= _start_y;
-    theta -= _start_theta;
 
     tf2::Quaternion quat;
     quat.setRPY(0, 0, theta);
@@ -590,9 +585,10 @@ double TJ2NetworkTables::getBoolean(NT_Entry entry, bool default_value)
 // -----
 bool TJ2NetworkTables::odom_reset_callback(tj2_networktables::OdomReset::Request &req, tj2_networktables::OdomReset::Response &resp)
 {
-    _start_x = _odom_x + req.x;
-    _start_y = _odom_y + req.y;
-    _start_theta = _odom_theta + req.t;
+    nt::SetEntryValue(_set_odom_time_entry, nt::Value::MakeDouble(get_local_time_as_remote()));
+    nt::SetEntryValue(_set_odom_x_entry, nt::Value::MakeDouble(req.x));
+    nt::SetEntryValue(_set_odom_y_entry, nt::Value::MakeDouble(req.y));
+    nt::SetEntryValue(_set_odom_t_entry, nt::Value::MakeDouble(req.t));
     ROS_INFO("Resetting odometry to x: %0.3f, y: %0.3f, theta: %0.3f", req.x, req.y, req.t);
     resp.resp = true;
     return true;

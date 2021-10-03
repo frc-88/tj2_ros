@@ -113,12 +113,14 @@ private:
     NT_Entry _is_autonomous_entry;
     NT_Entry _match_time_entry;
 
+    NT_Entry _set_odom_time_entry;
+    NT_Entry _set_odom_x_entry;
+    NT_Entry _set_odom_y_entry;
+    NT_Entry _set_odom_t_entry;
+
     double _prev_remote_timestamp;
     double _remote_start_time;
     double _local_start_time;
-
-    double _start_x, _start_y, _start_theta;
-    double _odom_x, _odom_y, _odom_theta;
 
     double _prev_twist_timestamp;
     double _twist_cmd_speed, _twist_cmd_dir, _twist_cmd_vt;
