@@ -28,7 +28,10 @@ class TJ2DebugJoystick:
         self.disable_timer = rospy.Time.now()
 
         self.cmd_vel_timeout = rospy.Duration(0.5)
+        self.send_timeout = rospy.Duration(self.cmd_vel_timeout.to_sec() + 1.0)
         self.disable_timeout = rospy.Duration(30.0)
+
+        assert self.send_timeout.to_sec() > self.cmd_vel_timeout.to_sec()
 
         # parameters from launch file
         self.linear_x_axis = rospy.get_param("~linear_x_axis", "left/X").split("/")
@@ -58,7 +61,7 @@ class TJ2DebugJoystick:
 
         # services
         self.set_robot_mode = rospy.ServiceProxy("robot_mode", SetRobotMode)
-        self.current_mode = None
+        self.last_set_mode_time = rospy.Time.now()
 
         # publishing topics
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
@@ -71,6 +74,17 @@ class TJ2DebugJoystick:
         rospy.loginfo("Debug joystick is ready!")
 
     def joystick_msg_callback(self, msg):
+        """
+        If the joystick disconnects, this callback will stop being called.
+        If a non-zero twist is set, the command timer will be reset
+            This way, if the joystick is idle, it will stop publishing after send timer is exceeded
+        If the command timer is exceeded in the main loop, the twist command will be set to zero
+            If the joystick disconnects (i.e. this callback stops being called), the twist command will
+            quickly be set to zero
+        If the send timer is exceeded in the main loop, this node will stop publishing twist
+        Note: the idle axis (one of the triggers) can be pressed to keep the command timer active so the robot doesn't disable itself
+        """
+
         self.joystick.update(msg)
         
         if all(self.joystick.check_list(self.joystick.is_button_down, ("triggers", "L1"), ("menu", "Start"))):
@@ -78,14 +92,19 @@ class TJ2DebugJoystick:
         elif any(self.joystick.check_list(self.joystick.did_button_down, ("triggers", "L1"), ("triggers", "R1"))):
             self.set_mode(RobotStatus.DISABLED)
 
-        if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis, self.idle_axis)):
+        if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis)):
             self.disable_timer = rospy.Time.now()
             linear_x_val = self.joystick.deadband_axis(self.linear_x_axis, self.deadzone_joy_val, self.linear_x_scale)
             linear_y_val = self.joystick.deadband_axis(self.linear_y_axis, self.deadzone_joy_val, self.linear_y_scale)
             angular_val = self.joystick.deadband_axis(self.angular_axis, self.deadzone_joy_val, self.angular_scale)
 
-            if self.set_twist(linear_x_val, linear_y_val, angular_val):
-                self.cmd_vel_pub.publish(self.twist_command)
+            self.set_twist(linear_x_val, linear_y_val, angular_val)
+        
+        if (self.joystick.did_axis_change(self.idle_axis) or
+                self.twist_command.linear.x != 0.0 or 
+                self.twist_command.linear.y != 0.0 or 
+                self.twist_command.angular.z != 0.0):
+            self.cmd_vel_timer = rospy.Time.now()
         
         if self.joystick.did_axis_change(self.speed_selector_axis):
             axis_value = self.joystick.get_axis(self.speed_selector_axis)
@@ -95,9 +114,11 @@ class TJ2DebugJoystick:
                 self.set_speed_mode(self.speed_mode - 1)
 
     def set_mode(self, mode):
-        if self.current_mode == mode:
+        now = rospy.Time.now()
+        if now - self.last_set_mode_time < rospy.Duration(1.0):
             return
-        rospy.loginfo("Set robot mode to %s. %s" % (self.current_mode, self.set_robot_mode(mode)))
+        self.last_set_mode_time = now
+        rospy.loginfo("Set robot mode to %s. %s" % (mode, self.set_robot_mode(mode)))
 
     def set_speed_mode(self, value):
         self.speed_mode = value
@@ -118,23 +139,32 @@ class TJ2DebugJoystick:
             self.twist_command.linear.x = linear_x_val
             self.twist_command.linear.y = linear_y_val
             self.twist_command.angular.z = angular_val
-            self.cmd_vel_timer = rospy.Time.now()
-            return True
-        else:
-            return rospy.Time.now() - self.cmd_vel_timer < self.cmd_vel_timeout
+    
+    def set_twist_zero(self):
+        self.twist_command.linear.x = 0.0
+        self.twist_command.linear.y = 0.0
+        self.twist_command.angular.z = 0.0
 
     def run(self):
-        did_disable_timer_expire = False
+        # did_disable_timer_expire = False
+        # while not rospy.is_shutdown():
+        #     # rospy.loginfo(rospy.Time.now() - self.disable_timer, self.disable_timeout, did_disable_timer_expire)
+        #     if rospy.Time.now() - self.disable_timer > self.disable_timeout:
+        #         if not did_disable_timer_expire:
+        #             rospy.loginfo(self.set_robot_mode(RobotStatus.DISABLED))
+        #             did_disable_timer_expire = True
+        #     else:
+        #         did_disable_timer_expire = False     
+        #     rospy.sleep(0.1)
+
+        clock_rate = rospy.Rate(50.0)
         while not rospy.is_shutdown():
-            # rospy.loginfo(rospy.Time.now() - self.disable_timer, self.disable_timeout, did_disable_timer_expire)
-            if rospy.Time.now() - self.disable_timer > self.disable_timeout:
-                if not did_disable_timer_expire:
-                    rospy.loginfo(self.set_robot_mode(RobotStatus.DISABLED))
-                    did_disable_timer_expire = True
-            else:
-                did_disable_timer_expire = False
-                
-            rospy.sleep(0.1)
+            dt = rospy.Time.now() - self.cmd_vel_timer
+            if dt > self.cmd_vel_timeout:
+                self.set_twist_zero()
+            if dt < self.send_timeout:
+                self.cmd_vel_pub.publish(self.twist_command)
+            clock_rate.sleep()
 
         # rospy.spin()
 

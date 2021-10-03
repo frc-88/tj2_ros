@@ -211,11 +211,11 @@ void TJ2NetworkTables::get_ping_value()
 {
     auto ping_val = nt::GetEntryValue(_return_ping_entry);
     if (!ping_val) {
-        ROS_WARN("ping return value doesn't exist");
+        ROS_WARN_THROTTLE(5, "ping return value doesn't exist");
         return;
     }
     if (!ping_val->IsDouble()) {
-        ROS_WARN("ping return value is not a double");
+        ROS_WARN_THROTTLE(5, "ping return value is not a double");
         return;
     }
     double ping = ping_val->GetDouble();
@@ -237,14 +237,13 @@ void TJ2NetworkTables::publish_odom()
     auto vt_val = nt::GetEntryValue(_vt_entry);
 
     if (!(x_val && y_val && theta_val && vx_val && vy_val && vt_val)) {
-        ROS_WARN("one of the odom values doesn't exist");
+        ROS_WARN_THROTTLE(5, "one of the odom values doesn't exist");
         return;
     }
     if (!(x_val->IsDouble() && y_val->IsDouble() && theta_val->IsDouble() && vx_val->IsDouble() && vy_val->IsDouble() && vt_val->IsDouble())) {
-        ROS_WARN("one of the odom values is not a double");
+        ROS_WARN_THROTTLE(5, "one of the odom values is not a double");
         return;
     }
-    ros::Time now = ros::Time::now();
 
     double x = x_val->GetDouble();
     double y = y_val->GetDouble();
@@ -265,6 +264,7 @@ void TJ2NetworkTables::publish_odom()
 
     geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
 
+    ros::Time now = ros::Time::now();
     _odom_msg.header.stamp = now;
     _odom_msg.pose.pose.position.x = x;
     _odom_msg.pose.pose.position.y = y;
@@ -273,8 +273,6 @@ void TJ2NetworkTables::publish_odom()
     _odom_msg.twist.twist.linear.x = vx;
     _odom_msg.twist.twist.linear.y = vy;
     _odom_msg.twist.twist.angular.z = vt;
-
-    _odom_pub.publish(_odom_msg);
 
     if (_publish_odom_tf)
     {
@@ -289,6 +287,8 @@ void TJ2NetworkTables::publish_odom()
 
         _tf_broadcaster.sendTransform(tf_stamped);
     }
+    
+    _odom_pub.publish(_odom_msg);
 }
 
 
@@ -504,11 +504,11 @@ double TJ2NetworkTables::get_remote_time() {
     // Gets RoboRIO's timestamp based on the networktables entry in seconds
     auto timestamp_val = nt::GetEntryValue(_remote_timestamp_entry);
     if (!timestamp_val) {
-        ROS_WARN("Remote timestamp entry doesn't exist!");
+        ROS_WARN_THROTTLE(5, "Remote timestamp entry doesn't exist!");
         return 0.0;
     }
     if (!timestamp_val->IsDouble()) {
-        ROS_WARN("Remote timestamp entry is not a double");
+        ROS_WARN_THROTTLE(5, "Remote timestamp entry is not a double");
         return 0.0;
     }
     return timestamp_val->GetDouble() * 1E-6;

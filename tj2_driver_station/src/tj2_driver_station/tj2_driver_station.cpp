@@ -7,16 +7,22 @@ TJ2DriverStation::TJ2DriverStation(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~frc_robot_address", _frc_robot_address, "10.0.88.2");
     ros::param::param<int>("~start_mode", _start_mode, 0);
     ros::param::param<double>("~alive_time_threshold", _alive_time_threshold_param, 5.0);
+    ros::param::param<double>("~disable_time_threshold", _disable_time_threshold_param, 10.0);
     if (_start_mode == NOMODE) {
         _start_mode = DISABLED;
     }
     _alive_time_threshold = ros::Duration(_alive_time_threshold_param);
+    _disable_time_threshold = ros::Duration(_disable_time_threshold_param);
     _heartbeat_time = ros::Time(0);
     _current_mode = NOMODE;
+
+    _twist_heartbeat_time = ros::Time::now();
 
     status_pub = nh.advertise<tj2_driver_station::RobotStatus>("robot_status", 20);
 
     robot_mode_srv = nh.advertiseService("robot_mode", &TJ2DriverStation::robot_mode_callback, this);
+
+    twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2DriverStation::twist_callback, this);
 
     _frc_protocol = DS_GetProtocolFRC_2020();
 
@@ -48,6 +54,16 @@ bool TJ2DriverStation::robot_mode_callback(tj2_driver_station::SetRobotMode::Req
     return true;
 }
 
+void TJ2DriverStation::twist_callback(const geometry_msgs::TwistConstPtr& msg) {
+    /*
+    If a non-zero twist command is set, reset the twist timer.
+    If the twist timer is exceeded in the main loop, disable the robot
+    */
+    if (msg->linear.x != 0.0 || msg->linear.y != 0.0 || msg->angular.z != 0.0) {
+        _twist_heartbeat_time = ros::Time::now();
+    }
+}
+
 bool TJ2DriverStation::set_mode(RobotMode mode)
 {
     if (!_is_robot_connected) {
@@ -73,14 +89,17 @@ bool TJ2DriverStation::set_mode(RobotMode mode)
         case TELEOP:
             DS_SetRobotEnabled(1);
             DS_SetControlMode(DS_CONTROL_TELEOPERATED);
+            _twist_heartbeat_time = ros::Time::now();
             break;
         case AUTONOMOUS:
             DS_SetRobotEnabled(1);
             DS_SetControlMode(DS_CONTROL_AUTONOMOUS);
+            _twist_heartbeat_time = ros::Time::now();
             break;
         case TEST:
             DS_SetRobotEnabled(1);
             DS_SetControlMode(DS_CONTROL_TEST);
+            _twist_heartbeat_time = ros::Time::now();
             break;
         default:
             ROS_WARN("Invalid mode: %d", mode);
@@ -161,6 +180,16 @@ bool TJ2DriverStation::is_connected()
     return _is_robot_connected;
 }
 
+void TJ2DriverStation::check_disable_timeout()
+{
+    if (is_connected() && ros::Time::now() - _twist_heartbeat_time > _disable_time_threshold) {
+        ROS_INFO("No twist commands received for %0.1fs. Disabling robot", _disable_time_threshold.toSec());
+        _requested_mode = DISABLED;
+        set_mode(DISABLED);
+    }
+}
+
+
 void TJ2DriverStation::init()
 {
     if (DS_Initialized()) {
@@ -209,6 +238,7 @@ int TJ2DriverStation::run()
     {
         ros::spinOnce();
         process_events();
+        check_disable_timeout();
         DS_Sleep(20);
         
         if (is_connected()) {
