@@ -78,6 +78,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _match_time_entry = nt::GetEntry(_nt, _base_key + _driver_station_table_key + "getMatchTime");
 
     _prev_remote_timestamp = 0.0;
+    _local_start_time = 0.0;
+    _remote_start_time = 0.0;
 
     _ping_pub = nh.advertise<std_msgs::Float64>("ping", 50);
     
@@ -255,13 +257,13 @@ void TJ2NetworkTables::publish_odom()
     vy *= _remote_linear_units_conversion;
     vt *= _remote_angular_units_conversion;
 
-    x -= _start_x;
-    y -= _start_y;
-    theta -= _start_theta;
-
     _odom_x = x;
     _odom_y = y;
     _odom_theta = theta;
+
+    x -= _start_x;
+    y -= _start_y;
+    theta -= _start_theta;
 
     tf2::Quaternion quat;
     quat.setRPY(0, 0, theta);

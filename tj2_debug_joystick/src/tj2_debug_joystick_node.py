@@ -72,9 +72,9 @@ class TJ2DebugJoystick:
     def joystick_msg_callback(self, msg):
         self.joystick.update(msg)
         
-        if self.joystick.did_button_down(("triggers", "L1")):
+        if all(self.joystick.check_list(self.joystick.did_button_down, ("triggers", "L1"), ("menu", "Start"))):
             rospy.loginfo(self.set_robot_mode(RobotStatus.TELEOP))
-        elif self.joystick.did_button_down(("triggers", "R1")):
+        elif any(self.joystick.check_list(self.joystick.did_button_down, ("triggers", "L1"), ("triggers", "R1"))):
             rospy.loginfo(self.set_robot_mode(RobotStatus.DISABLED))
 
         if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis, self.idle_axis)):
