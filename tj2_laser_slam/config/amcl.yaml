@@ -31,7 +31,7 @@ laser_sigma_hit: 0.2  # 0.2
 laser_lambda_short: 0.1  # 0.1
 
 laser_min_range: 0.25
-laser_max_range: 25.0
+laser_max_range: 12.0
 laser_max_beams: 360
 
 
