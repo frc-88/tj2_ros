@@ -13,6 +13,8 @@
 #include "tj2_driver_station/SetRobotMode.h"
 #include "tj2_driver_station/RobotStatus.h"
 
+#include "geometry_msgs/Twist.h"
+
 using namespace std;
 
 typedef enum {
@@ -33,6 +35,7 @@ private:
     string _frc_robot_address;
     int _start_mode;
     double _alive_time_threshold_param;
+    double _disable_time_threshold_param;
 
     // Object properties
     bool _is_robot_connected;
@@ -44,7 +47,11 @@ private:
     ros::Duration _alive_time_threshold;
     ros::Time _heartbeat_time;
 
+    ros::Duration _disable_time_threshold;
+    ros::Time _twist_heartbeat_time;
+
     // Subscribers
+    ros::Subscriber twist_sub;
 
     // Publishers
     ros::Publisher status_pub;
@@ -54,6 +61,7 @@ private:
 
     // Callbacks
     bool robot_mode_callback(tj2_driver_station::SetRobotMode::Request &req, tj2_driver_station::SetRobotMode::Response &resp);
+    void twist_callback(const geometry_msgs::TwistConstPtr& msg);
 
     void init();
     void close();
@@ -62,6 +70,7 @@ private:
     void wait_for_connection();
     void process_events();
     bool set_mode(RobotMode mode);
+    void check_disable_timeout();
 
 public:
     TJ2DriverStation(ros::NodeHandle* nodehandle);
