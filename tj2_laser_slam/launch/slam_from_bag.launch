@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <param name="use_sim_time" value="true"/>
+    <arg name="map_name" default="map-{date}"/>
     <arg name="bag_name" default=""/>
+    <arg name="mode" default="mapping"/> <!-- "mapping", "localize", or "idle" -->
     <node pkg="rosbag" type="play" name="player" output="screen" args="--pause --clock $(find tj2_laser_slam)/bags/$(arg bag_name)"/>
 
     <node pkg="tj2_laser_slam" type="odom_bag_publisher.py" name="odom_bag_publisher" output="screen">
@@ -12,7 +14,8 @@
     <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_laser" args="-0.0553 0.116 0.253 0 0 1 0 base_footprint laser 33" />
 
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
-        <arg name="mode" value="mapping"/>
+        <arg name="mode" value="$(arg mode)"/>
+        <arg name="map_name" value="$(arg map_name)"/>
     </include>
     
 </launch>
