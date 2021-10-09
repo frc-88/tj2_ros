@@ -118,6 +118,7 @@ class TJ2DebugJoystick:
         if now - self.last_set_mode_time < rospy.Duration(1.0):
             return
         self.last_set_mode_time = now
+        self.set_twist_zero()
         rospy.loginfo("Set robot mode to %s. %s" % (mode, self.set_robot_mode(mode)))
 
     def set_speed_mode(self, value):

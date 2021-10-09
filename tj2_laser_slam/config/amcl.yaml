@@ -1,6 +1,6 @@
 # Publish scans from best pose at a max of 10 Hz
 odom_model_type: omni-corrected
-transform_tolerance: 0.1
+transform_tolerance: 1.0
 gui_publish_rate: 0.2
 min_particles: 100
 max_particles: 5000
