@@ -12,8 +12,6 @@
 #include "std_msgs/Float64.h"
 #include "std_msgs/Bool.h"
 #include "sensor_msgs/Imu.h"
-#include "tj2_networktables/SwerveModule.h"
-#include "tj2_networktables/SwerveMotor.h"
 #include "tj2_networktables/OdomReset.h"
 
 #include "ntcore.h"
@@ -22,35 +20,6 @@ using namespace std;
 
 // NT callbacks
 void ping_callback(void* data, const NT_EntryNotification* event);
-
-typedef struct MotorEntries
-{
-    NT_Entry velocity;
-    NT_Entry command_velocity;
-    NT_Entry command_voltage;
-    NT_Entry current_draw;
-    
-} MotorEntries_t;
-
-typedef struct ModuleEntries
-{
-    NT_Entry wheel_velocity;
-    NT_Entry azimuth_position;
-    NT_Entry azimuth_velocity;
-    NT_Entry command_wheel_velocity;
-    NT_Entry command_azimuth_position;
-    NT_Entry command_azimuth_velocity;
-    NT_Entry target_wheel_velocity;
-    NT_Entry target_azimuth_position;
-    NT_Entry target_azimuth_velocity;
-    NT_Entry location_x;
-    NT_Entry location_y;
-
-    MotorEntries_t* motor_lo_0;
-    MotorEntries_t* motor_hi_1;
-    
-} ModuleEntries_t;
-
 
 
 class TJ2NetworkTables {
@@ -71,7 +40,6 @@ private:
     double _min_linear_y_cmd;
     double _min_angular_z_cmd;
     double _zero_epsilon;
-    int _num_modules;
     bool _fms_flag_ignored;
 
     // Properties
@@ -79,7 +47,6 @@ private:
     string _base_key;
     string _odom_table_key;
     string _command_table_key;
-    string _module_table_key;
     string _imu_table_key;
     string _driver_station_table_key;
     string _client_table_key;
@@ -108,8 +75,6 @@ private:
     NT_Entry _imu_ax_entry;
     NT_Entry _imu_ay_entry;
 
-    vector<ModuleEntries_t*>* _module_entries;
-
     NT_Entry _fms_attached_entry;
     NT_Entry _is_autonomous_entry;
     NT_Entry _match_time_entry;
@@ -131,13 +96,11 @@ private:
     // Messages
     nav_msgs::Odometry _odom_msg;
     sensor_msgs::Imu _imu_msg;
-    vector<tj2_networktables::SwerveModule*>* _module_msgs;
 
     // Publishers
     ros::Publisher _odom_pub;
     ros::Publisher _ping_pub;
     ros::Publisher _imu_pub;
-    vector<ros::Publisher>* _module_pubs;
     tf2_ros::TransformBroadcaster _tf_broadcaster;
     ros::Publisher _match_time_pub;
     ros::Publisher _is_autonomous_pub;
@@ -161,7 +124,6 @@ private:
     void publish_odom();
     void publish_cmd_vel(bool ignore_timeout = false);
     void publish_imu();
-    void publish_modules();
     void publish_fms();
 
     // time methods
@@ -171,11 +133,6 @@ private:
     double get_local_time_as_remote();
     double get_remote_time_as_local();
     void init_remote_time();
-
-    // Module methods
-    void init_module_entries(ModuleEntries_t* entries, int module_index);
-    void init_motor_entries(MotorEntries_t* entries, int module_index, string motor_key);
-    void update_motor_module(tj2_networktables::SwerveMotor& msg, MotorEntries_t* motor_entries);
 
     double getDouble(NT_Entry entry, double default_value = 0.0);
     double getBoolean(NT_Entry entry, bool default_value = false);

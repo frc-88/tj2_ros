@@ -15,7 +15,6 @@ from geometry_msgs.msg import Twist
 from networktables import NetworkTables
 
 from tj2_networktables.srv import OdomReset, OdomResetResponse
-from tj2_networktables.msg import SwerveModule
 
 from tj2_tools.robot_state import Pose2d
 
@@ -32,7 +31,7 @@ class TJ2NetworkTables:
         self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
         
         NetworkTables.initialize(server=self.nt_host)
-        self.nt = NetworkTables.getTable("swerveLibrary")
+        self.nt = NetworkTables.getTable("coprocessor")
 
         self.publish_odom_tf = rospy.get_param("~publish_odom_tf", False)
         self.base_frame_name = rospy.get_param("~base_frame", "base_link")
@@ -46,9 +45,6 @@ class TJ2NetworkTables:
         self.min_linear_y_cmd = rospy.get_param("~min_linear_y_cmd", 0.05)
         self.min_angular_z_cmd = rospy.get_param("~min_angular_z_cmd", 0.1)
         self.zero_epsilon = rospy.get_param("~zero_epsilon", 0.001)
-
-        self.num_modules = rospy.get_param("~num_modules", 4)
-
         self.odom_pub = rospy.Publisher("odom", Odometry, queue_size=50)
         self.odom_msg = Odometry()
         self.odom_msg.header.frame_id = self.odom_frame_name
@@ -93,12 +89,6 @@ class TJ2NetworkTables:
         ]
         self.ping_pub = rospy.Publisher("ping", Float64, queue_size=50)
 
-        self.module_states = []
-        self.module_publishers = []
-        for module_num in range(self.num_modules):
-            self.module_states.append(SwerveModule())
-            self.module_publishers.append(rospy.Publisher("swerve_modules/%s" % module_num, SwerveModule, queue_size=10))
-
         self.match_time_pub = rospy.Publisher("match_time", Float64, queue_size=5)
         self.is_autonomous_pub = rospy.Publisher("is_autonomous", Bool, queue_size=5)
 
@@ -109,7 +99,6 @@ class TJ2NetworkTables:
 
         self.odom_table_key = "odometryState"
         self.command_table_key = "commands"
-        self.module_table_key = "modules"
         self.imu_table_key = "gyro"
         self.driver_station_table_key = "DriverStation"
         self.client_table_key = "ROS"
@@ -148,7 +137,6 @@ class TJ2NetworkTables:
             self.clock_rate.sleep()
             self.update_heartbeat()
             self.publish_odom()
-            self.publish_modules()
             self.publish_driver_station()
             self.publish_cmd_vel()
             self.publish_imu()
@@ -194,37 +182,6 @@ class TJ2NetworkTables:
             self.is_autonomous_pub.publish(is_autonomous)
         else:
             self.match_time_pub.publish(-1.0)
-
-    def publish_modules(self):
-        for module_num in range(self.num_modules):
-            module_state = self.module_states[module_num]
-
-            module_state.wheel_velocity = self.remote_linear_units_conversion * self.get_module_entry(module_num, "wheelVelocity")
-            module_state.azimuth_position = math.radians(self.get_module_entry(module_num, "azimuthPosition"))
-            module_state.azimuth_velocity = math.radians(self.get_module_entry(module_num, "azimuthVelocity"))
-
-            module_state.command_wheel_velocity = self.remote_linear_units_conversion * self.get_module_entry(module_num, "commandWheelVelocity")
-            module_state.command_azimuth_position = math.radians(self.get_module_entry(module_num, "commandAzimuthPosition"))
-            module_state.command_azimuth_velocity = math.radians(self.get_module_entry(module_num, "commandAzimuthVelocity"))
-
-            module_state.target_wheel_velocity = self.remote_linear_units_conversion * self.get_module_entry(module_num, "targetWheelVelocity")
-            module_state.target_azimuth_position = math.radians(self.get_module_entry(module_num, "targetAzimuthPosition"))
-            module_state.target_azimuth_velocity = math.radians(self.get_module_entry(module_num, "targetAzimuthVelocity"))
-
-            module_state.location_x = self.remote_linear_units_conversion * self.get_module_entry(module_num, "locationX")
-            module_state.location_y = self.remote_linear_units_conversion * self.get_module_entry(module_num, "locationY")
-
-            for index, module_motor in enumerate((module_state.motor_lo_0, module_state.motor_hi_1)):
-                module_motor.velocity = self.get_module_entry(module_num, "motor%s/%s" % (str(index), "velocity"))
-                module_motor.command_velocity = self.get_module_entry(module_num, "motor%s/%s" % (str(index), "commandVelocity"))
-                module_motor.command_voltage = self.get_module_entry(module_num, "motor%s/%s" % (str(index), "commandVoltage"))
-                module_motor.current_draw = self.get_module_entry(module_num, "motor%s/%s" % (str(index), "currentDraw"))
-
-            publisher = self.module_publishers[module_num]
-            publisher.publish(module_state)
-        
-    def get_module_entry(self, module_num, key):
-        return self.nt.getEntry("/".join((self.module_table_key, str(module_num), str(key)))).getDouble(0.0)
 
     def publish_odom(self):
         timestamp = self.get_remote_time_as_local()

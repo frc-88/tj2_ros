@@ -18,7 +18,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~min_linear_y_cmd", _min_linear_y_cmd, 0.05);
     ros::param::param<double>("~min_angular_z_cmd", _min_angular_z_cmd, 0.1);
     ros::param::param<double>("~zero_epsilon", _zero_epsilon, 0.001);
-    ros::param::param<int>("~num_modules", _num_modules, 4);
     ros::param::param<bool>("~fms_flag_ignored", _fms_flag_ignored, true);
 
     _nt = nt::GetDefaultInstance();
@@ -33,10 +32,9 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::StartClient(_nt, _nt_host.c_str(), _nt_port);
     ros::Duration(2.0).sleep(); // wait for table to populate
 
-    _base_key = "/swerveLibrary/";
+    _base_key = "/coprocessor/";
     _odom_table_key = "odometryState/";
     _command_table_key = "commands/";
-    _module_table_key = "modules/";
     _imu_table_key = "gyro/";
     _driver_station_table_key = "DriverStation/";
     _client_table_key = "ROS/";
@@ -153,23 +151,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _imu_msg.linear_acceleration_covariance[0] = 100e-5;
     _imu_msg.linear_acceleration_covariance[4] = 100e-5;
     _imu_msg.linear_acceleration_covariance[8] = 100e-5;
-
-    _module_pubs = new vector<ros::Publisher>();
-    _module_msgs = new vector<tj2_networktables::SwerveModule*>();
-    _module_entries = new vector<ModuleEntries_t*>();
-    for (int index = 0; index < _num_modules; index++)
-    {
-        string module_name = std::to_string(index);
-        _module_msgs->push_back(new tj2_networktables::SwerveModule());
-
-        _module_pubs->push_back(
-            nh.advertise<tj2_networktables::SwerveModule>("swerve_modules/" + module_name, 50)
-        );
-
-        ModuleEntries_t* entries = new ModuleEntries_t;
-        init_module_entries(entries, index);
-        _module_entries->push_back(entries);
-    }
 
     _match_time_pub = nh.advertise<std_msgs::Float64>("match_time", 5);
     _is_autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 5);
@@ -394,83 +375,6 @@ void TJ2NetworkTables::publish_imu()
 }
 
 // -----
-// Modules
-// -----
-
-
-void TJ2NetworkTables::init_module_entries(ModuleEntries_t* entries, int module_index)
-{
-    string module_key = std::to_string(module_index) + "/";
-    
-    entries->wheel_velocity = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "wheelVelocity");
-    entries->azimuth_position = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "azimuthPosition");
-    entries->azimuth_velocity = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "azimuthVelocity");
-    
-    entries->command_wheel_velocity = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "commandWheelVelocity");
-    entries->command_azimuth_position = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "commandAzimuthPosition");
-    entries->command_azimuth_velocity = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "commandAzimuthVelocity");
-    
-    entries->target_wheel_velocity = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "targetWheelVelocity");
-    entries->target_azimuth_position = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "targetAzimuthPosition");
-    entries->target_azimuth_velocity = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "targetAzimuthVelocity");
-    
-    entries->location_x = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "locationX");
-    entries->location_y = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + "locationY");
-
-    entries->motor_lo_0 = new MotorEntries_t;
-    entries->motor_hi_1 = new MotorEntries_t;
-    init_motor_entries(entries->motor_lo_0, module_index, "motor0/");
-    init_motor_entries(entries->motor_hi_1, module_index, "motor1/");
-}
-
-void TJ2NetworkTables::init_motor_entries(MotorEntries_t* entries, int module_index, string motor_key)
-{
-    string module_key = std::to_string(module_index) + "/";
-    entries->velocity = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + motor_key + "velocity");
-    entries->command_velocity = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + motor_key + "commandVelocity");
-    entries->command_voltage = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + motor_key + "commandVoltage");
-    entries->current_draw = nt::GetEntry(_nt, _base_key + _module_table_key + module_key + motor_key + "currentDraw");
-}
-
-void TJ2NetworkTables::publish_modules()
-{
-    for (int index = 0; index < _num_modules; index++)
-    {
-        ModuleEntries_t* entries = _module_entries->at(index);
-        tj2_networktables::SwerveModule* msg = _module_msgs->at(index);
-        ros::Publisher pub = _module_pubs->at(index);
-
-        msg->wheel_velocity = _remote_linear_units_conversion * getDouble(entries->wheel_velocity);
-        msg->azimuth_position = _remote_angular_units_conversion * getDouble(entries->azimuth_position);
-        msg->azimuth_velocity = _remote_angular_units_conversion * getDouble(entries->azimuth_velocity);
-        
-        msg->command_wheel_velocity = _remote_linear_units_conversion * getDouble(entries->command_wheel_velocity);
-        msg->command_azimuth_position = _remote_angular_units_conversion * getDouble(entries->command_azimuth_position);
-        msg->command_azimuth_velocity = _remote_angular_units_conversion * getDouble(entries->command_azimuth_velocity);
-        
-        msg->target_wheel_velocity = _remote_linear_units_conversion * getDouble(entries->target_wheel_velocity);
-        msg->target_azimuth_position = _remote_angular_units_conversion * getDouble(entries->target_azimuth_position);
-        msg->target_azimuth_velocity = _remote_angular_units_conversion * getDouble(entries->target_azimuth_velocity);
-
-        msg->location_x = _remote_linear_units_conversion * getDouble(entries->location_x);
-        msg->location_y = _remote_linear_units_conversion * getDouble(entries->location_y);
-        
-        update_motor_module(msg->motor_lo_0, entries->motor_lo_0);
-        update_motor_module(msg->motor_hi_1, entries->motor_hi_1);
-
-        pub.publish(*msg);
-    }
-}
-
-void TJ2NetworkTables::update_motor_module(tj2_networktables::SwerveMotor& msg, MotorEntries_t* motor_entries)
-{
-    msg.velocity = getDouble(motor_entries->velocity);
-    msg.command_velocity = getDouble(motor_entries->command_velocity);
-    msg.command_voltage = getDouble(motor_entries->command_voltage);
-    msg.current_draw = getDouble(motor_entries->current_draw);
-}
-
-// -----
 // FRC FMS
 // -----
 
@@ -602,7 +506,6 @@ void TJ2NetworkTables::loop()
     }
     publish_heartbeat();
     publish_odom();
-    publish_modules();
     publish_cmd_vel();
     publish_imu();
     publish_fms();
