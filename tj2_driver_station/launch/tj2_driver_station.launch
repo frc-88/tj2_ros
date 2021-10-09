@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="start_mode" default="0"/>
+    <arg name="robot_address" default="10.0.88.2"/>
+    <group ns="tj2">
+        <node name="tj2_driver_station" pkg="tj2_driver_station" type="tj2_driver_station_node" output="log" required="false">
+            <!-- TeleOp -->
+            <!-- <param name="start_mode" value="3" /> -->
+            <!-- No mode (disabled) -->
+            <!-- <param name="start_mode" value="0" /> -->
+            <param name="start_mode" value="$(arg start_mode)" />
+            <param name="frc_robot_address" value="$(arg robot_address)" />
+            <param name="disable_time_threshold" value="30.0" />
+            
+        </node>
+    </group>
+</launch>

@@ -81,7 +81,7 @@ class SwerveNetworkTables:
     def log(self):
         if self.writer is None:
             return
-        log_row = [self.x, self.y, self.t, self.vx, self.vy, self.vt]
+        log_row = [self.timestamp, self.x, self.y, self.t, self.vx, self.vy, self.vt]
         for module_num in range(self.num_modules):
             azimuth, wheel_speed = self.module_states.get(module_num)
             log_row.append(module_num)

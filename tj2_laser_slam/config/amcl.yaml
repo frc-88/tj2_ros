@@ -1,6 +1,6 @@
 # Publish scans from best pose at a max of 10 Hz
 odom_model_type: omni-corrected
-transform_tolerance: 0.1
+transform_tolerance: 1.0
 gui_publish_rate: 0.2
 min_particles: 100
 max_particles: 5000
@@ -31,7 +31,7 @@ laser_sigma_hit: 0.2  # 0.2
 laser_lambda_short: 0.1  # 0.1
 
 laser_min_range: 0.25
-laser_max_range: 25.0
+laser_max_range: 12.0
 laser_max_beams: 360
 
 

@@ -1,0 +1,10 @@
+tj2_laser_slam/maps
+tj2_laser_slam/bags/
+tj2_camera/bags/
+.git
+playground/swerve-kinematics/data
+tj2_tools/build/
+tj2_tools/dist/
+tj2_tools/tj2_tools.egg-info/
+.vscode/
+__pycache__

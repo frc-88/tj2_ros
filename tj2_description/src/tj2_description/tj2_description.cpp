@@ -31,8 +31,8 @@ void TJ2Description::module_callback(const tj2_networktables::SwerveModuleConstP
 {
     ros::Time now = ros::Time::now();
 
-    double azimuth = msg->azimuth;
-    if (msg->velocity < 0) {
+    double azimuth = msg->azimuth_position;
+    if (msg->wheel_velocity > 0) {
         azimuth -= M_PI;
     }
     

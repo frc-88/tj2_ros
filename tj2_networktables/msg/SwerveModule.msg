@@ -1,2 +1,13 @@
-float64 velocity
-float64 azimuth
+float64 wheel_velocity
+float64 azimuth_position
+float64 azimuth_velocity
+float64 command_wheel_velocity
+float64 command_azimuth_position
+float64 command_azimuth_velocity
+float64 target_wheel_velocity
+float64 target_azimuth_position
+float64 target_azimuth_velocity
+float64 location_x
+float64 location_y
+tj2_networktables/SwerveMotor motor_lo_0
+tj2_networktables/SwerveMotor motor_hi_1

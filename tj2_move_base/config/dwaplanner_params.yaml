@@ -7,31 +7,31 @@
 ## Robot Configuration Parameters ##
 
 # The x acceleration limit of the robot in meters/sec^2
-acc_lim_x: 0.5
+acc_lim_x: 10.0
 
 # The y acceleration limit of the robot in meters/sec^2
-acc_lim_y: 0.0
+acc_lim_y: 10.0
 
 # The rotational acceleration limit of the robot in radians/sec^2
-acc_lim_th: 0.5
+acc_lim_th: 3.0
 
 # The absolute value of the maximum translational velocity for the robot in m/s
-max_vel_trans: 1.0  # max speed 4.48 m/s
+max_vel_trans: 2.0  # max speed 4.48 m/s
 
 # The absolute value of the minimum translational velocity for the robot in m/s
 min_vel_trans: 0.0  # 0.05
 
 # The maximum x velocity for the robot in m/s.
-max_vel_x: 1.0  # 4.48
+max_vel_x: 2.0  # 4.48
 
 # The minimum x velocity for the robot in m/s, negative for backwards motion.
-min_vel_x: -0.5  # -0.15
+min_vel_x: -2.0  # -0.15
 
 # The maximum y velocity for the robot in m/s
-max_vel_y: 0.0
+max_vel_y: 2.0
 
 # The minimum y velocity for the robot in m/s
-min_vel_y: 0.0
+min_vel_y: -2.0
 
 # The absolute value of the maximum rotational velocity for the robot in rad/s
 max_vel_theta: 6.14  # 6.14
@@ -43,10 +43,10 @@ min_vel_theta: 0.3  # 0.15
 ## Goal Tolerance Parameters ##
 
 # The tolerance in radians for the controller in yaw/rotation when achieving its goal
-yaw_goal_tolerance: 0.1
+yaw_goal_tolerance: 0.25
 
 # The tolerance in meters for the controller in the x & y distance when achieving a goal
-xy_goal_tolerance: 0.03
+xy_goal_tolerance: 0.1
 
 # If goal tolerance is latched, if the robot ever reaches the goal xy location
 # it will simply rotate in place, even if it ends up outside the goal
@@ -57,16 +57,16 @@ latch_xy_goal_tolerance: true
 ## Forward Simulation Parameters ##
 
 # The amount of time to forward-simulate trajectories in seconds
-sim_time: 1.0  # 1.7
+sim_time: 0.5  # 1.7
 
 # The step size, in meters, to take between points on a given trajectory
-sim_granularity: 0.075  # 0.025
+sim_granularity: 0.025  # 0.025
 
 # The number of samples to use when exploring the x velocity space
-vx_samples: 10  # 3
+vx_samples: 5  # 3
 
 # The number of samples to use when exploring the y velocity space
-vy_samples: 0  # 10
+vy_samples: 5  # 10
 
 # The number of samples to use when exploring the theta velocity space
 vth_samples: 20  # 20
