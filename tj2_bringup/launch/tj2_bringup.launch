@@ -16,6 +16,6 @@
     <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="localize"/>
-        <arg name="map_name" value="map-XXXX"/>
+        <arg name="map_name" value="map-2021-10-09T13-37-04--649312"/>
     </include>
 </launch>

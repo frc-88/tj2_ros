@@ -102,6 +102,7 @@ class TJ2NetworkTables:
         self.imu_table_key = "gyro"
         self.driver_station_table_key = "DriverStation"
         self.client_table_key = "ROS"
+        self.set_odom_key = self.client_table_key + "/setOdom"
 
         self.fms_flag_ignored = True
 
@@ -321,10 +322,15 @@ class TJ2NetworkTables:
         return remote_timestamp - self.remote_start_time + self.local_start_time
 
     def odom_reset_callback(self, req):
-        self.start_pose = Pose2d.from_state(self.robot_pose)
-        self.start_pose.x += req.x
-        self.start_pose.y += req.y
-        self.start_pose.theta += req.t
+        # self.start_pose = Pose2d.from_state(self.robot_pose)
+        # self.start_pose.x += req.x
+        # self.start_pose.y += req.y
+        # self.start_pose.theta += req.t
+        self.nt.getEntry(self.set_odom_key + "/timestamp").setNumber(self.get_local_time_as_remote())
+        self.nt.getEntry(self.set_odom_key + "/xPosition").setNumber(req.x)
+        self.nt.getEntry(self.set_odom_key + "/yPosition").setNumber(req.y)
+        self.nt.getEntry(self.set_odom_key + "/theta").setNumber(req.t)
+
         rospy.loginfo("Resetting odometry to x: %0.3f, y: %0.3f, theta: %0.3f" % (req.x, req.y, req.t))
 
         return OdomResetResponse(True)

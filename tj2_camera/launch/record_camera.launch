@@ -21,6 +21,9 @@
         /camera/gyro/sample
         /tj2/odom
 
-        --duration=30 --lz4
+        /laser/scan
+        /tj2/imu
+
+        --duration=150 --lz4 -b 1024
         " />
 </launch>
