@@ -7,13 +7,13 @@
 ## Robot Configuration Parameters ##
 
 # Maximum translational acceleration of the robot in meters/sec^2
-acc_lim_x: 30.0 # 0.5
+acc_lim_x: 10.0 # 0.5
 
 # Maximum angular acceleration of the robot in radians/sec^2
-acc_lim_theta: 6.0 # 0.5
+acc_lim_theta: 1.0 # 0.5
 
 # Maximum translational velocity of the robot in meters/sec
-max_vel_x: 0.2 # max speed 4.48 m/s
+max_vel_x: 0.4 # max speed 4.48 m/s
 
 # Maximum absolute translational velocity of the robot while driving
 # backwards in meters/sec. See optimization parameter
@@ -49,10 +49,10 @@ cmd_angle_instead_rotvel: false # false
 
 # Maximum strafing velocity of the robot (should be zero for non-
 # holonomic robots!)
-max_vel_y: 0.2 # 0.0
+max_vel_y: 0.4 # 0.0
 
 # Maximum strafing acceleration of the robot
-acc_lim_y: 30.0 # 0.5
+acc_lim_y: 10.0 # 0.5
 
 
 ## The following parameters are relevant for the footprint model used for

@@ -15,6 +15,7 @@ while true; do
     # fi
     sleep 0.5
     if [ $SECONDS -gt $stop_time ]; then
+        echo "Failed to find host IP"
         break
     fi
 done
