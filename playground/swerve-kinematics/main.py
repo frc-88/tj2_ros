@@ -90,12 +90,9 @@ def live():
         time.sleep(0.01)
 
 def logged():
-    path = "2021-04-24T16-50-07--353709.csv"
-    # path = "2021-04-24T16-51-00--079020.csv"
-    # path = "2021-04-24T16-51-32--525400.csv"
-    # path = "2021-04-24T16-51-44--394209.csv"
+    path = "data/2021-10-02T18-49-40--532382.csv"
 
-    swerve, plotter, num_modules = get_config()
+    swerve, swerve_plotter, module_plotter, num_modules = get_config()
     parser = SwerveLogParser(num_modules, path)
 
     prev_time = None
@@ -104,7 +101,7 @@ def logged():
             continue
         if prev_time is None:
             prev_time = timestamp
-            input()
+            # input()
             continue
         
         dt = (timestamp - prev_time) * 1E-6
@@ -113,13 +110,19 @@ def logged():
         chassis_speeds = swerve.module_to_chassis_speeds(module_state.state)
         state = swerve.estimate_pose(dt)
 
-        plotter.append_measured_state(logged_state[0], logged_state[1])
-        plotter.set_measured_arrow(logged_state[2])
+        swerve_plotter.append_measured_state(logged_state[0], logged_state[1])
+        swerve_plotter.set_measured_arrow(logged_state[2])
 
-        plotter.append_calculated_state(state.x, state.y)
-        plotter.set_calculated_arrow(state.t)
-        plotter.pause()
+        swerve_plotter.append_calculated_state(state.x, state.y)
+        swerve_plotter.set_calculated_arrow(state.t)
+        swerve_plotter.pause()
+
+        print(module_state.state)
+        for module_num in range(num_modules):
+            azimuth, wheel_speed = module_state.state[module_num]
+            module_plotter.set_module_arrow(module_num, wheel_speed, azimuth)
+            module_plotter.pause()
 
 
-live()
-# logged()
+# live()
+logged()

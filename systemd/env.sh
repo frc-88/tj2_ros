@@ -2,19 +2,20 @@
 
 HOST_MACHINE=""
 
-stop_time=$((SECONDS+300))
+stop_time=$((SECONDS+900))
 
 while true; do
     HOST_MACHINE=`ifconfig eth0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
-    if [ ! -z ${HOST_MACHINE} ]; then
+    if [[ $HOST_MACHINE =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
         break
     fi
-    HOST_MACHINE=`ifconfig wlan0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
-    if [ ! -z ${HOST_MACHINE} ]; then
-        break
-    fi
+    # HOST_MACHINE=`ifconfig wlan0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
+    # if [ ! -z ${HOST_MACHINE} ]; then
+    #     break
+    # fi
     sleep 0.5
     if [ $SECONDS -gt $stop_time ]; then
+        echo "Failed to find host IP"
         break
     fi
 done

@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <arg name="odom_ekf" default="false"/>
+    <arg name="robot_address" default="10.0.88.2"/>
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="publish_odom_tf" default="$(eval not arg('odom_ekf'))"/>
+        <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
-    <!-- <include file="$(find tj2_description)/launch/tj2_description.launch"/> -->
-    <include file="$(find tj2_description)/launch/basic_transforms.launch"/>
+    <include file="$(find tj2_description)/launch/tj2_description.launch"/>
+    <!-- <include file="$(find tj2_description)/launch/basic_transforms.launch"/> -->
     <include if="$(arg odom_ekf)" file="$(find tj2_ekf)/launch/tj2_ekf.launch"/>
     <include file="$(find tj2_camera)/launch/camera_launcher.launch"/>
-    <include file="$(find tj2_state_machine)/launch/tj2_state_machine.launch"/>
     <!-- <include file="$(find tj2_detectnet)/launch/tj2_detectnet.launch"/> -->
+    <include file="$(find tj2_state_machine)/launch/tj2_state_machine.launch"/>
+    <include file="$(find tj2_driver_station)/launch/tj2_driver_station.launch">
+        <arg name="start_mode" value="1"/>
+        <arg name="robot_address" value="$(arg robot_address)"/>
+    </include>
+    <include file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/>
 </launch>

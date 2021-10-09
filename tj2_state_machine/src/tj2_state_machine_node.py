@@ -48,9 +48,6 @@ class TJ2StateMachine(object):
 
         self.start_match_srv = self.make_service("start_match", StartMatch, self.start_match_callback)
 
-        response = self.start_camera_srv()
-        rospy.loginfo(str(response))
-
         self.match_time_sub = rospy.Subscriber("match_time", Float64, self.match_time_callback, queue_size=100)
         self.is_autonomous_sub = rospy.Subscriber("is_autonomous", Bool, self.is_autonomous_callback, queue_size=100)
 
@@ -136,6 +133,7 @@ class TJ2StateMachine(object):
         return response
 
     def run(self):
+        # self.start_camera()
         rospy.spin()
 
 
