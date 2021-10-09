@@ -111,7 +111,7 @@ class TJ2StateMachine(object):
 
     def period_changed(self, period):
         rospy.loginfo("Game is now in the %s period" % PERIODS.get(period, PREGAME).lower())
-        if period == ENDGAME:
+        if period == AUTONOMOUS:
             self.start_record()
         
         if period != PREGAME and period != FINISHED:
