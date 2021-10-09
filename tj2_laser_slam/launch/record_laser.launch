@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
+    <arg name="lidar" default="true"/>
+    <include if="$(arg lidar)" file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
     <node pkg="rosbag" type="record" name="rosbag_record_laser"
        args="record -o $(find tj2_laser_slam)/bags/laser
             /tj2/odom
