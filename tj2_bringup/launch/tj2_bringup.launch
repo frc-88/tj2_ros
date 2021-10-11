@@ -11,7 +11,7 @@
     <include if="$(arg odom_ekf)" file="$(find tj2_ekf)/launch/tj2_ekf.launch"/>
     <include file="$(find tj2_camera)/launch/camera_launcher.launch"/>
     <!-- <include file="$(find tj2_detectnet)/launch/tj2_detectnet.launch"/> -->
-    <include file="$(find tj2_state_machine)/launch/tj2_state_machine.launch"/>
+    <!-- <include file="$(find tj2_state_machine)/launch/tj2_state_machine.launch"/> -->
     <include file="$(find tj2_driver_station)/launch/tj2_driver_station.launch">
         <arg name="start_mode" value="1"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
