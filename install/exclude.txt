@@ -1,6 +1,7 @@
 tj2_laser_slam/maps
 tj2_laser_slam/bags/
 tj2_camera/bags/
+tj2_detectnet/models/
 .git
 playground/swerve-kinematics/data
 tj2_tools/build/
