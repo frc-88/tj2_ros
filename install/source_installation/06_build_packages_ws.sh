@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 BASE_DIR=$(realpath "$(dirname $0)")
+APPLY_PATCHES=${1:-}
 
 DEPENDENCIES_WS=$HOME/packages_ros_ws
 DEPENDENCIES_WS_SRC=${DEPENDENCIES_WS}/src
@@ -42,6 +43,7 @@ packages=(
     https://github.com/ros-perception/slam_gmapping.git
     https://github.com/ros-perception/openslam_gmapping.git
     https://github.com/ros-drivers/usb_cam.git
+    https://github.com/ros-perception/image_transport_plugins
 )
 
 branches=(
@@ -74,6 +76,7 @@ branches=(
     melodic-devel
     melodic-devel
     develop
+    noetic-devel
 )
 
 len=${#packages[@]}
@@ -85,7 +88,9 @@ cd ..
 
 rosdep install --from-paths src --ignore-src --rosdistro=noetic -y -r
 
-${BASE_DIR}/06a_apply_patches.sh
+if [ ! -z ${APPLY_PATCHES} ]; then
+    ${BASE_DIR}/06a_apply_patches.sh
+fi
 
 cd ${DEPENDENCIES_WS}
 catkin_make -j5

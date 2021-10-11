@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <group ns="tj2" >
-        <node name="tj2_detectnet" pkg="tj2_detectnet" type="tj2_detectnet_node" output="log">
+        <node name="tj2_detectnet" pkg="tj2_detectnet" type="tj2_detectnet_node" output="screen">
             <param name="model_name" value=""/>
-            <param name="model_path" value="$(find tj2_detectnet)/models/mb2-ssd-lite.onnx"/>
+            <param name="model_path" value="$(find tj2_detectnet)/models/tj2-2020-mb2-ssd-lite.onnx"/>
             <param name="prototxt_path" value=""/>
             <param name="class_labels_path" value="$(find tj2_detectnet)/models/labels.txt"/>
             <param name="input_blob" value="input_0"/>
