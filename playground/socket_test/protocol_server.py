@@ -36,9 +36,8 @@ class TunnelServer:
 
         self.read_buffer = b''
 
-        self.write_timeout = 1.0
-        self.packet_read_timeout = 10.0
-        self.packet_ok_timeout = 10.0
+        self.packet_write_timeout = 1.0
+        self.packet_read_timeout = 1.0
 
         self.ready_keyword = "swerve"
 
@@ -111,27 +110,34 @@ class TunnelServer:
     
     def write(self, category, *args):
         packet = self.protocol.make_packet(category, *args)
+        logger.debug("Writing %s" % repr(packet))
         for message_queue in self.message_queues.values():
             message_queue.put(packet)
 
     def readline(self, stream):
         data = b''
         char = b''
-        while char != b'\n':
+        begin_time = time.time()
+        while char != self.protocol.PACKET_STOP:
+            if time.time() - begin_time > self.packet_read_timeout:
+                break
             char = stream.recv(1)
             data += char
         return data
 
     def poll_socket(self):
-        readable, writable, exceptional = select.select(self.inputs, self.outputs, self.inputs)
+        readable, writable, exceptional = select.select(self.inputs, self.outputs, self.inputs, self.packet_read_timeout)
         for stream in readable:
             if stream is self.device:
                 connection, client_address = stream.accept()
                 connection.setblocking(0)
                 self.inputs.append(connection)
                 self.message_queues[connection] = queue.Queue()
+                logger.info("Registering client '%s'" % str(client_address))
             else:
+                logger.debug("Reading from socket")
                 data = self.readline(stream)
+                logger.debug("Got data: %s" % repr(data))
                 if data:
                     self.parse_packet(data)
                     if stream not in self.outputs:
@@ -142,15 +148,24 @@ class TunnelServer:
                     self.inputs.remove(stream)
                     stream.close()
                     del self.message_queues[stream]
+                    logger.info("Removing client")
 
-        for stream in writable:
-            try:
-                next_msg = self.message_queues[stream].get_nowait()
-            except queue.Empty:
-                # self.outputs.remove(stream)
-                pass
-            else:
-                stream.send(next_msg)
+        for stream in readable:
+            if stream is self.device:
+                continue
+            message_queue = self.message_queues[stream]
+            if message_queue.empty():
+                continue
+            next_msg = self.message_queues[stream].get_nowait()
+            stream.send(next_msg)
+        # for stream in writable:
+        #     try:
+        #         next_msg = self.message_queues[stream].get_nowait()
+        #     except queue.Empty:
+        #         self.outputs.remove(stream)
+        #     else:
+        #         stream.send(next_msg)
+        
 
         for stream in exceptional:
             self.inputs.remove(stream)
@@ -158,6 +173,7 @@ class TunnelServer:
                 self.outputs.remove(stream)
             stream.close()
             del self.message_queues[stream]
+            logger.info("Client had an exception")
     
     def parse_packet(self, packet):
         code, recv_time, data = self.protocol.parse_packet(packet, self.categories)
@@ -189,31 +205,21 @@ class TestServer(TunnelServer):
         super().__init__(address, port)
     
     def packet_callback(self, category, recv_time, data):
-        if category == "power":
-            shunt_voltage = data[0]
-            bus_voltage = data[1]
-            current_mA = data[2]
-            power_mW = data[3]
-            load_voltage = data[4]
+        pass
 
-            logger.info(
-                "\nshunt_voltage: %0.4f V\n" \
-                "bus_voltage: %0.4f V\n" \
-                "current_mA: %0.4f mA\n" \
-                "power_mW: %0.4f mW\n" \
-                "load_voltage: %0.4f V\n" % (
-                    shunt_voltage,
-                    bus_voltage,
-                    current_mA,
-                    power_mW,
-                    load_voltage
-                )
-            )
+def test_write(interface):
+    while True:
+        if interface.should_stop:
+            return
+        interface.write("test", "something", 0.88, 10, "else")
+        time.sleep(1.0)
+
 
 def main():
     interface = TestServer("127.0.0.1", 50000)
+    write_thread = threading.Thread(target=test_write, args=(interface,))
 
-    timer = time.time()
+    write_thread.start()
     try:
         interface.start()
         while True:
