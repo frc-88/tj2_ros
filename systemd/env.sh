@@ -2,11 +2,16 @@
 
 HOST_MACHINE=""
 
-stop_time=$((SECONDS+900))
+JUMP_THRESHOLD=60
+TIMEOUT=900
+
+stop_time=$((SECONDS+TIMEOUT))
+prev_time=$((SECONDS))
 
 while true; do
     HOST_MACHINE=`ifconfig eth0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
     if [[ $HOST_MACHINE =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        echo "$stop_time seconds. Current time: $SECONDS"
         break
     fi
     # HOST_MACHINE=`ifconfig wlan0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
@@ -14,10 +19,16 @@ while true; do
     #     break
     # fi
     sleep 0.5
+    if [ $SECONDS - $prev_time -gt $JUMP_THRESHOLD ]; then  # check if time jumped like when the jetson connects to the internet
+        prev_time=$((SECONDS))
+        stop_time=$((SECONDS+TIMEOUT))
+        echo "Experienced a time jump. Resetting timeout"
+    fi
     if [ $SECONDS -gt $stop_time ]; then
-        echo "Failed to find host IP"
+        echo "Failed to find host IP. Timed out after $stop_time seconds. Current time: $SECONDS"
         break
     fi
+    prev_time=$((SECONDS))
 done
 
 

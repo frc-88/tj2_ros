@@ -49,9 +49,9 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::SetEntryFlags(_heartbeat_time_entry, NT_PERSISTENT);
     nt::SetEntryFlags(_heartbeat_ping_entry, NT_PERSISTENT);
     
-    string ping_response_key = _base_key + "pingResponse";
+    string ping_response_key = _base_key + _client_table_key + "pingResponse";
     _return_ping_entry = nt::GetEntry(_nt, ping_response_key);
-    NT_AddEntryListener(_nt, ping_response_key.c_str(), ping_response_key.size(), this, &ping_callback, NT_NOTIFY_IMMEDIATE | NT_NOTIFY_UPDATE);
+    // NT_AddEntryListener(_nt, ping_response_key.c_str(), ping_response_key.size(), this, &ping_callback, NT_NOTIFY_IMMEDIATE | NT_NOTIFY_UPDATE);
 
     _x_entry = nt::GetEntry(_nt, _base_key + _odom_table_key + "xPosition");
     _y_entry = nt::GetEntry(_nt, _base_key + _odom_table_key + "yPosition");
@@ -187,7 +187,7 @@ void TJ2NetworkTables::publish_heartbeat()
 {
     nt::SetEntryValue(_heartbeat_time_entry, nt::Value::MakeDouble(get_local_time_as_remote()));
     nt::SetEntryValue(_heartbeat_ping_entry, nt::Value::MakeDouble(get_local_time()));
-    // get_ping_value();
+    get_ping_value();
 }
 
 void ping_callback(void* data, const NT_EntryNotification* event)
@@ -202,6 +202,9 @@ void ping_callback(void* data, const NT_EntryNotification* event)
 
 void TJ2NetworkTables::publish_ping(double ping_time)
 {
+    if (ping_time == 0.0) {
+        return;
+    }
     std_msgs::Float64 msg;
     msg.data = get_local_time() - ping_time;
     _ping_pub.publish(msg);   
