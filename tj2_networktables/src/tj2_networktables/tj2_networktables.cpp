@@ -49,7 +49,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::SetEntryFlags(_heartbeat_time_entry, NT_PERSISTENT);
     nt::SetEntryFlags(_heartbeat_ping_entry, NT_PERSISTENT);
     
-    string ping_response_key = _base_key + "pingResponse";
+    string ping_response_key = _base_key + _client_table_key + "pingResponse";
     _return_ping_entry = nt::GetEntry(_nt, ping_response_key);
     // NT_AddEntryListener(_nt, ping_response_key.c_str(), ping_response_key.size(), this, &ping_callback, NT_NOTIFY_IMMEDIATE | NT_NOTIFY_UPDATE);
 

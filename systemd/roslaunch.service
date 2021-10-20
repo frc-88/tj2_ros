@@ -16,7 +16,6 @@ StartLimitBurst=30
 
 KillSignal=SIGINT
 TimeoutStopSec=10
-FinalKillSignal=SIGKILL
 
 [Install]
 WantedBy=multi-user.target
