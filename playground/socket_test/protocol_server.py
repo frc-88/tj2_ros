@@ -77,7 +77,6 @@ class TunnelServer:
             except KeyError:
                 continue
             except queue.Empty:
-                # self.outputs.remove(stream)
                 continue
             try:
                 logger.debug("Writing: %s" % next_msg)
@@ -128,7 +127,7 @@ def test_write(interface):
 
 
 def main():
-    interface = TunnelServer("127.0.0.1", 50001)
+    interface = TunnelServer("", 3000)
     write_thread = threading.Thread(target=test_write, args=(interface,))
     write_thread.daemon = True
     write_thread.start()
