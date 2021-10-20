@@ -1,11 +1,12 @@
 import os
+from threading import Condition
 import time
 import struct
 import logging
 
 from logger import make_logger
 
-logger = make_logger("protocol", logging.DEBUG)
+logger = make_logger("protocol", logging.INFO)
 
 NO_ERROR = 0
 PACKET_0_ERROR = 1
@@ -75,6 +76,10 @@ class TunnelProtocol:
     @staticmethod
     def to_float_bytes(floating_point):
         return struct.pack('d', floating_point)
+    
+    @staticmethod
+    def to_int(raw_bytes):
+        return int.from_bytes(raw_bytes, 'big')
 
     def make_packet(self, category, *args):
         packet = self.packet_header(category)
@@ -131,7 +136,44 @@ class TunnelProtocol:
             logger.warning("Failed to parse checksum as int: %s" % str(e))
             return -1
 
-    def parse_packet(self, packet, format_mapping):
+    def parse_buffer(self, buffer: bytes, format_mapping):
+        results = []
+        def get_char(n=1):
+            nonlocal buffer
+            if n > len(buffer):
+                return b''
+            c = buffer[0:n]
+            buffer = buffer[n:]
+            return c
+
+        while True:
+            if len(buffer) == 0:
+                break
+            c = get_char()
+            if c != self.PACKET_START_0:
+                break
+            packet = c
+            c = get_char()
+            if c != self.PACKET_START_1:
+                break
+            packet += c
+            raw_length = get_char(2)
+            if len(raw_length) == 0:
+                break
+            packet += raw_length
+            length = self.to_int(raw_length)
+            packet += get_char(length + 1)
+            if len(packet) == 0:
+                break
+            if packet[-1:] != self.PACKET_STOP:
+                break
+
+            result = self.parse_packet(packet, format_mapping)
+            results.append(result)
+        
+        return buffer, results
+
+    def parse_packet(self, packet: bytes, format_mapping):
         recv_time = time.time()
         if len(packet) < self.min_packet_len:
             logger.warning("Packet is not the minimum length (%s): %s" % (self.min_packet_len, repr(packet)))
@@ -150,7 +192,7 @@ class TunnelProtocol:
             self.read_packet_num += 1
             return PACKET_STOP_ERROR, recv_time, []
         
-        packet = packet[4:-1]  # remove start and stop characters
+        packet = packet[4:-1]  # remove start, length, and stop characters
         calc_checksum = self.calculate_checksum(packet[:-2])
         recv_checksum = self.extract_checksum(packet)
         if recv_checksum != calc_checksum:
@@ -167,7 +209,7 @@ class TunnelProtocol:
             logger.warning("Failed to find packet number segment! %s" % (repr(packet)))
             self.read_packet_num += 1
             return PACKET_COUNT_NOT_FOUND_ERROR, recv_time, []
-        self.recv_packet_num = int.from_bytes(self.current_segment, 'big')
+        self.recv_packet_num = self.to_int(self.current_segment)
         
         self.parse_error_code = -1
 
@@ -214,7 +256,7 @@ class TunnelProtocol:
         for index, f in enumerate(formats):
             if not self.parse_next_segment(packet, parsed_data, f):
                 logger.warning("Failed to parse segment #%s. Buffer: %s" % (index, packet))
-                return FORMAT_TYPE_ERROR, []
+                return FORMAT_TYPE_ERROR, recv_time, []
         parsed_data.insert(0, category)
         parsed_data = tuple(parsed_data)
 
@@ -240,7 +282,7 @@ class TunnelProtocol:
 
         try:
             if f == 'd' or f == 'u':
-                data.append(int.from_bytes(self.current_segment, 'big'))
+                data.append(self.to_int(self.current_segment))
             elif f == 's' or f == 'x':
                 data.append(self.current_segment)
             elif f == 'f':
@@ -268,7 +310,7 @@ class TunnelProtocol:
             if length is None:
                 # assume first 2 bytes contain the length
                 len_bytes = buffer[self.buffer_index: self.buffer_index + 2]
-                length = int.from_bytes(len_bytes, 'big')
+                length = self.to_int(len_bytes)
                 self.buffer_index += 2
                 if length >= len(buffer):
                     logger.error("Parsed length %s exceeds buffer length! %s" % (length, len(buffer)))
