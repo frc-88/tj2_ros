@@ -105,7 +105,7 @@ def test_write(interface):
         time.sleep(0.02)
 
 def main():
-    interface = TunnelClient("127.0.0.1", 50001)
+    interface = TunnelClient("192.168.0.38", 3000)
     write_thread = threading.Thread(target=test_write, args=(interface,))
     write_thread.daemon = True
     write_thread.start()
