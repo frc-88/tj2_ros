@@ -9,7 +9,7 @@ import threading
 from logger import make_logger
 from tunnel_protocol import TunnelProtocol
 
-logger = make_logger("client", logging.INFO)
+logger = make_logger("client", logging.DEBUG)
 
 
 class TunnelClient:
@@ -52,6 +52,8 @@ class TunnelClient:
                 self.buffer, results = self.protocol.parse_buffer(self.buffer, self.categories)
                 for result in results:
                     error_code, recv_time, data = result
+                    if not self.protocol.is_code_warning(error_code):
+                        continue
                     category = data[0]
                     data = data[1:]
                     self.packet_callback(error_code, recv_time, category, data)
@@ -89,9 +91,9 @@ class TunnelClient:
             self.message_queue.put(packet)
     
     def packet_callback(self, error_code, recv_time, category, data):
-        if category == "ping":
+        if category == "ping" and len(data) == 1:
             logger.info("Ping time: %0.6fs" % (time.time() - data[0]))
-        elif category == "odom":
+        elif category == "odom" and len(data) == 6:
             logger.info("Odometry. x=%0.4f, y=%0.4f, t=%0.4f, vx=%0.4f, vy=%0.4f, vt=%0.4f" % data)
 
     def stop(self):
@@ -100,12 +102,14 @@ class TunnelClient:
 def test_write(interface):
     while True:
         interface.write("ping", time.time())
-        data = [random.random() for _ in range(3)]
-        interface.write("cmd", *data)
-        time.sleep(0.02)
+        # data = [random.random() for _ in range(3)]
+        # interface.write("cmd", *data)
+        # time.sleep(0.02)
+        time.sleep(1.0)
+
 
 def main():
-    interface = TunnelClient("192.168.0.38", 3000)
+    interface = TunnelClient("localhost", 3000)
     write_thread = threading.Thread(target=test_write, args=(interface,))
     write_thread.daemon = True
     write_thread.start()

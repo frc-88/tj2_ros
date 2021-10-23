@@ -6,7 +6,7 @@ import logging
 
 from logger import make_logger
 
-logger = make_logger("protocol", logging.INFO)
+logger = make_logger("protocol", logging.DEBUG)
 
 NO_ERROR = 0
 PACKET_0_ERROR = 1

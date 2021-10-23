@@ -66,7 +66,7 @@ class TunnelServer:
                             category = data[0]
                             data = data[1:]
                             self.packet_callback(error_code, recv_time, category, data)
-                    # self.message_queues[stream].put(recv_msg)  # echo back to client
+                    self.message_queues[stream].put(recv_msg)  # echo back to client
                     
                 else:
                     self.close_stream(stream)
@@ -128,9 +128,9 @@ def test_write(interface):
 
 def main():
     interface = TunnelServer("", 3000)
-    write_thread = threading.Thread(target=test_write, args=(interface,))
-    write_thread.daemon = True
-    write_thread.start()
+    # write_thread = threading.Thread(target=test_write, args=(interface,))
+    # write_thread.daemon = True
+    # write_thread.start()
     try:
         interface.start()
         while True:
