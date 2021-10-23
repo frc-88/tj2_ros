@@ -2,8 +2,8 @@ BASE_DIR=$(realpath "$(dirname $0)")
 PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
-LOCAL_PATH=${3:-${PARENT_DIR}}
-DESTINATION_PATH=${4:-/home/tj2}
+LOCAL_PATH=${PARENT_DIR}
+DESTINATION_PATH=/home/tj2
 
 if [ -z ${DESTINATION_NAME} ]; then
     echo "Please set a destination IP or hostname"
@@ -15,4 +15,4 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-rsync -avur --delete --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}
+rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}
