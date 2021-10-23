@@ -6,6 +6,6 @@ source /usr/local/bin/env.sh
 
 export ROS_HOME=/home/${USER}/.ros
 export DISPLAY=:0
-roslaunch tj2_bringup tj2_bringup.launch &
+roslaunch tj2_bringup tj2_bringup.launch --wait &
 PID=$!
 wait "$PID"

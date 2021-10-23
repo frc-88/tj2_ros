@@ -240,8 +240,15 @@ void TJ2DetectNet::rgbd_callback(
     }
 
     cv::Mat depth_cv_image;
-    ROS_ASSERT_MSG(color_image->width != 0, "Color image width is zero!");
-    ROS_ASSERT_MSG(color_image->height != 0, "Color image height is zero!");
+    if (color_image->width == 0 || color_image->height == 0) {
+        ROS_ERROR("Color image has a zero width dimension!");
+        return;
+    }
+    if (depth_image->width == 0 || depth_image->height == 0) {
+        ROS_ERROR("Depth image has a zero width dimension!");
+        return;
+    }
+    
     if (color_image->width != depth_image->width || color_image->height != depth_image->height) {
         cv::resize(cv_ptr->image, depth_cv_image, cv::Size(color_image->width, color_image->height));
     }
