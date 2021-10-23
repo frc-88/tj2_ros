@@ -4,6 +4,7 @@ HOST_MACHINE=""
 
 JUMP_THRESHOLD=60
 TIMEOUT=900
+DT=0
 
 stop_time=$((SECONDS+TIMEOUT))
 prev_time=$((SECONDS))
@@ -19,7 +20,8 @@ while true; do
     #     break
     # fi
     sleep 0.5
-    if [ $SECONDS - $prev_time -gt $JUMP_THRESHOLD ]; then  # check if time jumped like when the jetson connects to the internet
+    DT=$SECONDS-$prev_time
+    if (( $(echo "$DT > $JUMP_THRESHOLD" |bc -l) )); then  # check if time jumped like when the jetson connects to the internet
         prev_time=$((SECONDS))
         stop_time=$((SECONDS+TIMEOUT))
         echo "Experienced a time jump. Resetting timeout"
