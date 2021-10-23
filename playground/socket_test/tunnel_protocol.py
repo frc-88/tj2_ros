@@ -63,6 +63,7 @@ class TunnelProtocol:
         ]
 
         self.minimum_packet = self.make_packet("x")
+        self.write_packet_num = 0
         self.min_packet_len = len(self.minimum_packet)
 
     @staticmethod
@@ -137,10 +138,12 @@ class TunnelProtocol:
             return -1
 
     def parse_buffer(self, buffer: bytes, format_mapping):
+        logger.debug("Parse buffer: %s" % str(buffer))
         results = []
         def get_char(n=1):
             nonlocal buffer
             if n > len(buffer):
+                buffer = b''
                 return b''
             c = buffer[0:n]
             buffer = buffer[n:]
@@ -148,24 +151,30 @@ class TunnelProtocol:
 
         while True:
             if len(buffer) == 0:
+                logger.debug("No characters left in the buffer. Skipping")
                 break
             c = get_char()
             if c != self.PACKET_START_0:
-                break
+                continue
             packet = c
             c = get_char()
             if c != self.PACKET_START_1:
-                break
+                continue
             packet += c
             raw_length = get_char(2)
             if len(raw_length) == 0:
+                logger.debug("Buffer does not encode a length. Skipping")
                 break
             packet += raw_length
             length = self.to_int(raw_length)
+            logger.debug("Found packet length: %s" % length)
             packet += get_char(length + 1)
             if len(packet) == 0:
+                logger.debug("Packet length exceeds buffer size. Skipping")
                 break
+            logger.debug("Found packet: %s" % packet)
             if packet[-1:] != self.PACKET_STOP:
+                logger.debug("Packet doesn't end with PACKET_STOP. Skipping")
                 break
 
             result = self.parse_packet(packet, format_mapping)
@@ -341,17 +350,29 @@ if __name__ == '__main__':
     def main():
         protocol = TunnelProtocol()
 
-        print(protocol.minimum_packet)
-        code, recv_time, result = protocol.parse_packet(protocol.minimum_packet, {'x': ''})
-        protocol.log_packet_error_code(code)
-        print(result)
+        # print(protocol.minimum_packet)
+        # code, recv_time, result = protocol.parse_packet(protocol.minimum_packet, {'x': ''})
+        # protocol.log_packet_error_code(code)
+        # print(result)
                 
-        data = "something", b"else", 2.0, 4
+        # data = "something", b"else", 2.0, 4
+        # test_packet = protocol.make_packet(*data)
+        # code, recv_time, result = protocol.parse_packet(test_packet, {"something": 'sfd'})
+        # assert data == result, "%s != %s" % (data, result)
+        # protocol.log_packet_error_code(code)
+        # print(result)
+
+        data = "ping", 4.0
         test_packet = protocol.make_packet(*data)
-        code, recv_time, result = protocol.parse_packet(test_packet, {"something": 'sfd'})
+        print(test_packet)
+        code, recv_time, result = protocol.parse_packet(test_packet, {"ping": 'f'})
         assert data == result, "%s != %s" % (data, result)
         protocol.log_packet_error_code(code)
         print(result)
+
+        data = "something", 50.0, 10, b"else"
+        test_packet = protocol.make_packet(*data)
+        print(test_packet)
 
 
     main()

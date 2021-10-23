@@ -124,7 +124,7 @@ class MyTunnel(TunnelClient):
         #     logger.info("Odometry. x=%0.4f, y=%0.4f, t=%0.4f, vx=%0.4f, vy=%0.4f, vt=%0.4f" % data)
 
 def main():
-    interface = MyTunnel("192.168.0.38", 3000)
+    interface = MyTunnel("localhost", 3000)
     write_thread = threading.Thread(target=test_write, args=(interface,))
     write_thread.daemon = True
     write_thread.start()
