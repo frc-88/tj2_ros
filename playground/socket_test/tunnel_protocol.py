@@ -20,7 +20,6 @@ INVALID_FORMAT_ERROR = 8
 PACKET_STOP_ERROR = 9
 SEGMENT_TOO_LONG_ERROR = 10
 PACKET_TIMEOUT_ERROR = 11
-FORMAT_TYPE_ERROR = 12
 
 
 class TunnelProtocol:
@@ -55,7 +54,6 @@ class TunnelProtocol:
             PACKET_STOP_ERROR: "packet didn't end with stop character",
             SEGMENT_TOO_LONG_ERROR: "packet segment is too long",
             PACKET_TIMEOUT_ERROR: "packet receive timed out",
-            FORMAT_TYPE_ERROR: "provided formats do not correctly parse the packet"
         }
         self.packet_warning_codes = [
             NO_ERROR,
@@ -255,7 +253,7 @@ class TunnelProtocol:
         logger.debug("Category '%s' found in %s" % (category, str(packet)))
 
         if category not in format_mapping:
-            logger.warning("'%s' is not applied category: %s" % (
+            logger.warning("'%s' is not a recognized category: %s" % (
                 category, tuple(format_mapping.keys())))
             self.read_packet_num += 1
             return PACKET_CATEGORY_ERROR, recv_time, []
@@ -265,7 +263,8 @@ class TunnelProtocol:
         for index, f in enumerate(formats):
             if not self.parse_next_segment(packet, parsed_data, f):
                 logger.warning("Failed to parse segment #%s. Buffer: %s" % (index, packet))
-                return FORMAT_TYPE_ERROR, recv_time, []
+                self.read_packet_num += 1
+                return INVALID_FORMAT_ERROR, recv_time, []
         parsed_data.insert(0, category)
         parsed_data = tuple(parsed_data)
 
@@ -327,7 +326,7 @@ class TunnelProtocol:
             self.buffer_index += length
             return True
 
-    def is_code_warning(self, error_code):
+    def is_code_error(self, error_code):
         return error_code in self.packet_warning_codes
 
     def log_packet_error_code(self, error_code, packet_num=None):
@@ -337,7 +336,7 @@ class TunnelProtocol:
             logger.debug("Packet %s has no error" % packet_num)
             return
         
-        if self.is_code_warning(error_code):
+        if not self.is_code_error(error_code):
             logger.warning("Packet %s returned a warning:" % packet_num)
         else:
             logger.warning("Packet %s returned an error:" % packet_num)
@@ -370,9 +369,14 @@ if __name__ == '__main__':
         protocol.log_packet_error_code(code)
         print(result)
 
-        data = "something", 50.0, 10, b"else"
+        # data = "something", 50.0, 10, b"else"
+        data = "cmd", 5.3, 2.1, -6.6
         test_packet = protocol.make_packet(*data)
         print(test_packet)
+        code, recv_time, result = protocol.parse_packet(test_packet, {"cmd": 'fff'})
+        assert data == result, "%s != %s" % (data, result)
+        protocol.log_packet_error_code(code)
+        print(result)
 
 
     main()

@@ -53,7 +53,7 @@ class TunnelClient:
                 self.buffer, results = self.protocol.parse_buffer(self.buffer, self.categories)
                 for result in results:
                     error_code, recv_time, data = result
-                    if not self.protocol.is_code_warning(error_code):
+                    if self.protocol.is_code_error(error_code):
                         continue
                     category = data[0]
                     data = data[1:]
@@ -124,7 +124,7 @@ class MyTunnel(TunnelClient):
         #     logger.info("Odometry. x=%0.4f, y=%0.4f, t=%0.4f, vx=%0.4f, vy=%0.4f, vt=%0.4f" % data)
 
 def main():
-    interface = MyTunnel("localhost", 3000)
+    interface = MyTunnel("10.0.88.35", 3000)
     write_thread = threading.Thread(target=test_write, args=(interface,))
     write_thread.daemon = True
     write_thread.start()
