@@ -6,7 +6,7 @@ import logging
 
 from logger import make_logger
 
-logger = make_logger("protocol", logging.DEBUG)
+logger = make_logger("protocol", logging.INFO)
 
 NO_ERROR = 0
 PACKET_0_ERROR = 1
@@ -149,7 +149,7 @@ class TunnelProtocol:
 
         while True:
             if len(buffer) == 0:
-                logger.debug("No characters left in the buffer. Skipping")
+                logger.debug("No characters left in the buffer")
                 break
             c = get_char()
             if c != self.PACKET_START_0:
@@ -259,6 +259,8 @@ class TunnelProtocol:
             return PACKET_CATEGORY_ERROR, recv_time, []
         formats = format_mapping[category]
 
+        logger.debug("Category '%s' has format %s" % (category, formats))
+
         parsed_data = []
         for index, f in enumerate(formats):
             if not self.parse_next_segment(packet, parsed_data, f):
@@ -267,6 +269,8 @@ class TunnelProtocol:
                 return INVALID_FORMAT_ERROR, recv_time, []
         parsed_data.insert(0, category)
         parsed_data = tuple(parsed_data)
+
+        logger.debug("Parsed packet data: %s" % str(parsed_data))
 
         self.set_error_code(NO_ERROR)
         self.read_packet_num += 1
