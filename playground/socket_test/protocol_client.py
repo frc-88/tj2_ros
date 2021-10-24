@@ -1,3 +1,4 @@
+import sys
 import time
 import queue
 import socket
@@ -10,7 +11,7 @@ import numpy as np
 from logger import make_logger
 from tunnel_protocol import TunnelProtocol
 
-logger = make_logger("client", logging.DEBUG)
+logger = make_logger("client", logging.INFO)
 
 
 class TunnelClient:
@@ -20,7 +21,7 @@ class TunnelClient:
         self.device = None
 
         self.categories = {
-            "ping": "f",
+            "ping": "fd",
             "odom": "ffffff"
         }
 
@@ -53,7 +54,7 @@ class TunnelClient:
                 self.buffer, results = self.protocol.parse_buffer(self.buffer, self.categories)
                 for result in results:
                     error_code, recv_time, data = result
-                    if self.protocol.is_code_error(error_code):
+                    if not self.protocol.is_code_error(error_code):
                         continue
                     category = data[0]
                     data = data[1:]
@@ -102,8 +103,8 @@ def test_write(interface):
         interface.write("ping", time.time())
         # data = [random.random() for _ in range(3)]
         # interface.write("cmd", *data)
-        # time.sleep(0.02)
-        time.sleep(1.0)
+        time.sleep(0.04)
+        # time.sleep(1.0)
 
 
 
@@ -111,23 +112,37 @@ class MyTunnel(TunnelClient):
     def __init__(self, address, port):
         super(MyTunnel, self).__init__(address, port)
         self.pings = []
+        self.odoms = []
     
     def packet_callback(self, error_code, recv_time, category, data):
         if category == "ping":
             dt = time.time() - data[0]
             self.pings.append(dt)
-            while len(self.pings) > 1000:
+            while len(self.pings) > 50:
                 self.pings.pop(0)
             
-            logger.info("Ping time: %0.6fs.\tAvg: %0.6f.\tStddev: %0.6f" % (dt, np.mean(self.pings), np.std(self.pings)))
-        # elif category == "odom":
-        #     logger.info("Odometry. x=%0.4f, y=%0.4f, t=%0.4f, vx=%0.4f, vy=%0.4f, vt=%0.4f" % data)
+            logger.info("Length: %s, Ping time: %0.6fs.\tAvg: %0.6f.\tStddev: %0.6f.\tInt. Rate: %0.3f" % (data[1], dt, np.mean(self.pings), np.std(self.pings), 1.0 / np.mean(self.pings)))
+        elif category == "odom":
+            self.odoms.append(recv_time)
+            while len(self.odoms) > 50:
+                self.odoms.pop(0)
+            data = list(data)
+            rate = 1.0 / np.mean(np.diff(self.odoms))
+            data.insert(0, rate)
+            logger.info("Odometry. Rate: %0.4f Hz, x=%0.4f, y=%0.4f, t=%0.4f, vx=%0.4f, vy=%0.4f, vt=%0.4f" % tuple(data))
 
 def main():
-    interface = MyTunnel("10.0.88.35", 3000)
-    write_thread = threading.Thread(target=test_write, args=(interface,))
-    write_thread.daemon = True
-    write_thread.start()
+    if len(sys.argv[1]) == 0:
+        host = "127.0.0.1:3000"
+    else:
+        host = sys.argv[1]
+    print("Host: %s" % host)
+    address, port = host.split(":")
+    port = int(port)
+    interface = MyTunnel(address, port)
+    # write_thread = threading.Thread(target=test_write, args=(interface,))
+    # write_thread.daemon = True
+    # write_thread.start()
 
     try:
         interface.start()

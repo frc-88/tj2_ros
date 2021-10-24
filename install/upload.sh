@@ -15,4 +15,4 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-rsync -avur --delete --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}
+rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}

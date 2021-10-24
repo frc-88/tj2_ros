@@ -2,9 +2,9 @@ BASE_DIR=$(realpath "$(dirname $0)")
 PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
-LOCAL_PATH=${3:-${PARENT_DIR}}
-DESTINATION_PATH=${4:-/home/tj2}
-CATKIN_WS_PATH=${5:-/home/tj2/ros_ws}
+LOCAL_PATH=${PARENT_DIR}
+DESTINATION_PATH=/home/tj2
+CATKIN_WS_PATH=/home/tj2/ros_ws
 
 if [ -z ${DESTINATION_NAME} ]; then
     echo "Please set a destination IP or hostname"
@@ -16,6 +16,7 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
+LOCAL_PATH=$(realpath $LOCAL_PATH)
 LOCAL_NAME=$(basename $LOCAL_PATH)
 DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
 
