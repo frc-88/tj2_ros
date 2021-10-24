@@ -47,36 +47,36 @@ packages=(
 )
 
 branches=(
-    master
-    main
-    noetic-devel
-    noetic-devel
-    noetic-devel
-    noetic-devel
-    development
-    noetic
-    noetic-devel
-    ros1
-    noetic-devel
-    noetic-devel
-    kinetic-devel
-    melodic-devel
-    melodic-devel
-    noetic-devel
-    master
-    master
-    noetic
-    noetic-devel
-    master
-    kinetic-devel
-    noetic-devel
-    master
-    master
-    kinetic-devel
-    melodic-devel
-    melodic-devel
-    develop
-    noetic-devel
+    main      # https://github.com/wjwwood/serial
+    main    # https://github.com/ros-drivers/joystick_drivers.git
+    noetic-devel    # https://github.com/ros/geometry2.git
+    noetic-devel    # https://github.com/ros-planning/navigation.git
+    noetic-devel    # https://github.com/rst-tu-dortmund/teb_local_planner
+    noetic-devel    # https://github.com/introlab/rtabmap_ros.git
+    development     # https://github.com/IntelRealSense/realsense-ros.git
+    noetic      # https://github.com/ros-perception/vision_opencv.git
+    noetic-devel    # https://github.com/ros-perception/vision_msgs.git
+    ros1    # https://github.com/ros-planning/navigation_msgs.git
+    noetic-devel    # https://github.com/magazino/move_base_flex.git
+    noetic-devel    # https://github.com/introlab/find-object.git
+    kinetic-devel   # https://github.com/pal-robotics/ddynamic_reconfigure.git
+    melodic-devel   # https://github.com/ros-perception/perception_pcl.git
+    melodic-devel   # https://github.com/OctoMap/octomap_msgs.git
+    noetic-devel    # https://github.com/ros-perception/pcl_msgs.git
+    master      # https://github.com/AprilRobotics/apriltag_ros.git
+    master      # https://github.com/rst-tu-dortmund/costmap_converter.git
+    noetic      # https://github.com/ros-perception/image_pipeline.git
+    noetic-devel    # https://github.com/ros-perception/image_common.git
+    master      # https://github.com/robopeak/rplidar_ros.git
+    kinetic-devel   # https://github.com/ros-perception/laser_filters.git
+    noetic-devel    # https://github.com/cra-ros-pkg/robot_localization
+    master      # https://github.com/ros-geographic-info/geographic_info.git
+    master      # https://github.com/ros-geographic-info/unique_identifier.git
+    kinetic-devel   # https://github.com/ros-perception/laser_filters.git
+    melodic-devel   # https://github.com/ros-perception/slam_gmapping.git
+    melodic-devel   # https://github.com/ros-perception/openslam_gmapping.git
+    develop     # https://github.com/ros-drivers/usb_cam.git
+    noetic-devel    # https://github.com/ros-perception/image_transport_plugins
 )
 
 len=${#packages[@]}
