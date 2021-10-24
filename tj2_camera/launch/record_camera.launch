@@ -5,7 +5,7 @@
             args="messages /camera/color/image_raw $(arg image_throttle_rate) /camera/color/image_raw_throttle"/> -->
 
     <node pkg="rosbag" type="record" name="rosbag_record_realsense" output="log" 
-       args="record -o $(find tj2_camera)/bags/realsense
+       args="record -o /media/storage/bags/realsense
         /camera/aligned_depth_to_color/camera_info
         /camera/aligned_depth_to_color/image_raw
         /camera/depth/camera_info
