@@ -300,7 +300,7 @@ class TunnelProtocol:
             elif f == 'f':
                 parsed_float = struct.unpack('d', self.current_segment)
                 data.append(parsed_float[0])
-        except ValueError:
+        except (ValueError, struct.error):
             logger.warning("Failed to parse segment '%s' as '%s'" % (self.current_segment, f))
             return False
 
