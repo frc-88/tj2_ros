@@ -21,7 +21,7 @@ class TunnelClient:
         self.device = None
 
         self.categories = {
-            "ping": "fd",
+            "ping": "f",
             "odom": "ffffff"
         }
 
@@ -34,6 +34,7 @@ class TunnelClient:
         self.message_queue = queue.Queue(maxsize=100)
 
         self.poll_timeout = 1.0
+        self.read_block_size = 4096
 
         self.write_lock = threading.Lock()
     
@@ -48,7 +49,7 @@ class TunnelClient:
         for stream in readable:
             if stream is self.device:
                 logger.debug("Reading from socket")
-                recv_msg = stream.recv(1024)
+                recv_msg = stream.recv(self.read_block_size)
                 logger.debug("Received: %s" % recv_msg)
                 self.buffer += recv_msg
                 self.buffer, results = self.protocol.parse_buffer(self.buffer, self.categories)
@@ -98,15 +99,16 @@ class TunnelClient:
     def stop(self):
         self.device.close()
 
+
 def test_write(interface):
+    last_cmd_time = time.time()
     while True:
         interface.write("ping", time.time())
-        # data = [random.random() for _ in range(3)]
-        # interface.write("cmd", *data)
-        time.sleep(0.04)
-        # time.sleep(1.0)
+        time.sleep(0.1)
 
-
+        if time.time() - last_cmd_time > 0.5:
+            interface.write("cmd", 0.0, 0.25, 0.0)
+            last_cmd_time = time.time()
 
 class MyTunnel(TunnelClient):
     def __init__(self, address, port):
@@ -118,13 +120,13 @@ class MyTunnel(TunnelClient):
         if category == "ping":
             dt = time.time() - data[0]
             self.pings.append(dt)
-            while len(self.pings) > 50:
+            while len(self.pings) > 10:
                 self.pings.pop(0)
             
-            logger.info("Length: %s, Ping time: %0.6fs.\tAvg: %0.6f.\tStddev: %0.6f.\tInt. Rate: %0.3f" % (data[1], dt, np.mean(self.pings), np.std(self.pings), 1.0 / np.mean(self.pings)))
+            logger.info("Ping time: %0.6fs.\tAvg: %0.6f.\tStddev: %0.6f.\tInt. Rate: %0.3f" % (dt, np.mean(self.pings), np.std(self.pings), 1.0 / np.mean(self.pings)))
         elif category == "odom":
             self.odoms.append(recv_time)
-            while len(self.odoms) > 50:
+            while len(self.odoms) > 10:
                 self.odoms.pop(0)
             data = list(data)
             rate = 1.0 / np.mean(np.diff(self.odoms))
@@ -140,9 +142,9 @@ def main():
     address, port = host.split(":")
     port = int(port)
     interface = MyTunnel(address, port)
-    # write_thread = threading.Thread(target=test_write, args=(interface,))
-    # write_thread.daemon = True
-    # write_thread.start()
+    write_thread = threading.Thread(target=test_write, args=(interface,))
+    write_thread.daemon = True
+    write_thread.start()
 
     try:
         interface.start()
