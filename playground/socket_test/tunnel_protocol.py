@@ -199,11 +199,12 @@ class TunnelProtocol:
             self.read_packet_num += 1
             return PACKET_STOP_ERROR, recv_time, []
         
+        full_packet = packet
         packet = packet[4:-1]  # remove start, length, and stop characters
         calc_checksum = self.calculate_checksum(packet[:-2])
         recv_checksum = self.extract_checksum(packet)
         if recv_checksum != calc_checksum:
-            logger.warning("Checksum failed! recv %02x != calc %02x. %s" % (recv_checksum, calc_checksum, repr(packet)))
+            logger.warning("Checksum failed! recv %02x != calc %02x. %s" % (recv_checksum, calc_checksum, repr(full_packet)))
             self.read_packet_num += 1
             return CHECKSUMS_DONT_MATCH_ERROR, recv_time, []
         
@@ -213,7 +214,7 @@ class TunnelProtocol:
 
         # get packet num segment
         if not self.get_next_segment(packet, 4):
-            logger.warning("Failed to find packet number segment! %s" % (repr(packet)))
+            logger.warning("Failed to find packet number segment! %s" % (repr(full_packet)))
             self.read_packet_num += 1
             return PACKET_COUNT_NOT_FOUND_ERROR, recv_time, []
         self.recv_packet_num = self.to_int(self.current_segment)
@@ -233,20 +234,20 @@ class TunnelProtocol:
         # find category segment
         if not self.get_next_segment(packet, tab_separated=True):
             logger.warning(
-                "Failed to find category segment %s! %s" % (repr(self.current_segment), repr(packet)))
+                "Failed to find category segment %s! %s" % (repr(self.current_segment), repr(full_packet)))
             self.read_packet_num += 1
             return PACKET_CATEGORY_ERROR, recv_time, []
         try:
             category = self.current_segment.decode()
         except UnicodeDecodeError:
             logger.warning("Category segment contains invalid characters: %s, %s" % (
-                repr(self.current_segment), repr(packet)))
+                repr(self.current_segment), repr(full_packet)))
             self.read_packet_num += 1
             return PACKET_CATEGORY_ERROR, recv_time, []
         
         if len(category) == 0:
             logger.warning("Category segment is empty: %s, %s" % (
-                repr(self.current_segment), repr(packet)))
+                repr(self.current_segment), repr(full_packet)))
             self.read_packet_num += 1
             return PACKET_CATEGORY_ERROR, recv_time, []
         
