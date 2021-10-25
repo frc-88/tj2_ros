@@ -6,6 +6,10 @@
         <arg name="publish_odom_tf" default="$(eval not arg('odom_ekf'))"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
+    <include file="$(find tj2_tunnel)/launch/tj2_tunnel.launch">
+        <arg name="publish_odom_tf" default="$(eval not arg('odom_ekf'))"/>
+        <arg name="robot_address" value="$(arg robot_address)"/>
+    </include>
     <include file="$(find tj2_description)/launch/tj2_description.launch"/>
     <!-- <include file="$(find tj2_description)/launch/basic_transforms.launch"/> -->
     <include if="$(arg odom_ekf)" file="$(find tj2_ekf)/launch/tj2_ekf.launch"/>
