@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import rospy
 import math
+import time
 
 import tf2_ros
 import tf_conversions
@@ -24,9 +25,9 @@ class TJ2Tunnel(TunnelClient):
 
         self.node_name = "tj2_tunnel"
         rospy.init_node(
-            self.node_name
-            # disable_signals=True
-            # log_level=rospy.DEBUG
+            self.node_name,
+            # disable_signals=True,
+            log_level=rospy.DEBUG
         )
 
         self.host = rospy.get_param("~host", "10.0.88.2")
@@ -80,7 +81,7 @@ class TJ2Tunnel(TunnelClient):
 
         self.robot_vel = Pose2d()
         
-        self.clock_rate = rospy.Rate(50.0)
+        self.clock_rate = rospy.Rate(100.0)
         self.ping_timer = rospy.Timer(rospy.Duration(1.0), self.ping_callback)
 
         super(TJ2Tunnel, self).__init__(self.host, self.port, self.categories)
@@ -89,7 +90,9 @@ class TJ2Tunnel(TunnelClient):
     def packet_callback(self, error_code, recv_time, category, data):
         if category == "ping":
             msg = Float64()
-            msg.data = self.get_local_time() - data[0]
+            dt = self.get_local_time() - data[0]
+            msg.data = dt
+            rospy.logdebug("Publishing ping time: %s. (Return time: %s)", dt, data[0]);
             self.ping_pub.publish(msg)
 
         elif category == "odom":
@@ -102,7 +105,7 @@ class TJ2Tunnel(TunnelClient):
             while not rospy.is_shutdown():
                 self.clock_rate.sleep()
                 self.update()
-                self.publish_cmd_vel()
+                # self.publish_cmd_vel()
         finally:
             self.stop()
 
@@ -180,6 +183,7 @@ class TJ2Tunnel(TunnelClient):
             self.br.sendTransform(self.tf_msg)
     
     def ping_callback(self, timer):
+        rospy.logdebug("Writing ping")
         self.write("ping", self.get_local_time())
 
     def get_local_time(self):

@@ -9,51 +9,52 @@ using namespace std;
 typedef union uint16_union
 {
     uint16_t integer;
-    unsigned char byte[2];
+    unsigned char byte[sizeof(uint16_t)];
 } uint16_union_t;
 
 typedef union uint32_union
 {
     uint32_t integer;
-    unsigned char byte[4];
+    unsigned char byte[sizeof(uint32_t)];
 } uint32_union_t;
 
 
 typedef union int32_union
 {
     int32_t integer;
-    unsigned char byte[4];
+    unsigned char byte[sizeof(int32_t)];
 } int32_union_t;
 
 typedef union double_union
 {
     double floating_point;
-    unsigned char byte[8];
+    unsigned char byte[sizeof(double)];
 } double_union_t;
 
 
 uint32_t to_uint32(char* buffer)
 {
     uint32_union_t union_data;
-    for (unsigned short i = 0; i < 4; i++) {
-        union_data.byte[3 - i] = buffer[i];
+    for (unsigned short i = 0; i < sizeof(uint32_t); i++) {
+        union_data.byte[sizeof(uint32_t) - i - 1] = buffer[i];
     }
     return union_data.integer;
 }
 
 uint16_t to_uint16(char* buffer)
 {
-    uint16_union_t union_data;
-    union_data.byte[1] = buffer[0];
-    union_data.byte[0] = buffer[1];
+    uint32_union_t union_data;
+    for (unsigned short i = 0; i < sizeof(uint16_t); i++) {
+        union_data.byte[sizeof(uint16_t) - i - 1] = buffer[i];
+    }
     return union_data.integer;
 }
 
 int16_t to_int32(char* buffer)
 {
     int32_union_t union_data;
-    for (unsigned short i = 0; i < 4; i++) {
-        union_data.byte[3 - i] = buffer[i];
+    for (unsigned short i = 0; i < sizeof(int32_t); i++) {
+        union_data.byte[sizeof(int32_t) - i - 1] = buffer[i];
     }
     return union_data.integer;
 }
@@ -61,7 +62,7 @@ int16_t to_int32(char* buffer)
 double to_double(char* buffer)
 {
     double_union_t union_data;
-    for (unsigned short i = 0; i < 8; i++) {
+    for (unsigned short i = 0; i < sizeof(double); i++) {
         union_data.byte[i] = buffer[i];
     }
     return union_data.floating_point;
@@ -75,7 +76,7 @@ string to_string(char* buffer, int length)
     }
     char char_array[length + 1];
     memcpy(char_array, buffer, length);
-    char_array[length + 1] = '\0';
+    char_array[length] = '\0';
     return string(char_array);
 }
 
@@ -111,7 +112,9 @@ private:
     string _category;
     int _error_code;
     ros::Time _recv_time;
-    vector<char*> data;
+    vector<int> indices;
+    vector<int> lengths;
+    char* _buffer;
 public:
     PacketResult(int error_code, ros::Time recv_time) {
         _category = "";
@@ -144,21 +147,24 @@ public:
     ros::Time getRecvTime() {
         return _recv_time;
     }
+    void setBuffer(char* buffer) {
+        _buffer = buffer;
+    }
     size_t size() {
-        return data.size();
+        return indices.size();
     }
     int32_t get_int(int index) {
-        return to_int32(data.at(index));
+        return to_int32(_buffer + indices.at(index));
     }
-    uint16_t get_double(int index) {
-        return to_double(data.at(index));
+    double get_double(int index) {
+        return to_double(_buffer + indices.at(index));
     }
     string get_string(int index) {
-        return to_string(*data.at(index));
+        return to_string(_buffer + indices.at(index), lengths.at(index));
     }
-
-    void add(char* buffer) {
-        data.push_back(buffer);
+    void add(int index, int length) {
+        indices.push_back(index);
+        lengths.push_back(length);
     }
 };
 
@@ -169,6 +175,7 @@ private:
     vector<PacketResult*> _result_queue;
     int _read_buffer_index;
     uint32_t _read_packet_num;
+    uint32_t _write_packet_num;
     int _current_segment_start;
     int _current_segment_stop;
     std::map<string, string> _categories;
@@ -212,4 +219,5 @@ public:
     int parseBuffer(char* buffer, int start_index, int stop_index);
     PacketResult* popResult();
     bool isCodeError(int error_code);
+    int makePacket(char* write_buffer, string category, const char *formats, va_list args);
 };

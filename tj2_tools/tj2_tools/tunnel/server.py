@@ -1,4 +1,5 @@
 import time
+import rospy
 import queue
 import socket
 import select
@@ -23,6 +24,7 @@ class TunnelServer:
         self.message_queues = {}
 
         self.poll_timeout = 1.0
+        self.read_block_size = 4096
 
         self.buffer = b''
 
@@ -44,22 +46,22 @@ class TunnelServer:
                 connection.setblocking(0)
                 self.inputs.append(connection)
                 self.message_queues[connection] = queue.Queue()
-                logger.info("Registering client %s:%s" % client_address)
+                rospy.loginfo("Registering client %s:%s" % client_address)
                 if connection not in self.outputs:
                     self.outputs.append(connection)
             else:
-                recv_msg = stream.recv(1024)
+                recv_msg = stream.recv(self.read_block_size)
                 self.buffer += recv_msg
                 if recv_msg:
                     if len(self.buffer) > 0:
-                        logger.debug("Buffer: %s" % repr(self.buffer))
+                        rospy.logdebug("Buffer: %s" % repr(self.buffer))
                         self.buffer, results = self.protocol.parse_buffer(self.buffer, self.categories)
                         for result in results:
                             error_code, recv_time, data = result
                             category = data[0]
                             data = data[1:]
                             self.packet_callback(error_code, recv_time, category, data)
-                    self.message_queues[stream].put(recv_msg)  # echo back to client
+                    # self.message_queues[stream].put(recv_msg)  # echo back to client
                     
                 else:
                     self.close_stream(stream)
@@ -72,7 +74,7 @@ class TunnelServer:
             except queue.Empty:
                 continue
             try:
-                logger.debug("Writing: %s" % next_msg)
+                rospy.logdebug("Writing: %s" % next_msg)
                 stream.send(next_msg)
             except ConnectionResetError:
                 self.close_stream(stream)
@@ -85,12 +87,12 @@ class TunnelServer:
         
         for message_queue in self.message_queues.values():
             if message_queue.full():
-                logger.debug("Discarding write (%s, %s). Queue is full." % (category, serialized_args))
+                rospy.logdebug("Discarding write (%s, %s). Queue is full." % (category, serialized_args))
                 return
-            logger.debug("Creating packet from args: (%s, %s)" % (category, serialized_args))
+            rospy.logdebug("Creating packet from args: (%s, %s)" % (category, serialized_args))
             packet = self.protocol.make_packet(category, *args)
 
-            logger.debug("Queueing packet: %s" % repr(packet))
+            rospy.logdebug("Queueing packet: %s" % repr(packet))
             message_queue.put(packet)
 
     def close_stream(self, stream):
@@ -101,7 +103,10 @@ class TunnelServer:
         del self.message_queues[stream]
 
     def update(self):
-        self.poll_socket()
+        try:
+            self.poll_socket()
+        except BaseException as e:
+            rospy.logerr(str(e))
     
     def packet_callback(self, error_code, recv_time, category, data):
         pass
