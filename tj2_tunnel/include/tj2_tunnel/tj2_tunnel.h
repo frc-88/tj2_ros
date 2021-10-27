@@ -86,6 +86,9 @@ private:
     // Subscribers
     ros::Subscriber _twist_sub;
 
+    bool openSocket();
+    void closeSocket();
+
     void writePacket(string category, const char *formats, ...);
 
     void packetCallback(PacketResult* result);

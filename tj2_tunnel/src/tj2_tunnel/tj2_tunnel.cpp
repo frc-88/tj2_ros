@@ -53,31 +53,13 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     protocol = new TunnelProtocol(_categories);
 
-    if ((_socket_id = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    {
-        ROS_ERROR("Socket creation error! Failed to create connection.");
-        return;
-    }
-
-    _serv_addr.sin_family = AF_INET;
-    _serv_addr.sin_port = htons(_port);
-
-    // Convert IPv4 and IPv6 addresses from text to binary form
-    if(inet_pton(AF_INET, _host.c_str(), &_serv_addr.sin_addr) <= 0)
-    {
-        ROS_ERROR("Socket creation error. Invalid server address.");
-        return;
-    }
-
-    if (connect(_socket_id, (struct sockaddr *)&_serv_addr, sizeof(_serv_addr)) < 0)
-    {
-        ROS_ERROR("Socket connection failed!");
-        return;
-    }
-
     _socket_timeout.tv_sec = 0;
     _socket_timeout.tv_usec = 10000;
     
+    if (!openSocket()) {
+        return;
+    }
+
     _unparsed_index = 0;
 
     _prev_ping_time = ros::Time(0);
@@ -130,9 +112,37 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     _poll_socket_thread = new boost::thread(&TJ2Tunnel::pollSocketTask, this);
 
-    _socket_initialized = true;
     ROS_INFO("tj2_tunnel init complete");
 }
+
+bool TJ2Tunnel::openSocket()
+{
+    if ((_socket_id = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        ROS_ERROR("Socket creation error! Failed to create connection.");
+        return false;
+    }
+
+    _serv_addr.sin_family = AF_INET;
+    _serv_addr.sin_port = htons(_port);
+
+    // Convert IPv4 and IPv6 addresses from text to binary form
+    if (inet_pton(AF_INET, _host.c_str(), &_serv_addr.sin_addr) <= 0)
+    {
+        ROS_ERROR("Socket creation error. Invalid server address.");
+        return false;
+    }
+
+    if (connect(_socket_id, (struct sockaddr *)&_serv_addr, sizeof(_serv_addr)) < 0)
+    {
+        ROS_ERROR("Socket connection failed!");
+        return false;
+    }
+    _socket_initialized = true;
+
+    return true;
+}
+
 
 void TJ2Tunnel::packetCallback(PacketResult* result)
 {
@@ -336,11 +346,19 @@ void TJ2Tunnel::pollSocketTask()
     while (ros::ok())
     {
         if (!pollSocket()) {
+            ROS_INFO("Exiting socket thread");
             break;
         }
     }
-    close(_socket_id);
+    closeSocket();
 }
+
+void TJ2Tunnel::closeSocket()
+{
+    close(_socket_id);
+    _socket_initialized = false;
+}
+
 
 bool TJ2Tunnel::loop()
 {
