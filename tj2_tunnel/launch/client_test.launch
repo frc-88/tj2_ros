@@ -2,12 +2,11 @@
 <launch>
     <arg name="publish_odom_tf" default="true"/>
     <arg name="robot_address" default="10.0.88.2"/>
-    <!-- <arg name="robot_address" default="127.0.0.1"/> -->
     <arg name="robot_port" default="3000"/>
+    <!-- <arg name="robot_address" default="localhost"/> -->
 
     <group ns="tj2">
-        <node name="tj2_tunnel" pkg="tj2_tunnel" type="tj2_tunnel_node" output="screen" required="true">
-            <rosparam param="categories" file="$(find tj2_tunnel)/config/categories.yaml" command="load"/>
+        <node name="tj2_tunnel_client_test" pkg="tj2_tunnel" type="tj2_tunnel_node.py" output="screen" required="true">
             <param name="host" value="$(arg robot_address)"/>
             <!-- <param name="remote_angular_units_conversion" value="1.0"/> -->
             <param name="port" value="$(arg robot_port)"/>
