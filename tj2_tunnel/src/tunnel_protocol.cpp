@@ -253,7 +253,7 @@ PacketResult* TunnelProtocol::parsePacket(char* buffer, int start_index, int sto
     PacketResult* result = new PacketResult(NO_ERROR, recv_time);
 
     if (recv_packet_num != _read_packet_num) {
-        ROS_WARN("Received packet num doesn't match local count. recv %d != local %d. %s", recv_packet_num, _read_packet_num, packetToString(buffer, start_index, stop_index).c_str());
+        ROS_DEBUG("Received packet num doesn't match local count. recv %d != local %d. %s", recv_packet_num, _read_packet_num, packetToString(buffer, start_index, stop_index).c_str());
         _read_packet_num++;
         _read_packet_num = recv_packet_num;
         result->setErrorCode(PACKET_COUNT_NOT_SYNCED_ERROR);
