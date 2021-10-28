@@ -1,13 +1,18 @@
 #pragma once
 
+
 #include <stdio.h>
+
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <sys/select.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
+#include <sys/ioctl.h>
+
+#include <fcntl.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 #include <string.h>
 #include <mutex>
 #include <boost/thread/thread.hpp>
@@ -46,6 +51,7 @@ private:
     double _min_linear_y_cmd;
     double _min_angular_z_cmd;
     double _zero_epsilon;
+    double _socket_open_attempts;
 
     // Members
     const int READ_BUFFER_LEN = 4096;
@@ -69,6 +75,9 @@ private:
     std::map<string, string> _categories;
     TunnelProtocol* protocol;
 
+    ros::Time _last_read_time;
+    ros::Duration _last_read_threshold;
+
     ros::Timer _ping_timer;
     ros::Time _prev_ping_time;
     ros::Duration _ping_interval;
@@ -86,6 +95,7 @@ private:
     // Subscribers
     ros::Subscriber _twist_sub;
 
+    bool reOpenSocket();
     bool openSocket();
     void closeSocket();
 
