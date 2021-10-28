@@ -19,6 +19,8 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~min_angular_z_cmd", _min_angular_z_cmd, 0.1);
     ros::param::param<double>("~zero_epsilon", _zero_epsilon, 0.001);
 
+    _socket_open_attempts = 50;
+
     _cmd_vel_timeout = ros::Duration(_cmd_vel_timeout_param);
 
     string key;
@@ -53,10 +55,10 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     protocol = new TunnelProtocol(_categories);
 
-    _socket_timeout.tv_sec = 0;
-    _socket_timeout.tv_usec = 10000;
+    _socket_timeout.tv_sec = 3;
+    _socket_timeout.tv_usec = 0;
     
-    if (!openSocket()) {
+    if (!reOpenSocket()) {
         return;
     }
 
@@ -64,6 +66,9 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     _prev_ping_time = ros::Time(0);
     _ping_interval = ros::Duration(1.0);
+
+    _last_read_time = ros::Time(0);
+    _last_read_threshold = ros::Duration(5.0);
 
     _ping_pub = nh.advertise<std_msgs::Float64>("ping", 50);
 
@@ -115,8 +120,41 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ROS_INFO("tj2_tunnel init complete");
 }
 
+bool TJ2Tunnel::reOpenSocket()
+{
+    for (int attempt = 0; attempt < _socket_open_attempts; attempt++)
+    {
+        if (!ros::ok()) {
+            ROS_INFO("Exiting reopen");
+            break;
+        }
+        ros::Duration(0.5).sleep();
+        if (attempt > 0) {
+            ROS_INFO("Open socket attempt #%d", attempt + 1);
+        }
+        closeSocket();
+        if (openSocket()) {
+            break;
+        }
+        ROS_INFO("Connection attempt failed");
+    }
+    if (!_socket_initialized) {
+        ROS_ERROR("Maximum number of attempts reached");
+    }
+    return _socket_initialized;
+}
+
 bool TJ2Tunnel::openSocket()
 {
+    // Adapted from https://stackoverflow.com/questions/2597608/c-socket-connection-timeout
+    // and http://developerweb.net/viewtopic.php?id=3196.
+    ROS_INFO("Initializing socket");
+    socklen_t lon;
+    fd_set myset;
+    struct timeval tv;
+    int valopt;
+    long arg;
+    int res;
     if ((_socket_id = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         ROS_ERROR("Socket creation error! Failed to create connection.");
@@ -126,6 +164,17 @@ bool TJ2Tunnel::openSocket()
     _serv_addr.sin_family = AF_INET;
     _serv_addr.sin_port = htons(_port);
 
+    // Set non-blocking
+    if ((arg = fcntl(_socket_id, F_GETFL, NULL)) < 0) {
+        ROS_ERROR("Error fcntl(..., F_GETFL) (%s)", strerror(errno));
+        return false;
+    }
+    arg |= O_NONBLOCK;
+    if (fcntl(_socket_id, F_SETFL, arg) < 0) {
+        ROS_ERROR("Error fcntl(..., F_SETFL) (%s)", strerror(errno));
+        return false;
+    }
+
     // Convert IPv4 and IPv6 addresses from text to binary form
     if (inet_pton(AF_INET, _host.c_str(), &_serv_addr.sin_addr) <= 0)
     {
@@ -133,12 +182,64 @@ bool TJ2Tunnel::openSocket()
         return false;
     }
 
-    if (connect(_socket_id, (struct sockaddr *)&_serv_addr, sizeof(_serv_addr)) < 0)
-    {
-        ROS_ERROR("Socket connection failed!");
+    // if (connect(_socket_id, (struct sockaddr *)&_serv_addr, sizeof(_serv_addr)) < 0)
+    // {
+    //     ROS_ERROR("Socket connection failed!");
+    //     return false;
+    // }
+
+    // Trying to connect with timeout
+    res = connect(_socket_id, (struct sockaddr *)&_serv_addr, sizeof(_serv_addr));
+    if (res < 0) {
+        if (errno == EINPROGRESS) {
+            ROS_DEBUG("EINPROGRESS in connect() - selecting");
+            do {
+                tv.tv_sec = 5;
+                tv.tv_usec = 0;
+                FD_ZERO(&myset);
+                FD_SET(_socket_id, &myset);
+                res = select(_socket_id + 1, NULL, &myset, NULL, &tv);
+                if (res < 0 && errno != EINTR) {
+                    ROS_ERROR("Error connecting %d - %s", errno, strerror(errno));
+                    return false;
+                }
+                else if (res > 0) {
+                    // Socket selected for write
+                    lon = sizeof(int);
+                    if (getsockopt(_socket_id, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) {
+                        ROS_ERROR("Error in getsockopt() %d - %s", errno, strerror(errno));
+                        return false;
+                    }
+                    // Check the value returned
+                    if (valopt) {
+                        ROS_ERROR("Error in delayed connection() %d - %s", valopt, strerror(valopt));
+                        return false;
+                    }
+                    break;
+                }
+                else {
+                    ROS_ERROR("Timeout in select() - Cancelling!");
+                    return false;
+                }
+            } while (true);
+        }
+        else {
+            ROS_ERROR("Error connecting %d - %s\n", errno, strerror(errno));
+            return false;
+        }
+    }
+    // Set to blocking mode again
+    if ((arg = fcntl(_socket_id, F_GETFL, NULL)) < 0) {
+        ROS_ERROR("Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
+        return false;
+    }
+    arg &= (~O_NONBLOCK);
+    if( fcntl(_socket_id, F_SETFL, arg) < 0) {
+        ROS_ERROR("Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
         return false;
     }
     _socket_initialized = true;
+    ROS_INFO("Socket initialized");
 
     return true;
 }
@@ -274,6 +375,10 @@ void TJ2Tunnel::pingCallback(const ros::TimerEvent& event)
 
 void TJ2Tunnel::writePacket(string category, const char *formats, ...)
 {
+    if (!_socket_initialized) {
+        ROS_DEBUG("Socket is not initialized. Skipping write. Category: %s", category.c_str());
+        return;
+    }
     va_list args;
     va_start(args, formats);
     _write_lock.lock();
@@ -293,23 +398,30 @@ void TJ2Tunnel::writePacket(string category, const char *formats, ...)
 bool TJ2Tunnel::pollSocket()
 {
     if (!_socket_initialized) {
-        ROS_WARN("Socket is not initialized. Exiting.");
-        return false;
+        ROS_WARN("Socket is not initialized.");
+        reOpenSocket();
+        return true;
     }
     FD_ZERO(&_socket_set);  // clear the set
     FD_SET(_socket_id, &_socket_set); // add our file descriptor to the set
     int return_val = select(_socket_id + 1, &_socket_set, NULL, NULL, &_socket_timeout);
     if (return_val == -1) {
         ROS_ERROR("An error occurred while checking the socket for available data");
-        return false;
+        reOpenSocket();
+        return true;
     }
     else if (return_val == 0) {
+        if (ros::Time::now() - _last_read_time > _last_read_threshold) {
+            ROS_INFO("Socket timed out while waiting for data");
+            reOpenSocket();
+            _last_read_time = ros::Time::now();
+        }
         return true;  // a timeout occurred
     }
+    _last_read_time = ros::Time::now();
     int num_chars_read = read(_socket_id, _read_buffer, READ_BUFFER_LEN);
-    if (num_chars_read == -1) {
-        ROS_WARN("Socket indicated it should exit.");
-        return false;
+    if (num_chars_read == 0) {
+        return true;
     }
     int last_parsed_index = protocol->parseBuffer(_read_buffer, 0, _unparsed_index + num_chars_read);
 
