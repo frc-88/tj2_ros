@@ -353,7 +353,9 @@ void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
     
     _prev_twist_timestamp = ros::Time::now();
     _twist_cmd_speed = sqrt(vx * vx + vy * vy) / _remote_linear_units_conversion;
-    _twist_cmd_dir = fmod(atan2(vy, vx), 2 * M_PI) / _remote_angular_units_conversion;
+    if (abs(_twist_cmd_speed) > _zero_epsilon) {
+        _twist_cmd_dir = fmod(atan2(vy, vx), 2 * M_PI) / _remote_angular_units_conversion;
+    }
     _twist_cmd_vt = vt / _remote_angular_units_conversion;
 }
 
