@@ -243,6 +243,17 @@ bool TJ2Tunnel::openSocket()
 
     return true;
 }
+bool TJ2Tunnel::didSocketTimeout()
+{
+    if (ros::Time::now() - _last_read_time > _last_read_threshold) {
+        ROS_INFO("Socket timed out while waiting for data");
+        _last_read_time = ros::Time::now();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
 
 
 void TJ2Tunnel::packetCallback(PacketResult* result)
@@ -410,19 +421,20 @@ bool TJ2Tunnel::pollSocket()
         reOpenSocket();
         return true;
     }
-    else if (return_val == 0) {
-        if (ros::Time::now() - _last_read_time > _last_read_threshold) {
-            ROS_INFO("Socket timed out while waiting for data");
+    else if (return_val == 0 || !FD_ISSET(_socket_id, &_socket_set)) {
+        if (didSocketTimeout()) {
             reOpenSocket();
-            _last_read_time = ros::Time::now();
         }
         return true;  // a timeout occurred
     }
-    _last_read_time = ros::Time::now();
     int num_chars_read = read(_socket_id, _read_buffer, READ_BUFFER_LEN);
-    if (num_chars_read == 0) {
+    if (num_chars_read <= 0) {
+        if (didSocketTimeout()) {
+            reOpenSocket();
+        }
         return true;
     }
+    _last_read_time = ros::Time::now();
     int last_parsed_index = protocol->parseBuffer(_read_buffer, 0, _unparsed_index + num_chars_read);
 
     PacketResult* result;

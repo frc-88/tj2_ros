@@ -98,6 +98,7 @@ private:
     bool reOpenSocket();
     bool openSocket();
     void closeSocket();
+    bool didSocketTimeout();
 
     void writePacket(string category, const char *formats, ...);
 
