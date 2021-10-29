@@ -327,9 +327,9 @@ void TJ2Tunnel::publishOdom(ros::Time recv_time, double x, double y, double t, d
 
 void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
 {
-    double vx = -msg->linear.x;
-    double vy = -msg->linear.y;
-    double vt = -msg->angular.z;
+    double vx = msg->linear.x;
+    double vy = msg->linear.y;
+    double vt = msg->angular.z;
 
     if (_zero_epsilon < abs(vx) && abs(vx) < _min_linear_x_cmd) {
         vx = _min_linear_x_cmd;
