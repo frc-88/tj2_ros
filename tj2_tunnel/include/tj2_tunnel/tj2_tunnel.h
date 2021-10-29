@@ -107,7 +107,7 @@ private:
 
     // void publishPing();
     void publishCmdVel();
-    void publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt);
+    void publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vt);
 
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
 

@@ -6,8 +6,8 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~host", _host, "127.0.0.1");
     ros::param::param<int>("~port", _port, 3000);
 
-    ros::param::param<double>("~remote_linear_units_conversion", _remote_linear_units_conversion, 0.3048);
-    ros::param::param<double>("~remote_angular_units_conversion", _remote_angular_units_conversion, M_PI / 180.0);
+    ros::param::param<double>("~remote_linear_units_conversion", _remote_linear_units_conversion, 1.0);
+    ros::param::param<double>("~remote_angular_units_conversion", _remote_angular_units_conversion, 1.0);
 
     ros::param::param<bool>("~publish_odom_tf", _publish_odom_tf, true);
     ros::param::param<string>("~base_frame", _base_frame, "base_link");
@@ -258,8 +258,7 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
             result->get_double(1),
             result->get_double(2),
             result->get_double(3),
-            result->get_double(4),
-            result->get_double(5)
+            result->get_double(4)
         );
     }
     else if (category.compare("ping") == 0) {
@@ -276,13 +275,12 @@ double TJ2Tunnel::getLocalTime() {
     return ros::Time::now().toSec();
 }
 
-void TJ2Tunnel::publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt)
+void TJ2Tunnel::publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vt)
 {
     x *= _remote_linear_units_conversion;
     y *= _remote_linear_units_conversion;
     t *= _remote_angular_units_conversion;
     vx *= _remote_linear_units_conversion;
-    vy *= _remote_linear_units_conversion;
     vt *= _remote_angular_units_conversion;
 
     tf2::Quaternion quat;
@@ -296,7 +294,7 @@ void TJ2Tunnel::publishOdom(ros::Time recv_time, double x, double y, double t, d
     _odom_msg.pose.pose.orientation = msg_quat;
 
     _odom_msg.twist.twist.linear.x = vx;
-    _odom_msg.twist.twist.linear.y = vy;
+    _odom_msg.twist.twist.linear.y = 0.0;
     _odom_msg.twist.twist.angular.z = vt;
 
     if (_publish_odom_tf)
