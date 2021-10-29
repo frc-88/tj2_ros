@@ -1,29 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <!-- <arg name="image_throttle_rate" default="5.0"/>
-    <node type="throttle" name="image_topic_throttle" pkg="topic_tools" required="true" output="screen"
-            args="messages /camera/color/image_raw $(arg image_throttle_rate) /camera/color/image_raw_throttle"/> -->
-
-    <node pkg="rosbag" type="record" name="rosbag_record_realsense" output="log" 
-       args="record -o /media/storage/bags/realsense
-        /camera/aligned_depth_to_color/camera_info
-        /camera/aligned_depth_to_color/image_raw
-        /camera/depth/camera_info
-        /camera/depth/image_rect_raw
-        /camera/infra/camera_info
-        /camera/infra/image_raw
-        /camera/color/camera_info
-        /camera/color/image_raw
-
-        /camera/accel/imu_info
-        /camera/accel/sample
-        /camera/gyro/imu_info
-        /camera/gyro/sample
-        /tj2/odom
-
-        /laser/scan
-        /tj2/imu
-
-        --duration=150 --lz4 -b 1024
-        " />
+    <node name="rosbag_record_realsense" pkg="rosbag_snapshot" type="snapshot" args="">
+        <rosparam file="$(find tj2_camera)/config/snapshot.yaml" command="load" ns=""/>
+    </node>
 </launch>

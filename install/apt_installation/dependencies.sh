@@ -22,6 +22,7 @@ gmapping
 amcl
 usb-cam
 image-transport-plugins
+rosbag-snapshot
 )
 
 package_list=""
