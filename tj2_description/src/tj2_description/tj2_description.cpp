@@ -29,12 +29,8 @@ TJ2Description::TJ2Description(ros::NodeHandle* nodehandle):nh(*nodehandle)
 
 void TJ2Description::module_callback(const tj2_networktables::SwerveModuleConstPtr& msg, int module_index)
 {
-    ros::Time now = ros::Time::now();
-
-    double azimuth = msg->azimuth_position;
-    
-    wheel_joints_msg.position[module_index] = azimuth;
-    wheel_joints_msg.header.stamp = now;
+    wheel_joints_msg.position[module_index] = msg->azimuth_position;
+    wheel_joints_msg.header.stamp = ros::Time::now();
 }
 
 
