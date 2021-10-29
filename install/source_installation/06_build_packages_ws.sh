@@ -44,6 +44,7 @@ packages=(
     https://github.com/ros-perception/openslam_gmapping.git
     https://github.com/ros-drivers/usb_cam.git
     https://github.com/ros-perception/image_transport_plugins
+    https://github.com/ros/rosbag_snapshot.git
 )
 
 branches=(
@@ -77,6 +78,7 @@ branches=(
     melodic-devel   # https://github.com/ros-perception/openslam_gmapping.git
     develop     # https://github.com/ros-drivers/usb_cam.git
     noetic-devel    # https://github.com/ros-perception/image_transport_plugins
+    main  # https://github.com/ros/rosbag_snapshot.git
 )
 
 len=${#packages[@]}
