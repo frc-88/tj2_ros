@@ -1,19 +1,27 @@
 #!/usr/bin/env bash
 
 packages=(
-joystick-drivers
 geometry2
 navigation
 teb-local-planner
 rtabmap-ros
 realsense2-camera
-image-geometry
 vision-msgs
+move-base-flex
+perception-pcl
+octomap-msgs
+pcl-msgs
+apriltag-ros
+costmap-converter
+image-geometry
+image-pipeline
+image-common
+laser-filters
+robot-localization
 gmapping
 amcl
-move-base-flex
-apriltag-ros
-robot-localization
+usb-cam
+image-transport-plugins
 )
 
 package_list=""
@@ -21,7 +29,8 @@ for p in "${packages[@]}"; do
     package_list+="ros-noetic-$p "
 done
 
-sudo apt install $package_list
+sudo apt-get install -y $package_list
 
+sudo apt install -y python3-pip
 sudo pip3 install -r requirements.txt
 

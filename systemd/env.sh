@@ -3,7 +3,7 @@
 HOST_MACHINE=""
 
 JUMP_THRESHOLD=60
-TIMEOUT=900
+TIMEOUT=${1:-900}
 
 stop_time=$((SECONDS+TIMEOUT))
 prev_time=$((SECONDS))

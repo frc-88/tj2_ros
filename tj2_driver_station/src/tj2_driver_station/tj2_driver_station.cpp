@@ -67,11 +67,11 @@ void TJ2DriverStation::twist_callback(const geometry_msgs::TwistConstPtr& msg) {
 bool TJ2DriverStation::set_mode(RobotMode mode)
 {
     if (!_is_robot_connected) {
-        ROS_WARN("Robot isn't connected! Can't set mode.");
+        ROS_WARN_THROTTLE(1.0, "Robot isn't connected! Can't set mode.");
         return false;
     }
     if (!_is_code_running) {
-        ROS_WARN("Robot code isn't running! Can't set mode.");
+        ROS_WARN_THROTTLE(1.0, "Robot code isn't running! Can't set mode.");
         return false;
     }
     if (_current_mode == mode) {
