@@ -15,7 +15,6 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
     ros::param::param<double>("~min_linear_x_cmd", _min_linear_x_cmd, 0.05);
-    ros::param::param<double>("~min_linear_y_cmd", _min_linear_y_cmd, 0.05);
     ros::param::param<double>("~min_angular_z_cmd", _min_angular_z_cmd, 0.1);
     ros::param::param<double>("~zero_epsilon", _zero_epsilon, 0.001);
 
@@ -110,7 +109,6 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2Tunnel::twistCallback, this);
     _prev_twist_timestamp = ros::Time(0);
     _twist_cmd_speed = 0.0;
-    _twist_cmd_dir = 0.0;
     _twist_cmd_vt = 0.0;
 
     _ping_timer = nh.createTimer(ros::Duration(0.5), &TJ2Tunnel::pingCallback, this);
@@ -181,12 +179,6 @@ bool TJ2Tunnel::openSocket()
         ROS_ERROR("Socket creation error. Invalid server address.");
         return false;
     }
-
-    // if (connect(_socket_id, (struct sockaddr *)&_serv_addr, sizeof(_serv_addr)) < 0)
-    // {
-    //     ROS_ERROR("Socket connection failed!");
-    //     return false;
-    // }
 
     // Trying to connect with timeout
     res = connect(_socket_id, (struct sockaddr *)&_serv_addr, sizeof(_serv_addr));
@@ -328,14 +320,10 @@ void TJ2Tunnel::publishOdom(ros::Time recv_time, double x, double y, double t, d
 void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
 {
     double vx = msg->linear.x;
-    double vy = msg->linear.y;
     double vt = msg->angular.z;
 
     if (_zero_epsilon < abs(vx) && abs(vx) < _min_linear_x_cmd) {
         vx = _min_linear_x_cmd;
-    }
-    if (_zero_epsilon < abs(vy) && abs(vy) < _min_linear_y_cmd) {
-        vy = _min_linear_y_cmd;
     }
     if (_zero_epsilon < abs(vt) && abs(vt) < _min_angular_z_cmd) {
         vt = _min_angular_z_cmd;
@@ -344,18 +332,12 @@ void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
     if (abs(vx) < _zero_epsilon) {
         vx = 0.0;
     }
-    if (abs(vy) < _zero_epsilon) {
-        vy = 0.0;
-    }
     if (abs(vt) < _zero_epsilon) {
         vt = 0.0;
     }
     
     _prev_twist_timestamp = ros::Time::now();
-    _twist_cmd_speed = sqrt(vx * vx + vy * vy) / _remote_linear_units_conversion;
-    if (abs(_twist_cmd_speed) > _zero_epsilon) {
-        _twist_cmd_dir = fmod(atan2(vy, vx), 2 * M_PI) / _remote_angular_units_conversion;
-    }
+    _twist_cmd_speed = vx / _remote_linear_units_conversion;
     _twist_cmd_vt = vt / _remote_angular_units_conversion;
 }
 
@@ -363,11 +345,10 @@ void TJ2Tunnel::publishCmdVel()
 {
     ros::Duration dt = ros::Time::now() - _prev_twist_timestamp;
     if (dt > _cmd_vel_timeout) {
-        // ROS_DEBUG_THROTTLE(2.0, "cmd_vel timed out skipping write.");
         return;
     }
 
-    writePacket("cmd", "fff", _twist_cmd_dir, _twist_cmd_speed, _twist_cmd_vt);
+    writePacket("cmd", "ff", _twist_cmd_speed, _twist_cmd_vt);
 }
 
 
@@ -375,16 +356,6 @@ void TJ2Tunnel::pingCallback(const ros::TimerEvent& event)
 {
     writePacket("ping", "f", getLocalTime());
 }
-
-// void TJ2Tunnel::publishPing()
-// {
-//     ros::Time now = ros::Time::now();
-//     if (now - _prev_ping_time > _ping_interval) {
-//         writePacket("ping", "f", getLocalTime());
-//         _prev_ping_time = now;
-//     }
-// }
-
 
 void TJ2Tunnel::writePacket(string category, const char *formats, ...)
 {
@@ -488,11 +459,7 @@ void TJ2Tunnel::closeSocket()
 
 bool TJ2Tunnel::loop()
 {
-    // if (!pollSocket()) {
-    //     return false;
-    // }
     publishCmdVel();
-    // publishPing();
     return true;
 }
 
