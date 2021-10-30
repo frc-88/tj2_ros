@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="publish_odom_tf" default="true"/>
+    <arg name="robot_port" default="3000"/>
+    <arg name="robot_address" default="localhost"/>
+
+    <group ns="tj2">
+        <node name="tj2_tunnel_server_test" pkg="tj2_tunnel" type="server_test.py" output="screen" required="true">
+            <param name="host" value="$(arg robot_address)"/>
+            <param name="port" value="$(arg robot_port)"/>
+        </node>
+    </group>
+</launch>

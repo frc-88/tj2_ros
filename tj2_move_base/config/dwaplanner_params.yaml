@@ -37,7 +37,7 @@ min_vel_y: -2.0
 max_vel_theta: 6.14  # 6.14
 
 # The absolute value of the minimum rotational velocity for the robot in rad/s
-min_vel_theta: 0.3  # 0.15
+min_vel_theta: 0.0  # 0.15
 
 
 ## Goal Tolerance Parameters ##
