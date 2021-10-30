@@ -16,13 +16,13 @@ acc_lim_y: 10.0
 acc_lim_th: 3.0
 
 # The absolute value of the maximum translational velocity for the robot in m/s
-max_vel_trans: 2.0  # max speed 4.48 m/s
+max_vel_trans: 1.0  # max speed 4.48 m/s
 
 # The absolute value of the minimum translational velocity for the robot in m/s
 min_vel_trans: 0.0  # 0.05
 
 # The maximum x velocity for the robot in m/s.
-max_vel_x: 2.0  # 4.48
+max_vel_x: 1.0  # 4.48
 
 # The minimum x velocity for the robot in m/s, negative for backwards motion.
 min_vel_x: -2.0  # -0.15
