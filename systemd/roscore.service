@@ -15,12 +15,9 @@ Group=tj2
 ExecStart=/usr/local/bin/roscore.sh
 
 Restart=always
-RestartSec=300
-StartLimitBurst=30
+RestartSec=5
 
 KillSignal=SIGINT
-TimeoutStopSec=10
-FinalKillSignal=SIGKILL
 
 [Install]
 WantedBy=multi-user.target

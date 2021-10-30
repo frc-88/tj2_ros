@@ -16,6 +16,7 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
+LOCAL_PATH=$(realpath $LOCAL_PATH)
 LOCAL_NAME=$(basename $LOCAL_PATH)
 DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
 
