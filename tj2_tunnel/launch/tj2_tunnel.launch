@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <arg name="publish_odom_tf" default="true"/>
-    <!-- <arg name="robot_address" default="10.0.88.2"/> -->
-    <arg name="robot_address" default="127.0.0.1"/>
-    <arg name="robot_port" default="3000"/>
+    <arg name="robot_address" default="10.0.88.2"/>
+    <!-- <arg name="robot_address" default="127.0.0.1"/> -->
+    <arg name="robot_port" default="5800"/>
 
     <group ns="tj2">
         <node name="tj2_tunnel" pkg="tj2_tunnel" type="tj2_tunnel_node" output="screen" required="true">
