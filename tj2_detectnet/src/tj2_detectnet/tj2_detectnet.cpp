@@ -36,6 +36,7 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
     if (!ros::param::search("detectnet_marker_colors", key)) {
         THROW_EXCEPTION("Failed to find detectnet_marker_colors parameter");
     }
+    ROS_DEBUG("Found detectnet_marker_colors: %s", key.c_str());
     nh.getParam(key, _marker_colors_param);
 
     // _marker_colors_param is a map
@@ -43,12 +44,14 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
         _marker_colors_param.size() == 0) {
         THROW_EXCEPTION("detectnet_marker_colors wrong type or size");
     }
+    ROS_DEBUG("detectnet_marker_colors is the correct type");
 
     for (XmlRpc::XmlRpcValue::iterator it = _marker_colors_param.begin(); it != _marker_colors_param.end(); ++it)
     {
         if (it->second.getType() != XmlRpc::XmlRpcValue::TypeArray) {
             THROW_EXCEPTION("detectnet_marker_colors element is not a list");
         }
+        ROS_DEBUG("\tFound detectnet_marker_colors label");
         string label = it->first;
 
         std_msgs::ColorRGBA color;
@@ -57,7 +60,7 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
         color.b = (double)(it->second[2]);
         color.a = (double)(it->second[3]);
         _marker_colors[label] = color;
-        ROS_INFO("%s: R=%0.2f, G=%0.2f, B=%0.2f, A=%0.2f", label.c_str(), color.r, color.g, color.b, color.a);
+        ROS_DEBUG("\t%s: R=%0.2f, G=%0.2f, B=%0.2f, A=%0.2f", label.c_str(), color.r, color.g, color.b, color.a);
     }
 
     if (_marker_colors.size() == 0) {
@@ -67,10 +70,12 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
     if (!ros::param::search("detectnet_z_depth_estimations", key)) {
         THROW_EXCEPTION("Failed to find detectnet_z_depth_estimations parameter");
     }
+    ROS_DEBUG("Found detectnet_z_depth_estimations: %s", key.c_str());
     nh.getParam(key, _z_depth_estimations);
     if (_z_depth_estimations.size() == 0) {
         THROW_EXCEPTION("detectnet_z_depth_estimations has zero length!");
     }
+    ROS_DEBUG("detectnet_z_depth_estimations is the correct size");
 
     load_detectnet_model();
     load_labels();
@@ -104,8 +109,10 @@ void TJ2DetectNet::load_detectnet_model()
     /*
 	 * load object detection network
 	 */
+    ROS_DEBUG("Loading detectnet model.");
     if (_model_path.size() > 0)
 	{
+        ROS_DEBUG("Loading model from %s", _model_path.c_str());
 		// create network using custom model paths
 		_net = detectNet::Create(_prototxt_path.c_str(), _model_path.c_str(),
 						    _mean_pixel, _class_labels_path.c_str(), _threshold,
@@ -113,6 +120,7 @@ void TJ2DetectNet::load_detectnet_model()
 	}
 	else
 	{
+        ROS_DEBUG("Loading model from built-in set");
 		// determine which built-in model was requested
 		detectNet::NetworkType model = detectNet::NetworkTypeFromStr(_model_name.c_str());
 
