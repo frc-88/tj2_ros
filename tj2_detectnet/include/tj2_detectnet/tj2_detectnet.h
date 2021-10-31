@@ -119,6 +119,7 @@ private:
 
     bool _publish_with_frame;
     string _target_frame;
+    bool _always_publish_overlay;
 
     XmlRpc::XmlRpcValue _marker_colors_param;
     std::map<std::string, std_msgs::ColorRGBA> _marker_colors;
@@ -159,6 +160,7 @@ private:
     ros::Publisher _detection_pub;
     ros::Publisher _marker_pub;
     image_transport::Publisher _overlay_pub;
+    ros::Publisher _overlay_info_pub;
 
     // ROS TF
     tf2_ros::Buffer tfBuffer;
@@ -166,8 +168,8 @@ private:
 
     // Sub callbacks
     void rgbd_callback(const ImageConstPtr& color_image, const CameraInfoConstPtr& color_info, const ImageConstPtr& depth_image);
-    int detect(const ImageConstPtr& color_image, vision_msgs::Detection2DArray* msg);
-    bool publish_overlay(detectNet::Detection* detections, int num_detections);
+    int detect(const ImageConstPtr& color_image, const CameraInfoConstPtr& color_info, vision_msgs::Detection2DArray* msg);
+    bool publish_overlay(const CameraInfoConstPtr& color_info, detectNet::Detection* detections, int num_detections);
 
     void reset_label_counter();
     ObjPoseDescription bbox_to_pose(cv::Mat depth_cv_image, vision_msgs::BoundingBox2D bbox, ros::Time stamp, string label, int label_index);

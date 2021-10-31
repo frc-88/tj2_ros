@@ -29,6 +29,8 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
     ros::param::param<bool>("~publish_with_frame", _publish_with_frame, true);
     ros::param::param<string>("~target_frame", _target_frame, "base_link");
 
+    ros::param::param<bool>("~always_publish_overlay", _always_publish_overlay, false);
+
     _marker_persistance = ros::Duration(_marker_persistance_s);
     _overlay_flags = detectNet::OverlayFlagsFromStr(_overlay_str.c_str());
 
@@ -83,13 +85,14 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
     reset_label_counter();
 
     // image converter objects
-	_input_cvt = new imageConverter();
-	_overlay_cvt = new imageConverter();
+    _input_cvt = new imageConverter();
+    _overlay_cvt = new imageConverter();
 
     // Publishers
     _detection_pub = nh.advertise<vision_msgs::Detection2DArray>("detections", 25);
     _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("markers", 25);
-    _overlay_pub = _image_transport.advertise("detect_overlay", 2);
+    _overlay_pub = _image_transport.advertise("overlay/image_raw", 2);
+    _overlay_info_pub = nh.advertise<sensor_msgs::CameraInfo>("overlay/camera_info", 2);
 
     // Subscribers
     color_sub.subscribe(nh, _color_topic, 10);
@@ -107,32 +110,32 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
 void TJ2DetectNet::load_detectnet_model()
 {
     /*
-	 * load object detection network
-	 */
+     * load object detection network
+     */
     ROS_DEBUG("Loading detectnet model.");
     if (_model_path.size() > 0)
-	{
+    {
         ROS_DEBUG("Loading model from %s", _model_path.c_str());
-		// create network using custom model paths
-		_net = detectNet::Create(_prototxt_path.c_str(), _model_path.c_str(),
-						    _mean_pixel, _class_labels_path.c_str(), _threshold,
-						    _input_blob.c_str(), _output_cvg.c_str(), _output_bbox.c_str());
-	}
-	else
-	{
+        // create network using custom model paths
+        _net = detectNet::Create(_prototxt_path.c_str(), _model_path.c_str(),
+                            _mean_pixel, _class_labels_path.c_str(), _threshold,
+                            _input_blob.c_str(), _output_cvg.c_str(), _output_bbox.c_str());
+    }
+    else
+    {
         ROS_DEBUG("Loading model from built-in set");
-		// determine which built-in model was requested
-		detectNet::NetworkType model = detectNet::NetworkTypeFromStr(_model_name.c_str());
+        // determine which built-in model was requested
+        detectNet::NetworkType model = detectNet::NetworkTypeFromStr(_model_name.c_str());
 
-		if (model == detectNet::CUSTOM)
-		{
-			ROS_ERROR("invalid built-in pretrained model name '%s', defaulting to ssd-mobilenet-v2", _model_name.c_str());
-			model = detectNet::SSD_MOBILENET_V2;
-		}
+        if (model == detectNet::CUSTOM)
+        {
+            ROS_ERROR("invalid built-in pretrained model name '%s', defaulting to ssd-mobilenet-v2", _model_name.c_str());
+            model = detectNet::SSD_MOBILENET_V2;
+        }
 
-		// create network using the built-in model
-		_net = detectNet::Create(model, _threshold);
-	}
+        // create network using the built-in model
+        _net = detectNet::Create(model, _threshold);
+    }
 }
 
 
@@ -166,16 +169,16 @@ void TJ2DetectNet::load_labels()
 int TJ2DetectNet::run()
 {
     if (!_net)
-	{
-		ROS_ERROR("failed to load detectNet model");
-		return 0;
-	}
+    {
+        ROS_ERROR("failed to load detectNet model");
+        return 0;
+    }
 
     if (!_input_cvt || !_overlay_cvt)
-	{
-		ROS_ERROR("failed to create imageConverter objects");
-		return 0;
-	}
+    {
+        ROS_ERROR("failed to create imageConverter objects");
+        return 0;
+    }
     // ros::Rate clock_rate(60);  // run loop at 60 Hz
     //
     // int exit_code = 0;
@@ -200,8 +203,8 @@ int TJ2DetectNet::run()
 
     // free resources
     delete _net;
-	delete _input_cvt;
-	delete _overlay_cvt;
+    delete _input_cvt;
+    delete _overlay_cvt;
 
     return 0;
 }
@@ -217,17 +220,17 @@ void TJ2DetectNet::rgbd_callback(
     ros::Time t0 = ros::Time::now();
 
     // convert the image to reside on GPU
-	if (!_input_cvt || !_input_cvt->Convert(color_image))
-	{
-		ROS_INFO("failed to convert %ux%u %s image", color_image->width, color_image->height, color_image->encoding.c_str());
-		return;
-	}
+    if (!_input_cvt || !_input_cvt->Convert(color_image))
+    {
+        ROS_INFO("failed to convert %ux%u %s image", color_image->width, color_image->height, color_image->encoding.c_str());
+        return;
+    }
 
     //
     // Detect bounding boxes in color image
     //
     vision_msgs::Detection2DArray msg;
-    const int num_detections = detect(color_image, &msg);
+    const int num_detections = detect(color_image, color_info, &msg);
     if (num_detections <= 0) {
         return;
     }
@@ -442,7 +445,7 @@ double TJ2DetectNet::get_z_dist(cv::Mat depth_cv_image, ObjPoseDescription* desc
 }
 
 // classify the image
-int TJ2DetectNet::detect(const ImageConstPtr& color_image, vision_msgs::Detection2DArray* msg)
+int TJ2DetectNet::detect(const ImageConstPtr& color_image, const CameraInfoConstPtr& color_info, vision_msgs::Detection2DArray* msg)
 {
     detectNet::Detection* detections = NULL;
 
@@ -455,53 +458,50 @@ int TJ2DetectNet::detect(const ImageConstPtr& color_image, vision_msgs::Detectio
     ros::Duration dt = ros::Time::now() - t0;
     ROS_DEBUG("Detect took %fs", dt.toSec());
 
-	// verify success
-	if (num_detections < 0)	{
-		ROS_ERROR("failed to run object detection on %ux%u image", color_image->width, color_image->height);
-	}
+    // verify success
+    if (num_detections < 0)    {
+        ROS_ERROR("failed to run object detection on %ux%u image", color_image->width, color_image->height);
+    }
 
-	// if objects were detected, update message
-	if (num_detections > 0)
-	{
-		ROS_DEBUG("detected %i objects in %ux%u image", num_detections, color_image->width, color_image->height);
+    // create a detection for each bounding box
+    for (int n = 0; n < num_detections; n++)
+    {
+        detectNet::Detection* det = detections + n;
 
-		// create a detection for each bounding box
-		for (int n = 0; n < num_detections; n++)
-		{
-			detectNet::Detection* det = detections + n;
+        ROS_DEBUG("object %i class #%u (%s)  confidence=%f", n, det->ClassID, _net->GetClassDesc(det->ClassID), det->Confidence);
+        ROS_DEBUG("object %i bounding box (%f, %f)  (%f, %f)  w=%f  h=%f", n, det->Left, det->Top, det->Right, det->Bottom, det->Width(), det->Height());
 
-			ROS_DEBUG("object %i class #%u (%s)  confidence=%f", n, det->ClassID, _net->GetClassDesc(det->ClassID), det->Confidence);
-			ROS_DEBUG("object %i bounding box (%f, %f)  (%f, %f)  w=%f  h=%f", n, det->Left, det->Top, det->Right, det->Bottom, det->Width(), det->Height());
+        // create a detection sub-message
+        vision_msgs::Detection2D detMsg;
 
-			// create a detection sub-message
-			vision_msgs::Detection2D detMsg;
+        detMsg.bbox.size_x = det->Width();
+        detMsg.bbox.size_y = det->Height();
 
-			detMsg.bbox.size_x = det->Width();
-			detMsg.bbox.size_y = det->Height();
+        float cx, cy;
+        det->Center(&cx, &cy);
 
-			float cx, cy;
-			det->Center(&cx, &cy);
+        detMsg.bbox.center.x = cx;
+        detMsg.bbox.center.y = cy;
 
-			detMsg.bbox.center.x = cx;
-			detMsg.bbox.center.y = cy;
+        detMsg.bbox.center.theta = 0.0f;
 
-			detMsg.bbox.center.theta = 0.0f;
+        // create classification hypothesis
+        vision_msgs::ObjectHypothesisWithPose hyp;
 
-			// create classification hypothesis
-			vision_msgs::ObjectHypothesisWithPose hyp;
+        hyp.id = det->ClassID;
+        hyp.score = det->Confidence;
 
-			hyp.id = det->ClassID;
-			hyp.score = det->Confidence;
+        detMsg.results.push_back(hyp);
+        msg->detections.push_back(detMsg);
+    }
 
-			detMsg.results.push_back(hyp);
-			msg->detections.push_back(detMsg);
-		}
+    // if objects were detected, update message
+    if (_always_publish_overlay || (_overlay_pub.getNumSubscribers() > 0 && num_detections > 0))
+    {
+        ROS_DEBUG("detected %i objects in %ux%u image", num_detections, color_image->width, color_image->height);
 
-        // generate the overlay (if there are subscribers)
-    	if (_overlay_pub.getNumSubscribers() > 0) {
-            publish_overlay(detections, num_detections);
-        }
-	}
+        publish_overlay(color_info, detections, num_detections);
+    }
 
     return num_detections;
 }
@@ -515,35 +515,43 @@ void TJ2DetectNet::reset_label_counter()
 }
 
 // publish overlay image
-bool TJ2DetectNet::publish_overlay(detectNet::Detection* detections, int num_detections)
+bool TJ2DetectNet::publish_overlay(const CameraInfoConstPtr& color_info, detectNet::Detection* detections, int num_detections)
 {
-	// get the image dimensions
-	const uint32_t width  = _input_cvt->GetWidth();
-	const uint32_t height = _input_cvt->GetHeight();
+    // get the image dimensions
+    const uint32_t width  = _input_cvt->GetWidth();
+    const uint32_t height = _input_cvt->GetHeight();
 
-	// assure correct image size
-	if (!_overlay_cvt->Resize(width, height, imageConverter::ROSOutputFormat))
-		return false;
+    // assure correct image size
+    if (!_overlay_cvt->Resize(width, height, imageConverter::ROSOutputFormat))
+        return false;
 
-	// generate the overlay
+    // generate the overlay
     // was _input_cvt->ImageGPU(). Is now _input_cvt->ImageCPU().
     // Using the GPU stored image added ~0.03s of latency on Jetson Nano for some reason...
-	if (!_net->Overlay(_input_cvt->ImageCPU(), _overlay_cvt->ImageGPU(), width, height,
-				   imageConverter::InternalFormat, detections, num_detections, _overlay_flags))
-	{
-		return false;
-	}
+    if (!_net->Overlay(_input_cvt->ImageCPU(), _overlay_cvt->ImageGPU(), width, height,
+                   imageConverter::InternalFormat, detections, num_detections, _overlay_flags))
+    {
+        return false;
+    }
 
-	// populate the message
-	sensor_msgs::Image msg;
+    // populate the message
+    sensor_msgs::Image msg;
 
-	if( !_overlay_cvt->Convert(msg, imageConverter::ROSOutputFormat) )
-		return false;
+    if( !_overlay_cvt->Convert(msg, imageConverter::ROSOutputFormat) )
+        return false;
 
-	// populate timestamp in header field
-	msg.header.stamp = ros::Time::now();
+    // populate timestamp in header field
+    msg.header = color_info->header;
+    msg.header.stamp = ros::Time::now();
 
-	// publish the message
-	_overlay_pub.publish(msg);
-	ROS_DEBUG("publishing %ux%u overlay image", width, height);
+    // publish the message
+    _overlay_pub.publish(msg);
+
+    sensor_msgs::CameraInfo info = *color_info;
+    info.header.stamp = msg.header.stamp;
+
+    _overlay_info_pub.publish(info);
+    ROS_DEBUG("publishing %ux%u overlay image", width, height);
+
+    return true;
 }
