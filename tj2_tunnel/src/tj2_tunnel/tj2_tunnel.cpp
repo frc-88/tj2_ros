@@ -4,7 +4,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     nh(*nodehandle)
 {
     ros::param::param<string>("~host", _host, "127.0.0.1");
-    ros::param::param<int>("~port", _port, 3000);
+    ros::param::param<int>("~port", _port, 5800);
 
     ros::param::param<double>("~remote_linear_units_conversion", _remote_linear_units_conversion, 1.0);
     ros::param::param<double>("~remote_angular_units_conversion", _remote_angular_units_conversion, 1.0);
