@@ -10,8 +10,7 @@
         <remap from="odom" to="/tj2/odom"/>
     </node>
     <include file="$(find tj2_rplidar)/launch/laser_filter.launch"/>
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0  0.0  -0.117 0 0 0 1 base_link base_footprint 33" />
-    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_laser" args="-0.0553 0.116 0.253 0 0 1 0 base_footprint laser 33" />
+    <include file="$(find tj2_description)/launch/basic_transforms.launch"/>
 
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="$(arg mode)"/>
