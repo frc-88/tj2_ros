@@ -25,12 +25,28 @@ class OdomBagPublisher(object):
         self.br = tf2_ros.TransformBroadcaster()
         self.tf_msg = TransformStamped()
 
+        self.prev_msg = None
+        self.num_skipped = 0
+        self.num_published = 0
+
         rospy.loginfo("%s init complete" % self.node_name)
 
     def run(self):
         rospy.spin()
 
+    def is_msg_equal(self, other):
+        if self.prev_msg is None:
+            return False
+        return self.prev_msg.pose.pose == other.pose.pose
+    
     def odom_callback(self, msg):
+        if self.is_msg_equal(msg):
+            self.num_skipped += 1
+            return
+        self.prev_msg = msg
+        self.num_published += 1
+
+
         self.tf_msg.header.frame_id = msg.header.frame_id
         self.tf_msg.child_frame_id = msg.child_frame_id
         if self.use_bag_timestamp:
@@ -46,15 +62,17 @@ class OdomBagPublisher(object):
         self.tf_msg.transform.rotation.w = msg.pose.pose.orientation.w
 
         self.br.sendTransform(self.tf_msg)
+    
+    def close(self):
+        rospy.loginfo("%s of %s messages skipped" % (self.num_skipped, self.num_published))
 
 
 if __name__ == "__main__":
     node = OdomBagPublisher()
     try:
         node.run()
-
     except rospy.ROSInterruptException:
         pass
-
     finally:
+        node.close()
         rospy.loginfo("Exiting %s node" % node.node_name)
