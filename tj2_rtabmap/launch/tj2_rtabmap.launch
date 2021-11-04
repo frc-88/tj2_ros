@@ -44,7 +44,7 @@
             <param name="queue_size" type="int" value="10"/>
             <!-- <param name="odom_sensor_sync" type="bool" value="true"/> -->
 
-            <!-- <remap from="odom" to="/tj2/odom"/> -->
+            <remap from="odom" to="/tj2/odom"/>
 
             <remap from="rgb/image"       to="/camera/color/image_raw"/>
             <remap from="depth/image"     to="/camera/aligned_depth_to_color/image_raw"/>
