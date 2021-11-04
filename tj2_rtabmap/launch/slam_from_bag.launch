@@ -15,6 +15,7 @@
     <include file="$(find tj2_rtabmap)/launch/tj2_rtabmap.launch">
         <arg name="localization" value="$(eval len(database_path) > 0)"/>
         <arg name="database_path" value="$(arg database_path)"/>
+        <arg name="use_laser" value="true"/>
     </include>
     
 </launch>
