@@ -22,7 +22,8 @@ class TunnelClient:
 
         self.categories = {
             "ping": "f",
-            "odom": "ffffff"
+            "odom": "ffffff",
+            "__msg__": "s",
         }
 
         self.protocol = TunnelProtocol()
@@ -117,7 +118,9 @@ class MyTunnel(TunnelClient):
         self.odoms = []
     
     def packet_callback(self, error_code, recv_time, category, data):
-        if category == "ping":
+        if category == "__msg__":
+            logger.info("Tunnel message: %s" % data[0])
+        elif category == "ping":
             dt = time.time() - data[0]
             self.pings.append(dt)
             while len(self.pings) > 10:
