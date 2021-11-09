@@ -19,7 +19,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~min_angular_z_cmd", _min_angular_z_cmd, 0.1);
     ros::param::param<double>("~zero_epsilon", _zero_epsilon, 0.001);
 
-    _socket_open_attempts = 50;
+    _socket_open_attempts = 100;
 
     _cmd_vel_timeout = ros::Duration(_cmd_vel_timeout_param);
 
@@ -47,6 +47,8 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
         string format = it->second;
         _categories[category] = format;
     }
+    // Special categories:
+    _categories["__msg__"] = "s";
 
     _write_buffer = new char[TunnelProtocol::MAX_PACKET_LEN];
     _read_buffer = new char[READ_BUFFER_LEN];
@@ -128,7 +130,7 @@ bool TJ2Tunnel::reOpenSocket()
             ROS_INFO("Exiting reopen");
             break;
         }
-        ros::Duration(0.5).sleep();
+        ros::Duration(1.0).sleep();
         if (attempt > 0) {
             ROS_INFO("Open socket attempt #%d", attempt + 1);
         }
@@ -449,7 +451,13 @@ bool TJ2Tunnel::pollSocket()
             ROS_ERROR("Encountered error code %d.", result->getErrorCode());
             continue;
         }
-        packetCallback(result);
+        string category = result->getCategory();
+        if (category.compare("__msg__") == 0) {
+            ROS_INFO("Tunnel message: %s", result->get_string(0).c_str());
+        }
+        else {
+            packetCallback(result);
+        }
     }
     while (result->getErrorCode() != TunnelProtocol::NULL_ERROR);
 
