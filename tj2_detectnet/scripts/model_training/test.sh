@@ -8,10 +8,10 @@ MODEL_DIR=$WORKSPACE/models/tj2_2020_game
 MODEL=$MODEL_DIR/tj2-2020-mb2-ssd-lite.onnx
 
 LABELS=$MODEL_DIR/labels.txt
-# INPUT=/dev/video0
+INPUT=/dev/video0
 # INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-05-29.mp4
 # INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-08-55.mp4
-INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-05-26.mp4
+# INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-05-26.mp4
 # INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-05-29/realsense_2021-10-23-18-05-29_25.png
 # INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-08-55/realsense_2021-10-23-18-08-55_25.png
 # INPUT=/home/ben/object-recognition/jetson_inference_training/detection/ssd/data/tj2_2020_unsorted/team900_2020_game//5172_POV-Great_Northern_2020_Quals_22.mp4
@@ -26,7 +26,7 @@ OUTPUT=display://0
 # OUTPUT=/home/ben/Desktop/output.png
 #OUTPUT=/home/ben/Desktop/output.mp4
 
-THRESHOLD=0.35
+THRESHOLD=0.7
 
 # relevant fix for running video on x86 systems:
 # https://github.com/dusty-nv/jetson-inference/issues/810
