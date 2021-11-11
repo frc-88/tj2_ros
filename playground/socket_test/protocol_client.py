@@ -87,9 +87,9 @@ class TunnelClient:
             logger.debug("Discarding write (%s, %s). Queue is full." % (category, serialized_args))
             return
         logger.debug("Creating packet from args: (%s, %s)" % (category, serialized_args))
-        packet = self.protocol.make_packet(category, *args)
 
         with self.write_lock:
+            packet = self.protocol.make_packet(category, *args)
             logger.debug("Queueing packet: %s" % repr(packet))
             self.message_queue.put(packet)
     
@@ -100,21 +100,15 @@ class TunnelClient:
         self.device.close()
 
 
-def test_write(interface):
-    last_cmd_time = time.time()
-    while True:
-        interface.write("ping", time.time())
-        time.sleep(0.1)
-
-        if time.time() - last_cmd_time > 0.5:
-            interface.write("cmd", 0.0, 0.25, 0.0)
-            last_cmd_time = time.time()
-
 class MyTunnel(TunnelClient):
     def __init__(self, address, port):
         super(MyTunnel, self).__init__(address, port)
         self.pings = []
         self.odoms = []
+
+        self.write_thread = threading.Thread(target=self.write_task)
+        self.write_thread.daemon = True
+        self.write_thread.start()
     
     def packet_callback(self, error_code, recv_time, category, data):
         if category == "ping":
@@ -133,18 +127,26 @@ class MyTunnel(TunnelClient):
             data.insert(0, rate)
             logger.info("Odometry. Rate: %0.4f Hz, x=%0.4f, y=%0.4f, t=%0.4f, vx=%0.4f, vy=%0.4f, vt=%0.4f" % tuple(data))
 
+    def write_task(self):
+        last_ping_time = time.time()
+        while True:
+            self.write("cmd", 0.0, 0.0, 0.0)
+
+            if time.time() - last_ping_time > 1.0:
+                self.write("ping", time.time())
+                last_ping_time = time.time()
+            time.sleep(0.005)
+
+
 def main():
-    if len(sys.argv[1]) == 0:
-        host = "127.0.0.1:3000"
+    if len(sys.argv) == 1:
+        host = "127.0.0.1:5800"
     else:
         host = sys.argv[1]
     print("Host: %s" % host)
     address, port = host.split(":")
     port = int(port)
     interface = MyTunnel(address, port)
-    write_thread = threading.Thread(target=test_write, args=(interface,))
-    write_thread.daemon = True
-    write_thread.start()
 
     try:
         interface.start()
