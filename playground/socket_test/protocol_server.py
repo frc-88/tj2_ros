@@ -127,10 +127,10 @@ def test_write(interface):
 
 
 def main():
-    interface = TunnelServer("", 3000)
-    # write_thread = threading.Thread(target=test_write, args=(interface,))
-    # write_thread.daemon = True
-    # write_thread.start()
+    interface = TunnelServer("", 5800)
+    write_thread = threading.Thread(target=test_write, args=(interface,))
+    write_thread.daemon = True
+    write_thread.start()
     try:
         interface.start()
         while True:
