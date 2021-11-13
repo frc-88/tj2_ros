@@ -1,10 +1,15 @@
 import os
+import sys
 import cv2
 import time
 import numpy as np
 
 
+SHOW = False
+
+
 def process_video(path, output_dir):
+    global SHOW
     filename = os.path.basename(path)
     name = os.path.splitext(filename)[0]
     output_dir = os.path.join(output_dir, name)
@@ -71,16 +76,21 @@ def process_video(path, output_dir):
                 cv2.putText(draw_frame, motion_text, (10, 60),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 255), 3)
 
-                cv2.imshow('frame', draw_frame)
+                if SHOW:
+                    cv2.imshow('frame', draw_frame)
                 if should_save_frame:
+                    print("Writing frame #%s" % frame_num)
                     cv2.imwrite(image_name_format % saved_frame_num, frame)
                     saved_frame_num += 1
+                else:
+                    print("Skipping frame #%s" % frame_num)
 
-            key = cv2.waitKey(1)
-            if key == ord('q'):
-                break
-            elif key == ord(' '):
-                paused = not paused
+            if SHOW:
+                key = cv2.waitKey(1)
+                if key == ord('q'):
+                    break
+                elif key == ord(' '):
+                    paused = not paused
     finally:
         t1 = time.time()
         video.release()
@@ -89,11 +99,16 @@ def process_video(path, output_dir):
 
 
 def main():
-    # filename = "tj2_02-27-2021_1.mkv"
-    # filename = "tj2_02-27-2021_2.mkv"
-    filenames = ["tj2_02-27-2021_%s.mkv" % x for x in range(3, 13)]
+    global SHOW
+    # filenames = ["tj2_02-27-2021_%s.mkv" % x for x in range(3, 13)]
+    filenames = ["realsense_2021-10-23-18-05-29.mp4"]
     # dirname = "/Users/Woz4tetra/Google Drive/Projects/TJ2 ROS/2021 Game Objects Training Data/%s"
-    dirname = "/home/ben/object-recognition/detectnet_training/data/2021_Game_Objects_Training_Data/%s"
+    # dirname = "/home/ben/object-recognition/detectnet_training/data/2021_Game_Objects_Training_Data/%s"
+    dirname = "output/%s"
+
+    for arg in sys.argv[1:]:
+        if "show" in arg:
+            SHOW = True
 
     for filename in filenames:
         path = dirname % filename

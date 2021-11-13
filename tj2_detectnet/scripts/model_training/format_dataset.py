@@ -255,12 +255,16 @@ def format_dataset(source_dirs, dest_dir, class_label_path, database_name, dry_r
 
 
 def main():
+    source_dir = "/home/ben/object-recognition/jetson_inference_training/detection/ssd/data"
+    ws_dir = source_dir + "/tj2_2020_unsorted"
     format_dataset(
-        ["/home/ben/tensorflow_workspace/2020Game/data/videos",
-         "/home/ben/Desktop/output/tj2_02-27-2021_2"],
-        "/home/ben/jetson-inference/python/training/detection/ssd/data",
-        # "/home/ben/tensorflow_workspace/2020Game/data/2020Game_label_map.pbtxt",
-        "/home/ben/Desktop/output/labels.pbtxt",
+        [
+            ws_dir + "/team900_2020_game",
+            ws_dir + "/tj2_02-27-2021_2",
+            ws_dir + "/realsense_2021-10-23-18-05-29"
+         ],
+        source_dir,
+        ws_dir + "/labels.pbtxt",
         "tj2_2020_voc_image_database",
         dry_run=False)
 
