@@ -124,7 +124,7 @@ class TunnelServer:
 def test_write(interface):
     while True:
         data = [random.random() for _ in range(6)]
-        interface.write("odom", *data)
+        # interface.write("odom", *data)
         time.sleep(0.02)
 
 
