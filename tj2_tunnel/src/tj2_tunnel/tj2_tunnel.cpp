@@ -111,8 +111,8 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2Tunnel::twistCallback, this);
     _prev_twist_timestamp = ros::Time(0);
-    _twist_cmd_speed = 0.0;
-    _twist_cmd_dir = 0.0;
+    _twist_cmd_vx = 0.0;
+    _twist_cmd_vy = 0.0;
     _twist_cmd_vt = 0.0;
 
     _ping_timer = nh.createTimer(ros::Duration(0.5), &TJ2Tunnel::pingCallback, this);
@@ -354,10 +354,8 @@ void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
     }
     
     _prev_twist_timestamp = ros::Time::now();
-    _twist_cmd_speed = sqrt(vx * vx + vy * vy) / _remote_linear_units_conversion;
-    if (abs(_twist_cmd_speed) > _zero_epsilon) {
-        _twist_cmd_dir = fmod(atan2(vy, vx), 2 * M_PI) / _remote_angular_units_conversion;
-    }
+    _twist_cmd_vx = vx / _remote_linear_units_conversion;
+    _twist_cmd_vy = vy / _remote_linear_units_conversion;
     _twist_cmd_vt = vt / _remote_angular_units_conversion;
 }
 
@@ -369,7 +367,7 @@ void TJ2Tunnel::publishCmdVel()
         return;
     }
 
-    writePacket("cmd", "fff", _twist_cmd_dir, _twist_cmd_speed, _twist_cmd_vt);
+    writePacket("cmd", "fff", _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt);
 }
 
 

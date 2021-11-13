@@ -60,7 +60,10 @@ class TunnelServer:
                             error_code, recv_time, data = result
                             category = data[0]
                             data = data[1:]
-                            self.packet_callback(error_code, recv_time, category, data)
+                            if category == "__msg__":
+                                rospy.loginfo("Tunnel message: %s" % data[0])
+                            else:
+                                self.packet_callback(error_code, recv_time, category, data)
                     # self.message_queues[stream].put(recv_msg)  # echo back to client
                     
                 else:

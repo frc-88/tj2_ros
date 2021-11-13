@@ -85,7 +85,7 @@ private:
     nav_msgs::Odometry _odom_msg;
 
     ros::Time _prev_twist_timestamp;
-    double _twist_cmd_speed, _twist_cmd_dir, _twist_cmd_vt;
+    double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
 
     // Publishers
     tf2_ros::TransformBroadcaster _tf_broadcaster;

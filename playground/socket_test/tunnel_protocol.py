@@ -30,7 +30,7 @@ class TunnelProtocol:
         self.PACKET_SEP = b'\t'
         self.PACKET_SEP_STR = '\t'
 
-        self.max_packet_len = 128
+        self.max_packet_len = 1024
         self.max_segment_len = 64
 
         self.read_packet_num = -1

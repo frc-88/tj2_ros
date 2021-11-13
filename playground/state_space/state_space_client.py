@@ -1,13 +1,19 @@
 import sys
 import csv
 import time
+import logging
 import threading
 import numpy as np
 from datetime import datetime
-from protocol_client import TunnelClient, logger
+from logger import make_logger
+from tj2_tools.tunnel.client import TunnelClient
+
+
+logger = make_logger("state_space", logging.INFO)
+
 
 class MyTunnel(TunnelClient):
-    def __init__(self, address, port):
+    def __init__(self, address, port, base_dir):
         categories = {
             "ping": "f",
             "odom": "ffffff",
@@ -20,10 +26,7 @@ class MyTunnel(TunnelClient):
         self.write_thread = threading.Thread(target=self.write_task)
         self.write_thread.daemon = True
 
-        self.path = "./%s.csv" % datetime.now().strftime("%Y-%m-%dT%H-%M-%S--%f")
-        self.file = open(self.path, 'w')
-        self.writer = csv.writer(self.file)
-        self.writer.writerow([
+        self.header = [
             "timestamp",
             "module index",
             "wheel velocity",
@@ -45,15 +48,22 @@ class MyTunnel(TunnelClient):
             "reference wheel velocity",
             "lo next voltage",
             "hi next voltage",
-        ])
+        ]
+        assert len(self.header) - 1 == len(categories["module"])
+
+        self.path = "%s/%s.csv" % (base_dir, datetime.now().strftime("%Y-%m-%dT%H-%M-%S--%f"))
+        self.file = open(self.path, 'w')
+        self.writer = csv.writer(self.file)
+        self.writer.writerow(self.header)
 
     def start(self):
         super(MyTunnel, self).start()
-        self.write_thread.start()
+        # self.write_thread.start()
     
     def stop(self):
         super(MyTunnel, self).stop()
         self.file.close()
+        logger.info("Wrote to %s" % self.path)
     
     def write_task(self):
         last_cmd_time = time.time()
@@ -96,7 +106,7 @@ def main():
     print("Host: %s" % host)
     address, port = host.split(":")
     port = int(port)
-    interface = MyTunnel(address, port)
+    interface = MyTunnel(address, port, "data")
     
     try:
         interface.start()

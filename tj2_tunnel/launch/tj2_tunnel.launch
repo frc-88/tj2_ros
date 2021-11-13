@@ -9,7 +9,8 @@
         <node name="tj2_tunnel" pkg="tj2_tunnel" type="tj2_tunnel_node" output="screen" required="true">
             <rosparam param="categories" file="$(find tj2_tunnel)/config/categories.yaml" command="load"/>
             <param name="host" value="$(arg robot_address)"/>
-            <!-- <param name="remote_angular_units_conversion" value="1.0"/> -->
+            <param name="remote_angular_units_conversion" value="1.0"/>
+            <param name="remote_linear_units_conversion" value="1.0"/>
             <param name="port" value="$(arg robot_port)"/>
             <param name="cmd_vel_timeout" value="2.0"/>
             <param name="publish_odom_tf" value="true"/>

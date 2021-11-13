@@ -322,7 +322,7 @@ class TunnelProtocol:
                 length = self.to_int(len_bytes)
                 self.buffer_index += 2
                 if length >= len(buffer):
-                    logger.error("Parsed length %s exceeds buffer length! %s" % (length, len(buffer)))
+                    rospy.logerr("Parsed length %s exceeds buffer length! %s" % (length, len(buffer)))
             self.current_segment = buffer[self.buffer_index: self.buffer_index + length]
             self.buffer_index += length
             return True

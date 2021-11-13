@@ -51,7 +51,10 @@ class TunnelClient:
                         continue
                     category = data[0]
                     data = data[1:]
-                    self.packet_callback(error_code, recv_time, category, data)
+                    if category == "__msg__":
+                        rospy.loginfo("Tunnel message: %s" % data[0])
+                    else:
+                        self.packet_callback(error_code, recv_time, category, data)
         
         for stream in writable:
             if self.message_queue.qsize() == 0:
@@ -70,7 +73,6 @@ class TunnelClient:
             if stream in self.outputs:
                 self.outputs.remove(stream)
             stream.close()
-            del self.message_queues[stream]
     
     def write(self, category, *args):
         serialized_args = ", ".join(map(str, args))
