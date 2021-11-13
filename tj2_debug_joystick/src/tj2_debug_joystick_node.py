@@ -56,7 +56,7 @@ class TJ2DebugJoystick:
         assert self.axis_mapping is not None
 
         self.speed_mode = 0
-        self.speed_multipliers = [0.1, 0.25, 0.5, 1.0]
+        self.speed_multipliers = [0.1, 0.25, 0.5, 0.9, 1.0]
         self.set_speed_mode(0)
 
         # services
