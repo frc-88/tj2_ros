@@ -44,6 +44,7 @@ class TunnelClient:
 
     def update(self):
         readable, writable, exceptional = select.select(self.inputs, self.outputs, self.inputs, self.poll_timeout)
+        
         for stream in readable:
             if stream is self.device:
                 logger.debug("Reading from socket")
@@ -84,9 +85,9 @@ class TunnelClient:
             logger.debug("Discarding write (%s, %s). Queue is full." % (category, serialized_args))
             return
         logger.debug("Creating packet from args: (%s, %s)" % (category, serialized_args))
-        packet = self.protocol.make_packet(category, *args)
-
         with self.write_lock:
+            packet = self.protocol.make_packet(category, *args)
+
             logger.debug("Queueing packet: %s" % repr(packet))
             self.message_queue.put(packet)
     

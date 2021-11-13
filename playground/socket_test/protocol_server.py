@@ -39,6 +39,8 @@ class TunnelServer:
         self.device.bind((self.address, self.port))
         self.device.listen(5)
         self.inputs.append(self.device)
+
+        logger.info("Opened socket on %s:%s" % (self.address, self.port))
     
     def poll_socket(self):
         if len(self.inputs) == 0:
@@ -127,7 +129,7 @@ def test_write(interface):
 
 
 def main():
-    interface = TunnelServer("", 5800)
+    interface = TunnelServer("127.0.0.1", 5800)
     write_thread = threading.Thread(target=test_write, args=(interface,))
     write_thread.daemon = True
     write_thread.start()
