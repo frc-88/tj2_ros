@@ -225,7 +225,7 @@ class TunnelProtocol:
             self.read_packet_num = self.recv_packet_num
         if self.recv_packet_num != self.read_packet_num:
             logger.warning("Received packet num doesn't match local count. "
-                           "recv %s != local %s", self.recv_packet_num, self.read_packet_num)
+                           "recv %s != local %s. %s", self.recv_packet_num, self.read_packet_num, repr(full_packet))
             logger.debug("Buffer: %s" % packet)
             self.read_packet_num = self.recv_packet_num
             self.set_error_code(PACKET_COUNT_NOT_SYNCED_ERROR)
