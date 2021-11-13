@@ -182,7 +182,7 @@ bool TJ2DriverStation::is_connected()
 
 void TJ2DriverStation::check_disable_timeout()
 {
-    if (is_connected() && ros::Time::now() - _twist_heartbeat_time > _disable_time_threshold) {
+    if (is_connected() && _requested_mode != DISABLED && ros::Time::now() - _twist_heartbeat_time > _disable_time_threshold) {
         ROS_INFO("No twist commands received for %0.1fs. Disabling robot", _disable_time_threshold.toSec());
         _requested_mode = DISABLED;
         set_mode(DISABLED);
