@@ -15,15 +15,13 @@ logger = make_logger("client", logging.INFO)
 
 
 class TunnelClient:
-    def __init__(self, address, port):
+    def __init__(self, address, port, categories):
         self.address = address
         self.port = port
         self.device = None
 
-        self.categories = {
-            "ping": "f",
-            "odom": "ffffff"
-        }
+        self.categories = categories
+        self.categories["__msg__"] = "s"
 
         self.protocol = TunnelProtocol()
 
@@ -78,7 +76,6 @@ class TunnelClient:
             if stream in self.outputs:
                 self.outputs.remove(stream)
             stream.close()
-            del self.message_queues[stream]
     
     def write(self, category, *args):
         serialized_args = ", ".join(map(str, args))
@@ -87,9 +84,9 @@ class TunnelClient:
             logger.debug("Discarding write (%s, %s). Queue is full." % (category, serialized_args))
             return
         logger.debug("Creating packet from args: (%s, %s)" % (category, serialized_args))
+        packet = self.protocol.make_packet(category, *args)
 
         with self.write_lock:
-            packet = self.protocol.make_packet(category, *args)
             logger.debug("Queueing packet: %s" % repr(packet))
             self.message_queue.put(packet)
     
@@ -102,22 +99,41 @@ class TunnelClient:
 
 class MyTunnel(TunnelClient):
     def __init__(self, address, port):
-        super(MyTunnel, self).__init__(address, port)
+        categories = {
+            "ping": "f",
+            "odom": "ffffff",
+        }
+        super(MyTunnel, self).__init__(address, port, categories)
         self.pings = []
         self.odoms = []
 
         self.write_thread = threading.Thread(target=self.write_task)
         self.write_thread.daemon = True
+
+    def start(self):
+        super(MyTunnel, self).start()
         self.write_thread.start()
     
+    def write_task(self):
+        last_cmd_time = time.time()
+        while True:
+            self.write("ping", time.time())
+            time.sleep(0.1)
+
+            if time.time() - last_cmd_time > 0.5:
+                self.write("cmd", 0.0, 0.25, 0.0)
+                last_cmd_time = time.time()
+
     def packet_callback(self, error_code, recv_time, category, data):
-        if category == "ping":
+        if category == "__msg__":
+            logger.info("Tunnel message: %s" % data[0])
+        elif category == "ping":
             dt = time.time() - data[0]
             self.pings.append(dt)
             while len(self.pings) > 10:
                 self.pings.pop(0)
             
-            logger.info("Ping time: %0.6fs.\tAvg: %0.6f.\tStddev: %0.6f.\tInt. Rate: %0.3f" % (dt, np.mean(self.pings), np.std(self.pings), 1.0 / np.mean(self.pings)))
+            # logger.info("Ping time: %0.6fs.\tAvg: %0.6f.\tStddev: %0.6f.\tInt. Rate: %0.3f" % (dt, np.mean(self.pings), np.std(self.pings), 1.0 / np.mean(self.pings)))
         elif category == "odom":
             self.odoms.append(recv_time)
             while len(self.odoms) > 10:
@@ -125,17 +141,7 @@ class MyTunnel(TunnelClient):
             data = list(data)
             rate = 1.0 / np.mean(np.diff(self.odoms))
             data.insert(0, rate)
-            logger.info("Odometry. Rate: %0.4f Hz, x=%0.4f, y=%0.4f, t=%0.4f, vx=%0.4f, vy=%0.4f, vt=%0.4f" % tuple(data))
-
-    def write_task(self):
-        last_ping_time = time.time()
-        while True:
-            self.write("cmd", 0.0, 0.0, 0.0)
-
-            if time.time() - last_ping_time > 1.0:
-                self.write("ping", time.time())
-                last_ping_time = time.time()
-            time.sleep(0.005)
+            # logger.info("Odometry. Rate: %0.4f Hz, x=%0.4f, y=%0.4f, t=%0.4f, vx=%0.4f, vy=%0.4f, vt=%0.4f" % tuple(data))
 
 
 def main():
@@ -147,7 +153,7 @@ def main():
     address, port = host.split(":")
     port = int(port)
     interface = MyTunnel(address, port)
-
+    
     try:
         interface.start()
         while True:
