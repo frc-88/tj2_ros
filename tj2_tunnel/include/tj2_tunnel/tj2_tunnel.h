@@ -27,6 +27,11 @@
 #include "nav_msgs/Odometry.h"
 #include "geometry_msgs/Twist.h"
 #include "std_msgs/Float64.h"
+#include "sensor_msgs/Imu.h"
+
+#include "tj2_tunnel/SwerveModule.h"
+#include "tj2_tunnel/SwerveMotor.h"
+#include "tj2_tunnel/OdomReset.h"
 
 #include "tunnel_protocol.h"
 
@@ -45,6 +50,7 @@ private:
     bool _publish_odom_tf;
     string _base_frame;
     string _odom_frame;
+    string _imu_frame;
     double _cmd_vel_timeout_param;
     ros::Duration _cmd_vel_timeout;
     double _min_linear_x_cmd;
@@ -52,6 +58,7 @@ private:
     double _min_angular_z_cmd;
     double _zero_epsilon;
     double _socket_open_attempts;
+    int _num_modules;
 
     // Members
     const int READ_BUFFER_LEN = 4096;
@@ -82,7 +89,10 @@ private:
     ros::Time _prev_ping_time;
     ros::Duration _ping_interval;
 
+    // Messages
     nav_msgs::Odometry _odom_msg;
+    sensor_msgs::Imu _imu_msg;
+    vector<tj2_tunnel::SwerveModule*>* _module_msgs;
 
     ros::Time _prev_twist_timestamp;
     double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
@@ -91,9 +101,14 @@ private:
     tf2_ros::TransformBroadcaster _tf_broadcaster;
     ros::Publisher _odom_pub;
     ros::Publisher _ping_pub;
+    ros::Publisher _imu_pub;
+    vector<ros::Publisher>* _module_pubs;
 
     // Subscribers
     ros::Subscriber _twist_sub;
+
+    // Service Servers
+    ros::ServiceServer _odom_reset_srv;
 
     bool reOpenSocket();
     bool openSocket();
@@ -106,9 +121,19 @@ private:
     void pingCallback(const ros::TimerEvent& event);
     double getLocalTime();
 
+    // Service callbacks
+    bool odom_reset_callback(tj2_tunnel::OdomReset::Request &req, tj2_tunnel::OdomReset::Response &resp);
+
     // void publishPing();
     void publishCmdVel();
     void publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt);
+    void publishImu(ros::Time recv_time, double yaw, double yaw_rate, double accel_x, double accel_y);
+    void publishModule(ros::Time recv_time,
+        int module_index,
+        double module_angle, double module_speed,
+        double lo_voltage_command, double lo_radps,
+        double hi_voltage_command, double hi_radps
+    );
 
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
 

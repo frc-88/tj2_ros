@@ -1,2 +1,4 @@
 ping: "f"
 odom: "ffffff"
+imu: "ffff"
+module: "dffffff"

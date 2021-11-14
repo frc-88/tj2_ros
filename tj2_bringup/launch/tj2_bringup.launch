@@ -3,7 +3,6 @@
     <arg name="odom_ekf" default="false"/>
     <arg name="robot_address" default="10.0.88.2"/>
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
-        <arg name="publish_odom_tf" default="$(eval not arg('odom_ekf'))"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
     <include file="$(find tj2_tunnel)/launch/tj2_tunnel.launch">

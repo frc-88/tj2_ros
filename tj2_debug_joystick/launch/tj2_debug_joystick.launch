@@ -3,7 +3,7 @@
     <arg name="joystick_linear_x_axis"   default="left/Y" />
     <arg name="joystick_linear_y_axis"   default="left/X" />
     <arg name="joystick_angular_axis"   default="right/X" />
-    <arg name="deadzone_val"   default="0.1" />
+    <arg name="deadzone_val"   default="0.0" />
 
     <node name="joystick" pkg="joy" type="joy_node" output="screen" required="true">
         <param name="dev" value="/dev/input/js0" type="str"/>
