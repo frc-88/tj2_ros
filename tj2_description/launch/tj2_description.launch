@@ -22,4 +22,5 @@
     <!-- <node pkg="tf" type="static_transform_publisher" name="base_to_footprint" args="0.0 0.0 -0.254 0 0 0 1 base_link base_footprint 33" /> -->
     <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_laser" args="-0.0553 0.116 0.253 0 0 1 0 base_footprint laser 20" />
     <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_camera" args="0.2032 0.0 0.254 0 0 0 1 base_footprint camera_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_imu" args="0.0634 0.0012 0.2039 0 0 0 1 base_footprint imu 33" />
 </launch>

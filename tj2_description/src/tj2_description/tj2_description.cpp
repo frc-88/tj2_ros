@@ -15,7 +15,7 @@ TJ2Description::TJ2Description(ros::NodeHandle* nodehandle):nh(*nodehandle)
         wheel_joints_msg.position.push_back(0.0);
 
         wheel_subs->push_back(
-            nh.subscribe<tj2_networktables::SwerveModule>(
+            nh.subscribe<tj2_tunnel::SwerveModule>(
                 "swerve_modules/" + wheel_name, 50,
                 boost::bind(&TJ2Description::module_callback, this, _1, index)
             )
@@ -27,9 +27,14 @@ TJ2Description::TJ2Description(ros::NodeHandle* nodehandle):nh(*nodehandle)
     ROS_INFO("tj2_description is ready!");
 }
 
-void TJ2Description::module_callback(const tj2_networktables::SwerveModuleConstPtr& msg, int module_index)
+void TJ2Description::module_callback(const tj2_tunnel::SwerveModuleConstPtr& msg, int module_index)
 {
-    wheel_joints_msg.position[module_index] = msg->azimuth_position;
+    double azimuth = msg->azimuth_position;
+    if (msg->wheel_velocity < 0) {
+        azimuth -= M_PI;
+    }
+    
+    wheel_joints_msg.position[module_index] = azimuth;
     wheel_joints_msg.header.stamp = ros::Time::now();
 }
 

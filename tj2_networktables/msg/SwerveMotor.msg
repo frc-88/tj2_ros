@@ -1,4 +1,0 @@
-float64 velocity
-float64 command_velocity
-float64 command_voltage
-float64 current_draw

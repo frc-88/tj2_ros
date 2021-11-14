@@ -12,12 +12,15 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<bool>("~publish_odom_tf", _publish_odom_tf, true);
     ros::param::param<string>("~base_frame", _base_frame, "base_link");
     ros::param::param<string>("~odom_frame", _odom_frame, "odom");
+    ros::param::param<string>("~imu_frame", _imu_frame, "imu");
 
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
     ros::param::param<double>("~min_linear_x_cmd", _min_linear_x_cmd, 0.05);
     ros::param::param<double>("~min_linear_y_cmd", _min_linear_y_cmd, 0.05);
     ros::param::param<double>("~min_angular_z_cmd", _min_angular_z_cmd, 0.1);
     ros::param::param<double>("~zero_epsilon", _zero_epsilon, 0.001);
+
+    ros::param::param<int>("~num_modules", _num_modules, 4);
 
     _socket_open_attempts = 100;
 
@@ -109,11 +112,44 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     _odom_msg.twist.covariance[28] = 10e-2;
     _odom_msg.twist.covariance[35] = 10e-2;
 
+    _imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 50);
+    _imu_msg.header.frame_id = _imu_frame;
+    /* [
+        0, 1, 2,
+        3, 4, 5,
+        6, 7, 8
+    ] */
+    _imu_msg.orientation_covariance[0] = 10e-5;
+    _imu_msg.orientation_covariance[4] = 10e-5;
+    _imu_msg.orientation_covariance[8] = 10e-5;
+
+    _imu_msg.angular_velocity_covariance[0] = 10e-5;
+    _imu_msg.angular_velocity_covariance[4] = 10e-5;
+    _imu_msg.angular_velocity_covariance[8] = 10e-5;
+    
+    _imu_msg.linear_acceleration_covariance[0] = 100e-5;
+    _imu_msg.linear_acceleration_covariance[4] = 100e-5;
+    _imu_msg.linear_acceleration_covariance[8] = 100e-5;
+
+    _module_pubs = new vector<ros::Publisher>();
+    _module_msgs = new vector<tj2_tunnel::SwerveModule*>();
+    for (int index = 0; index < _num_modules; index++)
+    {
+        string module_name = std::to_string(index);
+        _module_msgs->push_back(new tj2_tunnel::SwerveModule());
+
+        _module_pubs->push_back(
+            nh.advertise<tj2_tunnel::SwerveModule>("swerve_modules/" + module_name, 50)
+        );
+    }
+
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2Tunnel::twistCallback, this);
     _prev_twist_timestamp = ros::Time(0);
     _twist_cmd_vx = 0.0;
     _twist_cmd_vy = 0.0;
     _twist_cmd_vt = 0.0;
+
+    _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2Tunnel::odom_reset_callback, this);
 
     _ping_timer = nh.createTimer(ros::Duration(0.5), &TJ2Tunnel::pingCallback, this);
 
@@ -280,6 +316,27 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         msg.data = dt;
         _ping_pub.publish(msg);
     }
+    else if (category.compare("imu") == 0) {
+        publishImu(
+            result->getRecvTime(),
+            result->get_double(0),
+            result->get_double(1),
+            result->get_double(2),
+            result->get_double(3)
+        );
+    }
+    else if (category.compare("module") == 0) {
+        publishModule(
+            result->getRecvTime(),
+            result->get_int(0),
+            result->get_double(1),
+            result->get_double(2),
+            result->get_double(3),
+            result->get_double(4),
+            result->get_double(5),
+            result->get_double(6)
+        );
+    }
 }
 
 double TJ2Tunnel::getLocalTime() {
@@ -326,6 +383,40 @@ void TJ2Tunnel::publishOdom(ros::Time recv_time, double x, double y, double t, d
     _odom_pub.publish(_odom_msg);
 }
 
+void TJ2Tunnel::publishImu(ros::Time recv_time, double yaw, double yaw_rate, double accel_x, double accel_y)
+{
+    _imu_msg.header.stamp = recv_time;
+
+    yaw *= M_PI / 180.0;
+    yaw_rate *= M_PI / 180.0;
+    accel_x *= 9.81;
+    accel_y *= 9.81;
+
+    tf2::Quaternion quat;
+    quat.setRPY(0, 0, yaw);
+    _imu_msg.orientation = tf2::toMsg(quat);
+    _imu_msg.angular_velocity.z = yaw_rate;
+    _imu_pub.publish(_imu_msg);
+}
+
+void TJ2Tunnel::publishModule(ros::Time recv_time,
+    int module_index,
+    double module_angle, double module_speed,
+    double lo_voltage_command, double lo_radps,
+    double hi_voltage_command, double hi_radps)
+{
+    tj2_tunnel::SwerveModule* msg = _module_msgs->at(module_index);
+    msg->module_index = std::to_string(module_index);
+    msg->azimuth_position = module_angle;
+    msg->wheel_velocity = module_speed;
+    
+    msg->motor_lo_0.velocity = lo_radps;
+    msg->motor_lo_0.command_voltage = lo_voltage_command;
+    msg->motor_hi_1.velocity = hi_radps;
+    msg->motor_hi_1.command_voltage = hi_voltage_command;
+
+    _module_pubs->at(module_index).publish(*msg);
+}
 
 void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
 {
@@ -491,6 +582,13 @@ void TJ2Tunnel::closeSocket()
     _socket_initialized = false;
 }
 
+bool TJ2Tunnel::odom_reset_callback(tj2_tunnel::OdomReset::Request &req, tj2_tunnel::OdomReset::Response &resp)
+{
+    writePacket("reset", "fff", req.x, req.y, req.t);
+    ROS_INFO("Resetting odometry to x: %0.3f, y: %0.3f, theta: %0.3f", req.x, req.y, req.t);
+    resp.resp = true;
+    return true;
+}
 
 bool TJ2Tunnel::loop()
 {

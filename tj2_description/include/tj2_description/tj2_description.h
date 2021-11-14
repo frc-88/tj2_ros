@@ -3,7 +3,7 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 #include <sensor_msgs/JointState.h>
-#include <tj2_networktables/SwerveModule.h>
+#include <tj2_tunnel/SwerveModule.h>
 
 using namespace std;
 
@@ -25,7 +25,7 @@ private:
     sensor_msgs::JointState wheel_joints_msg;
 
     // Module callback
-    void module_callback(const tj2_networktables::SwerveModuleConstPtr& msg, int module_index);
+    void module_callback(const tj2_tunnel::SwerveModuleConstPtr& msg, int module_index);
 
     // Main loop methods
     void loop();

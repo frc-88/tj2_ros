@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     geometry_msgs
     sensor_msgs
-    tj2_networktables
+    tj2_tunnel
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,7 +108,7 @@ catkin_package(
  INCLUDE_DIRS include
 #  LIBRARIES tj2_description
 #  CATKIN_DEPENDS other_catkin_pkg
- DEPENDS geometry_msgs roscpp sensor_msgs tj2_networktables
+ DEPENDS geometry_msgs roscpp sensor_msgs tj2_tunnel
 )
 
 ###########
