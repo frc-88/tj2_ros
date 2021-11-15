@@ -19,7 +19,7 @@ class TJ2NetworkTables:
         self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
         
         NetworkTables.initialize(server=self.nt_host)
-        self.nt = NetworkTables.getTable("swerveLibrary")
+        self.nt = NetworkTables.getTable("coprocessor")
 
         self.remote_linear_units_conversion = rospy.get_param("~remote_linear_units_conversion", 1.0)
         self.remote_angular_units_conversion = rospy.get_param("~remote_angular_units_conversion", 1.0)
