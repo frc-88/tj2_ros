@@ -190,7 +190,7 @@ public:
     static const char PACKET_START_1 = 0x13;
     static const char PACKET_STOP = '\n';
     static const char PACKET_SEP = '\t';
-    static const int MAX_PACKET_LEN = 128;
+    static const int MAX_PACKET_LEN = 1024;
     static const int MIN_PACKET_LEN = 13;
     static const int MAX_SEGMENT_LEN = 64;
     static const int CHECKSUM_START_INDEX = 4;
