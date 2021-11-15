@@ -54,7 +54,6 @@ private:
     double _cmd_vel_timeout_param;
     ros::Duration _cmd_vel_timeout;
     double _min_linear_x_cmd;
-    double _min_linear_y_cmd;
     double _min_angular_z_cmd;
     double _zero_epsilon;
     double _socket_open_attempts;
@@ -95,7 +94,11 @@ private:
     vector<tj2_tunnel::SwerveModule*>* _module_msgs;
 
     ros::Time _prev_twist_timestamp;
+<<<<<<< HEAD
     double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
+=======
+    double _twist_cmd_speed, _twist_cmd_vt;
+>>>>>>> dev/rtabmap
 
     // Publishers
     tf2_ros::TransformBroadcaster _tf_broadcaster;
