@@ -1,6 +1,4 @@
 <launch>
-    <!-- R: -87.0, P: 8.0, Y: 90.0 -->
-    <node pkg="tf" type="static_transform_publisher" name="base_to_camera" args="-0.02200000 -0.234950 0.52865156  0 0 1 0 base_link camera_link 33" />
-    <node pkg="tf" type="static_transform_publisher" name="base_to_laser" args="0.26250900 -0.244250 0.25000000  -0.7071  0.7071  0.0000  0.0000 base_link laser 33" />
-    
+    <node pkg="tf" type="static_transform_publisher" name="base_to_camera" args="-0.154 0.200 0.481  0.45451948 -0.35355339  0.61237244  0.54167522 base_link camera_link 33" />
+    <node pkg="tf" type="static_transform_publisher" name="base_to_laser" args="0.0 0.0 0.0  0.0 0.0 0.0 1.0 base_link laser 33" />
 </launch>
