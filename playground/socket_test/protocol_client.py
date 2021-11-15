@@ -103,6 +103,8 @@ class MyTunnel(TunnelClient):
         categories = {
             "ping": "f",
             "odom": "ffffff",
+            "module": "dffffff",
+            "imu": "ffff",
         }
         super(MyTunnel, self).__init__(address, port, categories)
         self.pings = []
@@ -134,7 +136,7 @@ class MyTunnel(TunnelClient):
             while len(self.pings) > 10:
                 self.pings.pop(0)
             
-            # logger.info("Ping time: %0.6fs.\tAvg: %0.6f.\tStddev: %0.6f.\tInt. Rate: %0.3f" % (dt, np.mean(self.pings), np.std(self.pings), 1.0 / np.mean(self.pings)))
+            logger.info("Ping time: %0.6fs.\tAvg: %0.6f.\tStddev: %0.6f.\tInt. Rate: %0.3f" % (dt, np.mean(self.pings), np.std(self.pings), 1.0 / np.mean(self.pings)))
         elif category == "odom":
             self.odoms.append(recv_time)
             while len(self.odoms) > 10:
