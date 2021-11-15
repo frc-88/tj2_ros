@@ -13,16 +13,16 @@ acc_lim_x: 10.0 # 0.5
 acc_lim_theta: 1.0 # 0.5
 
 # Maximum translational velocity of the robot in meters/sec
-max_vel_x: 0.4 # max speed 4.48 m/s
+max_vel_x: 2.0 # max speed 4.48 m/s
 
 # Maximum absolute translational velocity of the robot while driving
 # backwards in meters/sec. See optimization parameter
 # weight_kinematics_forward_drive
-max_vel_x_backwards: 0.2 # 0.2
+max_vel_x_backwards: 2.0 # 0.2
 
 # Maximum angular velocity of the robot in radians/secThe following
 # parameters are relevant only for carlike robots:
-max_vel_theta: 2.0  # 6.14
+max_vel_theta: 31.4
 
 ## The following parameters are relevant only for holonomic robots:
 
@@ -49,7 +49,7 @@ cmd_angle_instead_rotvel: false # false
 
 # Maximum strafing velocity of the robot (should be zero for non-
 # holonomic robots!)
-max_vel_y: 0.4 # 0.0
+max_vel_y: 2.0 # 0.0
 
 # Maximum strafing acceleration of the robot
 acc_lim_y: 10.0 # 0.5
@@ -101,7 +101,7 @@ footprint_model/rear_radius: 0.2 # 0.2
 # This parameter is only relevant for type "polygon". It contains the
 # list of polygon vertices (2d coordinates each). The polygon is always
 # closed: do not repeat the first vertex at the end.
-footprint_model/vertices: [[-0.23, -0.23], [-0.23, 0.23], [0.23, 0.23], [0.23, -0.23]]
+footprint_model/vertices: [[-0.313, -0.313], [-0.313, 0.313], [0.313, 0.313], [0.313, -0.313]]
 
 # If true, updates the footprint before checking trajectory feasibility
 is_footprint_dynamic: false # false
@@ -413,7 +413,7 @@ switching_blocking_period: 0.0 # 0.0
 
 # Topic name of the odometry message, provided by the robot driver or
 # simulator.
-odom_topic: "/odom" # "odom"
+odom_topic: "/tj2/odom" # "odom"
 
 # Global planning frame (in case of a static map, this parameter must be
 # usually changed to "/map".
