@@ -22,7 +22,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     ros::param::param<int>("~num_modules", _num_modules, 4);
 
-    _socket_open_attempts = 100;
+    _socket_open_attempts = 10;
 
     _cmd_vel_timeout = ros::Duration(_cmd_vel_timeout_param);
 
@@ -60,7 +60,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     protocol = new TunnelProtocol(_categories);
 
-    _socket_timeout.tv_sec = 3;
+    _socket_timeout.tv_sec = 1;
     _socket_timeout.tv_usec = 0;
     
     if (!reOpenSocket()) {
@@ -166,7 +166,7 @@ bool TJ2Tunnel::reOpenSocket()
             ROS_INFO("Exiting reopen");
             break;
         }
-        ros::Duration(1.0).sleep();
+        ros::Duration(2.0).sleep();
         if (attempt > 0) {
             ROS_INFO("Open socket attempt #%d", attempt + 1);
         }
