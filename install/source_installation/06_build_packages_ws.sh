@@ -45,6 +45,8 @@ packages=(
     https://github.com/ros-drivers/usb_cam.git
     https://github.com/ros-perception/image_transport_plugins
     https://github.com/ros/rosbag_snapshot.git
+    https://github.com/stereolabs/zed-ros-wrapper
+    https://github.com/stereolabs/zed-ros-examples
 )
 
 branches=(
@@ -79,11 +81,13 @@ branches=(
     develop     # https://github.com/ros-drivers/usb_cam.git
     noetic-devel    # https://github.com/ros-perception/image_transport_plugins
     main  # https://github.com/ros/rosbag_snapshot.git
+    master  # https://github.com/stereolabs/zed-ros-wrapper
+    master  # https://github.com/stereolabs/zed-ros-examples
 )
 
 len=${#packages[@]}
 for (( i=0; i<$len; i++ )); do
-    git clone ${packages[i]} --branch ${branches[i]}
+    git clone --recursive ${packages[i]} --branch ${branches[i]}
 done
 
 cd ..
