@@ -1,4 +1,5 @@
 import math
+import rospy
 from sensor_msgs.msg import Joy
 from tj2_tools.recursive_namespace import RecursiveNamespace
 
@@ -26,13 +27,31 @@ class Joystick:
         else:
             index = namespace.get_nested(value)
         return index
+    
+    def is_valid_button(self, index):
+        if index >= len(self.curr_msg.buttons):
+            rospy.logwarn("Button '%s' does not map to a valid index: %s" % (index, self.curr_msg))
+            return False
+        else:
+            return True
+    
+    def is_valid_axis(self, index):
+        if index >= len(self.curr_msg.axes):
+            rospy.logwarn("Axis '%s' does not map to a valid index: %s" % (index, self.curr_msg))
+            return False
+        else:
+            return True
         
     def is_button_down(self, button):
         index = self.get_index(self.button_mapping, button)
+        if not self.is_valid_button(index):
+            return False
         return self.curr_msg.buttons[index]
 
     def is_button_up(self, button):
         index = self.get_index(self.button_mapping, button)
+        if not self.is_valid_button(index):
+            return False
         return not self.curr_msg.buttons[index]
     
     def did_button_down(self, button):
@@ -43,10 +62,14 @@ class Joystick:
 
     def did_button_change(self, button):
         index = self.get_index(self.button_mapping, button)
+        if not self.is_valid_button(index):
+            return False
         return self.prev_msg.buttons[index] != self.curr_msg.buttons[index]
     
     def did_axis_change(self, axis):
         index = self.get_index(self.axis_mapping, axis)
+        if not self.is_valid_axis(index):
+            return False
         return self.prev_msg.axes[index] != self.curr_msg.axes[index]
     
     def check_list(self, fn, *keys):
@@ -60,11 +83,15 @@ class Joystick:
     
     def get_axis(self, axis):
         index = self.get_index(self.axis_mapping, axis)
+        if not self.is_valid_axis(index):
+            return None
         value = self.curr_msg.axes[index]
         return value
 
     def deadband_axis(self, axis, deadband, scale=1.0):
         value = self.get_axis(axis)
+        if value is None:
+            return None
         if abs(value) < deadband:
             return 0.0
         joy_val = abs(value) - deadband
