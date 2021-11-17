@@ -218,13 +218,7 @@ bool TJ2Tunnel::openSocket()
         ROS_ERROR("Socket creation error. Invalid server address.");
         return false;
     }
-
-    // if (connect(_socket_id, (struct sockaddr *)&_serv_addr, sizeof(_serv_addr)) < 0)
-    // {
-    //     ROS_ERROR("Socket connection failed!");
-    //     return false;
-    // }
-
+    
     // Trying to connect with timeout
     res = connect(_socket_id, (struct sockaddr *)&_serv_addr, sizeof(_serv_addr));
     if (res < 0) {
@@ -423,24 +417,32 @@ void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
     double vy = msg->linear.y;
     double vt = msg->angular.z;
     
+    // If magnitude of translation is in the "no-go" zone (_zero_epsilon..._min_linear_cmd),
+    // set vx, vy to _min_linear_cmd with heading applied
     double trans_vel = sqrt(vx * vx + vy * vy);
-    if (_zero_epsilon < abs(trans_vel) && abs(trans_vel) < _min_linear_cmd) {
+    if (_zero_epsilon < abs(trans_vel) && abs(trans_vel) < _min_linear_cmd)
+    {
         double trans_angle = atan2(vy, vx);
         vx = _min_linear_cmd * cos(trans_angle);
         vy = _min_linear_cmd * sin(trans_angle);
     }
-    if (_zero_epsilon < abs(vt) && abs(vt) < _min_angular_z_cmd) {
-        vt = sign_of(vt) * _min_angular_z_cmd;
-    }
-    
-    if (abs(trans_vel) < _zero_epsilon) {
+    // If magnitude of translation is in the "zero" zone (<_zero_epsilon),
+    // Set translation velocity to zero
+    //      If angular velocity is in the "no-go" zone,
+    //      set vt to _min_angular_z_cmd with direction applied
+    //      If angular velocity is in the "zero" zone,
+    //      set vt to zero
+    else if (abs(trans_vel) < _zero_epsilon) {
         vx = 0.0;
         vy = 0.0;
+        if (_zero_epsilon < abs(vt) && abs(vt) < _min_angular_z_cmd) {
+            vt = sign_of(vt) * _min_angular_z_cmd;
+        }
+        else if (abs(vt) < _zero_epsilon) {
+            vt = 0.0;
+        }
     }
-    if (abs(vt) < _zero_epsilon) {
-        vt = 0.0;
-    }
-    
+
     _prev_twist_timestamp = ros::Time::now();
     _twist_cmd_vx = vx / _remote_linear_units_conversion;
     _twist_cmd_vy = vy / _remote_linear_units_conversion;
@@ -451,7 +453,7 @@ void TJ2Tunnel::publishCmdVel()
 {
     ros::Duration dt = ros::Time::now() - _prev_twist_timestamp;
     if (dt > _cmd_vel_timeout) {
-        // ROS_DEBUG_THROTTLE(2.0, "cmd_vel timed out skipping write.");
+        ROS_DEBUG_THROTTLE(5.0, "cmd_vel timed out skipping write.");
         return;
     }
 
@@ -459,19 +461,9 @@ void TJ2Tunnel::publishCmdVel()
 }
 
 
-void TJ2Tunnel::pingCallback(const ros::TimerEvent& event)
-{
+void TJ2Tunnel::pingCallback(const ros::TimerEvent& event) {
     writePacket("ping", "f", getLocalTime());
 }
-
-// void TJ2Tunnel::publishPing()
-// {
-//     ros::Time now = ros::Time::now();
-//     if (now - _prev_ping_time > _ping_interval) {
-//         writePacket("ping", "f", getLocalTime());
-//         _prev_ping_time = now;
-//     }
-// }
 
 
 void TJ2Tunnel::writePacket(string category, const char *formats, ...)
@@ -589,11 +581,7 @@ bool TJ2Tunnel::odom_reset_callback(tj2_tunnel::OdomReset::Request &req, tj2_tun
 
 bool TJ2Tunnel::loop()
 {
-    // if (!pollSocket()) {
-    //     return false;
-    // }
     publishCmdVel();
-    // publishPing();
     return true;
 }
 
