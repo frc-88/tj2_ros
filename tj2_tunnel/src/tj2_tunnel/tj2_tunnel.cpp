@@ -15,8 +15,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~imu_frame", _imu_frame, "imu");
 
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
-    ros::param::param<double>("~min_linear_x_cmd", _min_linear_x_cmd, 0.05);
-    ros::param::param<double>("~min_linear_y_cmd", _min_linear_y_cmd, 0.05);
+    ros::param::param<double>("~min_linear_cmd", _min_linear_cmd, 0.05);
     ros::param::param<double>("~min_angular_z_cmd", _min_angular_z_cmd, 0.1);
     ros::param::param<double>("~zero_epsilon", _zero_epsilon, 0.001);
 
@@ -423,21 +422,19 @@ void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
     double vx = msg->linear.x;
     double vy = msg->linear.y;
     double vt = msg->angular.z;
-
-    if (_zero_epsilon < abs(vx) && abs(vx) < _min_linear_x_cmd) {
-        vx = _min_linear_x_cmd;
-    }
-    if (_zero_epsilon < abs(vy) && abs(vy) < _min_linear_y_cmd) {
-        vy = _min_linear_y_cmd;
+    
+    double trans_vel = sqrt(vx * vx + vy * vy);
+    if (_zero_epsilon < abs(trans_vel) && abs(trans_vel) < _min_linear_cmd) {
+        double trans_angle = atan2(vy, vx);
+        vx = _min_linear_cmd * cos(trans_angle);
+        vy = _min_linear_cmd * sin(trans_angle);
     }
     if (_zero_epsilon < abs(vt) && abs(vt) < _min_angular_z_cmd) {
-        vt = _min_angular_z_cmd;
+        vt = sign_of(vt) * _min_angular_z_cmd;
     }
     
-    if (abs(vx) < _zero_epsilon) {
+    if (abs(trans_vel) < _zero_epsilon) {
         vx = 0.0;
-    }
-    if (abs(vy) < _zero_epsilon) {
         vy = 0.0;
     }
     if (abs(vt) < _zero_epsilon) {

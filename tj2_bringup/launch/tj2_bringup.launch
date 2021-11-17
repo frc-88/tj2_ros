@@ -19,5 +19,6 @@
         <arg name="start_mode" value="1"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
-    <include file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/>
+    <!-- <include file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/> -->
+    <include file="$(find tj2_launcher)/launch/tj2_launcher.launch"/>
 </launch>

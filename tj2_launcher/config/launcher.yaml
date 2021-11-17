@@ -1,0 +1,22 @@
+joystick:
+  package: "tj2_debug_joystick"
+  path: "tj2_debug_joystick.launch"
+  topics:
+    /joy: None
+  on_start: true
+move_base:
+  package: "tj2_move_base"
+  path: "tj2_move_base.launch"
+  on_start: false
+  topics:
+    /move_base: None
+rplidar:
+  package: "tj2_rplidar"
+  path: "rplidar.launch"
+  on_start: false
+  topics:
+    /laser/scan_filtered: 2.0
+detectnet:
+  package: "tj2_detectnet"
+  path: "tj2_detectnet.launch"
+  on_start: false

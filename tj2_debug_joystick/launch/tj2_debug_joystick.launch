@@ -3,26 +3,28 @@
     <arg name="joystick_linear_x_axis"   default="left/Y" />
     <arg name="joystick_linear_y_axis"   default="left/X" />
     <arg name="joystick_angular_axis"   default="right/X" />
-    <arg name="deadzone_val"   default="0.0" />
+    <arg name="deadzone_val"   default="0.1" />
 
-    <node name="joystick" pkg="joy" type="joy_node" output="screen" required="true">
+    <arg name="button_map_name"   default="button_mapping.yaml" />
+    <arg name="axis_map_name"   default="axis_mapping.yaml" />
+
+    <node name="$(anon joystick)" pkg="joy" type="joy_node" output="screen" required="true">
         <param name="dev" value="/dev/input/js0" type="str"/>
         <param name="deadzone" value="0.0" />
         <param name="autorepeat_rate" value="30.0" />
     </node>
-    <node name="joy_throttle" pkg="topic_tools" type="throttle" required="true" args="messages /joy 30 /joy_throttled" />
-
+    <node name="$(anon joy_throttle)" pkg="topic_tools" type="throttle" required="true" args="messages /joy 30 /joy_throttled" />
 
     <group ns="tj2" >
-        <node name="tj2_debug_joystick" pkg="tj2_debug_joystick" type="tj2_debug_joystick_node.py" output="screen" required="false">
+        <node name="$(anon tj2_debug_joystick)" pkg="tj2_debug_joystick" type="tj2_debug_joystick_node.py" output="screen" required="false">
             <param name="deadzone_joy_val" value="$(arg deadzone_val)" />
             <param name="joystick_topic" value="/joy_throttled" />
             <param name="linear_x_scale" value="4.48" />
             <param name="linear_y_scale" value="4.48" />
             <param name="angular_scale" value="31.4" />
 
-            <rosparam param="button_mapping" file="$(find tj2_debug_joystick)/config/button_mapping.yaml" command="load"/>
-            <rosparam param="axis_mapping" file="$(find tj2_debug_joystick)/config/axis_mapping.yaml" command="load"/>
+            <rosparam param="button_mapping" file="$(find tj2_debug_joystick)/config/$(arg button_map_name)" command="load"/>
+            <rosparam param="axis_mapping" file="$(find tj2_debug_joystick)/config/$(arg axis_map_name)" command="load"/>
 
             <param name="linear_x_axis" value="$(arg joystick_linear_x_axis)" />
             <param name="linear_y_axis" value="$(arg joystick_linear_y_axis)" />

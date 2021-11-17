@@ -37,6 +37,9 @@
 
 using namespace std;
 
+int sign_of(double x) {
+    return (x > 0) - (x < 0);
+}
 
 class TJ2Tunnel {
 private:
@@ -53,8 +56,7 @@ private:
     string _imu_frame;
     double _cmd_vel_timeout_param;
     ros::Duration _cmd_vel_timeout;
-    double _min_linear_x_cmd;
-    double _min_linear_y_cmd;
+    double _min_linear_cmd;
     double _min_angular_z_cmd;
     double _zero_epsilon;
     double _socket_open_attempts;

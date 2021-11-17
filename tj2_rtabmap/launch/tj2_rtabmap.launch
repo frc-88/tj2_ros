@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <arg name="localization"       default="false"/>
-    <arg name="database_path"      default="rtabmap.db"/>
+    <arg name="database_path"      default="$(find tj2_rtabmap)/maps/rtabmap.db)"/>
     <arg name="create_new_db"      default="$(eval not localization)"/>
     <arg name="use_laser"          default="true"/>
 
@@ -25,7 +25,7 @@
             <param name="Odom/Holonomic" type="string" value="false"/>
         </node> -->
 
-        <node name="rtabmap" pkg="rtabmap_ros" type="rtabmap" output="log" args="$(arg rtabmap_args)">
+        <node name="rtabmap" pkg="rtabmap_ros" type="rtabmap" output="screen" args="$(arg rtabmap_args)">
             <rosparam file="$(find tj2_rtabmap)/config/rtabmap_common.yaml" command="load"/>
             <rosparam     if="$(arg localization)" file="$(find tj2_rtabmap)/config/rtabmap_localization.yaml" command="load"/>
             <rosparam unless="$(arg localization)" file="$(find tj2_rtabmap)/config/rtabmap_mapping.yaml" command="load"/>
