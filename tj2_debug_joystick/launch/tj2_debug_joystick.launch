@@ -5,8 +5,8 @@
     <arg name="joystick_angular_axis"   default="right/X" />
     <arg name="deadzone_val"   default="0.1" />
 
-    <arg name="button_map_name"   default="button_mapping.yaml" />
-    <arg name="axis_map_name"   default="axis_mapping.yaml" />
+    <arg name="button_map_name"   default="button_mapping_1.yaml" />
+    <arg name="axis_map_name"   default="axis_mapping_2.yaml" />
 
     <node name="$(anon joystick)" pkg="joy" type="joy_node" output="screen" required="true">
         <param name="dev" value="/dev/input/js0" type="str"/>
@@ -21,7 +21,7 @@
             <param name="joystick_topic" value="/joy_throttled" />
             <param name="linear_x_scale" value="4.48" />
             <param name="linear_y_scale" value="4.48" />
-            <param name="angular_scale" value="31.4" />
+            <param name="angular_scale" value="20.5" />
 
             <rosparam param="button_mapping" file="$(find tj2_debug_joystick)/config/$(arg button_map_name)" command="load"/>
             <rosparam param="axis_mapping" file="$(find tj2_debug_joystick)/config/$(arg axis_map_name)" command="load"/>

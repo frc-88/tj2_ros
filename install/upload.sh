@@ -16,3 +16,13 @@ if [ -z ${REMOTE_KEY} ]; then
 fi
 
 rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}
+
+SSH_COMMAND="ssh -i ${REMOTE_KEY} tj2@${DESTINATION_NAME}"
+
+# restart systemd
+echo "Restart roslaunch.service? (Y/n) "
+read response
+case $response in
+  ([Nn])     echo "Skipping restart";;
+  (*)        echo "Restarting roslaunch." && ${SSH_COMMAND} -t "sudo systemctl restart roslaunch.service";;
+esac
