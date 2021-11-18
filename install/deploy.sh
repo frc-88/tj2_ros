@@ -30,3 +30,10 @@ ${SSH_COMMAND} "cd ${DEST_FULL_PATH}/tj2_tools && python3 setup.py -q install --
 # build catkin ws
 ${SSH_COMMAND} -t "cd ${CATKIN_WS_PATH} && source ${CATKIN_WS_PATH}/devel/setup.bash && catkin_make"
 
+# restart systemd
+echo "Restart roslaunch.service? (Y/n) "
+read response
+case $response in
+  ([Nn])     echo "Skipping restart";;
+  (*)        echo "Restarting roslaunch." && ${SSH_COMMAND} -t "sudo systemctl restart roslaunch.service";;
+esac

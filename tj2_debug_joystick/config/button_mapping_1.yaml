@@ -9,6 +9,7 @@ triggers:
 menu:
   Select: 6
   Start: 7
+  Home: 8
 sticks:
-  L: 8
-  R: 9
+  L: 9
+  R: 10
