@@ -89,6 +89,8 @@ class TJ2DebugJoystick:
         
         if all(self.joystick.check_list(self.joystick.is_button_down, ("triggers", "L1"), ("menu", "Start"))):
             self.set_mode(RobotStatus.TELEOP)
+        elif all(self.joystick.check_list(self.joystick.is_button_down, ("sticks", "L"), ("menu", "Start"))):
+            self.set_mode(RobotStatus.AUTONOMOUS)
         elif any(self.joystick.check_list(self.joystick.did_button_down, ("triggers", "L1"), ("triggers", "R1"))):
             self.set_mode(RobotStatus.DISABLED)
 

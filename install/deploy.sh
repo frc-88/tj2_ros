@@ -2,6 +2,8 @@ BASE_DIR=$(realpath "$(dirname $0)")
 PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
+RESTART_ROSLAUNCH=$3
+
 LOCAL_PATH=${PARENT_DIR}
 DESTINATION_PATH=/home/tj2
 CATKIN_WS_PATH=/home/tj2/ros_ws
@@ -20,7 +22,7 @@ LOCAL_PATH=$(realpath $LOCAL_PATH)
 LOCAL_NAME=$(basename $LOCAL_PATH)
 DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
 
-${BASE_DIR}/upload.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${LOCAL_PATH} ${DESTINATION_PATH}
+${BASE_DIR}/upload.sh ${DESTINATION_NAME} ${REMOTE_KEY} n
 
 SSH_COMMAND="ssh -i ${REMOTE_KEY} tj2@${DESTINATION_NAME}"
 
@@ -30,10 +32,4 @@ ${SSH_COMMAND} "cd ${DEST_FULL_PATH}/tj2_tools && python3 setup.py -q install --
 # build catkin ws
 ${SSH_COMMAND} -t "cd ${CATKIN_WS_PATH} && source ${CATKIN_WS_PATH}/devel/setup.bash && catkin_make"
 
-# restart systemd
-echo "Restart roslaunch.service? (Y/n) "
-read response
-case $response in
-  ([Nn])     echo "Skipping restart";;
-  (*)        echo "Restarting roslaunch." && ${SSH_COMMAND} -t "sudo systemctl restart roslaunch.service";;
-esac
+${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_ROSLAUNCH}
