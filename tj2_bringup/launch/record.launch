@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node name="rosbag_record_diffyjr" pkg="rosbag_snapshot" type="snapshot" args="">
+        <rosparam file="$(find tj2_bringup)/config/bag_snapshot.yaml" command="load" ns=""/>
+    </node>
+</launch>

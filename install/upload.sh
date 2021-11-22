@@ -2,6 +2,8 @@ BASE_DIR=$(realpath "$(dirname $0)")
 PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
+RESTART_ROSLAUNCH=$3
+
 LOCAL_PATH=${PARENT_DIR}
 DESTINATION_PATH=/home/tj2
 
@@ -17,12 +19,4 @@ fi
 
 rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}
 
-SSH_COMMAND="ssh -i ${REMOTE_KEY} tj2@${DESTINATION_NAME}"
-
-# restart systemd
-echo "Restart roslaunch.service? (Y/n) "
-read response
-case $response in
-  ([Nn])     echo "Skipping restart";;
-  (*)        echo "Restarting roslaunch." && ${SSH_COMMAND} -t "sudo systemctl restart roslaunch.service";;
-esac
+${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_ROSLAUNCH}

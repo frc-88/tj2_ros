@@ -1,7 +1,8 @@
 #include "tj2_tunnel/tj2_tunnel.h"
 
 TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
-    nh(*nodehandle)
+    nh(*nodehandle),
+    tfListener(tfBuffer)
 {
     ros::param::param<string>("~host", _host, "127.0.0.1");
     ros::param::param<int>("~port", _port, 5800);
@@ -12,6 +13,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<bool>("~publish_odom_tf", _publish_odom_tf, true);
     ros::param::param<string>("~base_frame", _base_frame, "base_link");
     ros::param::param<string>("~odom_frame", _odom_frame, "odom");
+    ros::param::param<string>("~map_frame", _map_frame, "map");
     ros::param::param<string>("~imu_frame", _imu_frame, "imu");
 
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
@@ -147,6 +149,8 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     _twist_cmd_vx = 0.0;
     _twist_cmd_vy = 0.0;
     _twist_cmd_vt = 0.0;
+
+    _global_plan_sub = nh.subscribe<nav_msgs::Path>("/move_base/GlobalPlanner/plan", 10, &TJ2Tunnel::globalPathCallback, this);
 
     _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2Tunnel::odom_reset_callback, this);
 
@@ -449,6 +453,31 @@ void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
     _twist_cmd_vt = vt / _remote_angular_units_conversion;
 }
 
+void TJ2Tunnel::globalPathCallback(const nav_msgs::PathConstPtr& msg)
+{
+    for (int index = 0; index < msg->poses.size(); index++) {
+        geometry_msgs::PoseStamped pose = msg->poses.at(index);
+
+        tfScalar yaw, pitch, roll;
+        tf::Quaternion quat(
+            pose.pose.orientation.x,
+            pose.pose.orientation.y,
+            pose.pose.orientation.z,
+            pose.pose.orientation.w);
+        tf::Matrix3x3 mat(quat);
+        mat.getEulerYPR(yaw, pitch, roll);
+
+        writePacket("plan", "ddfff",
+            index,
+            msg->poses.size(),
+            pose.pose.position.x,
+            pose.pose.position.y,
+            yaw
+        );
+    }
+}
+
+
 void TJ2Tunnel::publishCmdVel()
 {
     ros::Duration dt = ros::Time::now() - _prev_twist_timestamp;
@@ -460,6 +489,36 @@ void TJ2Tunnel::publishCmdVel()
     writePacket("cmd", "fff", _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt);
 }
 
+
+void TJ2Tunnel::publishGlobalPose()
+{
+    geometry_msgs::TransformStamped global_transform;
+    try {
+        global_transform = tfBuffer.lookupTransform(
+            _map_frame, _base_frame,
+            ros::Time::now(), ros::Duration(1.0)
+        );
+        
+        tfScalar yaw, pitch, roll;
+        tf::Quaternion quat(
+            global_transform.transform.rotation.x,
+            global_transform.transform.rotation.y,
+            global_transform.transform.rotation.z,
+            global_transform.transform.rotation.w);
+        tf::Matrix3x3 mat(quat);
+        mat.getEulerYPR(yaw, pitch, roll);
+
+        writePacket("global", "fff",
+            global_transform.transform.translation.x,
+            global_transform.transform.translation.y,
+            yaw
+        );
+    }
+    catch (tf2::TransformException &ex) {
+        ROS_DEBUG("%s", ex.what());
+        return;
+    }
+}
 
 void TJ2Tunnel::pingCallback(const ros::TimerEvent& event) {
     writePacket("ping", "f", getLocalTime());
@@ -582,6 +641,7 @@ bool TJ2Tunnel::odom_reset_callback(tj2_tunnel::OdomReset::Request &req, tj2_tun
 bool TJ2Tunnel::loop()
 {
     publishCmdVel();
+    publishGlobalPose();
     return true;
 }
 
