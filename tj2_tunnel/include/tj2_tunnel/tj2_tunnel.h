@@ -20,11 +20,15 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 
+#include <tf/transform_datatypes.h>
+#include <tf2_ros/transform_listener.h>
+
 #include "tf2/LinearMath/Quaternion.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_broadcaster.h>
 
 #include "nav_msgs/Odometry.h"
+#include "nav_msgs/Path.h"
 #include "geometry_msgs/Twist.h"
 #include "std_msgs/Float64.h"
 #include "sensor_msgs/Imu.h"
@@ -53,6 +57,7 @@ private:
     bool _publish_odom_tf;
     string _base_frame;
     string _odom_frame;
+    string _map_frame;
     string _imu_frame;
     double _cmd_vel_timeout_param;
     ros::Duration _cmd_vel_timeout;
@@ -108,9 +113,14 @@ private:
 
     // Subscribers
     ros::Subscriber _twist_sub;
+    ros::Subscriber _global_plan_sub;
 
     // Service Servers
     ros::ServiceServer _odom_reset_srv;
+
+    // ROS TF
+    tf2_ros::Buffer tfBuffer;
+    tf2_ros::TransformListener tfListener;
 
     bool reOpenSocket();
     bool openSocket();
@@ -128,6 +138,7 @@ private:
 
     // void publishPing();
     void publishCmdVel();
+    void publishGlobalPose();
     void publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt);
     void publishImu(ros::Time recv_time, double yaw, double yaw_rate, double accel_x, double accel_y);
     void publishModule(ros::Time recv_time,
@@ -138,6 +149,7 @@ private:
     );
 
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
+    void globalPathCallback(const nav_msgs::PathConstPtr& msg);
 
     void pollSocketTask();
     bool pollSocket();
