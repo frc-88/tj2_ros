@@ -10,10 +10,11 @@ if [ $? != 0 ]; then
 fi
 
 tmux send -t $SESSION "${BASE_DIR}/start_launch.sh rplidar
-${BASE_DIR}/start_camera.sh" ENTER
+${BASE_DIR}/start_camera.sh" ENTER 
 
-if [ -z ${MAP_NAME} ]; then
-    tmux send -t $SESSION "roslaunch tj2_rtabmap tj2_rtabmap.launch use_laser:=true" ENTER
+if [ -z ${DB_PATH} ]; then
+    tmux send -t $SESSION "roslaunch tj2_rtabmap tj2_rtabmap.launch use_laser:=true" ENTER 
 else
-    tmux send -t $SESSION "roslaunch tj2_rtabmap tj2_rtabmap.launch use_laser:=true database_path:=$DB_PATH" ENTER
+    tmux send -t $SESSION "roslaunch tj2_rtabmap tj2_rtabmap.launch use_laser:=true localization:=true database_path:=$DB_PATH" ENTER 
 fi
+echo "Started rtabmap"
