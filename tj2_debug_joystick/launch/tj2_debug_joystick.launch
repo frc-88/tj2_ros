@@ -4,12 +4,13 @@
     <arg name="joystick_linear_y_axis"   default="left/X" />
     <arg name="joystick_angular_axis"   default="right/X" />
     <arg name="deadzone_val"   default="0.1" />
+    <arg name="device"   default="/dev/input/js0" />
 
     <arg name="button_map_name"   default="button_mapping_1.yaml" />
     <arg name="axis_map_name"   default="axis_mapping_2.yaml" />
 
     <node name="$(anon joystick)" pkg="joy" type="joy_node" output="screen" required="true">
-        <param name="dev" value="/dev/input/js0" type="str"/>
+        <param name="dev" value="$(arg device)" type="str"/>
         <param name="deadzone" value="0.0" />
         <param name="autorepeat_rate" value="30.0" />
     </node>

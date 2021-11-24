@@ -8,8 +8,8 @@ MODEL_DIR=$WORKSPACE/models/tj2_2020_game
 MODEL=$MODEL_DIR/tj2-2020-mb2-ssd-lite.onnx
 
 LABELS=$MODEL_DIR/labels.txt
-INPUT=/dev/video0
-# INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-05-29.mp4
+# INPUT=/dev/video0
+INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-05-29.mp4
 # INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-08-55.mp4
 # INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-05-26.mp4
 # INPUT=/home/ben/Diff-Swerve-ROS/tj2_detectnet/scripts/video_dataset/output/realsense_2021-10-23-18-05-29/realsense_2021-10-23-18-05-29_25.png
