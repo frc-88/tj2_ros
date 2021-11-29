@@ -1,0 +1,6 @@
+string[] waypoints
+bool continuous
+---
+bool success
+---
+int32 index
