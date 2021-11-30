@@ -19,6 +19,11 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~min_angular_z_cmd", _min_angular_z_cmd, 0.1);
     ros::param::param<double>("~zero_epsilon", _zero_epsilon, 0.001);
 
+    ros::param::param<double>("~pose_estimate_x_std", _pose_estimate_x_std, 0.5);
+    ros::param::param<double>("~pose_estimate_y_std", _pose_estimate_y_std, 0.5);
+    ros::param::param<double>("~pose_estimate_theta_std_deg", _pose_estimate_theta_std_deg, 15.0);
+    ros::param::param<string>("~pose_estimate_frame_id", _pose_estimate_frame_id, "map");
+
     ros::param::param<int>("~num_modules", _num_modules, 4);
 
     _socket_open_attempts = 10;
@@ -142,11 +147,20 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
         );
     }
 
+    _match_time_pub = nh.advertise<std_msgs::Float64>("match_time", 10);
+    _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
+
+    _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 1);
+
+    _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
+
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2Tunnel::twistCallback, this);
     _prev_twist_timestamp = ros::Time(0);
     _twist_cmd_vx = 0.0;
     _twist_cmd_vy = 0.0;
     _twist_cmd_vt = 0.0;
+
+    _currentGoalStatus = INVALID;
 
     _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2Tunnel::odom_reset_callback, this);
 
@@ -330,6 +344,40 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
             result->get_double(6)
         );
     }
+    else if (category.compare("goalp")) {
+        // TODO: FollowPath is defined as a string of names. This needs to be reworked to include poses
+    }
+    else if (category.compare("goaln")) {
+        string waypoint = result->get_string(0);
+        _waypoints.insert(_waypoints.end(), waypoint);
+    }
+    else if (category.compare("exec")) {
+        int num_waypoints = result->get_int(0);
+        if (num_waypoints != _waypoints.size()) {
+            ROS_ERROR("The reported number of waypoints in the plan does match the number received! Canceling plan");
+            setGoalStatus(GoalStatus::FAILED);
+        }
+        else {
+            sendWaypoints();
+        }
+        _waypoints.clear();
+    }
+    else if (category.compare("cancel")) {
+        cancelWaypointGoal();
+    }
+    else if (category.compare("match")) {
+        publishMatch(
+            (bool)result->get_int(0),
+            result->get_double(1)
+        );
+    }
+    else if (category.compare("poseest")) {
+        sendPoseEstimate(
+            result->get_double(0),
+            result->get_double(1),
+            result->get_double(2)
+        );
+    }
 }
 
 double TJ2Tunnel::getLocalTime() {
@@ -410,6 +458,107 @@ void TJ2Tunnel::publishModule(ros::Time recv_time,
 
     _module_pubs->at(module_index).publish(*msg);
 }
+
+void TJ2Tunnel::publishGoalStatus()
+{
+    actionlib::SimpleClientGoalState state = _waypoints_action_client->getState();
+
+    GoalStatus currentPollStatus;
+
+    // Possible states:  PENDING, ACTIVE, RECALLED, REJECTED, PREEMPTED, ABORTED, SUCCEEDED, LOST
+    if (state.isDone()) {
+        // RECALLED, REJECTED, PREEMPTED, ABORTED, SUCCEEDED, or LOST.
+        if (state == actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED) {
+            currentPollStatus = GoalStatus::FINISHED;
+        }
+        else {
+            currentPollStatus = GoalStatus::FAILED;
+        }
+    }
+    else {
+        // PENDING or ACTIVE
+        currentPollStatus = GoalStatus::RUNNING;
+    }
+
+    if (currentPollStatus != _prevPollStatus) {
+        _prevPollStatus = currentPollStatus;
+        _currentGoalStatus = currentPollStatus;
+    }
+    writePacket("gstatus", "d", _currentGoalStatus);
+}
+
+void TJ2Tunnel::setGoalStatus(GoalStatus status)
+{
+    _currentGoalStatus = status;
+}
+
+void TJ2Tunnel::sendWaypoints()
+{
+    tj2_waypoints::FollowPathGoal goal;
+    goal.is_continuous = true;
+    goal.waypoints = _waypoints;
+    _waypoints_action_client->sendGoal(goal);
+}
+
+void TJ2Tunnel::cancelWaypointGoal()
+{
+    _waypoints_action_client->cancelAllGoals();
+}
+
+void TJ2Tunnel::publishMatch(bool is_autonomous, double match_timer)
+{
+    std_msgs::Float64 timer_msg;
+    timer_msg.data = match_timer;
+    _match_time_pub.publish(timer_msg);
+
+    std_msgs::Bool is_auto_msg;
+    is_auto_msg.data = is_autonomous;
+    _match_time_pub.publish(is_auto_msg);
+}
+
+void TJ2Tunnel::sendPoseEstimate(double x, double y, double theta)
+{
+    geometry_msgs::PoseWithCovarianceStamped pose_est;
+
+    /*
+    [
+        x_std * x_std, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, y_std * y_std, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, theta_std_rad * theta_std_rad
+    ]
+    [
+         0,  1,  2,  3,  4,  5,
+         6,  7,  8,  9, 10, 11,
+        12, 13, 14, 15, 16, 17,
+        18, 19, 20, 21, 22, 23,
+        24, 25, 26, 27, 28, 29,
+        30, 31, 32, 33, 34, 35
+    ]
+    */
+
+    tf2::Quaternion quat;
+    quat.setRPY(0.0, 0.0, theta);
+
+    geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
+
+    pose_est.pose.pose.position.x = x;
+    pose_est.pose.pose.position.y = y;
+    pose_est.pose.pose.orientation = msg_quat;
+    pose_est.header.frame_id = _pose_estimate_frame_id;
+
+    double theta_std_rad = _pose_estimate_theta_std_deg * M_PI / 180.0;
+
+    pose_est.pose.covariance[0] = _pose_estimate_x_std * _pose_estimate_x_std;
+    pose_est.pose.covariance[7] = _pose_estimate_y_std * _pose_estimate_y_std;
+    pose_est.pose.covariance[35] = theta_std_rad * theta_std_rad;
+
+    _pose_estimate_pub.publish(pose_est);
+}
+
+
 
 void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
 {
@@ -582,6 +731,7 @@ bool TJ2Tunnel::odom_reset_callback(tj2_tunnel::OdomReset::Request &req, tj2_tun
 bool TJ2Tunnel::loop()
 {
     publishCmdVel();
+    publishGoalStatus();
     return true;
 }
 

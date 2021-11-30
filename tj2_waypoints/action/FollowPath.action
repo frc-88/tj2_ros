@@ -1,5 +1,5 @@
 string[] waypoints
-bool continuous
+bool is_continuous
 ---
 bool success
 ---
