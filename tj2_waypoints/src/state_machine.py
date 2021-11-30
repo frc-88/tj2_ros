@@ -38,6 +38,10 @@ class GoToWaypointState(State):
             return self.execute_discontinuous(userdata)
     
     def execute_continuous(self, userdata):
+        # forked version of move_base: https://github.com/frc-88/navigation
+        # In this version, move_base accepts pose arrays. If continuous mode is enabled,
+        # waypoints are all used together in the global plan instead of discrete move_base
+        # action calls
         waypoints = userdata.waypoints
 
         goal = MoveBaseGoal()

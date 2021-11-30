@@ -20,6 +20,10 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 
+#include "actionlib/client/simple_action_client.h"
+#include "actionlib/client/terminal_state.h"
+#include "actionlib/client/simple_client_goal_state.h"
+
 #include "tf2/LinearMath/Quaternion.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -27,11 +31,16 @@
 #include "nav_msgs/Odometry.h"
 #include "geometry_msgs/Twist.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Bool.h"
 #include "sensor_msgs/Imu.h"
+#include "geometry_msgs/PoseWithCovarianceStamped.h"
 
 #include "tj2_tunnel/SwerveModule.h"
 #include "tj2_tunnel/SwerveMotor.h"
 #include "tj2_tunnel/OdomReset.h"
+
+#include "tj2_waypoints/FollowPathGoal.h"
+#include "tj2_waypoints/FollowPathAction.h"
 
 #include "tunnel_protocol.h"
 
@@ -40,6 +49,15 @@ using namespace std;
 int sign_of(double x) {
     return (x > 0) - (x < 0);
 }
+
+
+typedef enum {
+    IDLE=0,
+    RUNNING=1,
+    FINISHED=2,
+    FAILED=3,
+    INVALID=-1,
+} GoalStatus;
 
 class TJ2Tunnel {
 private:
@@ -61,6 +79,8 @@ private:
     double _zero_epsilon;
     double _socket_open_attempts;
     int _num_modules;
+    double _pose_estimate_x_std, _pose_estimate_y_std, _pose_estimate_theta_std_deg;
+    string _pose_estimate_frame_id;
 
     // Members
     const int READ_BUFFER_LEN = 4096;
@@ -91,6 +111,13 @@ private:
     ros::Time _prev_ping_time;
     ros::Duration _ping_interval;
 
+    vector<string> _waypoints;
+
+    GoalStatus _currentGoalStatus;
+    GoalStatus _prevPollStatus;
+
+    actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction> *_waypoints_action_client;
+
     // Messages
     nav_msgs::Odometry _odom_msg;
     sensor_msgs::Imu _imu_msg;
@@ -105,6 +132,8 @@ private:
     ros::Publisher _ping_pub;
     ros::Publisher _imu_pub;
     vector<ros::Publisher>* _module_pubs;
+    ros::Publisher _match_time_pub, _autonomous_pub;
+    ros::Publisher _pose_estimate_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
@@ -128,6 +157,7 @@ private:
 
     // void publishPing();
     void publishCmdVel();
+    void publishGoalStatus();
     void publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt);
     void publishImu(ros::Time recv_time, double yaw, double yaw_rate, double accel_x, double accel_y);
     void publishModule(ros::Time recv_time,
@@ -136,6 +166,11 @@ private:
         double lo_voltage_command, double lo_radps,
         double hi_voltage_command, double hi_radps
     );
+    void setGoalStatus(GoalStatus status);
+    void sendWaypoints();
+    void cancelWaypointGoal();
+    void publishMatch(bool is_autonomous, double match_timer);
+    void sendPoseEstimate(double x, double y, double theta);
 
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
 
