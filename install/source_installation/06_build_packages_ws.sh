@@ -17,13 +17,13 @@ packages=(
     https://github.com/wjwwood/serial
     https://github.com/ros-drivers/joystick_drivers.git
     https://github.com/ros/geometry2.git
-    https://github.com/ros-planning/navigation.git
+    git@github.com:frc-88/navigation.git
     https://github.com/rst-tu-dortmund/teb_local_planner
     https://github.com/introlab/rtabmap_ros.git
     https://github.com/IntelRealSense/realsense-ros.git
     https://github.com/ros-perception/vision_opencv.git
     https://github.com/ros-perception/vision_msgs.git
-    https://github.com/ros-planning/navigation_msgs.git
+    git@github.com:frc-88/navigation_msgs.git
     https://github.com/magazino/move_base_flex.git
     https://github.com/introlab/find-object.git
     https://github.com/pal-robotics/ddynamic_reconfigure.git
@@ -53,13 +53,13 @@ branches=(
     main      # https://github.com/wjwwood/serial
     main    # https://github.com/ros-drivers/joystick_drivers.git
     noetic-devel    # https://github.com/ros/geometry2.git
-    noetic-devel    # https://github.com/ros-planning/navigation.git
+    noetic-devel    # git@github.com:frc-88/navigation.git
     noetic-devel    # https://github.com/rst-tu-dortmund/teb_local_planner
     noetic-devel    # https://github.com/introlab/rtabmap_ros.git
     development     # https://github.com/IntelRealSense/realsense-ros.git
     noetic      # https://github.com/ros-perception/vision_opencv.git
     noetic-devel    # https://github.com/ros-perception/vision_msgs.git
-    ros1    # https://github.com/ros-planning/navigation_msgs.git
+    ros1    # git@github.com:frc-88/navigation_msgs.git
     noetic-devel    # https://github.com/magazino/move_base_flex.git
     noetic-devel    # https://github.com/introlab/find-object.git
     kinetic-devel   # https://github.com/pal-robotics/ddynamic_reconfigure.git

@@ -703,13 +703,16 @@ bool TJ2Tunnel::pollSocket()
 }
 
 void TJ2Tunnel::pollSocketTask()
-{
+{ 
+    ros::Rate clock_rate(200);  // Hz
+
     while (ros::ok())
     {
         if (!pollSocket()) {
             ROS_INFO("Exiting socket thread");
             break;
         }
+        clock_rate.sleep();
     }
     closeSocket();
 }
