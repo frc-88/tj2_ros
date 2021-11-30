@@ -344,17 +344,19 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
             result->get_double(6)
         );
     }
-    else if (category.compare("goalp")) {
+    else if (category.compare("goalp") == 0) {
         // TODO: FollowPath is defined as a string of names. This needs to be reworked to include poses
     }
-    else if (category.compare("goaln")) {
+    else if (category.compare("goaln") == 0) {
         string waypoint = result->get_string(0);
         _waypoints.insert(_waypoints.end(), waypoint);
+        ROS_INFO("Received a waypoint: %s", waypoint.c_str());
     }
-    else if (category.compare("exec")) {
+    else if (category.compare("exec") == 0) {
+        ROS_INFO("Received execute plan command");
         int num_waypoints = result->get_int(0);
         if (num_waypoints != _waypoints.size()) {
-            ROS_ERROR("The reported number of waypoints in the plan does match the number received! Canceling plan");
+            ROS_ERROR("The reported number of waypoints in the plan does match the number received! %d != %ld Canceling plan", num_waypoints, _waypoints.size());
             setGoalStatus(GoalStatus::FAILED);
         }
         else {
@@ -362,16 +364,17 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         }
         _waypoints.clear();
     }
-    else if (category.compare("cancel")) {
+    else if (category.compare("cancel") == 0) {
+        ROS_INFO("Received cancel plan command");
         cancelWaypointGoal();
     }
-    else if (category.compare("match")) {
+    else if (category.compare("match") == 0) {
         publishMatch(
             (bool)result->get_int(0),
             result->get_double(1)
         );
     }
-    else if (category.compare("poseest")) {
+    else if (category.compare("poseest") == 0) {
         sendPoseEstimate(
             result->get_double(0),
             result->get_double(1),
@@ -494,6 +497,7 @@ void TJ2Tunnel::setGoalStatus(GoalStatus status)
 
 void TJ2Tunnel::sendWaypoints()
 {
+    ROS_INFO("Sending waypoints");
     tj2_waypoints::FollowPathGoal goal;
     goal.is_continuous = true;
     goal.waypoints = _waypoints;
