@@ -662,7 +662,7 @@ bool TJ2Tunnel::pollSocket()
         }
         return true;  // a timeout occurred
     }
-    int num_chars_read = read(_socket_id, _read_buffer, READ_BUFFER_LEN);
+    int num_chars_read = read(_socket_id, _read_buffer + _unparsed_index, READ_BUFFER_LEN - _unparsed_index);
     if (num_chars_read <= 0) {
         if (didSocketTimeout()) {
             reOpenSocket();
@@ -670,7 +670,9 @@ bool TJ2Tunnel::pollSocket()
         return true;
     }
     _last_read_time = ros::Time::now();
-    int last_parsed_index = protocol->parseBuffer(_read_buffer, 0, _unparsed_index + num_chars_read);
+    int read_stop_index = _unparsed_index + num_chars_read;
+    // ROS_INFO("_unparsed_index: %d, num_chars_read: %d", _unparsed_index, num_chars_read);
+    int last_parsed_index = protocol->parseBuffer(_read_buffer, 0, read_stop_index);
 
     PacketResult* result;
     do {
@@ -692,7 +694,7 @@ bool TJ2Tunnel::pollSocket()
     }
     while (result->getErrorCode() != TunnelProtocol::NULL_ERROR);
 
-    _unparsed_index = _unparsed_index + num_chars_read - last_parsed_index;
+    _unparsed_index = read_stop_index - last_parsed_index;
     if (_unparsed_index >= READ_BUFFER_LEN) {
         _unparsed_index = 0;
     }
