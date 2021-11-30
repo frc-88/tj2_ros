@@ -81,13 +81,15 @@ class Tj2Waypoints:
         self.follow_path_server = actionlib.SimpleActionServer("follow_path", FollowPathAction, self.follow_path_callback, auto_start=False)
         self.follow_path_server.start()
 
+        rospy.loginfo("%s is ready" % self.node_name)
+
     # ---
     # Action callback
     # ---
 
     def follow_path_callback(self, goal):
-        if self.enable_waypoint_navigation:
-            rospy.warn("Navigation isn't enabled for this node. Set the parameter enable_waypoint_navigation to True")
+        if not self.enable_waypoint_navigation:
+            rospy.logwarn("Navigation isn't enabled for this node. Set the parameter enable_waypoint_navigation to True")
             return
         
         waypoints = []
@@ -98,7 +100,7 @@ class Tj2Waypoints:
             waypoint = self.get_waypoint(name)
             pose = self.waypoint_to_pose(waypoint)
             waypoints.append(pose)
-        self.state_machine.execute(goal.continuous, waypoints, self.follow_path_server)
+        self.state_machine.execute(waypoints, goal.is_continuous, goal.intermediate_tolerance, self.follow_path_server)
 
     # ---
     # Service callbacks
