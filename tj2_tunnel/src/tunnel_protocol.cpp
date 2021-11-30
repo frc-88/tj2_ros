@@ -137,7 +137,7 @@ int TunnelProtocol::parseBuffer(char* buffer, int start_index, int stop_index)
         index += 2;
 
         if (index >= stop_index) {
-            // ROS_DEBUG("Buffer length exceeded while searching for length start");
+            ROS_DEBUG("Buffer length exceeded while searching for length start");
             index = stop_index;
             continue;
         }
@@ -154,10 +154,10 @@ int TunnelProtocol::parseBuffer(char* buffer, int start_index, int stop_index)
             ROS_DEBUG("Buffer does not end with PACKET_STOP");
             continue;
         }
-        index++;
-        last_packet_index = index;
+        // do not modify index from this point onward as the for loop increments index
+        last_packet_index = index + 1;
         // ROS_DEBUG("Found a packet: %s", packetToString(buffer, packet_start, index).c_str());
-        PacketResult* result = parsePacket(buffer, packet_start, index);
+        PacketResult* result = parsePacket(buffer, packet_start, index + 1);
         _result_queue.push_back(result);
     }
 
@@ -253,7 +253,7 @@ PacketResult* TunnelProtocol::parsePacket(char* buffer, int start_index, int sto
     PacketResult* result = new PacketResult(NO_ERROR, recv_time);
 
     if (recv_packet_num != _read_packet_num) {
-        ROS_DEBUG("Received packet num doesn't match local count. recv %d != local %d. %s", recv_packet_num, _read_packet_num, packetToString(buffer, start_index, stop_index).c_str());
+        ROS_WARN("Received packet num doesn't match local count. recv %d != local %d. %s", recv_packet_num, _read_packet_num, packetToString(buffer, start_index, stop_index).c_str());
         _read_packet_num++;
         _read_packet_num = recv_packet_num;
         result->setErrorCode(PACKET_COUNT_NOT_SYNCED_ERROR);
