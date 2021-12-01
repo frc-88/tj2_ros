@@ -29,6 +29,7 @@ from tj2_waypoints.srv import SaveRobotPose, SaveRobotPoseResponse
 from tj2_waypoints.srv import SaveTF, SaveTFResponse
 
 from tj2_waypoints.msg import FollowPathAction, FollowPathGoal, FollowPathResult
+from tj2_waypoints.msg import Waypoint, WaypointArray
 
 from state_machine import WaypointStateMachine
 
@@ -92,15 +93,59 @@ class Tj2Waypoints:
             rospy.logwarn("Navigation isn't enabled for this node. Set the parameter enable_waypoint_navigation to True")
             return
         
-        waypoints = []
-        for name in goal.waypoints:
-            if not self.check_name(name):
-                rospy.logwarn("Waypoint name '%s' is not registered. Skipping" % name)
-                continue
-            waypoint = self.get_waypoint(name)
-            pose = self.waypoint_to_pose(waypoint)
-            waypoints.append(pose)
-        self.state_machine.execute(waypoints, goal.is_continuous, goal.intermediate_tolerance, self.follow_path_server)
+        # TODO: feed goal intermediate_tolerance into sm
+        waypoint_plan = self.get_waypoint_plan(goal.waypoints)
+        self.state_machine.execute(waypoint_plan, self.follow_path_server)
+
+    def get_waypoint_plan(self, waypoints: WaypointArray):
+        sub_plan = []  # array of geometry_msgs/Pose
+        full_plan = []
+        waypoint = None
+        array_header = None
+
+        def append_to_sub_plan(waypoint):
+            nonlocal array_header, sub_plan
+            pose_stamped = self.get_waypoint_pose(waypoint)
+
+            if array_header is None:
+                array_header = pose_stamped.header
+            sub_plan.append(pose_stamped.pose)
+        
+        def append_to_full_plan(waypoint):
+            nonlocal array_header, sub_plan
+            assert array_header is not None
+            pose_array = geometry_msgs.msg.PoseArray()
+            pose_array.header = array_header
+            pose_array.poses = sub_plan
+
+            # insert pose array to send to move_base.
+            # only last waypoint in continuous sequence matters for other parameters like
+            # ignore_orientation and intermediate_tolerance
+            full_plan.append((waypoint, pose_array))
+            sub_plan = []
+
+        first_waypoint = waypoints.waypoints.pop(0)
+        first_waypoint.is_continuous = False  # first waypoint must always be discontinuous
+        append_to_sub_plan(first_waypoint)
+        append_to_full_plan(first_waypoint)
+
+        for waypoint in waypoints.waypoints:
+            if not waypoint.is_continuous and len(sub_plan) > 0:
+                append_to_full_plan(waypoint)
+            append_to_sub_plan(waypoint)
+                
+        if len(sub_plan) > 0 and waypoint is not None:
+            append_to_full_plan(waypoint)
+        return full_plan
+
+    def get_waypoint_pose(self, waypoint: Waypoint):
+        name = waypoint.name
+        if not self.check_name(name):
+            rospy.logwarn("Waypoint name '%s' is not registered. Skipping" % name)
+            return None
+        pose_2d = self.get_waypoint(name)
+        pose = self.waypoint_to_pose(pose_2d)
+        return pose
 
     # ---
     # Service callbacks
@@ -116,8 +161,8 @@ class Tj2Waypoints:
         if not self.check_name(req.name):
             return False
         
-        waypoint = self.get_waypoint(req.name)
-        pose = self.waypoint_to_pose(waypoint)
+        pose_2d = self.get_waypoint(req.name)
+        pose = self.waypoint_to_pose(pose_2d)
         return GetWaypointResponse(pose)
     
     def delete_waypoint_callback(self, req):

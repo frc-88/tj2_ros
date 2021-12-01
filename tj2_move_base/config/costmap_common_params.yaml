@@ -45,5 +45,7 @@ obstacle_layer:
         marking: true
         clearing: true
         inflation_radius: 0.005
+        raytrace_range: 3.0
+        obstacle_range: 4.0
 
 transform_tolerance: 1.0  # 0.2
