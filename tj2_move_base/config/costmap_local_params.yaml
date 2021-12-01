@@ -6,7 +6,7 @@ width: 6.0
 height: 6.0
 # origin_x: -1.5
 # origin_y: -1.5
-resolution: 0.1
+resolution: 0.075
 # static_map: false  # unnecessary with plugins
 rolling_window: true
 
