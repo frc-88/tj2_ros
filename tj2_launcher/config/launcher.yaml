@@ -13,7 +13,7 @@ move_base:
 rplidar:
   package: "tj2_rplidar"
   path: "tj2_rplidar.launch"
-  on_start: false
+  on_start: true
   topics:
     /laser/scan_filtered: 2.0
 detectnet:
