@@ -1,5 +1,4 @@
-string[] waypoints
-bool is_continuous
+tj2_waypoints/WaypointArray waypoints
 float64 intermediate_tolerance
 ---
 bool success

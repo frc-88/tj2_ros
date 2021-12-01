@@ -42,6 +42,9 @@
 #include "tj2_waypoints/FollowPathGoal.h"
 #include "tj2_waypoints/FollowPathAction.h"
 
+#include "tj2_waypoints/Waypoint.h"
+#include "tj2_waypoints/WaypointArray.h"
+
 #include "tunnel_protocol.h"
 
 using namespace std;
@@ -111,7 +114,7 @@ private:
     ros::Time _prev_ping_time;
     ros::Duration _ping_interval;
 
-    vector<string> _waypoints;
+    tj2_waypoints::WaypointArray _waypoints;
 
     GoalStatus _currentGoalStatus;
     GoalStatus _prevPollStatus;

@@ -11,8 +11,8 @@ class GoToWaypointState(State):
     def __init__(self):
         super(GoToWaypointState, self).__init__(
             outcomes=["success", "preempted", "failure", "finished"],
-            input_keys=["waypoints", "waypoint_index_in", "state_machine"],
-            output_keys=["waypoints", "waypoint_index_out", "state_machine"]
+            input_keys=["waypoints_plan", "waypoint_index_in", "state_machine"],
+            output_keys=["waypoints_plan", "waypoint_index_out", "state_machine"]
         )
     
         self.action_result = "success"
@@ -22,74 +22,46 @@ class GoToWaypointState(State):
 
         self.action_server = None
         self.move_base = None
-        self.is_continuous = False
+
         self.intermediate_tolerance = 0.0
+        self.ignore_orientation = False
 
     def execute(self, userdata):
         self.action_result = "success"
         self.action_server = userdata.state_machine.action_server
-        self.is_continuous = userdata.state_machine.is_continuous
+        self.action_goal = userdata.state_machine.action_goal
         self.move_base = userdata.state_machine.move_base
-        self.intermediate_tolerance = userdata.state_machine.intermediate_tolerance
 
-        self.num_waypoints = len(userdata.waypoints)
+        self.num_waypoints = len(userdata.waypoints_plan)
         self.current_waypoint_index = userdata.waypoint_index_in
 
         rospy.loginfo("Number of waypoints: %s, Current index: %s" % (self.num_waypoints, self.current_waypoint_index))
 
-        if self.is_continuous:
-            return self.execute_continuous(userdata)
-        else:
-            return self.execute_discontinuous(userdata)
-    
-    def execute_continuous(self, userdata):
-        if userdata.waypoint_index_in >= self.num_waypoints:
-            return "finished"
-        
-        # forked version of move_base: https://github.com/frc-88/navigation
-        # In this version, move_base accepts pose arrays. If continuous mode is enabled,
-        # waypoints are all used together in the global plan instead of discrete move_base
-        # action calls
-        waypoints = userdata.waypoints
-
-        goal = MoveBaseGoal()
-        goal.target_poses.header.frame_id = waypoints[0].header.frame_id
-        for waypoint in waypoints:
-            if type(waypoint) != PoseStamped:
-                rospy.logerr("Waypoint isn't of type PoseStampted! %s" % repr(waypoint))
-                return "failure"
-            if waypoint.header.frame_id != goal.target_poses.header.frame_id:
-                rospy.logerr("Waypoints have inconsistent frame_ids! %s != %s" % (waypoint.header.frame_id, goal.target_poses.header.frame_id))
-                return "failure"
-
-            goal.target_poses.poses.append(waypoint.pose)
-        
-        self.move_base.send_goal(goal, done_cb=self.move_base_done)
-        self.move_base.wait_for_result()
-
-        if self.action_result != "success":
-            return self.action_result
-
-        move_base_result = self.move_base.get_result()
-        if bool(move_base_result):
-            userdata.waypoint_index_out = len(waypoints)
-            return "success"
-        else:
-            return "failure"
-
-    def execute_discontinuous(self, userdata):
         if userdata.waypoint_index_in >= self.num_waypoints:
             self.action_server.set_succeeded()
             return "finished"
         
-        waypoint_pose = userdata.waypoints[userdata.waypoint_index_in]
-        self.goal_pose_stamped = waypoint_pose
+        waypoint, pose_array = userdata.waypoints_plan[userdata.waypoint_index_in]
 
-        goal = MoveBaseGoal()
-        goal.target_poses.header.frame_id = waypoint_pose.header.frame_id
-        goal.target_poses.poses.append(waypoint_pose.pose)
+        self.intermediate_tolerance = waypoint.intermediate_tolerance
+        self.ignore_orientation = waypoint.ignore_orientation
+
+        if self.ignore_orientation:
+            self.intermediate_tolerance = 0.075  # TODO: pull this from move_base local planner parameters
         
-        rospy.loginfo("Going to position (%s, %s)" % (waypoint_pose.pose.position.x, waypoint_pose.pose.position.y))
+        self.goal_pose_stamped = PoseStamped()
+        self.goal_pose_stamped.header = pose_array.header
+        self.goal_pose_stamped.pose = pose_array.poses[-1]
+
+        # forked version of move_base: https://github.com/frc-88/navigation
+        # In this version, move_base accepts pose arrays. If continuous mode is enabled,
+        # waypoints are all used together in the global plan instead of discrete move_base
+        # action calls
+        goal = MoveBaseGoal()
+        goal.target_poses.header.frame_id = pose_array.header.frame_id
+        goal.target_poses = pose_array
+        
+        rospy.loginfo("Going to position (%s, %s)" % (self.goal_pose_stamped.pose.position.x, self.goal_pose_stamped.pose.position.y))
 
         self.move_base.send_goal(goal, feedback_cb=self.move_base_feedback, done_cb=self.move_base_done)
         self.move_base.wait_for_result()
@@ -103,7 +75,7 @@ class GoToWaypointState(State):
             return "success"
         else:
             return "failure"
-    
+
     def move_base_feedback(self, feedback):
         if rospy.is_shutdown():
             rospy.loginfo("Received abort. Cancelling waypoint goal")
@@ -147,8 +119,7 @@ class WaypointStateMachine(object):
         self.sm = StateMachine(outcomes=["success", "failure", "preempted"])
         self.outcome = None
         self.action_server = None
-        self.is_continuous = False
-        self.intermediate_tolerance = 0.0
+        self.action_goal = None
 
         self.move_base_namespace = rospy.get_param("~move_base_namespace", "/move_base")
         self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
@@ -163,29 +134,25 @@ class WaypointStateMachine(object):
                     "preempted": "preempted"
                 },
                 remapping={
-                    "waypoints": "sm_waypoints",
-                    "is_continuous": "sm_continuous",
+                    "waypoints_plan": "sm_waypoints_plan",
                     "waypoint_index_in": "sm_waypoint_index",
                     "waypoint_index_out": "sm_waypoint_index",
                     "state_machine": "sm_state_machine",
                 }
             )
 
-    def execute(self, waypoints, is_continuous, intermediate_tolerance, action_server):
+    def execute(self, waypoints_plan, action_server):
         rospy.loginfo("Connecting to move_base...")
         self.move_base.wait_for_server()
         rospy.loginfo("move_base connected")
 
         rospy.loginfo("To cancel the waypoint follower, run: 'rostopic pub -1 /tj2/follow_path/cancel actionlib_msgs/GoalID -- {}'")
         rospy.loginfo("To cancel the current goal, run: 'rostopic pub -1 /move_base/cancel actionlib_msgs/GoalID -- {}'")
-        rospy.loginfo("Waypoint follow parameters: is_continuous=%s, intermediate_tolerance=%s" % (is_continuous, intermediate_tolerance))
 
-        self.is_continuous = is_continuous
-        self.intermediate_tolerance = intermediate_tolerance
         self.action_server = action_server
 
         self.sm.userdata.sm_waypoint_index = 0
-        self.sm.userdata.sm_waypoints = waypoints
+        self.sm.userdata.sm_waypoints_plan = waypoints_plan
         self.sm.userdata.sm_state_machine = self
         self.outcome = self.sm.execute()
         return self.outcome
