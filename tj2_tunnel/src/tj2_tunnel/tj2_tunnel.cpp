@@ -514,6 +514,7 @@ void TJ2Tunnel::sendWaypoints()
 
 void TJ2Tunnel::cancelWaypointGoal()
 {
+    ROS_INFO("Canceling waypoint goal");
     _waypoints_action_client->cancelAllGoals();
 }
 
