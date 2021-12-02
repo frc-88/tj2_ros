@@ -1,19 +1,17 @@
 # Robot Configuration Parameters
-acc_lim_x: 1.0
-acc_lim_theta:  1.0
+acc_lim_x: 5.0
+acc_lim_theta:  5.0
 
-max_vel_x: 0.45  # max speed 0.66 m/s
-min_vel_x: 0.15
+max_vel_x: 2.0  # max speed 4.48 m/s
+min_vel_x: 0.2
 
 # for recovery behaviors
-# max_vel_theta: 2.0
-# min_vel_theta: -2.0
-max_vel_theta: 9.3
-min_vel_theta: -9.3
-min_in_place_vel_theta: 0.6
+max_vel_theta: 61.4
+min_vel_theta: -61.4
+min_in_place_vel_theta: 3.0
 
 holonomic_robot: false
-escape_vel: -0.1
+escape_vel: -1.0
 
 # Goal Tolerance Parameters
 yaw_goal_tolerance: 0.075
@@ -21,12 +19,13 @@ xy_goal_tolerance: 0.05
 latch_xy_goal_tolerance: false
 
 # Forward Simulation Parameters
-sim_time: 1.7
+sim_time: 0.5
 sim_granularity: 0.025
 angular_sim_granularity: 0.025
-vx_samples: 3
+vx_samples: 5
+vy_samples: 5
 vtheta_samples: 20
-controller_frequency: 3.0
+controller_frequency: 10.0
 
 # Trajectory scoring parameters
 meter_scoring: true  # Whether the gdist_scale and pdist_scale parameters should assume that goal_distance and path_distance are expressed in units of meters or cells. Cells are assumed by default (false).

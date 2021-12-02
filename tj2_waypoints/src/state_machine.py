@@ -14,7 +14,9 @@ class GoToWaypointState(State):
             input_keys=["waypoints_plan", "waypoint_index_in", "state_machine"],
             output_keys=["waypoints_plan", "waypoint_index_out", "state_machine"]
         )
+        self.reset()
     
+    def reset(self):
         self.action_result = "success"
         self.goal_pose_stamped = None
         self.current_waypoint_index = 0
@@ -26,7 +28,15 @@ class GoToWaypointState(State):
         self.intermediate_tolerance = 0.0
         self.ignore_orientation = False
 
+        self.intermediate_settle_time = rospy.Duration(0.25)  # TODO: change to launch param or goal param
+        self.within_range_time = None
+        
+        self.is_move_base_done = False
+        self.distance_to_goal = 0.0
+        
     def execute(self, userdata):
+        self.reset()
+
         self.action_result = "success"
         self.action_server = userdata.state_machine.action_server
         self.action_goal = userdata.state_machine.action_goal
@@ -64,7 +74,7 @@ class GoToWaypointState(State):
         rospy.loginfo("Going to position (%s, %s)" % (self.goal_pose_stamped.pose.position.x, self.goal_pose_stamped.pose.position.y))
 
         self.move_base.send_goal(goal, feedback_cb=self.move_base_feedback, done_cb=self.move_base_done)
-        self.move_base.wait_for_result()
+        self.wait_for_move_base()
 
         if self.action_result != "success":
             return self.action_result
@@ -74,32 +84,64 @@ class GoToWaypointState(State):
             userdata.waypoint_index_out = userdata.waypoint_index_in + 1
             return "success"
         else:
+            rospy.loginfo("move_base result was not a success")
             return "failure"
 
-    def move_base_feedback(self, feedback):
-        if rospy.is_shutdown():
-            rospy.loginfo("Received abort. Cancelling waypoint goal")
-            self.action_server.set_aborted()
-            self.action_result = "failure"
-            self.move_base.cancel_goal()
-
-        if self.action_server.is_preempt_requested():
-            rospy.loginfo("Received preempt. Cancelling waypoint goal")
-            self.action_server.set_preempted()
-            self.action_result = "preempted"
-            self.move_base.cancel_goal()
-        
-        # rospy.loginfo("feedback: %s, %s" % (str(feedback), self.intermediate_tolerance))
-        if self.intermediate_tolerance != 0.0 and self.current_waypoint_index < self.num_waypoints - 1:
-            dist = self.get_xy_dist(feedback.base_position, self.goal_pose_stamped)
-            if dist <= self.intermediate_tolerance:
-                rospy.loginfo("Robot is close enough to goal. Moving on")
+    def wait_for_move_base(self):
+        rate = rospy.Rate(10.0)
+        while not self.is_move_base_done:
+            if rospy.is_shutdown():
+                rospy.loginfo("Received abort. Cancelling waypoint goal")
+                self.action_server.set_aborted()
+                self.action_result = "failure"
                 self.move_base.cancel_goal()
-                self.action_result = "success"
+                break
 
+            if self.action_server.is_preempt_requested():
+                rospy.loginfo("Received preempt. Cancelling waypoint goal")
+                self.action_server.set_preempted()
+                self.action_result = "preempted"
+                self.move_base.cancel_goal()
+                break
+
+            # if ignore_orientation is True
+            #   if this is the last waypoint
+            #       wait for the robot to settle, then cancel goal
+            #   if this isn't the last waypoint
+            #       cancel goal
+            # if ignore_orientation is False
+            #   if intermediate_tolerance is greater than zero
+            #       cancel goal
+
+            if self.distance_to_goal <= self.intermediate_tolerance:
+                if self.within_range_time is None:
+                    self.within_range_time = rospy.Time.now()
+
+                if self.ignore_orientation:
+                    if self.current_waypoint_index < self.num_waypoints - 1:
+                        if rospy.Time.now() - self.within_range_time > self.intermediate_settle_time:
+                            self.close_enough_to_goal()
+                    else:
+                        self.close_enough_to_goal()
+                else:
+                    if self.intermediate_tolerance > 0.0:
+                        self.close_enough_to_goal()
+            else:
+                self.within_range_time = None
+            
+            rate.sleep()
+        
+    def move_base_feedback(self, feedback):
+        self.distance_to_goal = self.get_xy_dist(feedback.base_position, self.goal_pose_stamped)
+
+    def close_enough_to_goal(self):
+        rospy.loginfo("Robot is close enough to goal. Moving on")
+        self.move_base.cancel_goal()
+        self.action_result = "success"
     
     def move_base_done(self, goal_status, result):
         rospy.loginfo("move_base finished")
+        self.is_move_base_done = True
     
     def get_xy_dist(self, pose1, pose2):
         # pose1 and pose2 are PoseStamped
