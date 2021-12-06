@@ -25,7 +25,7 @@ private:
 
     // Messages
     sensor_msgs::JointState wheel_joints_msg;
-    vector<sensor_msgs::JointState>* twist_msgs;
+    vector<geometry_msgs::TwistStamped>* twist_msgs;
 
     // Module callback
     void module_callback(const tj2_tunnel::SwerveModuleConstPtr& msg, int module_index);
