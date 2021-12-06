@@ -128,6 +128,7 @@ private:
 
     ros::Time _prev_twist_timestamp;
     double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
+    bool _is_field_relative;
 
     // Publishers
     tf2_ros::TransformBroadcaster _tf_broadcaster;
@@ -140,6 +141,7 @@ private:
 
     // Subscribers
     ros::Subscriber _twist_sub;
+    ros::Subscriber _is_field_relative_sub;
 
     // Service Servers
     ros::ServiceServer _odom_reset_srv;
@@ -165,7 +167,7 @@ private:
     void publishImu(ros::Time recv_time, double yaw, double yaw_rate, double accel_x, double accel_y);
     void publishModule(ros::Time recv_time,
         int module_index,
-        double module_angle, double module_speed,
+        double azimuth_position, double wheel_velocity,
         double lo_voltage_command, double lo_radps,
         double hi_voltage_command, double hi_radps
     );
@@ -176,6 +178,7 @@ private:
     void sendPoseEstimate(double x, double y, double theta);
 
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
+    void setFieldRelativeCallback(const std_msgs::BoolConstPtr& msg);
 
     void pollSocketTask();
     bool pollSocket();

@@ -5,6 +5,7 @@ import math
 import rospy
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Bool
 
 from tj2_tools.joystick import Joystick
 from tj2_driver_station.srv import SetRobotMode
@@ -59,12 +60,15 @@ class TJ2DebugJoystick:
         self.speed_multipliers = [0.1, 0.25, 0.5, 0.9, 1.0]
         self.set_speed_mode(0)
 
+        self.is_field_relative = False
+
         # services
         self.set_robot_mode = rospy.ServiceProxy("robot_mode", SetRobotMode)
         self.last_set_mode_time = rospy.Time.now()
 
         # publishing topics
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
+        self.set_field_relative_pub = rospy.Publisher("set_field_relative", Bool, queue_size=100)
 
         self.joystick = Joystick(self.button_mapping, self.axis_mapping)
 
@@ -93,6 +97,8 @@ class TJ2DebugJoystick:
             self.set_mode(RobotStatus.AUTONOMOUS)
         elif any(self.joystick.check_list(self.joystick.did_button_down, ("triggers", "L1"), ("triggers", "R1"))):
             self.set_mode(RobotStatus.DISABLED)
+        elif self.joystick.did_button_down(("main", "B")):
+            self.set_field_relative(not self.is_field_relative)
 
         if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis)):
             self.disable_timer = rospy.Time.now()
@@ -147,6 +153,13 @@ class TJ2DebugJoystick:
         self.twist_command.linear.x = 0.0
         self.twist_command.linear.y = 0.0
         self.twist_command.angular.z = 0.0
+
+    def set_field_relative(self, is_field_relative):
+        msg = Bool()
+        msg.data = is_field_relative
+        self.is_field_relative = is_field_relative
+        rospy.loginfo("Setting field relative to %s" % is_field_relative)
+        self.set_field_relative_pub.publish(msg)
 
     def run(self):
         # did_disable_timer_expire = False

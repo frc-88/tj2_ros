@@ -6,6 +6,8 @@ TJ2Description::TJ2Description(ros::NodeHandle* nodehandle):nh(*nodehandle)
     ros::param::param<int>("~num_modules", num_modules, 4);
 
     wheel_subs = new vector<ros::Subscriber>();
+    twist_pubs = new vector<ros::Publisher>();
+    twist_msgs = new vector<geometry_msgs::TwistStamped>();
 
     wheel_joints_msg.header.frame_id = "base_link";
     for (int index = 0; index < num_modules; index++)
@@ -19,6 +21,13 @@ TJ2Description::TJ2Description(ros::NodeHandle* nodehandle):nh(*nodehandle)
                 "swerve_modules/" + wheel_name, 50,
                 boost::bind(&TJ2Description::module_callback, this, _1, index)
             )
+        );
+
+        geometry_msgs::TwistStamped msg;
+        msg.header.frame_id = "swerve_wheel_" + wheel_name;
+        twist_msgs->push_back(msg);
+        twist_pubs->push_back(
+            nh.advertise<geometry_msgs::TwistStamped>("swerve_module_twist/" + wheel_name, 10)
         );
     }
     
@@ -36,6 +45,11 @@ void TJ2Description::module_callback(const tj2_tunnel::SwerveModuleConstPtr& msg
     
     wheel_joints_msg.position[module_index] = azimuth;
     wheel_joints_msg.header.stamp = ros::Time::now();
+
+    geometry_msgs::TwistStamped twist_msg = twist_msgs->at(module_index);
+    twist_msg.header.stamp = ros::Time::now();
+    twist_msg.twist.linear.x = msg->wheel_velocity;
+    twist_pubs->at(module_index).publish(twist_msg);
 }
 
 
