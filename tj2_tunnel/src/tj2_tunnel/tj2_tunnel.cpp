@@ -155,10 +155,12 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2Tunnel::twistCallback, this);
+    _is_field_relative_sub = nh.subscribe<std_msgs::Bool>("set_field_relative", 10, &TJ2Tunnel::setFieldRelativeCallback, this);
     _prev_twist_timestamp = ros::Time(0);
     _twist_cmd_vx = 0.0;
     _twist_cmd_vy = 0.0;
     _twist_cmd_vt = 0.0;
+    _is_field_relative = false;
 
     _currentGoalStatus = INVALID;
 
@@ -453,14 +455,14 @@ void TJ2Tunnel::publishImu(ros::Time recv_time, double yaw, double yaw_rate, dou
 
 void TJ2Tunnel::publishModule(ros::Time recv_time,
     int module_index,
-    double module_angle, double module_speed,
+    double azimuth_position, double wheel_velocity,
     double lo_voltage_command, double lo_radps,
     double hi_voltage_command, double hi_radps)
 {
     tj2_tunnel::SwerveModule* msg = _module_msgs->at(module_index);
     msg->module_index = std::to_string(module_index);
-    msg->azimuth_position = module_angle;
-    msg->wheel_velocity = module_speed;
+    msg->azimuth_position = azimuth_position;
+    msg->wheel_velocity = wheel_velocity;
     
     msg->motor_lo_0.velocity = lo_radps;
     msg->motor_lo_0.command_voltage = lo_voltage_command;
@@ -572,6 +574,10 @@ void TJ2Tunnel::sendPoseEstimate(double x, double y, double theta)
 }
 
 
+void TJ2Tunnel::setFieldRelativeCallback(const std_msgs::BoolConstPtr& msg) {
+    _is_field_relative = msg->data;
+}
+
 
 void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
 {
@@ -619,7 +625,7 @@ void TJ2Tunnel::publishCmdVel()
         return;
     }
 
-    writePacket("cmd", "fff", _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt);
+    writePacket("cmd", "fffd", _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt, _is_field_relative);
 }
 
 
