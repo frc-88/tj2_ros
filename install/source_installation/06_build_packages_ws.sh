@@ -47,6 +47,7 @@ packages=(
     https://github.com/ros/rosbag_snapshot.git
     https://github.com/stereolabs/zed-ros-wrapper
     https://github.com/stereolabs/zed-ros-examples
+    https://github.com/alireza-hosseini/ipcamera_driver
 )
 
 branches=(
@@ -83,6 +84,7 @@ branches=(
     main  # https://github.com/ros/rosbag_snapshot.git
     master  # https://github.com/stereolabs/zed-ros-wrapper
     master  # https://github.com/stereolabs/zed-ros-examples
+    master  # https://github.com/alireza-hosseini/ipcamera_driver
 )
 
 len=${#packages[@]}
