@@ -1,0 +1,33 @@
+image_width: 320
+image_height: 240
+camera_name: limelight
+camera_matrix:
+  rows: 3
+  cols: 3
+  
+  data: [
+    225.35439462,   0.,         161.01018011,
+    0.,         225.11179234, 120.55447492,
+    0.,             0.,           1.
+  ]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.04465872,  1.12400169, -0.00477512,  0.00749084, -3.12158864]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [
+    1.000000, 0.000000, 0.000000,
+    0.000000, 1.000000, 0.000000,
+    0.000000, 0.000000, 1.000000
+  ]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [
+    225.35439462,   0.,         161.01018011, 0.,
+    0.,         225.11179234, 120.55447492,   0.,
+    0.,             0.,           1.,         0.
+  ]
