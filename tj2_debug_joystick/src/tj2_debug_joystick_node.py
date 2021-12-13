@@ -41,14 +41,14 @@ class TJ2DebugJoystick:
         self.idle_axis = rospy.get_param("~idle_axis", "brake/L").split("/")
         self.speed_selector_axis = rospy.get_param("~speed_selector_axis", "dpad/vertical").split("/")
 
-        self.linear_x_scale_max = rospy.get_param("~linear_x_scale", 1.0)
-        self.linear_y_scale_max = rospy.get_param("~linear_y_scale", 1.0)
-        self.angular_scale_max = rospy.get_param("~angular_scale", 1.0)
+        self.linear_x_scale_max = float(rospy.get_param("~linear_x_scale", 1.0))
+        self.linear_y_scale_max = float(rospy.get_param("~linear_y_scale", 1.0))
+        self.angular_scale_max = float(rospy.get_param("~angular_scale", 1.0))
         self.linear_x_scale = self.linear_x_scale_max
         self.linear_y_scale = self.linear_y_scale_max
         self.angular_scale = self.angular_scale_max
 
-        self.deadzone_joy_val = rospy.get_param("~deadzone_joy_val", 0.05)
+        self.deadzone_joy_val = float(rospy.get_param("~deadzone_joy_val", 0.05))
         self.joystick_topic = rospy.get_param("~joystick_topic", "/joy")
 
         self.button_mapping = rospy.get_param("~button_mapping", None)
@@ -61,6 +61,9 @@ class TJ2DebugJoystick:
         self.set_speed_mode(0)
 
         self.is_field_relative = False
+        self.limelight_led_mode = False  # False == on, True == off
+
+        self.joystick = Joystick(self.button_mapping, self.axis_mapping)
 
         # services
         self.set_robot_mode = rospy.ServiceProxy("robot_mode", SetRobotMode)
@@ -69,8 +72,7 @@ class TJ2DebugJoystick:
         # publishing topics
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
         self.set_field_relative_pub = rospy.Publisher("set_field_relative", Bool, queue_size=100)
-
-        self.joystick = Joystick(self.button_mapping, self.axis_mapping)
+        self.limelight_led_pub = rospy.Publisher("limelight_led_mode", Bool, queue_size=5)
 
         # subscription topics
         self.joy_sub = rospy.Subscriber(self.joystick_topic, Joy, self.joystick_msg_callback, queue_size=5)
@@ -99,6 +101,10 @@ class TJ2DebugJoystick:
             self.set_mode(RobotStatus.DISABLED)
         elif self.joystick.did_button_down(("main", "B")):
             self.set_field_relative(not self.is_field_relative)
+        elif self.joystick.did_button_down(("main", "A")):
+            self.limelight_led_mode = not self.limelight_led_mode
+            rospy.loginfo("Setting limelight led mode to %s" % self.limelight_led_mode)
+            self.limelight_led_pub.publish(self.limelight_led_mode)
 
         if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis)):
             self.disable_timer = rospy.Time.now()

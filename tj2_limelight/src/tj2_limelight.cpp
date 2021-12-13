@@ -96,10 +96,12 @@ int TJ2Limelight::run()
 
 void TJ2Limelight::reopenCapture()
 {
+    ROS_WARN("Video stream is not available, retrying...");
     _video_capture.release();
-    ROS_WARN_STREAM_DELAYED_THROTTLE(2, "Video stream is not available, retrying...");
-    _reopenSleep.sleep();
-    _video_capture.open(_video_url);
+    exit(0);
+    // ROS_WARN_STREAM_DELAYED_THROTTLE(2, "Video stream is not available, retrying...");
+    // _reopenSleep.sleep();
+    // _video_capture.open(_video_url);
 }
 
 int main(int argc, char **argv)

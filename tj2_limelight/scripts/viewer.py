@@ -51,20 +51,23 @@ def main():
 
         result = draw_checkerboard(frame)
         if result is not None:
-            frame = result
+            draw_frame = result
+        else:
+            draw_frame = frame
 
-        height, width = frame.shape[0:2]
+        height, width = draw_frame.shape[0:2]
         resize_height = int(resize_width / width * height)
-        frame = cv2.resize(frame, (resize_width, resize_height))
+        draw_frame = cv2.resize(draw_frame, (resize_width, resize_height))
         
-        cv2.imshow("Capturing",frame)
+        cv2.imshow("Capturing",draw_frame)
 
         key = chr(cv2.waitKey(1) & 0xff)
 
         if key == "q":
             break
         elif key == "s":
-            record_image(frame, "images")
+            if frame is not None:
+                record_image(frame, "images")
         t2 = time.time()
 
         read_times.append(t1 - t0)

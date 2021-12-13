@@ -39,7 +39,7 @@ class TopicListener:
         else:
             return result[0]
 
-class Tj2Launcher:
+class TJ2Launcher:
     def __init__(self):
         self.node_name = "tj2_launcher"
         rospy.init_node(
@@ -71,7 +71,8 @@ class Tj2Launcher:
 
             if not package:
                 if not os.path.isfile(path):
-                    raise ValueError("Package is not provided for %s and path is not valid: %s" % (name, path))
+                    rospy.logerr("Package is not provided for %s and path is not valid: %s. Skipping launch" % (name, path))
+                    continue
                 else:
                     launch_path = path
             else:
@@ -138,7 +139,7 @@ class Tj2Launcher:
 
 
 if __name__ == "__main__":
-    node = Tj2Launcher()
+    node = TJ2Launcher()
     try:
         node.run()
     except rospy.ROSInterruptException:
