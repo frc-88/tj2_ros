@@ -3,7 +3,7 @@ import re
 import cv2
 import math
 import numpy as np
-from pascal_voc import PascalVOCFrame, PascalVOCObject
+from tj2_tools.training.pascal_voc import PascalVOCFrame, PascalVOCObject
 
 IMAGE = None
 PATHS = []

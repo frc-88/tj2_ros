@@ -2,6 +2,9 @@
 tj2_detectnet/models
 tj2_detectnet/scripts/video_dataset/output 
 tj2_laser_slam/maps
+dataset_builder/limelight_targets/base_images
+dataset_builder/limelight_targets/output_images
+
 .idea/
 .vscode/
 bags/

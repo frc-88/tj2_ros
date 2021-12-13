@@ -4,15 +4,19 @@ After=NetworkManager.service time-sync.target
 Description=TJ2 roslaunch
 
 [Service]
-Type=simple
+Type=forking
 User=tj2
 Group=tj2
+RemainAfterExit=yes
 ExecStart=/usr/local/bin/roslaunch.sh
+ExecStop=/usr/bin/tmux send-keys -t "roslaunch" C-c
+KillMode=none
+TimeoutStopSec=3
+KillSignal=SIGINT
 
 Restart=always
 RestartSec=5
 
-KillSignal=SIGINT
-
 [Install]
 WantedBy=multi-user.target
+

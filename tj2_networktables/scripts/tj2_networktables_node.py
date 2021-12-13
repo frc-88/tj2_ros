@@ -19,15 +19,21 @@ class TJ2NetworkTables:
         self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
         
         NetworkTables.initialize(server=self.nt_host)
-        self.nt = NetworkTables.getTable("swerveLibrary")
+        self.nt = NetworkTables.getTable("")
 
         self.remote_linear_units_conversion = rospy.get_param("~remote_linear_units_conversion", 1.0)
         self.remote_angular_units_conversion = rospy.get_param("~remote_angular_units_conversion", 1.0)
         
         self.match_time_pub = rospy.Publisher("match_time", Float64, queue_size=5)
         self.is_autonomous_pub = rospy.Publisher("is_autonomous", Bool, queue_size=5)
+        self.limelight_led_mode_sub = rospy.Subscriber("limelight_led_mode", Bool, self.limelight_led_mode_callback, queue_size=5)
+        self.limelight_cam_mode_sub = rospy.Subscriber("limelight_cam_mode", Bool, self.limelight_cam_mode_callback, queue_size=5)
 
-        self.driver_station_table_key = "DriverStation"
+        self.driver_station_table_key = "swerveLibrary/ROS/DriverStation"
+        self.limelight_table_key = "limelight"
+
+        self.limelight_led_mode_entry = self.nt.getEntry(self.limelight_table_key + "/ledMode")
+        self.limelight_cam_mode_entry = self.nt.getEntry(self.limelight_table_key + "/camMode")
 
         self.fms_flag_ignored = True
 
@@ -56,6 +62,16 @@ class TJ2NetworkTables:
             self.is_autonomous_pub.publish(is_autonomous)
         else:
             self.match_time_pub.publish(-1.0)
+
+    def limelight_led_mode_callback(self, msg):
+        mode = 1.0 if msg.data else 0.0
+        rospy.loginfo("Setting limelight led mode to %s" % mode)
+        self.limelight_led_mode_entry.setDouble(mode)
+
+    def limelight_cam_mode_callback(self, msg):
+        mode = 1.0 if msg.data else 0.0
+        rospy.loginfo("Setting limelight cam mode to %s" % mode)
+        self.limelight_cam_mode_entry.setDouble(mode)
 
     def get_remote_time(self):
         """

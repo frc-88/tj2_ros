@@ -25,6 +25,7 @@ class TJ2CameraLauncher:
         self.package_dir = self.rospack.get_path(self.package_name)
         self.default_launches_dir = self.package_dir + "/launch"
 
+        self.on_start = rospy.get_param("~on_start", False)
         self.service_ns_name = rospy.get_param("~service_ns_name", "/tj2")
         self.camera_launch_path = rospy.get_param("~camera_launch", self.default_launches_dir + "/tj2_camera.launch")
         self.record_launch_path = rospy.get_param("~record_launch", self.default_launches_dir + "/record_camera.launch")
@@ -93,6 +94,10 @@ class TJ2CameraLauncher:
         return TriggerResponse(True, "Recording stopped" if stopped else "Recording is already stopped!")
     
     def run(self):
+        if self.on_start:
+            started = self.camera_launcher.start()
+            if not started:
+                rospy.logerr("Camera failed to start!")
         rospy.spin()
         
     def stop_all(self):

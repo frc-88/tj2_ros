@@ -1,7 +1,7 @@
 import os
 import random
 
-from pascal_voc import PascalVOCFrame, PascalVOCObject
+from tj2_tools.training.pascal_voc import PascalVOCFrame, PascalVOCObject
 
 ANNOTATIONS = "Annotations"
 IMAGESETS = "ImageSets/Main"

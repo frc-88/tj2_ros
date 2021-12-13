@@ -5,8 +5,8 @@ import cv2
 import shutil
 import random
 
-from get_image_size import get_image_metadata, Image
-from pascal_voc import PascalVOCFrame, PascalVOCObject
+from tj2_tools.training.get_image_size import get_image_metadata, Image
+from tj2_tools.training.pascal_voc import PascalVOCFrame, PascalVOCObject
 from utils import ANNOTATIONS, IMAGESETS, JPEGIMAGES, LABELS
 from utils import makedirs, build_image_sets
 

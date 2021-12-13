@@ -3,7 +3,7 @@ import os
 import cv2
 import random
 import numpy as np
-from pascal_voc import PascalVOCFrame, PascalVOCObject
+from tj2_tools.training.pascal_voc import PascalVOCFrame, PascalVOCObject
 from utils import read_dataset, build_image_sets
 
 

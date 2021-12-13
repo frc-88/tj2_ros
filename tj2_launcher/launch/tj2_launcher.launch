@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <node pkg="tj2_launcher" type="tj2_launcher_node.py" name="tj2_launcher" output="log">
+    <node pkg="tj2_launcher" type="tj2_launcher_node.py" name="tj2_launcher" output="log" required="true">
         <rosparam param="launches" file="$(find tj2_launcher)/config/launcher.yaml" command="load"/>
     </node>
 </launch>
