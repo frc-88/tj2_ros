@@ -24,7 +24,7 @@ class ImageCollector:
                 self.frames.append(frame)
                 self.images.append(None)
                 self.metadata.append(image_metadata)
-    
+
     def _load_image(self, index):
         frame = self.frames[index]
         path = os.path.join(self.base_dir, frame.filename)
@@ -45,5 +45,7 @@ class ImageCollector:
             if include_metadata:
                 image_metadata = self.metadata[index]
                 result.append(image_metadata)
-            yield tuple(result)
-
+            if len(result) == 1:
+                yield result[0]
+            else:
+                yield tuple(result)

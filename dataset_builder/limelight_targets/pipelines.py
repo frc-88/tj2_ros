@@ -7,28 +7,32 @@ erratic_warps = dict(
     random_width=100,
     lower_ratio=0.8, upper_ratio=1.2,
     random_angle=2 * np.pi,
-    min_percentage=1.0, max_percentage=10.0
+    min_percentage=1.0, max_percentage=10.0,
+    obj_max_count=dict(target_1=3, target_2=4)
 )
 
 medium_warps = dict(
     random_width=25,
     lower_ratio=0.8, upper_ratio=1.2,
     random_angle=0.5 * np.pi,
-    min_percentage=1.0, max_percentage=10.0
+    min_percentage=1.0, max_percentage=10.0,
+    obj_max_count=dict(target_1=2, target_2=4)
 )
 
 subtle_warps = dict(
     random_width=10,
     lower_ratio=0.2, upper_ratio=10.0,
     random_angle=0.1 * np.pi,
-    min_percentage=0.9, max_percentage=10.0
+    min_percentage=0.9, max_percentage=10.0,
+    obj_max_count=dict(target_1=1, target_2=1)
 )
 
 no_warps = dict(
     random_width=0,
     lower_ratio=0.8, upper_ratio=1.2,
     random_angle=0.1 * np.pi,
-    min_percentage=1.0, max_percentage=10.0
+    min_percentage=1.0, max_percentage=10.0,
+    obj_max_count=None
 )
 
 background_gauss_params = (20, 20)

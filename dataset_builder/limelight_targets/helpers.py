@@ -3,7 +3,7 @@ import cv2
 import math
 import random
 import numpy as np
-from tj2_tools.training.pascal_voc import PascalVOCFrame
+from tj2_tools.training.pascal_voc import PascalVOCFrame, PascalVOCObject
 
 
 def get_object_mask(bndbox, image):
@@ -254,16 +254,45 @@ def apply_objects_to_background(image, background, frame, kwargs):
     warp_mask = np.zeros(image.shape[0:2], dtype=np.uint8)
     warp_image = np.zeros_like(image)
 
+    kwargs = kwargs.copy()
+    if "obj_max_count" in kwargs:
+        obj_max_count = kwargs.pop("obj_max_count")
+    else:
+        obj_max_count = None
+
     all_bndboxes = []
-    for index, obj in enumerate(frame.objects):
+    first_warp = True
+    new_objects = []
+
+    objects_by_label = {}
+    warps_by_label = {}
+    objects_flattened = []
+    for obj in frame.objects:
+        if obj.name not in objects_by_label:
+            objects_by_label[obj.name] = []
+            if obj_max_count is None:
+                max_num_warps = 1
+            else:
+                max_num_warps = obj_max_count[obj.name]
+            warps_by_label[obj.name] = random.randint(1 if first_warp else 0, max_num_warps)
+        first_warp = False
+        num_warps = warps_by_label[obj.name]
+        if len(objects_by_label[obj.name]) < num_warps:
+            objects_by_label[obj.name].append(obj)
+            objects_flattened.append(obj)
+
+    for index, obj in enumerate(objects_flattened):
         warp_obj_image, warp_obj_mask, w_bndbox = randomly_transform_annotation(
             obj.bndbox, all_bndboxes, image, **kwargs)
         all_bndboxes.append(w_bndbox)
-        frame.objects[index].bndbox = w_bndbox
+        new_object = PascalVOCObject.from_obj(obj)
+        new_object.bndbox = w_bndbox
+        new_objects.append(new_object)
         # obj_mask = get_object_mask(obj, image)
         # mask = cv2.bitwise_or(mask, obj_mask)
         warp_mask = cv2.bitwise_or(warp_mask, warp_obj_mask)
         warp_image = cv2.bitwise_or(warp_image, warp_obj_image)
+    frame.objects = new_objects
 
     background_masked = cv2.bitwise_and(background, background, mask=cv2.bitwise_not(warp_mask))
     image_masked = cv2.bitwise_and(warp_image, warp_image, mask=warp_mask)
