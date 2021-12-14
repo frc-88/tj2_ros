@@ -5,6 +5,7 @@
         <node pkg="tj2_limelight" type="tj2_limelight" name="tj2_limelight" output="screen" respawn="true">
             <param name="video_url" value="http://10.0.88.42:5802/" />
             <param name="camera_info_url" value="package://tj2_limelight/config/320x240.yaml" />
+            <!-- <param name="camera_info_url" value="package://tj2_limelight/config/960x720.yaml" /> -->
             <param name="frame_id" value="limelight_optical_link" />
             <param name="max_frame_rate" value="90.0" />
             <remap from="camera/image" to="image_raw" />

@@ -18,6 +18,11 @@
             <param name="color_topic"     value="/camera/color/image_raw"/>
             <param name="color_info_topic"     value="/camera/color/camera_info"/>
 
+            <remap from="overlay/image_raw" to="tj2_2020/overlay/image_raw"/>
+            <remap from="overlay/camera_info" to="tj2_2020/overlay/camera_info"/>
+            <remap from="markers" to="tj2_2020/markers"/>
+            <remap from="detections" to="tj2_2020/detections"/>
+
             <param name="always_publish_overlay"     value="true"/>
 
             <rosparam param="detectnet_marker_colors" file="$(find tj2_detectnet)/config/tj2_2020/marker_colors.yaml" command="load"/>
