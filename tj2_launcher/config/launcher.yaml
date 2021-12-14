@@ -16,10 +16,6 @@ rplidar:
   on_start: true
   topics:
     /laser/scan_filtered: 2.0
-detectnet:
-  package: "tj2_detectnet"
-  path: "tj2_detectnet.launch"
-  on_start: false
 limelight:
   package: "tj2_limelight"
   path: "tj2_limelight.launch"
