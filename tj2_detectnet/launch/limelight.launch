@@ -3,7 +3,7 @@
     <group ns="tj2" >
         <node name="tj2_detectnet_limelight" pkg="tj2_detectnet" type="tj2_detectnet_node" output="screen">
             <param name="model_name" value=""/>
-            <param name="model_path" value="$(find tj2_detectnet)/models/limelight-mb2-ssd-lite.onnx"/>
+            <param name="model_path" value="$(find tj2_detectnet)/models/limelight-mb2-ssd-lite-60.onnx"/>
             <param name="prototxt_path" value=""/>
             <param name="class_labels_path" value="$(find tj2_detectnet)/models/limelight-labels.txt"/>
             <param name="input_blob" value="input_0"/>
@@ -11,7 +11,12 @@
             <param name="output_bbox" value="boxes"/>
             <param name="overlay_flags" value="box,labels,conf"/>
             <param name="mean_pixel_value" value="0.0"/>
-            <param name="threshold" value="0.3"/>
+            <param name="threshold" value="0.2"/>
+
+            <remap from="overlay/image_raw" to="limelight/overlay/image_raw"/>
+            <remap from="overlay/camera_info" to="limelight/overlay/camera_info"/>
+            <remap from="markers" to="limelight/markers"/>
+            <remap from="detections" to="limelight/detections"/>
 
             <param name="depth_topic"           value="/limelight/aligned_depth_to_color/image_raw"/>
             <param name="depth_info_topic"      value="/limelight/aligned_depth_to_color/camera_info"/>
