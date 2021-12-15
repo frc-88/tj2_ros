@@ -141,7 +141,6 @@ private:
     image_geometry::PinholeCameraModel _camera_model;
     std::map<std::string, int> _label_counter;
 
-
     // Subscribers
     message_filters::Subscriber<Image> color_sub;
     message_filters::Subscriber<CameraInfo> color_info_sub;

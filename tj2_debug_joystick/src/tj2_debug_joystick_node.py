@@ -72,7 +72,7 @@ class TJ2DebugJoystick:
         # publishing topics
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
         self.set_field_relative_pub = rospy.Publisher("set_field_relative", Bool, queue_size=100)
-        self.limelight_led_pub = rospy.Publisher("limelight_led_mode", Bool, queue_size=5)
+        self.limelight_led_pub = rospy.Publisher("/limelight/led_mode", Bool, queue_size=5)
 
         # subscription topics
         self.joy_sub = rospy.Subscriber(self.joystick_topic, Joy, self.joystick_msg_callback, queue_size=5)

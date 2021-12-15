@@ -5,7 +5,6 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
     _image_transport(nh),
     _camera_info_manager(nh)
 {
-  _camera_pub = _image_transport.advertiseCamera("camera/image", 10);
     ros::param::param<string>("~video_url", _video_url, "");
     ros::param::param<string>("~camera_info_url", _camera_info_url, "");
     ros::param::param<string>("~frame_id", _frame_id, "camera_link");
@@ -36,10 +35,12 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
     _camera_info.header.frame_id = _frame_id;
 
     _reopenSleep = ros::Duration(0.25);
-    
-    _watcher_thread = new boost::thread(&TJ2Limelight::watchVideoCapture, this);
 
+    _camera_pub = _image_transport.advertiseCamera("camera/image", 10);
+
+    _watcher_thread = new boost::thread(&TJ2Limelight::watchVideoCapture, this);
 }
+
 void TJ2Limelight::watchVideoCapture()
 {
     ros::Rate clock_rate(_max_frame_rate);  // Hz
@@ -64,12 +65,9 @@ int TJ2Limelight::run()
     {
         if (_video_capture.isOpened())
         {
-            ROS_INFO_ONCE("connection established");
+            ROS_INFO_ONCE("Connection established");
             loop.sleep();
             ros::spinOnce();
-            // if (_camera_pub.getNumSubscribers() > 0)
-            // {
-                // ROS_INFO_ONCE("publishing frames");
             if (!_video_capture.read(frame)) {
                 continue;
             }
@@ -81,7 +79,6 @@ int TJ2Limelight::run()
 
             _out_msg.toImageMsg(_ros_img);
             _camera_pub.publish(_ros_img, _camera_info, _last_publish_time);
-            // }
         }
         else
         {
@@ -96,12 +93,9 @@ int TJ2Limelight::run()
 
 void TJ2Limelight::reopenCapture()
 {
-    ROS_WARN("Video stream is not available, retrying...");
+    ROS_WARN("Video stream is not available. Exiting.");
     _video_capture.release();
     exit(0);
-    // ROS_WARN_STREAM_DELAYED_THROTTLE(2, "Video stream is not available, retrying...");
-    // _reopenSleep.sleep();
-    // _video_capture.open(_video_url);
 }
 
 int main(int argc, char **argv)
