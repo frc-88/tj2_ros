@@ -297,6 +297,7 @@ void TJ2DetectNet::rgbd_callback(
         text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
         text_marker.ns = "text_" + text_marker.ns;
         text_marker.text = label + "_" + std::to_string(label_index);
+        text_marker.scale.z = std::max({text_marker.scale.x, text_marker.scale.y, text_marker.scale.z});
         text_marker.scale.x = 0.0;
         text_marker.scale.y = 0.0;
 
@@ -381,7 +382,6 @@ void TJ2DetectNet::tf_obj_to_target(const CameraInfoConstPtr color_info, ObjPose
         return;
     }
     geometry_msgs::TransformStamped transform_camera_to_target;
-    geometry_msgs::PoseStamped object_pose;
 
     try {
         transform_camera_to_target = tfBuffer.lookupTransform(

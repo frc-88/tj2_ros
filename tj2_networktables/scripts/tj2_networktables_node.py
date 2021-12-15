@@ -3,8 +3,10 @@ import rospy
 
 from std_msgs.msg import Float64
 from std_msgs.msg import Bool
+from sensor_msgs.msg import CameraInfo
 
 from networktables import NetworkTables
+from tj2_limelight.msg import LimelightTarget
 
 
 class TJ2NetworkTables:
@@ -26,8 +28,10 @@ class TJ2NetworkTables:
         
         self.match_time_pub = rospy.Publisher("match_time", Float64, queue_size=5)
         self.is_autonomous_pub = rospy.Publisher("is_autonomous", Bool, queue_size=5)
-        self.limelight_led_mode_sub = rospy.Subscriber("limelight_led_mode", Bool, self.limelight_led_mode_callback, queue_size=5)
-        self.limelight_cam_mode_sub = rospy.Subscriber("limelight_cam_mode", Bool, self.limelight_cam_mode_callback, queue_size=5)
+        self.limelight_target_pub = rospy.Publisher("/limelight/target", LimelightTarget, queue_size=5)
+        self.limelight_led_mode_sub = rospy.Subscriber("/limelight/led_mode", Bool, self.limelight_led_mode_callback, queue_size=5)
+        self.limelight_cam_mode_sub = rospy.Subscriber("/limelight/cam_mode", Bool, self.limelight_cam_mode_callback, queue_size=5)
+        self.limelight_info_sub = rospy.Subscriber("/limelight/camera_info", CameraInfo, self.limelight_info_callback, queue_size=5)
 
         self.driver_station_table_key = "swerveLibrary/ROS/DriverStation"
         self.limelight_table_key = "limelight"
@@ -40,6 +44,8 @@ class TJ2NetworkTables:
         self.remote_start_time = 0.0
         self.local_start_time = 0.0
         self.prev_timestamp = 0.0
+
+        self.limelight_camera_info = CameraInfo()
         
         self.clock_rate = rospy.Rate(20.0)  # networktable servers update at 10 Hz
 
@@ -51,6 +57,27 @@ class TJ2NetworkTables:
                 self.init_remote_time()
             self.clock_rate.sleep()
             self.publish_driver_station()
+            self.publish_limelight_target()
+
+    def limelight_info_callback(self, msg):
+        self.limelight_camera_info = msg
+
+    def publish_limelight_target(self):
+        msg = LimelightTarget()
+        msg.tv = self.nt.getEntry(self.limelight_table_key + "/tv").getDouble(0.0) == 1.0
+        tx = self.nt.getEntry(self.limelight_table_key + "/tx0").getDouble(0.0)
+        ty = self.nt.getEntry(self.limelight_table_key + "/ty0").getDouble(0.0)
+        msg.thor = int(self.nt.getEntry(self.limelight_table_key + "/thor0").getDouble(0.0))
+        msg.tvert = int(self.nt.getEntry(self.limelight_table_key + "/tvert0").getDouble(0.0))
+
+        width = self.limelight_camera_info.width
+        height = self.limelight_camera_info.height
+
+        msg.tx = int((tx + 1.0) / 2.0 * width)
+        msg.ty = int((-ty + 1.0) / 2.0 * height)
+        msg.header.stamp = rospy.Time.now()
+
+        self.limelight_target_pub.publish(msg)
 
     def publish_driver_station(self):
         is_fms_attached = self.nt.getEntry(self.driver_station_table_key + "/isFMSAttached").getBoolean(False)

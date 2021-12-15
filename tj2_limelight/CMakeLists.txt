@@ -10,12 +10,18 @@ project(tj2_limelight)
 
 find_package(catkin REQUIRED COMPONENTS
     camera_info_manager
-    cv_bridge
-    dynamic_reconfigure
-    image_transport
     roscpp
+    std_msgs
     sensor_msgs
-    std_srvs
+    roslaunch
+    message_generation
+    message_filters
+    visualization_msgs
+    vision_msgs
+    image_transport
+    image_geometry
+    cv_bridge
+    tf2_ros
 )
 find_package(OpenCV REQUIRED)
 
@@ -53,11 +59,10 @@ find_package(OpenCV REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  LimelightTarget.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -74,10 +79,10 @@ find_package(OpenCV REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -110,14 +115,18 @@ find_package(OpenCV REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
     INCLUDE_DIRS include
+    LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
         camera_info_manager
-        cv_bridge
-        dynamic_reconfigure
-        image_transport
         roscpp
+        std_msgs
         sensor_msgs
-        std_srvs
+        visualization_msgs
+        vision_msgs
+        image_transport
+        image_geometry
+        cv_bridge
+        tf2_ros
     DEPENDS OpenCV
 )
 
@@ -132,10 +141,11 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
 )
+link_directories(${catkin_LIBRARY_DIRS})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/tj2_limelight.cpp
+#   src/${PROJECT_NAME}.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -151,6 +161,11 @@ add_executable(${PROJECT_NAME}
     src/${PROJECT_NAME}.cpp
 )
 
+add_executable(limelight_target_node
+    include/limelight_target_node.h
+    src/limelight_target_node.cpp
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -163,6 +178,11 @@ add_executable(${PROJECT_NAME}
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+)
+
+target_link_libraries(limelight_target_node
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
 )
@@ -195,12 +215,18 @@ install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
 
-## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-    launch
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-    USE_SOURCE_PERMISSIONS
+install(TARGETS limelight_target_node
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
+
+## Mark cpp header files for installation
+# install(DIRECTORY include/${PROJECT_NAME}/
+#     launch
+#     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+#     USE_SOURCE_PERMISSIONS
+# )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

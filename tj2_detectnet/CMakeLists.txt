@@ -125,7 +125,6 @@ catkin_package(
         sensor_msgs
         message_runtime
         message_filters
-        sensor_msgs
         visualization_msgs
         vision_msgs
         image_transport
