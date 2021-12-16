@@ -43,6 +43,40 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
         _hsv_upper_bound_param.at(1),
         _hsv_upper_bound_param.at(2)
     );
+
+    if (ros::param::search("marker_colors", key))
+    {
+        ROS_DEBUG("Found marker_colors: %s", key.c_str());
+        nh.getParam(key, _marker_colors_param);
+
+        // _marker_colors_param is an array
+        if (_marker_colors_param.getType() != XmlRpc::XmlRpcValue::Type::TypeArray ||
+            _marker_colors_param.size() == 0) {
+            THROW_EXCEPTION("marker_colors wrong type or size");
+        }
+        ROS_DEBUG("marker_colors is the correct type");
+
+        _marker_colors = new std::vector<std_msgs::ColorRGBA>(_marker_colors_param.size());
+        for (size_t index = 0; index < _marker_colors_param.size(); index++)
+        {
+            if (_marker_colors_param[index].getType() != XmlRpc::XmlRpcValue::TypeArray) {
+                THROW_EXCEPTION("marker_colors element is not a list");
+            }
+            ROS_DEBUG("\tFound marker_colors entry");
+
+            std_msgs::ColorRGBA color;
+            color.r = (double)(_marker_colors_param[index][0]);
+            color.g = (double)(_marker_colors_param[index][1]);
+            color.b = (double)(_marker_colors_param[index][2]);
+            color.a = (double)(_marker_colors_param[index][3]);
+            _marker_colors->at(index) = color;
+            ROS_DEBUG("\tR=%0.2f, G=%0.2f, B=%0.2f, A=%0.2f", color.r, color.g, color.b, color.a);
+        }
+    }
+    else {
+        _marker_colors = new std::vector<std_msgs::ColorRGBA>(0);
+    }
+    
     _pipeline_pub = _image_transport.advertise("pipeline/image_raw", 2);
 
     _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("pipeline/markers", 10);
@@ -88,7 +122,7 @@ void LimelightTargetNode::camera_callback(const ImageConstPtr& color_image, cons
         det_msg.header.frame_id = _camera_model.tfFrame();
 
         det_array_msg.detections.push_back(det_msg);
-        publish_markers("limelight_detection", det_msg, dimensions);
+        publish_markers("limelight", index + 1, det_msg, dimensions);
     }
     _detection_array_pub.publish(det_array_msg);
 }
@@ -118,7 +152,7 @@ void LimelightTargetNode::target_callback(const ImageConstPtr& depth_image, cons
     det_msg.header.frame_id = _camera_model.tfFrame();
 
     _target_detection_pub.publish(det_msg);
-    publish_markers("limelight_target", det_msg, dimensions);
+    publish_markers("target", 0, det_msg, dimensions);
 }
 
 vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int id, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions)
@@ -204,11 +238,11 @@ bool LimelightTargetNode::msg_to_frame(const ImageConstPtr msg, cv::Mat& image)
     return true;
 }
 
-void LimelightTargetNode::publish_markers(string name, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
+void LimelightTargetNode::publish_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
 {
     visualization_msgs::MarkerArray markers;
-    visualization_msgs::Marker rect_marker = make_marker(name, det_msg, dimensions);
-    visualization_msgs::Marker text_marker = make_marker(name, det_msg, dimensions);
+    visualization_msgs::Marker rect_marker = make_marker(name, index, det_msg, dimensions);
+    visualization_msgs::Marker text_marker = make_marker(name, index, det_msg, dimensions);
 
     rect_marker.type = visualization_msgs::Marker::CUBE;
     rect_marker.ns = "cube_" + rect_marker.ns;
@@ -231,7 +265,7 @@ void LimelightTargetNode::publish_markers(string name, vision_msgs::Detection2D 
     _marker_pub.publish(markers);
 }
 
-visualization_msgs::Marker LimelightTargetNode::make_marker(string name, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
+visualization_msgs::Marker LimelightTargetNode::make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
 {
     visualization_msgs::Marker marker;
     marker.action = visualization_msgs::Marker::ADD;
@@ -246,9 +280,14 @@ visualization_msgs::Marker LimelightTargetNode::make_marker(string name, vision_
     scale_vector.y = dimensions.y;
     scale_vector.z = dimensions.z;
     marker.scale = scale_vector;
-    marker.color = std_msgs::ColorRGBA();
-    marker.color.r = 1.0;
-    marker.color.a = 0.5;
+    if (_marker_colors->size() == 0) {
+        marker.color = std_msgs::ColorRGBA();
+        marker.color.r = 1.0;
+        marker.color.a = 0.5;
+    }
+    else {
+        marker.color = _marker_colors->at(index % _marker_colors->size());
+    }
 
     return marker;
 }
@@ -285,8 +324,8 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     cv::inRange(frame_hsv, hsv_lower_bound, hsv_upper_bound, contour_image);
     cv::findContours(contour_image, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
     detection_boxes->resize(contours.size());
-    for (size_t i = 0; i < contours.size(); i++) {
-        detection_boxes->at(i) = cv::boundingRect(contours[i]);
+    for (size_t index = 0; index < contours.size(); index++) {
+        detection_boxes->at(index) = cv::boundingRect(contours[index]);
     }
 
     if (_pipeline_pub.getNumSubscribers() > 0) {
@@ -295,6 +334,10 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
         cv::drawContours(result_image, contours, -1, cv::Scalar(0, 255, 0), 1);
         if (!result_image.empty())
         {
+            for (size_t bb_index = 0; bb_index < detection_boxes->size(); bb_index++) {
+                cv::rectangle(result_image, detection_boxes->at(bb_index), cv::Scalar(255, 0, 0), 2);
+            }
+
             std_msgs::Header header;
             header.frame_id = _camera_model.tfFrame();
             sensor_msgs::ImagePtr msg = cv_bridge::CvImage(header, "bgr8", result_image).toImageMsg();

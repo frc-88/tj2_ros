@@ -12,8 +12,8 @@ fi
 tmux send -t $SESSION "source /home/${USER}/packages_ros_ws/devel/setup.bash" ENTER
 tmux send -t $SESSION "source /home/${USER}/noetic_ws/install_isolated/setup.bash" ENTER
 tmux send -t $SESSION "source /home/${USER}/ros_ws/devel/setup.bash" ENTER
-tmux send -t $SESSION ". /usr/local/bin/env.sh roslaunch" ENTER
+tmux send -t $SESSION ". /usr/local/bin/env.sh 0 roslaunch" ENTER
 
-tmux send -t $SESSION "export ROS_HOME=/home/${USER}/.ros"
-tmux send -t $SESSION "export DISPLAY=:0"
-tmux send -t $SESSION "roslaunch --wait tj2_bringup tj2_bringup.launch --screen"
+tmux send -t $SESSION "export ROS_HOME=/home/${USER}/.ros" ENTER
+tmux send -t $SESSION "export DISPLAY=:0" ENTER
+tmux send -t $SESSION "roslaunch --wait tj2_bringup tj2_bringup.launch --screen" ENTER

@@ -50,6 +50,7 @@ private:
     image_transport::ImageTransport _image_transport;
     image_geometry::PinholeCameraModel _camera_model;
     sensor_msgs::CameraInfo _camera_info;
+    std::vector<std_msgs::ColorRGBA>* _marker_colors;
 
     cv::Scalar hsv_lower_bound;
     cv::Scalar hsv_upper_bound;
@@ -85,12 +86,13 @@ private:
     ros::Duration _marker_persistance;
     vector<int> _hsv_lower_bound_param;
     vector<int> _hsv_upper_bound_param;
+    XmlRpc::XmlRpcValue _marker_colors_param;
 
     bool msg_to_frame(const ImageConstPtr msg, cv::Mat& image);
     vision_msgs::Detection2D target_to_detection(int id, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions);
     double get_target_z(cv::Mat depth_cv_image, cv::Rect target);
-    visualization_msgs::Marker make_marker(string name, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
-    void publish_markers(string name, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
+    void publish_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
+    visualization_msgs::Marker make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
 
     void detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes);
 
