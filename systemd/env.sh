@@ -4,6 +4,7 @@ HOST_MACHINE=""
 
 JUMP_THRESHOLD=5
 TIMEOUT=${1:-0}
+LOGPREFIX=${2:-log}
 
 STOP_TIME=$((SECONDS+TIMEOUT))
 PREV_TIME=$((SECONDS))
@@ -37,11 +38,10 @@ echo ${ROS_IP}
 echo ${ROS_MASTER_URI}
 
 if [[ $TERM = "screen" ]] && [[ $(ps -p $PPID -o comm=) = tmux* ]]; then
-    LOGPREFIX={$2:-log}
     echo "Enabling tmux logging for $LOGPREFIX"
     LOGDIR=/media/storage/logs
     mkdir $LOGDIR 2> /dev/null
-    LOGNAME="$LOGPREFEX-$(date '+%Y-%m-%dT%H-%M-%S').log"
+    LOGNAME="$LOGPREFIX-$(date '+%Y-%m-%dT%H-%M-%S').log"
     script -f $LOGDIR/${LOGNAME}
     exit
 fi
