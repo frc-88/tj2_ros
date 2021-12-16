@@ -8,6 +8,9 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~text_marker_size", _text_marker_size, 0.25);
     ros::param::param<string>("~target_frame", _target_frame, "base_link");
     ros::param::param<double>("~marker_persistance_s", _marker_persistance_s, 0.1);
+    ros::param::param<double>("~min_contour_area", _min_contour_area, 0.0);
+    ros::param::param<double>("~max_contour_area", _max_contour_area, 1000.0);
+    ros::param::param<int>("~approx_sync_queue_size", _approx_sync_queue_size, 10);
     _marker_persistance = ros::Duration(_marker_persistance_s);
 
     string key;
@@ -88,10 +91,10 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
     _depth_info_sub.subscribe(nh, "depth/camera_info", 10);
     _target_sub.subscribe(nh, "/limelight/target", 10);
 
-    target_sync.reset(new TargetSync(TargetApproxSyncPolicy(10), _depth_sub, _depth_info_sub, _target_sub));
+    target_sync.reset(new TargetSync(TargetApproxSyncPolicy(_approx_sync_queue_size), _depth_sub, _depth_info_sub, _target_sub));
     target_sync->registerCallback(boost::bind(&LimelightTargetNode::target_callback, this, _1, _2, _3));
 
-    camera_sync.reset(new CameraSync(CameraApproxSyncPolicy(10), _color_sub, _depth_sub, _depth_info_sub));
+    camera_sync.reset(new CameraSync(CameraApproxSyncPolicy(_approx_sync_queue_size), _color_sub, _depth_sub, _depth_info_sub));
     camera_sync->registerCallback(boost::bind(&LimelightTargetNode::camera_callback, this, _1, _2, _3));
 }
 
@@ -325,7 +328,14 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     cv::findContours(contour_image, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
     detection_boxes->resize(contours.size());
     for (size_t index = 0; index < contours.size(); index++) {
-        detection_boxes->at(index) = cv::boundingRect(contours[index]);
+        double area = cv::contourArea(contours.at(index));
+        if (area < _min_contour_area || area > _max_contour_area) {
+            contours.erase(contours.begin() + index);
+            index--;
+        }
+    }
+    for (size_t index = 0; index < contours.size(); index++) {
+        detection_boxes->at(index) = cv::boundingRect(contours.at(index));
     }
 
     if (_pipeline_pub.getNumSubscribers() > 0) {
@@ -334,8 +344,8 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
         cv::drawContours(result_image, contours, -1, cv::Scalar(0, 255, 0), 1);
         if (!result_image.empty())
         {
-            for (size_t bb_index = 0; bb_index < detection_boxes->size(); bb_index++) {
-                cv::rectangle(result_image, detection_boxes->at(bb_index), cv::Scalar(255, 0, 0), 2);
+            for (size_t index = 0; index < detection_boxes->size(); index++) {
+                cv::rectangle(result_image, detection_boxes->at(index), cv::Scalar(255, 0, 0), 2);
             }
 
             std_msgs::Header header;

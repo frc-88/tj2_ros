@@ -51,6 +51,8 @@ private:
     image_geometry::PinholeCameraModel _camera_model;
     sensor_msgs::CameraInfo _camera_info;
     std::vector<std_msgs::ColorRGBA>* _marker_colors;
+    double _min_contour_area, _max_contour_area;
+    int _approx_sync_queue_size;
 
     cv::Scalar hsv_lower_bound;
     cv::Scalar hsv_upper_bound;
