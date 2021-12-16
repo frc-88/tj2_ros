@@ -31,7 +31,7 @@ class TJ2NetworkTables:
         self.limelight_target_pub = rospy.Publisher("/limelight/target", LimelightTarget, queue_size=5)
         self.limelight_led_mode_sub = rospy.Subscriber("/limelight/led_mode", Bool, self.limelight_led_mode_callback, queue_size=5)
         self.limelight_cam_mode_sub = rospy.Subscriber("/limelight/cam_mode", Bool, self.limelight_cam_mode_callback, queue_size=5)
-        self.limelight_info_sub = rospy.Subscriber("/limelight/camera_info", CameraInfo, self.limelight_info_callback, queue_size=5)
+        self.limelight_info_sub = rospy.Subscriber("limelight/camera_info", CameraInfo, self.limelight_info_callback, queue_size=5)
 
         self.driver_station_table_key = "swerveLibrary/ROS/DriverStation"
         self.limelight_table_key = "limelight"

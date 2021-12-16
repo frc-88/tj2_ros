@@ -35,6 +35,28 @@ class DatasetBuilder:
             "validation": self.validation_ratio
         }
 
+    def reset(self):
+        # deletes all image and xml files under annotations and jpeg images respectively
+        
+        annotations_dir = self.output_dir / ANNOTATIONS
+        for filename in os.listdir(annotations_dir):
+            if filename.lower().endswith(".xml"):
+                path = annotations_dir / filename
+                print("Deleting %s" % path)
+                if self.dry_run:
+                    continue
+                os.remove(path)
+
+        images_dir = self.output_dir / JPEGIMAGES
+        for filename in os.listdir(images_dir):
+            if filename.lower().endswith(".jpg") or filename.lower().endswith(".jpeg"):
+                path = images_dir / filename
+                print("Deleting %s" % path)
+                if self.dry_run:
+                    continue
+                os.remove(path)
+            
+
     def makedir(self, directory: Path):
         if self.dry_run:
             return

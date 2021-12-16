@@ -47,6 +47,11 @@ def with_gauss_background(image, frame):
     return apply_objects_to_background(image, background, frame, no_warps)
 
 
+def with_gauss_background(image, frame):
+    background = gauss_background(*background_gauss_params, image.shape)
+    return apply_objects_to_background(image, background, frame, no_warps)
+
+
 def with_gauss(image, frame):
     return gauss_foreground(image, *foreground_gauss_params, image.shape)
 
