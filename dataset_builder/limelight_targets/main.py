@@ -14,23 +14,25 @@ def generate_images():
     collector = ImageCollector(base_dir)
 
     pipelines = {
-        "a_with_gauss_background": (2, with_gauss_background),
-        "b_with_gauss": (2, with_gauss),
+        "a_with_gauss_background": (4, with_gauss_background),
+        "b_with_gauss": (3, with_gauss),
         "c_with_colored_background": (2, with_colored_background),
-        "d_move_objects_subtle": (25, move_objects_subtle),
-        "e_move_objects_subtle": (25, move_objects_subtle_gauss_background),
-        "f_move_objects_subtle_gauss": (25, move_objects_subtle_gauss),
+        "d_move_objects_subtle": (10, move_objects_subtle),
+        "e_move_objects_subtle": (10, move_objects_subtle_gauss_background),
+        "f_move_objects_subtle_gauss": (10, move_objects_subtle_gauss),
         "g_false_objects_subtle": (10, false_objects_subtle),
         "h_false_objects_subtle_gauss_background": (5, false_objects_subtle_gauss_background),
         "i_false_objects_subtle_gauss": (5, false_objects_subtle_gauss),
-        "j_move_objects_medium": (20, move_objects_medium),
-        "k_move_objects_medium_gauss_background": (10, move_objects_medium_gauss_background),
-        "l_move_objects_medium_gauss": (10, move_objects_medium_gauss),
-        "m_move_objects_erratic": (10, move_objects_erratic),
+        "j_move_objects_medium": (5, move_objects_medium),
+        "k_move_objects_medium_gauss_background": (5, move_objects_medium_gauss_background),
+        "l_move_objects_medium_gauss": (5, move_objects_medium_gauss),
+        "m_move_objects_erratic": (5, move_objects_erratic),
         "n_move_objects_erratic_gauss_background": (5, move_objects_erratic_gauss_background),
         "o_move_objects_erratic_gauss": (5, move_objects_erratic_gauss),
-        "p_window_false_objects": (40, window_false_objects),
+        "p_window_false_objects": (20, window_false_objects),
     }
+    for frame, image in collector.iter(include_image=True):
+        record_annotation(image, frame, "output_images", "00_original")
 
     for key, (iterations, pipeline) in pipelines.items():
         for _ in range(iterations):
@@ -48,6 +50,7 @@ def format_dataset():
 
     collector = ImageCollector(base_dir)
     dataset = DatasetBuilder(Path("dataset"), collector, dry_run=False)
+    dataset.reset()
     dataset.build()
 
 def try_pipeline():
@@ -62,7 +65,7 @@ def try_pipeline():
 
 def main():
     # try_pipeline()
-    # generate_images()
+    generate_images()
     format_dataset()
 
 

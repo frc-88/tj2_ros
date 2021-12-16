@@ -43,46 +43,51 @@ def main():
     loop_times = []
     window_size = 20
     resize_width = 1920
+    show_checkerboard = False
 
-    while True:
-        t0 = time.time()
-        ret, frame = cap.read()
-        t1 = time.time()
+    try:
+        while True:
+            t0 = time.time()
+            ret, frame = cap.read()
+            t1 = time.time()
 
-        result = draw_checkerboard(frame)
-        if result is not None:
-            draw_frame = result
-        else:
-            draw_frame = frame
+            if show_checkerboard:
+                result = draw_checkerboard(frame)
+                if result is not None:
+                    draw_frame = result
+                else:
+                    draw_frame = frame
+            else:
+                draw_frame = frame
 
-        height, width = draw_frame.shape[0:2]
-        resize_height = int(resize_width / width * height)
-        draw_frame = cv2.resize(draw_frame, (resize_width, resize_height))
-        
-        cv2.imshow("Capturing",draw_frame)
+            height, width = draw_frame.shape[0:2]
+            resize_height = int(resize_width / width * height)
+            draw_frame = cv2.resize(draw_frame, (resize_width, resize_height))
+            
+            cv2.imshow("Capturing",draw_frame)
 
-        key = chr(cv2.waitKey(1) & 0xff)
+            key = chr(cv2.waitKey(1) & 0xff)
 
-        if key == "q":
-            break
-        elif key == "s":
-            if frame is not None:
-                record_image(frame, "images")
-        t2 = time.time()
+            if key == "q":
+                break
+            elif key == "s":
+                if frame is not None:
+                    record_image(frame, "../../dataset_builder/limelight_targets/base_images")
+            t2 = time.time()
 
-        read_times.append(t1 - t0)
-        loop_times.append(t2 - t0)
-        while len(read_times) > window_size:
-            read_times.pop(0)
-        while len(loop_times) > window_size:
-            loop_times.pop(0)
+            read_times.append(t1 - t0)
+            loop_times.append(t2 - t0)
+            while len(read_times) > window_size:
+                read_times.pop(0)
+            while len(loop_times) > window_size:
+                loop_times.pop(0)
 
-        if time.time() - prev_log_time > 1.0:
-            prev_log_time = time.time()
-            print("Read: %0.2f, Loop: %0.2f" % (len(read_times) / sum(read_times), len(loop_times) / sum(loop_times)))
-
-    cap.release()
-    cv2.destroyAllWindows()
+            if time.time() - prev_log_time > 1.0:
+                prev_log_time = time.time()
+                print("Read: %0.2f, Loop: %0.2f" % (len(read_times) / sum(read_times), len(loop_times) / sum(loop_times)))
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()

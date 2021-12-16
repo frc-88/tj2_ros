@@ -10,6 +10,7 @@
             <!-- <param name="remote_angular_units_conversion" value="1.0"/> -->
             <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
             <param name="cmd_vel_timeout" value="2.0"/>
+            <remap from="limelight/camera_info" to="/limelight/color/camera_info" />
         </node>
 
         <node name="constants_setter" pkg="tj2_networktables" type="constants_setter.py" output="screen" required="false">

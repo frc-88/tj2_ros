@@ -66,19 +66,19 @@ int TJ2Limelight::run()
         if (_video_capture.isOpened())
         {
             ROS_INFO_ONCE("Connection established");
-            loop.sleep();
-            ros::spinOnce();
             if (!_video_capture.read(frame)) {
+                loop.sleep();
                 continue;
             }
             _last_publish_time = ros::Time::now();
             _out_msg.header.stamp = _last_publish_time;
             _out_msg.image = frame;
-
             _camera_info.header.stamp = _last_publish_time;
 
             _out_msg.toImageMsg(_ros_img);
             _camera_pub.publish(_ros_img, _camera_info, _last_publish_time);
+
+            ros::spinOnce();
         }
         else
         {

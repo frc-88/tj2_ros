@@ -10,15 +10,87 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~marker_persistance_s", _marker_persistance_s, 0.1);
     _marker_persistance = ros::Duration(_marker_persistance_s);
 
-    _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("target_marker", 10);
-    _target_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("target_pose", 10);
+    string key;
+    if (!ros::param::search("hsv_lower_bound", key)) {
+        THROW_EXCEPTION("Failed to find hsv_lower_bound parameter");
+    }
+    ROS_DEBUG("Found hsv_lower_bound: %s", key.c_str());
+    nh.getParam(key, _hsv_lower_bound_param);
 
+    if (_hsv_lower_bound_param.size() != 3) {
+        ROS_ERROR("hsv_upper_bound is size %lu", _hsv_lower_bound_param.size());
+        THROW_EXCEPTION("hsv_lower_bound parameter is the incorrect size");
+    }
+
+    if (!ros::param::search("hsv_upper_bound", key)) {
+        THROW_EXCEPTION("Failed to find hsv_upper_bound parameter");
+    }
+    ROS_DEBUG("Found hsv_upper_bound: %s", key.c_str());
+    nh.getParam(key, _hsv_upper_bound_param);
+
+    if (_hsv_upper_bound_param.size() != 3) {
+        ROS_ERROR("hsv_upper_bound is size %lu", _hsv_upper_bound_param.size());
+        THROW_EXCEPTION("hsv_upper_bound parameter is the incorrect size");
+    }
+
+    hsv_lower_bound = cv::Scalar(
+        _hsv_lower_bound_param.at(0),
+        _hsv_lower_bound_param.at(1),
+        _hsv_lower_bound_param.at(2)
+    );
+    hsv_upper_bound = cv::Scalar(
+        _hsv_upper_bound_param.at(0),
+        _hsv_upper_bound_param.at(1),
+        _hsv_upper_bound_param.at(2)
+    );
+    _pipeline_pub = _image_transport.advertise("pipeline/image_raw", 2);
+
+    _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("pipeline/markers", 10);
+    _target_detection_pub = nh.advertise<vision_msgs::Detection2D>("detections/target", 10);
+    _detection_array_pub = nh.advertise<vision_msgs::Detection2DArray>("detections/array", 10);
+
+    _color_sub.subscribe(nh, "color/image_raw", 10);
     _depth_sub.subscribe(nh, "depth/image_raw", 10);
     _depth_info_sub.subscribe(nh, "depth/camera_info", 10);
     _target_sub.subscribe(nh, "/limelight/target", 10);
 
-    sync.reset(new Sync(ApproxSyncPolicy(10), _depth_sub, _depth_info_sub, _target_sub));
-    sync->registerCallback(boost::bind(&LimelightTargetNode::target_callback, this, _1, _2, _3));
+    target_sync.reset(new TargetSync(TargetApproxSyncPolicy(10), _depth_sub, _depth_info_sub, _target_sub));
+    target_sync->registerCallback(boost::bind(&LimelightTargetNode::target_callback, this, _1, _2, _3));
+
+    camera_sync.reset(new CameraSync(CameraApproxSyncPolicy(10), _color_sub, _depth_sub, _depth_info_sub));
+    camera_sync->registerCallback(boost::bind(&LimelightTargetNode::camera_callback, this, _1, _2, _3));
+}
+
+void LimelightTargetNode::camera_callback(const ImageConstPtr& color_image, const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info)
+{
+    _camera_model.fromCameraInfo(depth_info);
+    
+    cv::Mat color_cv_image;
+    if (!msg_to_frame(color_image, color_cv_image)) {
+        return;
+    }
+    cv::Mat depth_cv_image;
+    if (!msg_to_frame(depth_image, depth_cv_image)) {
+        return;
+    }
+    vector<cv::Rect>* detection_boxes = new vector<cv::Rect>();
+    detection_pipeline(color_cv_image, detection_boxes);
+    
+    vision_msgs::Detection2DArray det_array_msg;
+    det_array_msg.header = color_image->header;
+    for (size_t index = 0; index < detection_boxes->size(); index++) {
+        cv::Rect bndbox = detection_boxes->at(index);
+        cv::Point3d dimensions;
+        vision_msgs::Detection2D det_msg = target_to_detection(index, depth_cv_image, bndbox, dimensions);
+
+        det_msg.source_img = *color_image;
+        det_msg.header.stamp = depth_image->header.stamp;
+        det_msg.header.frame_id = _camera_model.tfFrame();
+
+        det_array_msg.detections.push_back(det_msg);
+        publish_markers("limelight_detection", det_msg, dimensions);
+    }
+    _detection_array_pub.publish(det_array_msg);
 }
 
 void LimelightTargetNode::target_callback(const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info, const tj2_limelight::LimelightTargetConstPtr& target)
@@ -27,34 +99,44 @@ void LimelightTargetNode::target_callback(const ImageConstPtr& depth_image, cons
         return;
     }
 
-    // Extract info from messages
-
     _camera_model.fromCameraInfo(depth_info);
 
-    cv_bridge::CvImagePtr cv_ptr;
-    try {
-        cv_ptr = cv_bridge::toCvCopy(depth_image);  // encoding: passthrough
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
-    }
     cv::Mat depth_cv_image;
-    if (depth_image->width == 0 || depth_image->height == 0) {
-        ROS_ERROR("Depth image has a zero width dimension!");
+    if (!msg_to_frame(depth_image, depth_cv_image)) {
         return;
     }
-    depth_cv_image = cv_ptr->image;
+    
+    cv::Rect bndbox(
+        target->tx - target->thor / 2,
+        target->ty - target->tvert / 2,
+        target->thor, target->tvert
+    );
+    cv::Point3d dimensions;
+    vision_msgs::Detection2D det_msg = target_to_detection(0, depth_cv_image, bndbox, dimensions);
 
+    det_msg.header.stamp = depth_image->header.stamp;
+    det_msg.header.frame_id = _camera_model.tfFrame();
+
+    _target_detection_pub.publish(det_msg);
+    publish_markers("limelight_target", det_msg, dimensions);
+}
+
+vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int id, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions)
+{
+    vision_msgs::Detection2D det_msg;
+    int width = bndbox.width;
+    int height = bndbox.height;
+    int cx = bndbox.x + width / 2;
+    int cy = bndbox.y + height / 2;
+    
     // Project limelight target onto depth image
     cv::Point2d target_point;
-    target_point.x = target->tx;
-    target_point.y = target->ty;
+    target_point.x = cx;
+    target_point.y = cy;
     cv::Point3d ray = _camera_model.projectPixelTo3dRay(target_point);
 
-    double z_dist = get_target_z(depth_cv_image, target);
-
+    double z_dist = get_target_z(depth_cv_image, bndbox);
+    
     cv::Point3d center;
     center.x = ray.x * z_dist;
     center.y = ray.y * z_dist;
@@ -63,62 +145,70 @@ void LimelightTargetNode::target_callback(const ImageConstPtr& depth_image, cons
     ROS_DEBUG("center, X: %0.3f, Y: %0.3f, Z: %0.3f", center.x, center.y, center.z);
 
     cv::Point2d edge_point;
-    edge_point.x = target->tx + target->thor;
-    edge_point.y = target->ty + target->tvert;
+    edge_point.x = cx + width / 2;
+    edge_point.y = cy + height / 2;
     ray = _camera_model.projectPixelTo3dRay(edge_point);
-
+    
     cv::Point3d edge;
     edge.x = ray.x * z_dist;
     edge.y = ray.y * z_dist;
     edge.z = z_dist;
     ROS_DEBUG("edge,   X: %0.3f, Y: %0.3f, Z: %0.3f", edge.x, edge.y, edge.z);
 
-    geometry_msgs::PoseStamped object_pose;
+    dimensions.x = 2.0 * (edge.x - center.x);
+    dimensions.y = 2.0 * (edge.y - center.y);
+    dimensions.z = 0.005;  // We have no information on how deep the target goes.
 
-    object_pose.header.frame_id = _camera_model.tfFrame();
-    object_pose.header.stamp = depth_image->header.stamp;
-    object_pose.pose.position.x = center.x;
-    object_pose.pose.position.y = center.y;
-    object_pose.pose.position.z = center.z;
-    object_pose.pose.orientation.x = 0.0;
-    object_pose.pose.orientation.y = 0.0;
-    object_pose.pose.orientation.z = 0.0;
-    object_pose.pose.orientation.w = 1.0;
+    geometry_msgs::Pose object_pose;
+    object_pose.position.x = center.x;
+    object_pose.position.y = center.y;
+    object_pose.position.z = center.z;
+    object_pose.orientation.x = 0.0;
+    object_pose.orientation.y = 0.0;
+    object_pose.orientation.z = 0.0;
+    object_pose.orientation.w = 1.0;
 
-    // Publish to topics
-    publish_target_pose(object_pose, depth_info, center);
-    publish_markers(object_pose, center, edge);
+    det_msg.bbox.center.x = bndbox.x;
+    det_msg.bbox.center.y = bndbox.y;
+    det_msg.bbox.size_x = bndbox.width;
+    det_msg.bbox.size_y = bndbox.height;
+
+    vision_msgs::ObjectHypothesisWithPose hypothesis;
+
+    hypothesis.id = id;
+    hypothesis.score = 0.0;
+    hypothesis.pose.pose = object_pose;
+
+    det_msg.results.push_back(hypothesis);
+
+    return det_msg;
 }
 
-void LimelightTargetNode::publish_target_pose(geometry_msgs::PoseStamped object_pose, const CameraInfoConstPtr depth_info, cv::Point3d center)
+
+bool LimelightTargetNode::msg_to_frame(const ImageConstPtr msg, cv::Mat& image)
 {
-    
-    geometry_msgs::TransformStamped transform_camera_to_target;
-
+    cv_bridge::CvImagePtr cv_ptr;
     try {
-        transform_camera_to_target = _tf_buffer.lookupTransform(
-            _target_frame, depth_info->header.frame_id,
-            depth_info->header.stamp, ros::Duration(1.0)
-        );
-        tf2::doTransform(object_pose, object_pose, transform_camera_to_target);
-        // obj_desc now contains the object position in the target frame
-
-        object_pose.header.frame_id = _target_frame;
-
-        _target_pose_pub.publish(object_pose);
+        cv_ptr = cv_bridge::toCvCopy(msg);  // encoding: passthrough
     }
-    catch (tf2::TransformException &ex) {
-        ROS_WARN("%s", ex.what());
-        ros::Duration(1.0).sleep();
-        return;
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return false;
     }
+    if (msg->width == 0 || msg->height == 0) {
+        ROS_ERROR("Image has a zero width dimension!");
+        return false;
+    }
+    image = cv_ptr->image;
+    return true;
 }
 
-void LimelightTargetNode::publish_markers(geometry_msgs::PoseStamped object_pose, cv::Point3d center, cv::Point3d edge)
+void LimelightTargetNode::publish_markers(string name, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
 {
     visualization_msgs::MarkerArray markers;
-    visualization_msgs::Marker rect_marker = make_marker(object_pose, center, edge);
-    visualization_msgs::Marker text_marker = make_marker(object_pose, center, edge);
+    visualization_msgs::Marker rect_marker = make_marker(name, det_msg, dimensions);
+    visualization_msgs::Marker text_marker = make_marker(name, det_msg, dimensions);
 
     rect_marker.type = visualization_msgs::Marker::CUBE;
     rect_marker.ns = "cube_" + rect_marker.ns;
@@ -126,7 +216,7 @@ void LimelightTargetNode::publish_markers(geometry_msgs::PoseStamped object_pose
     text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     text_marker.text = text_marker.ns;
     text_marker.ns = "text_" + text_marker.ns;
-    text_marker.pose.position.z += edge.y - center.y;
+    text_marker.pose.position.y += dimensions.y;  // Z is perpendicular to camera plane. Y is up in world coordinates here
     text_marker.scale.x = 0.0;
     text_marker.scale.y = 0.0;
     text_marker.scale.z = _text_marker_size;
@@ -141,20 +231,20 @@ void LimelightTargetNode::publish_markers(geometry_msgs::PoseStamped object_pose
     _marker_pub.publish(markers);
 }
 
-visualization_msgs::Marker LimelightTargetNode::make_marker(geometry_msgs::PoseStamped object_pose, cv::Point3d center, cv::Point3d edge)
+visualization_msgs::Marker LimelightTargetNode::make_marker(string name, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
 {
     visualization_msgs::Marker marker;
     marker.action = visualization_msgs::Marker::ADD;
-    marker.pose = object_pose.pose;
-    marker.header = object_pose.header;
+    marker.pose = det_msg.results[0].pose.pose;
+    marker.header = det_msg.header;
     marker.lifetime = _marker_persistance;
-    marker.ns = "limelight_target";
-    marker.id = 0;
+    marker.ns = name;
+    marker.id = det_msg.results[0].id;
 
     geometry_msgs::Vector3 scale_vector;
-    scale_vector.x = edge.x - center.x;
-    scale_vector.y = edge.y - center.y;
-    scale_vector.z = 0.005;
+    scale_vector.x = dimensions.x;
+    scale_vector.y = dimensions.y;
+    scale_vector.z = dimensions.z;
     marker.scale = scale_vector;
     marker.color = std_msgs::ColorRGBA();
     marker.color.r = 1.0;
@@ -163,13 +253,11 @@ visualization_msgs::Marker LimelightTargetNode::make_marker(geometry_msgs::PoseS
     return marker;
 }
 
-double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, tj2_limelight::LimelightTargetConstPtr target)
+double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, cv::Rect target)
 {
     ROS_DEBUG("Depth image size: w=%d, h=%d", depth_cv_image.rows, depth_cv_image.cols);
     cv::Mat rectangle_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
-    cv::Point pt1(target->tx - target->thor / 2, target->ty - target->tvert / 2);
-    cv::Point pt2(target->tx + target->thor / 2, target->ty + target->tvert / 2);
-    cv::rectangle(rectangle_mask, pt1, pt2, cv::Scalar(255, 255, 255), cv::FILLED);
+    cv::rectangle(rectangle_mask, target, cv::Scalar(255, 255, 255), cv::FILLED);
     ROS_DEBUG("Created rectangle mask");
 
     cv::Mat nonzero_mask = (depth_cv_image > 0.0);
@@ -188,6 +276,32 @@ double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, tj2_limelight::
     return z_dist;
 }
 
+void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes)
+{
+    cv::Mat frame_hsv, contour_image;
+    vector<vector<cv::Point>> contours;
+    vector<cv::Vec4i> hierarchy;
+    cv::cvtColor(frame, frame_hsv, cv::COLOR_BGR2HSV);
+    cv::inRange(frame_hsv, hsv_lower_bound, hsv_upper_bound, contour_image);
+    cv::findContours(contour_image, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+    detection_boxes->resize(contours.size());
+    for (size_t i = 0; i < contours.size(); i++) {
+        detection_boxes->at(i) = cv::boundingRect(contours[i]);
+    }
+
+    if (_pipeline_pub.getNumSubscribers() > 0) {
+        cv::Mat result_image;
+        cv::cvtColor(contour_image, result_image, cv::COLOR_GRAY2BGR);
+        cv::drawContours(result_image, contours, -1, cv::Scalar(0, 255, 0), 1);
+        if (!result_image.empty())
+        {
+            std_msgs::Header header;
+            header.frame_id = _camera_model.tfFrame();
+            sensor_msgs::ImagePtr msg = cv_bridge::CvImage(header, "bgr8", result_image).toImageMsg();
+            _pipeline_pub.publish(msg);
+        }
+    }
+}
 
 int LimelightTargetNode::run()
 {
