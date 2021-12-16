@@ -52,6 +52,8 @@ class TJ2NetworkTables:
         rospy.loginfo("%s init complete" % self.node_name)
 
     def run(self):
+        self.set_limelight_led_mode(True)  # turn limelight off on start up
+        
         while not rospy.is_shutdown():
             if self.remote_start_time == 0.0:
                 self.init_remote_time()
@@ -90,15 +92,32 @@ class TJ2NetworkTables:
         else:
             self.match_time_pub.publish(-1.0)
 
+
     def limelight_led_mode_callback(self, msg):
-        mode = 1.0 if msg.data else 0.0
+        self.set_limelight_led_mode(msg.data)
+    
+    def get_limelight_led_mode(self):
+        mode = self.limelight_led_mode_entry.getDouble(1.0)
+        return mode == 1.0
+
+    def set_limelight_led_mode(self, flag):
+        mode = 1.0 if flag else 0.0
         rospy.loginfo("Setting limelight led mode to %s" % mode)
         self.limelight_led_mode_entry.setDouble(mode)
 
+
     def limelight_cam_mode_callback(self, msg):
-        mode = 1.0 if msg.data else 0.0
+        self.set_limelight_cam_mode(msg.data)
+
+    def get_limelight_cam_mode(self):
+        mode = self.limelight_cam_mode_entry.getDouble(1.0)
+        return mode == 1.0
+
+    def set_limelight_cam_mode(self, flag):
+        mode = 1.0 if flag else 0.0
         rospy.loginfo("Setting limelight cam mode to %s" % mode)
         self.limelight_cam_mode_entry.setDouble(mode)
+
 
     def get_remote_time(self):
         """

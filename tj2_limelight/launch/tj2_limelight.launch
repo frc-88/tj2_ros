@@ -14,7 +14,6 @@
         </node>
 
         <node pkg="tj2_limelight" type="limelight_target_node" name="limelight_target" output="screen">
-            <param name="text_marker_size" value="0.1" />
             <!-- <remap from="color/image_raw" to="color/image_raw" /> -->
             <remap from="depth/image_raw" to="aligned_depth_to_color/image_raw" />
             <remap from="depth/camera_info" to="aligned_depth_to_color/camera_info" />

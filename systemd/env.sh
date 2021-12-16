@@ -2,11 +2,11 @@
 
 HOST_MACHINE=""
 
-JUMP_THRESHOLD=60
-TIMEOUT=${1:-900}
+JUMP_THRESHOLD=5
+TIMEOUT=${1:-0}
 
-stop_time=$((SECONDS+TIMEOUT))
-prev_time=$((SECONDS))
+STOP_TIME=$((SECONDS+TIMEOUT))
+PREV_TIME=$((SECONDS))
 INTERFACE_NAME=eth0
 
 while true; do
@@ -15,16 +15,18 @@ while true; do
         break
     fi
     sleep 0.5
-    if (( $(echo "$SECONDS - $prev_time > $JUMP_THRESHOLD" |bc -l) )); then  # check if time jumped like when the jetson connects to the internet
-        prev_time=$((SECONDS))
-        stop_time=$((SECONDS+TIMEOUT))
-        echo "Experienced a time jump. Resetting timeout"
+    if [[ $TIMEOUT != 0 ]]; then
+        if (( $(echo "$SECONDS - $PREV_TIME > $JUMP_THRESHOLD" |bc -l) )); then  # check if time jumped like when the jetson connects to the internet
+            PREV_TIME=$((SECONDS))
+            STOP_TIME=$((SECONDS+TIMEOUT))
+            echo "Experienced a time jump. Resetting timeout"
+        fi
+        if [ $SECONDS -gt $STOP_TIME ]; then
+            echo "Failed to find host IP. Timed out after $STOP_TIME seconds. Current time: $SECONDS"
+            break
+        fi
+        PREV_TIME=$((SECONDS))
     fi
-    if [ $SECONDS -gt $stop_time ]; then
-        echo "Failed to find host IP. Timed out after $stop_time seconds. Current time: $SECONDS"
-        break
-    fi
-    prev_time=$((SECONDS))
 done
 
 
@@ -34,11 +36,10 @@ export ROS_MASTER_URI=http://${HOST_MACHINE}:11311
 echo ${ROS_IP}
 echo ${ROS_MASTER_URI}
 
-LOGPREFIX={$1:-log}
 if [[ $TERM = "screen" ]] && [[ $(ps -p $PPID -o comm=) = tmux* ]]; then
-    LOGPREFIX={$1:-log}
+    LOGPREFIX={$2:-log}
     echo "Enabling tmux logging for $LOGPREFIX"
-    LOGDIR=$HOME/ros-logs
+    LOGDIR=/media/storage/logs
     mkdir $LOGDIR 2> /dev/null
     LOGNAME="$LOGPREFEX-$(date '+%Y-%m-%dT%H-%M-%S').log"
     script -f $LOGDIR/${LOGNAME}
