@@ -6,6 +6,7 @@ import rospy
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool
+from std_msgs.msg import Int32
 
 from tj2_tools.joystick import Joystick
 from tj2_driver_station.srv import SetRobotMode
@@ -13,6 +14,8 @@ from tj2_driver_station.msg import RobotStatus
 
 
 class TJ2DebugJoystick:
+    AUTO_PLAN_1 = 1
+
     def __init__(self):
         rospy.init_node(
             "tj2_debug_joystick",
@@ -73,6 +76,7 @@ class TJ2DebugJoystick:
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
         self.set_field_relative_pub = rospy.Publisher("set_field_relative", Bool, queue_size=100)
         self.limelight_led_pub = rospy.Publisher("/limelight/led_mode", Bool, queue_size=5)
+        self.general_cmd_pub = rospy.Publisher("general_cmd", Int32, queue_size=5)
 
         # subscription topics
         self.joy_sub = rospy.Subscriber(self.joystick_topic, Joy, self.joystick_msg_callback, queue_size=5)
@@ -95,7 +99,7 @@ class TJ2DebugJoystick:
         
         if all(self.joystick.check_list(self.joystick.is_button_down, ("triggers", "L1"), ("menu", "Start"))):
             self.set_mode(RobotStatus.TELEOP)
-        elif all(self.joystick.check_list(self.joystick.is_button_down, ("sticks", "L"), ("menu", "Start"))):
+        elif all(self.joystick.check_list(self.joystick.is_button_down, ("menu", "Select"), ("menu", "Start"))):
             self.set_mode(RobotStatus.AUTONOMOUS)
         elif any(self.joystick.check_list(self.joystick.did_button_down, ("triggers", "L1"), ("triggers", "R1"))):
             self.set_mode(RobotStatus.DISABLED)
@@ -105,6 +109,11 @@ class TJ2DebugJoystick:
             self.limelight_led_mode = not self.limelight_led_mode
             rospy.loginfo("Setting limelight led mode to %s" % self.limelight_led_mode)
             self.limelight_led_pub.publish(self.limelight_led_mode)
+        elif self.joystick.did_button_down(("main", "Y")):
+            msg = Int32()
+            msg.data = self.AUTO_PLAN_1
+            rospy.loginfo("Setting auto mode to %s" % msg.data)
+            self.general_cmd_pub.publish(msg)
 
         if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis)):
             self.disable_timer = rospy.Time.now()
