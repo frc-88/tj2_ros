@@ -156,6 +156,8 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2Tunnel::twistCallback, this);
     _is_field_relative_sub = nh.subscribe<std_msgs::Bool>("set_field_relative", 10, &TJ2Tunnel::setFieldRelativeCallback, this);
+    _general_cmd_sub = nh.subscribe<std_msgs::Int32>("general_cmd", 5, &TJ2Tunnel::generalPurposeCallback, this);
+    
     _prev_twist_timestamp = ros::Time(0);
     _twist_cmd_vx = 0.0;
     _twist_cmd_vy = 0.0;
@@ -163,6 +165,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     _is_field_relative = false;
 
     _currentGoalStatus = INVALID;
+
 
     _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2Tunnel::odom_reset_callback, this);
 
@@ -350,6 +353,7 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         string waypoint_name = result->get_string(0);
         bool is_continuous = result->get_int(1);
         bool ignore_orientation = result->get_int(2);
+        double intermediate_tolerance = result->get_double(3);
         if (_waypoints.waypoints.size() == 0 && is_continuous) {
             is_continuous = false;
             ROS_WARN("First goal must be discontinuous. Setting waypoint to discontinuous");
@@ -358,7 +362,7 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         waypoint.name = waypoint_name;
         waypoint.is_continuous = is_continuous;
         waypoint.ignore_orientation = ignore_orientation;
-        waypoint.intermediate_tolerance = -1.0;  // global intermediate_tolerance will be used as defined by the action message
+        waypoint.intermediate_tolerance = intermediate_tolerance;
         _waypoints.waypoints.insert(_waypoints.waypoints.end(), waypoint);
         ROS_INFO("Received a waypoint: %s. is_continuous: %d, ignore_orientation: %d", waypoint_name.c_str(), is_continuous, ignore_orientation);
     }
@@ -372,7 +376,11 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         else {
             sendWaypoints();
         }
-        _waypoints.waypoints.clear();
+        resetWaypoints();
+    }
+    else if (category.compare("reset") == 0) {
+        ROS_INFO("Received reset plan command");
+        resetWaypoints();
     }
     else if (category.compare("cancel") == 0) {
         ROS_INFO("Received cancel plan command");
@@ -494,6 +502,7 @@ void TJ2Tunnel::publishGoalStatus()
     }
 
     if (currentPollStatus != _prevPollStatus) {
+        ROS_INFO("Current goal status changed to: %d", _currentGoalStatus);
         _prevPollStatus = currentPollStatus;
         _currentGoalStatus = currentPollStatus;
     }
@@ -509,15 +518,19 @@ void TJ2Tunnel::sendWaypoints()
 {
     ROS_INFO("Sending waypoints");
     tj2_waypoints::FollowPathGoal goal;
-    goal.intermediate_tolerance = 0.1;  // TODO: pull this from parameters or tunnel
     goal.waypoints = _waypoints;
     _waypoints_action_client->sendGoal(goal);
+}
+
+void TJ2Tunnel::resetWaypoints() {
+    _waypoints.waypoints.clear();
 }
 
 void TJ2Tunnel::cancelWaypointGoal()
 {
     ROS_INFO("Canceling waypoint goal");
     _waypoints_action_client->cancelAllGoals();
+    resetWaypoints();
 }
 
 void TJ2Tunnel::publishMatch(bool is_autonomous, double match_timer)
@@ -571,6 +584,12 @@ void TJ2Tunnel::sendPoseEstimate(double x, double y, double theta)
     pose_est.pose.covariance[35] = theta_std_rad * theta_std_rad;
 
     _pose_estimate_pub.publish(pose_est);
+}
+
+void TJ2Tunnel::generalPurposeCallback(const std_msgs::Int32ConstPtr& msg)
+{
+    ROS_INFO("Writing general command: %d", msg->data);
+    writePacket("general", "d", msg->data);
 }
 
 

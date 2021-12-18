@@ -7,7 +7,7 @@ joystick:
 move_base:
   package: "tj2_move_base"
   path: "tj2_move_base.launch"
-  on_start: false
+  on_start: true
   topics:
     /move_base: None
 rplidar:

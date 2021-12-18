@@ -3,7 +3,7 @@ import rospy
 import actionlib
 from geometry_msgs.msg import PoseStamped
 
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseResult
+from move_base_msgs.msg import MoveBaseGoal
 
 from smach import State, StateMachine
 
@@ -32,15 +32,16 @@ class GoToWaypointState(State):
         self.within_range_time = None
         
         self.is_move_base_done = False
-        self.distance_to_goal = 0.0
+        self.distance_to_goal = None
         
     def execute(self, userdata):
+        rospy.loginfo("Executing waypoint")
         self.reset()
 
         self.action_result = "success"
-        self.action_server = userdata.state_machine.action_server
+        self.action_server = userdata.state_machine.waypoints_node.follow_path_server
         self.action_goal = userdata.state_machine.action_goal
-        self.move_base = userdata.state_machine.move_base
+        self.move_base = userdata.state_machine.waypoints_node.move_base
 
         self.num_waypoints = len(userdata.waypoints_plan)
         self.current_waypoint_index = userdata.waypoint_index_in
@@ -48,7 +49,6 @@ class GoToWaypointState(State):
         rospy.loginfo("Number of waypoints: %s, Current index: %s" % (self.num_waypoints, self.current_waypoint_index))
 
         if userdata.waypoint_index_in >= self.num_waypoints:
-            self.action_server.set_succeeded()
             return "finished"
         
         waypoint, pose_array = userdata.waypoints_plan[userdata.waypoint_index_in]
@@ -92,14 +92,12 @@ class GoToWaypointState(State):
         while not self.is_move_base_done:
             if rospy.is_shutdown():
                 rospy.loginfo("Received abort. Cancelling waypoint goal")
-                self.action_server.set_aborted()
                 self.action_result = "failure"
                 self.move_base.cancel_goal()
                 break
 
             if self.action_server.is_preempt_requested():
                 rospy.loginfo("Received preempt. Cancelling waypoint goal")
-                self.action_server.set_preempted()
                 self.action_result = "preempted"
                 self.move_base.cancel_goal()
                 break
@@ -112,6 +110,8 @@ class GoToWaypointState(State):
             # if ignore_orientation is False
             #   if intermediate_tolerance is greater than zero
             #       cancel goal
+            if self.distance_to_goal is None:
+                continue
 
             if self.distance_to_goal <= self.intermediate_tolerance:
                 if self.within_range_time is None:
@@ -135,12 +135,12 @@ class GoToWaypointState(State):
         self.distance_to_goal = self.get_xy_dist(feedback.base_position, self.goal_pose_stamped)
 
     def close_enough_to_goal(self):
-        rospy.loginfo("Robot is close enough to goal. Moving on")
+        rospy.loginfo("Robot is close enough to goal: %s. Moving on" % self.distance_to_goal)
         self.move_base.cancel_goal()
         self.action_result = "success"
     
     def move_base_done(self, goal_status, result):
-        rospy.loginfo("move_base finished")
+        rospy.loginfo("move_base finished: %s. %s" % (goal_status, result))
         self.is_move_base_done = True
     
     def get_xy_dist(self, pose1, pose2):
@@ -160,11 +160,8 @@ class WaypointStateMachine(object):
     def __init__(self):
         self.sm = StateMachine(outcomes=["success", "failure", "preempted"])
         self.outcome = None
-        self.action_server = None
+        self.waypoints_node = None
         self.action_goal = None
-
-        self.move_base_namespace = rospy.get_param("~move_base_namespace", "/move_base")
-        self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
 
         with self.sm:
             StateMachine.add(
@@ -183,18 +180,22 @@ class WaypointStateMachine(object):
                 }
             )
 
-    def execute(self, waypoints_plan, action_server):
-        rospy.loginfo("Connecting to move_base...")
-        self.move_base.wait_for_server()
-        rospy.loginfo("move_base connected")
-
+    def execute(self, waypoints_plan, waypoints_node):
         rospy.loginfo("To cancel the waypoint follower, run: 'rostopic pub -1 /tj2/follow_path/cancel actionlib_msgs/GoalID -- {}'")
         rospy.loginfo("To cancel the current goal, run: 'rostopic pub -1 /move_base/cancel actionlib_msgs/GoalID -- {}'")
 
-        self.action_server = action_server
+        self.waypoints_node = waypoints_node
 
         self.sm.userdata.sm_waypoint_index = 0
         self.sm.userdata.sm_waypoints_plan = waypoints_plan
         self.sm.userdata.sm_state_machine = self
         self.outcome = self.sm.execute()
+        if self.outcome == "success":
+            self.waypoints_node.follow_path_server.set_succeeded()
+        if self.outcome == "failure":
+            self.waypoints_node.follow_path_server.set_aborted()
+        if self.outcome == "preempted":
+            self.waypoints_node.follow_path_server.set_preempted()
+
+        self.waypoints_node.move_base.cancel_goal()
         return self.outcome

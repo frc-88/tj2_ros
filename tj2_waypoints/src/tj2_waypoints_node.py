@@ -21,6 +21,8 @@ from std_srvs.srv import Trigger, TriggerResponse
 from visualization_msgs.msg import MarkerArray
 from visualization_msgs.msg import Marker
 
+from move_base_msgs.msg import MoveBaseAction
+
 from tj2_waypoints.srv import GetAllWaypoints, GetAllWaypointsResponse
 from tj2_waypoints.srv import GetWaypoint, GetWaypointResponse
 from tj2_waypoints.srv import DeleteWaypoint, DeleteWaypointResponse
@@ -50,6 +52,7 @@ class Tj2Waypoints:
         self.marker_size = rospy.get_param("~marker_size", 0.25)
         self.marker_color = rospy.get_param("~marker_color", (0.0, 0.0, 1.0, 1.0))
         self.enable_waypoint_navigation = rospy.get_param("~enable_waypoint_navigation", False)
+        self.move_base_namespace = rospy.get_param("~move_base_namespace", "/move_base")
         assert (type(self.marker_color) == tuple or type(self.marker_color) == list), "type(%s) != tuple or list" % type(self.marker_color)
         assert len(self.marker_color) == 4, "len(%s) != 4" % len(self.marker_color)
         
@@ -79,6 +82,15 @@ class Tj2Waypoints:
         self.save_tf_srv = self.create_service("save_tf", SaveTF, self.save_tf_callback)
         self.save_robot_pose_srv = self.create_service("save_robot_pose", SaveRobotPose, self.save_robot_pose_callback)
 
+        if self.enable_waypoint_navigation:
+            self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
+
+            rospy.loginfo("Connecting to move_base...")
+            self.move_base.wait_for_server()
+            rospy.loginfo("move_base connected")
+        else:
+            self.move_base = None
+
         self.follow_path_server = actionlib.SimpleActionServer("follow_path", FollowPathAction, self.follow_path_callback, auto_start=False)
         self.follow_path_server.start()
 
@@ -89,19 +101,27 @@ class Tj2Waypoints:
     # ---
 
     def follow_path_callback(self, goal):
+        rospy.loginfo("Received waypoint plan")
         if not self.enable_waypoint_navigation:
             rospy.logwarn("Navigation isn't enabled for this node. Set the parameter enable_waypoint_navigation to True")
             return
         
-        # TODO: feed goal intermediate_tolerance into sm
         waypoint_plan = self.get_waypoint_plan(goal.waypoints)
-        self.state_machine.execute(waypoint_plan, self.follow_path_server)
+        if len(waypoint_plan) <= 0:
+            print("Plan has no waypoints!")
+            self.follow_path_server.set_aborted()
+            return
+        self.state_machine.execute(waypoint_plan, self)
+        rospy.loginfo("Waypoint plan complete")
 
     def get_waypoint_plan(self, waypoints: WaypointArray):
         sub_plan = []  # array of geometry_msgs/Pose
         full_plan = []
         waypoint = None
         array_header = None
+
+        if len(waypoints.waypoints) <= 0:
+            return full_plan
 
         def append_to_sub_plan(waypoint):
             nonlocal array_header, sub_plan

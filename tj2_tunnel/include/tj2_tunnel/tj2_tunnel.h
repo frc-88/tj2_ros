@@ -31,6 +31,7 @@
 #include "nav_msgs/Odometry.h"
 #include "geometry_msgs/Twist.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Int32.h"
 #include "std_msgs/Bool.h"
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
@@ -142,6 +143,7 @@ private:
     // Subscribers
     ros::Subscriber _twist_sub;
     ros::Subscriber _is_field_relative_sub;
+    ros::Subscriber _general_cmd_sub;
 
     // Service Servers
     ros::ServiceServer _odom_reset_srv;
@@ -174,11 +176,13 @@ private:
     void setGoalStatus(GoalStatus status);
     void sendWaypoints();
     void cancelWaypointGoal();
+    void resetWaypoints();
     void publishMatch(bool is_autonomous, double match_timer);
     void sendPoseEstimate(double x, double y, double theta);
 
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
     void setFieldRelativeCallback(const std_msgs::BoolConstPtr& msg);
+    void generalPurposeCallback(const std_msgs::Int32ConstPtr& msg);
 
     void pollSocketTask();
     bool pollSocket();
