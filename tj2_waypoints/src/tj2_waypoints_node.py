@@ -44,8 +44,9 @@ class Tj2Waypoints:
             # disable_signals=True
             # log_level=rospy.DEBUG
         )
-        waypoints_path_param = rospy.get_param("~waypoints_path", "~/.ros/waypoints.yaml")
+        waypoints_path_param = rospy.get_param("~waypoints_path", "~/.ros/waypoints")
         waypoints_path_param = os.path.expanduser(waypoints_path_param)
+        waypoints_path_param += ".yaml"
         
         self.map_frame = rospy.get_param("~map", "map")
         self.base_frame = rospy.get_param("~base_link", "base_link")
