@@ -33,6 +33,7 @@ class GoToWaypointState(State):
         
         self.is_move_base_done = False
         self.distance_to_goal = None
+        self.epsilon = 1E-100
         
     def execute(self, userdata):
         rospy.loginfo("Executing waypoint")
@@ -56,7 +57,7 @@ class GoToWaypointState(State):
         self.intermediate_tolerance = waypoint.intermediate_tolerance
         self.ignore_orientation = waypoint.ignore_orientation
 
-        if self.ignore_orientation:
+        if self.ignore_orientation and abs(self.intermediate_tolerance) < self.epsilon:
             self.intermediate_tolerance = 0.075  # TODO: pull this from move_base local planner parameters
         
         self.goal_pose_stamped = PoseStamped()

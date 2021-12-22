@@ -156,7 +156,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2Tunnel::twistCallback, this);
     _is_field_relative_sub = nh.subscribe<std_msgs::Bool>("set_field_relative", 10, &TJ2Tunnel::setFieldRelativeCallback, this);
-    _general_cmd_sub = nh.subscribe<std_msgs::Int32>("general_cmd", 5, &TJ2Tunnel::generalPurposeCallback, this);
+    _debug_cmd_sub = nh.subscribe<std_msgs::Int32>("debug_cmd", 5, &TJ2Tunnel::debugCommandCallback, this);
     
     _prev_twist_timestamp = ros::Time(0);
     _twist_cmd_vx = 0.0;
@@ -586,10 +586,10 @@ void TJ2Tunnel::sendPoseEstimate(double x, double y, double theta)
     _pose_estimate_pub.publish(pose_est);
 }
 
-void TJ2Tunnel::generalPurposeCallback(const std_msgs::Int32ConstPtr& msg)
+void TJ2Tunnel::debugCommandCallback(const std_msgs::Int32ConstPtr& msg)
 {
-    ROS_INFO("Writing general command: %d", msg->data);
-    writePacket("general", "d", msg->data);
+    ROS_INFO("Writing debug command: %d", msg->data);
+    writePacket("debug", "d", msg->data);
 }
 
 
