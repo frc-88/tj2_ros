@@ -143,7 +143,7 @@ private:
     // Subscribers
     ros::Subscriber _twist_sub;
     ros::Subscriber _is_field_relative_sub;
-    ros::Subscriber _general_cmd_sub;
+    ros::Subscriber _debug_cmd_sub;
 
     // Service Servers
     ros::ServiceServer _odom_reset_srv;
@@ -182,7 +182,7 @@ private:
 
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
     void setFieldRelativeCallback(const std_msgs::BoolConstPtr& msg);
-    void generalPurposeCallback(const std_msgs::Int32ConstPtr& msg);
+    void debugCommandCallback(const std_msgs::Int32ConstPtr& msg);
 
     void pollSocketTask();
     bool pollSocket();

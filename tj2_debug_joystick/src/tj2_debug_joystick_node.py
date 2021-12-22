@@ -14,7 +14,8 @@ from tj2_driver_station.msg import RobotStatus
 
 
 class TJ2DebugJoystick:
-    AUTO_PLAN_1 = 1
+    SEND_AUTO_PLAN = 1
+    RESET_IMU = 2
 
     def __init__(self):
         rospy.init_node(
@@ -76,7 +77,7 @@ class TJ2DebugJoystick:
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
         self.set_field_relative_pub = rospy.Publisher("set_field_relative", Bool, queue_size=100)
         self.limelight_led_pub = rospy.Publisher("/limelight/led_mode", Bool, queue_size=5)
-        self.general_cmd_pub = rospy.Publisher("general_cmd", Int32, queue_size=5)
+        self.debug_cmd_pub = rospy.Publisher("debug_cmd", Int32, queue_size=5)
 
         # subscription topics
         self.joy_sub = rospy.Subscriber(self.joystick_topic, Joy, self.joystick_msg_callback, queue_size=5)
@@ -111,9 +112,14 @@ class TJ2DebugJoystick:
             self.limelight_led_pub.publish(self.limelight_led_mode)
         elif self.joystick.did_button_down(("main", "Y")):
             msg = Int32()
-            msg.data = self.AUTO_PLAN_1
-            rospy.loginfo("Setting auto mode to %s" % msg.data)
-            self.general_cmd_pub.publish(msg)
+            msg.data = self.SEND_AUTO_PLAN
+            rospy.loginfo("Requesting auto plan be sent")
+            self.debug_cmd_pub.publish(msg)
+        elif self.joystick.did_button_down(("main", "X")):
+            msg = Int32()
+            msg.data = self.RESET_IMU
+            rospy.loginfo("Requesting IMU be reset")
+            self.debug_cmd_pub.publish(msg)
 
         if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis)):
             self.disable_timer = rospy.Time.now()
