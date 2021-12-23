@@ -273,7 +273,8 @@ PacketResult* TunnelProtocol::parsePacket(char* buffer, int start_index, int sto
     }
     result->setCategory(category);
 
-    result->setStart(_current_segment_stop + 1);
+    // _read_buffer_index is currently the next index after category separator (\t)
+    result->setStart(_read_buffer_index);
     result->setStop(checksum_start + 1);
 
     result->setBuffer(buffer);
