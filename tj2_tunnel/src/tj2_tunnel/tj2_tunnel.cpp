@@ -30,39 +30,12 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     _cmd_vel_timeout = ros::Duration(_cmd_vel_timeout_param);
 
-    string key;
-    if (!ros::param::search("categories", key)) {
-        ROS_ERROR("Failed to find categories parameter");
-        return;
-    }
-    nh.getParam(key, _categories_param);
-
-    // _categories_param is a map
-    if (_categories_param.getType() != XmlRpc::XmlRpcValue::Type::TypeStruct ||
-        _categories_param.size() == 0) {
-        ROS_ERROR("categories wrong type or size");
-        return;
-    }
-    
-    for (XmlRpc::XmlRpcValue::iterator it = _categories_param.begin(); it != _categories_param.end(); ++it)
-    {
-        if (it->second.getType() != XmlRpc::XmlRpcValue::TypeString) {
-            ROS_WARN("%s category format isn't a string", it->first.c_str());
-            continue;
-        }
-        string category = it->first;
-        string format = it->second;
-        _categories[category] = format;
-    }
-    // Special categories:
-    _categories["__msg__"] = "s";
-
     _write_buffer = new char[TunnelProtocol::MAX_PACKET_LEN];
     _read_buffer = new char[READ_BUFFER_LEN];
     _socket_initialized = false;
     _socket_id = 0;
 
-    protocol = new TunnelProtocol(_categories);
+    protocol = new TunnelProtocol();
 
     _socket_timeout.tv_sec = 1;
     _socket_timeout.tv_usec = 0;
@@ -312,17 +285,17 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
     if (category.compare("odom") == 0) {
         publishOdom(
             result->getRecvTime(),
-            result->get_double(0),
-            result->get_double(1),
-            result->get_double(2),
-            result->get_double(3),
-            result->get_double(4),
-            result->get_double(5)
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble()
         );
     }
     else if (category.compare("ping") == 0) {
         std_msgs::Float64 msg;
-        double ping_time = result->get_double(0);
+        double ping_time = result->getDouble();
         double dt = getLocalTime() - ping_time;
         ROS_DEBUG("Publishing ping time: %f. (Return time: %f)", dt, ping_time);
         msg.data = dt;
@@ -331,29 +304,29 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
     else if (category.compare("imu") == 0) {
         publishImu(
             result->getRecvTime(),
-            result->get_double(0),
-            result->get_double(1),
-            result->get_double(2),
-            result->get_double(3)
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble()
         );
     }
     else if (category.compare("module") == 0) {
         publishModule(
             result->getRecvTime(),
-            result->get_int(0),
-            result->get_double(1),
-            result->get_double(2),
-            result->get_double(3),
-            result->get_double(4),
-            result->get_double(5),
-            result->get_double(6)
+            result->getInt(),
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble()
         );
     }
     else if (category.compare("goal") == 0) {
-        string waypoint_name = result->get_string(0);
-        bool is_continuous = result->get_int(1);
-        bool ignore_orientation = result->get_int(2);
-        double intermediate_tolerance = result->get_double(3);
+        string waypoint_name = result->getString();
+        bool is_continuous = result->getInt();
+        bool ignore_orientation = result->getInt();
+        double intermediate_tolerance = result->getDouble();
         if (_waypoints.waypoints.size() == 0 && is_continuous) {
             is_continuous = false;
             ROS_WARN("First goal must be discontinuous. Setting waypoint to discontinuous");
@@ -368,7 +341,7 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
     }
     else if (category.compare("exec") == 0) {
         ROS_INFO("Received execute plan command");
-        int num_waypoints = result->get_int(0);
+        int num_waypoints = result->getInt();
         if (num_waypoints != _waypoints.waypoints.size()) {
             ROS_ERROR("The reported number of waypoints in the plan does match the number received! %d != %ld Canceling plan", num_waypoints, _waypoints.waypoints.size());
             setGoalStatus(GoalStatus::FAILED);
@@ -388,15 +361,15 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
     }
     else if (category.compare("match") == 0) {
         publishMatch(
-            (bool)result->get_int(0),
-            result->get_double(1)
+            (bool)result->getInt(),
+            result->getDouble()
         );
     }
     else if (category.compare("poseest") == 0) {
         sendPoseEstimate(
-            result->get_double(0),
-            result->get_double(1),
-            result->get_double(2)
+            result->getDouble(),
+            result->getDouble(),
+            result->getDouble()
         );
     }
 }
@@ -649,7 +622,9 @@ void TJ2Tunnel::publishCmdVel()
 
 
 void TJ2Tunnel::pingCallback(const ros::TimerEvent& event) {
-    writePacket("ping", "f", getLocalTime());
+    double ping_time = getLocalTime();
+    ROS_DEBUG("Writing ping time: %f", ping_time);
+    writePacket("ping", "f", ping_time);
 }
 
 
@@ -663,12 +638,12 @@ void TJ2Tunnel::writePacket(string category, const char *formats, ...)
     va_start(args, formats);
     _write_lock.lock();
     int length = protocol->makePacket(_write_buffer, category, formats, args);
-    ROS_DEBUG("Writing packet: %s", protocol->packetToString(_write_buffer, 0, length).c_str());
+    ROS_DEBUG("Writing packet: %s", packetToString(_write_buffer, 0, length).c_str());
     if (length > 0) {
         write(_socket_id, _write_buffer, length);
     }
     else {
-        ROS_DEBUG("Skipping write for packet: %s. Length is %d", protocol->packetToString(_write_buffer, 0, length).c_str(), length);
+        ROS_DEBUG("Skipping write for packet: %s. Length is %d", packetToString(_write_buffer, 0, length).c_str(), length);
     }
     _write_lock.unlock();
     va_end(args);
@@ -720,7 +695,7 @@ bool TJ2Tunnel::pollSocket()
         }
         string category = result->getCategory();
         if (category.compare("__msg__") == 0) {
-            ROS_INFO("Tunnel message: %s", result->get_string(0).c_str());
+            ROS_INFO("Tunnel message: %s", result->getString().c_str());
         }
         else {
             packetCallback(result);
