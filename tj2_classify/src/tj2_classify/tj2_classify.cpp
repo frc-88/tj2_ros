@@ -1,7 +1,7 @@
 #include <tj2_detectnet/tj2_detectnet.h>
 
 
-TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
+TJ2Classify::TJ2Classify(ros::NodeHandle* nodehandle) :
     nh(*nodehandle),
     _image_transport(nh),
     tfListener(tfBuffer)
@@ -12,14 +12,14 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~class_labels_path", _class_labels_path, "");
 
     ros::param::param<string>("~input_blob", _input_blob, IMAGENET_DEFAULT_INPUT);
-    ros::param::param<string>("~output_cvg", _output_blob, IMAGENET_DEFAULT_OUTPUT);
+    ros::param::param<string>("~output_blob", _output_blob, IMAGENET_DEFAULT_OUTPUT);
 
-    ros::param::param<string>("~depth_topic", _depth_topic, "depth/image_raw");
     ros::param::param<string>("~color_topic", _color_topic, "color/image_raw");
     ros::param::param<string>("~color_info_topic", _color_info_topic, "color/camera_info");
-    ros::param::param<string>("~depth_info_topic", _depth_info_topic, "depth/camera_info");
+    ros::param::param<string>("~raw_detection_topic", _raw_detection_topic, "detections/array");
     ros::param::param<int>("~bounding_box_border_px", _bounding_box_border_px, 30);
     ros::param::param<double>("~marker_persistance_s", _marker_persistance_s, 0.5);
+    ros::param::param<double>("~threshold", _threshold, 0.5);
 
     ros::param::param<bool>("~publish_with_frame", _publish_with_frame, true);
     ros::param::param<string>("~target_frame", _target_frame, "base_link");
@@ -29,25 +29,25 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
     _marker_persistance = ros::Duration(_marker_persistance_s);
 
     string key;
-    if (!ros::param::search("detectnet_marker_colors", key)) {
-        THROW_EXCEPTION("Failed to find detectnet_marker_colors parameter");
+    if (!ros::param::search("marker_colors", key)) {
+        THROW_EXCEPTION("Failed to find marker_colors parameter");
     }
-    ROS_DEBUG("Found detectnet_marker_colors: %s", key.c_str());
+    ROS_DEBUG("Found marker_colors: %s", key.c_str());
     nh.getParam(key, _marker_colors_param);
 
     // _marker_colors_param is a map
     if (_marker_colors_param.getType() != XmlRpc::XmlRpcValue::Type::TypeStruct ||
         _marker_colors_param.size() == 0) {
-        THROW_EXCEPTION("detectnet_marker_colors wrong type or size");
+        THROW_EXCEPTION("marker_colors wrong type or size");
     }
-    ROS_DEBUG("detectnet_marker_colors is the correct type");
+    ROS_DEBUG("marker_colors is the correct type");
 
     for (XmlRpc::XmlRpcValue::iterator it = _marker_colors_param.begin(); it != _marker_colors_param.end(); ++it)
     {
         if (it->second.getType() != XmlRpc::XmlRpcValue::TypeArray) {
-            THROW_EXCEPTION("detectnet_marker_colors element is not a list");
+            THROW_EXCEPTION("marker_colors element is not a list");
         }
-        ROS_DEBUG("\tFound detectnet_marker_colors label");
+        ROS_DEBUG("\tFound marker_colors label");
         string label = it->first;
 
         std_msgs::ColorRGBA color;
@@ -60,7 +60,7 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
     }
 
     if (_marker_colors.size() == 0) {
-        THROW_EXCEPTION("detectnet_marker_colors has zero length!");
+        THROW_EXCEPTION("marker_colors has zero length!");
     }
 
     if (!ros::param::search("detectnet_z_depth_estimations", key)) {
@@ -73,7 +73,7 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
     }
     ROS_DEBUG("detectnet_z_depth_estimations is the correct size");
 
-    load_detectnet_model();
+    load_imagenet_model();
     load_labels();
 
     reset_label_counter();
@@ -83,7 +83,7 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
     _overlay_cvt = new imageConverter();
 
     // Publishers
-    _detection_pub = nh.advertise<vision_msgs::Detection2DArray>("detections", 25);
+    _detection_pub = nh.advertise<vision_msgs::Detection2DArray>("detections/filtered", 25);
     _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("markers", 25);
     _overlay_pub = _image_transport.advertise("overlay/image_raw", 2);
     _overlay_info_pub = nh.advertise<sensor_msgs::CameraInfo>("overlay/camera_info", 2);
@@ -91,29 +91,28 @@ TJ2DetectNet::TJ2DetectNet(ros::NodeHandle* nodehandle) :
     // Subscribers
     color_sub.subscribe(nh, _color_topic, 10);
     color_info_sub.subscribe(nh, _color_info_topic, 10);
-    depth_sub.subscribe(nh, _depth_topic, 10);
+    raw_detection_sub.subscribe(nh, _raw_detection_topic, 10);
 
-    sync.reset(new Sync(ApproxSyncPolicy(10), color_sub, color_info_sub, depth_sub));
-    // sync.reset(new Sync(ExactSyncPolicy(10), color_sub, color_info_sub, depth_sub));
-    sync->registerCallback(boost::bind(&TJ2DetectNet::rgbd_callback, this, _1, _2, _3));
+    sync.reset(new Sync(ApproxSyncPolicy(10), color_sub, color_info_sub, raw_detection_sub));
+    sync->registerCallback(boost::bind(&TJ2Classify::raw_detection_callback, this, _1, _2, _3));
 
-    ROS_INFO("tj2_detectnet init done");
+    ROS_INFO("tj2_classify init done");
 }
 
 
-void TJ2DetectNet::load_detectnet_model()
+void TJ2Classify::load_imagenet_model()
 {
     /*
-     * load object detection network
+     * load image recognition network
      */
-    ROS_DEBUG("Loading detectnet model.");
+    ROS_DEBUG("Loading imagenet model.");
     if (_model_path.size() > 0)
     {
         ROS_DEBUG("Loading model from %s", _model_path.c_str());
         // create network using custom model paths
-        _net = detectNet::Create(_prototxt_path.c_str(), _model_path.c_str(),
-                            _mean_pixel, _class_labels_path.c_str(), _threshold,
-                            _input_blob.c_str(), _output_blob.c_str(), _output_bbox.c_str());
+        _net = imageNet::Create(_prototxt_path.c_str(), _model_path.c_str(),
+                            NULL, _class_labels_path.c_str(),
+                            _input_blob.c_str(), _output_blob.c_str());
     }
     else
     {
@@ -123,17 +122,17 @@ void TJ2DetectNet::load_detectnet_model()
 
         if (model == detectNet::CUSTOM)
         {
-            ROS_ERROR("invalid built-in pretrained model name '%s', defaulting to ssd-mobilenet-v2", _model_name.c_str());
-            model = detectNet::SSD_MOBILENET_V2;
+            ROS_ERROR("invalid built-in pretrained model name '%s', defaulting to googlenet", _model_name.c_str());
+            model = imageNet::GOOGLENET;
         }
 
         // create network using the built-in model
-        _net = detectNet::Create(model, _threshold);
+        _net = imageNet::Create(model);
     }
 }
 
 
-void TJ2DetectNet::load_labels()
+void TJ2Classify::load_labels()
 {
     /*
      * create the class labels parameter vector
@@ -160,7 +159,7 @@ void TJ2DetectNet::load_labels()
 }
 
 
-int TJ2DetectNet::run()
+int TJ2Classify::run()
 {
     if (!_net)
     {
@@ -173,26 +172,6 @@ int TJ2DetectNet::run()
         ROS_ERROR("failed to create imageConverter objects");
         return 0;
     }
-    // ros::Rate clock_rate(60);  // run loop at 60 Hz
-    //
-    // int exit_code = 0;
-    // while (ros::ok())
-    // {
-    //     // let ROS process any events
-    //     ros::spinOnce();
-    //     clock_rate.sleep();
-    //
-    //     try {
-    //
-    //     }
-    //     catch (exception& e) {
-    //         ROS_ERROR_STREAM("Exception in main loop: " << e.what());
-    //         exit_code = 1;
-    //         break;
-    //     }
-    // }
-    //
-    // return exit_code;
     ros::spin();
 
     // free resources
@@ -207,345 +186,83 @@ int TJ2DetectNet::run()
 // Sub callbacks
 //
 
-void TJ2DetectNet::rgbd_callback(
+void TJ2Classify::raw_detection_callback(
     const ImageConstPtr& color_image, const CameraInfoConstPtr& color_info,
-    const ImageConstPtr& depth_image)
+    const vision_msgs::Detection2DArrayConstPtr& raw_detection)
 {
     ros::Time t0 = ros::Time::now();
 
-    // convert the image to reside on GPU
-    if (!_input_cvt || !_input_cvt->Convert(color_image))
+    vision_msgs::Detection2DArray filtered_dets;
+    filtered_dets.header = raw_detection->header;
+
+    cv::Mat cv_image;
+    msg_to_frame(color_image, cv_image);
+
+    for (size_t raw_index = 0; raw_index < raw_detection->detections.size(); raw_index++)
     {
-        ROS_INFO("failed to convert %ux%u %s image", color_image->width, color_image->height, color_image->encoding.c_str());
-        return;
+        vision_msgs::BoundingBox2D bbox = raw_detection->detections.at(raw_index).bbox
+        int x0 = (int)(bbox.center.x - bbox.size_x / 2);
+        int y0 = (int)(bbox.center.y - bbox.size_y / 2);
+        int width = (int)(bbox.size_x);
+        int height = (int)(bbox.size_y);
+        cv::Rect detect_roi(x0, y0, width, height);
+        cv::Mat cropped_image = cv_image(detect_roi);
+
+        // convert the image to reside on GPU
+        if (!input_cvt || !input_cvt->Convert(cropped_image))
+        {
+            ROS_INFO("failed to convert %ux%u image", width, height);
+            return;
+        }
+
+    	// classify the image
+        float confidence = 0.0f;
+
+        // was _input_cvt->ImageGPU(). Is now _input_cvt->ImageCPU().
+        // Using the GPU stored image added ~0.03s of latency on Jetson Nano for some reason...
+        const int img_class = net->Classify(input_cvt->ImageCPU(), input_cvt->GetWidth(), input_cvt->GetHeight(), &confidence);    
+
+
+        // verify the output	
+        if (img_class < 0) {            
+            continue;
+        }
+        if (confidence < _threshold) {
+            continue;
+        }
+        ROS_INFO("classified image #%lu, %f %s (class=%i)", raw_index, confidence, _net->GetClassDesc(img_class), img_class);
+
+        vision_msgs::Detection2D det = raw_detection->detections.at(raw_index);
+        det.results.at(0).id = img_class;
+        det.results.at(0).score = confidence;
+
+        filtered_dets.detections.push_back(det);
     }
+}
 
-    //
-    // Detect bounding boxes in color image
-    //
-    vision_msgs::Detection2DArray msg;
-    const int num_detections = detect(color_image, color_info, &msg);
-    if (num_detections <= 0) {
-        return;
-    }
-
-    //
-    // Get Z values of bounding boxes
-    //
-    _camera_model.fromCameraInfo(color_info);
-
+bool TJ2Classify::msg_to_frame(const ImageConstPtr msg, cv::Mat& image)
+{
     cv_bridge::CvImagePtr cv_ptr;
     try {
-        cv_ptr = cv_bridge::toCvCopy(depth_image);  // encoding: passthrough
+        cv_ptr = cv_bridge::toCvCopy(msg);  // encoding: passthrough
     }
     catch (cv_bridge::Exception& e)
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
+        return false;
     }
-
-    cv::Mat depth_cv_image;
-    if (color_image->width == 0 || color_image->height == 0) {
-        ROS_ERROR("Color image has a zero width dimension!");
-        return;
+    if (msg->width == 0 || msg->height == 0) {
+        ROS_ERROR("Image has a zero width dimension!");
+        return false;
     }
-    if (depth_image->width == 0 || depth_image->height == 0) {
-        ROS_ERROR("Depth image has a zero width dimension!");
-        return;
-    }
-    
-    if (color_image->width != depth_image->width || color_image->height != depth_image->height) {
-        cv::resize(cv_ptr->image, depth_cv_image, cv::Size(color_image->width, color_image->height));
-    }
-    else {
-        depth_cv_image = cv_ptr->image;
-    }
-
-
-    visualization_msgs::MarkerArray markers;
-
-    reset_label_counter();
-    for (int n = 0; n < num_detections; n++)
-    {
-        int class_index = msg.detections[n].results[0].id;
-        string label = _class_descriptions[class_index];
-        int label_index = _label_counter[label];
-        _label_counter[label]++;
-
-        geometry_msgs::PoseWithCovariance pose_with_covar;
-
-        ObjPoseDescription obj_desc = bbox_to_pose(depth_cv_image, msg.detections[n].bbox, depth_image->header.stamp, label, label_index);
-        tf_obj_to_target(color_info, obj_desc);
-        // obj_desc now contains the object position in the target frame (if _publish_with_frame is true)
-
-        pose_with_covar.pose = obj_desc.pose_stamped.pose;
-        msg.detections[n].results[0].pose = pose_with_covar;
-        msg.detections[n].header = obj_desc.pose_stamped.header;
-
-        visualization_msgs::Marker sphere_marker = make_marker(&obj_desc);
-        visualization_msgs::Marker text_marker = make_marker(&obj_desc);
-
-        sphere_marker.type = visualization_msgs::Marker::SPHERE;
-        sphere_marker.ns = "sphere_" + sphere_marker.ns;
-
-        text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-        text_marker.ns = "text_" + text_marker.ns;
-        text_marker.text = label + "_" + std::to_string(label_index);
-        text_marker.scale.z = std::max({text_marker.scale.x, text_marker.scale.y, text_marker.scale.z});
-        text_marker.scale.x = 0.0;
-        text_marker.scale.y = 0.0;
-
-        markers.markers.push_back(sphere_marker);
-        markers.markers.push_back(text_marker);
-    }
-
-    // populate timestamp in header field
-    msg.header.stamp = color_image->header.stamp;
-
-    // publish the detection message
-    _detection_pub.publish(msg);
-    _marker_pub.publish(markers);
-
-    ros::Time now = ros::Time::now();
-    ros::Duration dt_camera = now - color_image->header.stamp;
-    ros::Duration dt_process = now - t0;
-
-    ROS_DEBUG("Callback took %fs, %fs since image", dt_process.toSec(), dt_camera.toSec());
-}
-
-ObjPoseDescription TJ2DetectNet::bbox_to_pose(cv::Mat depth_cv_image, vision_msgs::BoundingBox2D bbox, ros::Time stamp, string label, int label_index)
-{
-    ObjPoseDescription desc = init_obj_desc();
-    desc.label = label;
-    desc.index = label_index;
-    desc.center_x = (int)(bbox.center.x);
-    desc.center_y = (int)(bbox.center.y);
-    desc.obj_radius = std::min(bbox.size_x, bbox.size_y) / 2;
-    desc.detect_radius = std::max(desc.obj_radius - _bounding_box_border_px, 1);
-    ROS_DEBUG("bbox_to_pose for label %s", desc.label.c_str());
-
-    double z_model = _z_depth_estimations[label];
-    ROS_DEBUG("z_model: %f", z_model);
-
-    double z_dist = get_z_dist(depth_cv_image, &desc);
-    z_dist += z_model / 2.0;
-    ROS_DEBUG("z_dist: %f", z_dist);
-
-    cv::Point2d center_point;
-    center_point.x = desc.center_x;
-    center_point.y = desc.center_y;
-    cv::Point3d ray = _camera_model.projectPixelTo3dRay(center_point);
-
-    desc.x_dist = ray.x * z_dist;
-    desc.y_dist = ray.y * z_dist;
-    desc.z_dist = z_dist;
-
-    ROS_DEBUG("center; label: %s, X: %0.3f, Y: %0.3f, Z: %0.3f", label.c_str(), desc.x_dist, desc.y_dist, desc.z_dist);
-
-    cv::Point2d edge_point;
-    edge_point.x = desc.center_x - (int)(bbox.size_x / 2.0);
-    edge_point.y = desc.center_y - (int)(bbox.size_y / 2.0);
-    ray = _camera_model.projectPixelTo3dRay(edge_point);
-
-    desc.x_edge = abs(ray.x * z_dist - desc.x_dist) * 2.0;
-    desc.y_edge = abs(ray.y * z_dist - desc.y_dist) * 2.0;
-    desc.z_edge = z_model;
-
-    ROS_DEBUG("edge;   label: %s, X: %0.3f, Y: %0.3f, Z: %0.3f", label.c_str(), desc.x_edge, desc.y_edge, desc.z_edge);
-
-    geometry_msgs::PoseStamped pose;
-
-    pose.header.frame_id = _camera_model.tfFrame();
-    pose.header.stamp = stamp;
-    pose.pose.position.x = desc.x_dist;
-    pose.pose.position.y = desc.y_dist;
-    pose.pose.position.z = desc.z_dist;
-    pose.pose.orientation.x = 0.0;
-    pose.pose.orientation.y = 0.0;
-    pose.pose.orientation.z = 0.0;
-    pose.pose.orientation.w = 1.0;
-
-    desc.pose_stamped = pose;
-
-    return desc;
-}
-
-void TJ2DetectNet::tf_obj_to_target(const CameraInfoConstPtr color_info, ObjPoseDescription& obj_desc)
-{
-    if (!_publish_with_frame) {
-        return;
-    }
-    geometry_msgs::TransformStamped transform_camera_to_target;
-
-    try {
-        transform_camera_to_target = tfBuffer.lookupTransform(
-            _target_frame, color_info->header.frame_id,
-            color_info->header.stamp, ros::Duration(1.0)
-        );
-        tf2::doTransform(obj_desc.pose_stamped, obj_desc.pose_stamped, transform_camera_to_target);
-        // obj_desc now contains the object position in the target frame
-
-        obj_desc.pose_stamped.header.frame_id = _target_frame;
-    }
-    catch (tf2::TransformException &ex) {
-        ROS_WARN("%s", ex.what());
-        ros::Duration(1.0).sleep();
-        return;
-    }
-}
-
-visualization_msgs::Marker TJ2DetectNet::make_marker(ObjPoseDescription* desc)
-{
-    visualization_msgs::Marker marker;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.pose = desc->pose_stamped.pose;
-    marker.header = desc->pose_stamped.header;
-    marker.lifetime = _marker_persistance;
-    marker.ns = desc->label;
-    marker.id = desc->index;
-
-    geometry_msgs::Vector3 scale_vector;
-    scale_vector.x = desc->x_edge;
-    scale_vector.y = desc->y_edge;
-    scale_vector.z = desc->z_edge;
-    marker.scale = scale_vector;
-    marker.color = _marker_colors[desc->label];
-
-    return marker;
+    image = cv_ptr->image;
+    return true;
 }
 
 
-double TJ2DetectNet::get_z_dist(cv::Mat depth_cv_image, ObjPoseDescription* desc)
-{
-    ROS_DEBUG("Depth image size: w=%d, h=%d", depth_cv_image.rows, depth_cv_image.cols);
-    cv::Mat circle_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
-    cv::circle(circle_mask, cv::Size(desc->center_x, desc->center_y), desc->detect_radius, cv::Scalar(255, 255, 255), cv::FILLED);
-    ROS_DEBUG("Created circle mask");
-
-    cv::Mat nonzero_mask = (depth_cv_image > 0.0);
-    nonzero_mask.convertTo(nonzero_mask, CV_8U);
-    ROS_DEBUG("Created nonzero mask");
-
-    cv::Mat target_mask;
-    cv::bitwise_and(circle_mask, nonzero_mask, target_mask);
-    ROS_DEBUG("Created target mask");
-
-    double z_dist = cv::mean(depth_cv_image, target_mask)[0];  // depth values are in mm
-    ROS_DEBUG("z_dist mm: %f", z_dist);
-
-    z_dist /= 1000.0;
-
-    return z_dist;
-}
-
-// classify the image
-int TJ2DetectNet::detect(const ImageConstPtr& color_image, const CameraInfoConstPtr& color_info, vision_msgs::Detection2DArray* msg)
-{
-    detectNet::Detection* detections = NULL;
-
-    ros::Time t0 = ros::Time::now();
-
-    // was _input_cvt->ImageGPU(). Is now _input_cvt->ImageCPU().
-    // Using the GPU stored image added ~0.03s of latency on Jetson Nano for some reason...
-    const int num_detections = _net->Detect(_input_cvt->ImageCPU(), _input_cvt->GetWidth(), _input_cvt->GetHeight(), &detections, detectNet::OVERLAY_NONE);
-
-    ros::Duration dt = ros::Time::now() - t0;
-    ROS_DEBUG("Detect took %fs", dt.toSec());
-
-    // verify success
-    if (num_detections < 0)    {
-        ROS_ERROR("failed to run object detection on %ux%u image", color_image->width, color_image->height);
-    }
-
-    // create a detection for each bounding box
-    for (int n = 0; n < num_detections; n++)
-    {
-        detectNet::Detection* det = detections + n;
-
-        ROS_DEBUG("object %i class #%u (%s)  confidence=%f", n, det->ClassID, _net->GetClassDesc(det->ClassID), det->Confidence);
-        ROS_DEBUG("object %i bounding box (%f, %f)  (%f, %f)  w=%f  h=%f", n, det->Left, det->Top, det->Right, det->Bottom, det->Width(), det->Height());
-
-        // create a detection sub-message
-        vision_msgs::Detection2D detMsg;
-
-        detMsg.bbox.size_x = det->Width();
-        detMsg.bbox.size_y = det->Height();
-
-        float cx, cy;
-        det->Center(&cx, &cy);
-
-        detMsg.bbox.center.x = cx;
-        detMsg.bbox.center.y = cy;
-
-        detMsg.bbox.center.theta = 0.0f;
-
-        // create classification hypothesis
-        vision_msgs::ObjectHypothesisWithPose hyp;
-
-        hyp.id = det->ClassID;
-        hyp.score = det->Confidence;
-
-        detMsg.results.push_back(hyp);
-        msg->detections.push_back(detMsg);
-    }
-
-    // if objects were detected, update message
-    if (_always_publish_overlay || (_overlay_pub.getNumSubscribers() > 0 && num_detections > 0))
-    {
-        ROS_DEBUG("detected %i objects in %ux%u image", num_detections, color_image->width, color_image->height);
-
-        publish_overlay(color_info, detections, num_detections);
-    }
-
-    return num_detections;
-}
-
-
-void TJ2DetectNet::reset_label_counter()
+void TJ2Classify::reset_label_counter()
 {
     for (size_t i = 0; i < _class_descriptions.size(); i++) {
         _label_counter[_class_descriptions[i]] = 0;
     }
-}
-
-// publish overlay image
-bool TJ2DetectNet::publish_overlay(const CameraInfoConstPtr& color_info, detectNet::Detection* detections, int num_detections)
-{
-    // get the image dimensions
-    const uint32_t width  = _input_cvt->GetWidth();
-    const uint32_t height = _input_cvt->GetHeight();
-
-    // assure correct image size
-    if (!_overlay_cvt->Resize(width, height, imageConverter::ROSOutputFormat))
-        return false;
-
-    // generate the overlay
-    // was _input_cvt->ImageGPU(). Is now _input_cvt->ImageCPU().
-    // Using the GPU stored image added ~0.03s of latency on Jetson Nano for some reason...
-    if (!_net->Overlay(_input_cvt->ImageCPU(), _overlay_cvt->ImageGPU(), width, height,
-                   imageConverter::InternalFormat, detections, num_detections, _overlay_flags))
-    {
-        return false;
-    }
-
-    // populate the message
-    sensor_msgs::Image msg;
-
-    if( !_overlay_cvt->Convert(msg, imageConverter::ROSOutputFormat) )
-        return false;
-
-    // populate timestamp in header field
-    msg.header = color_info->header;
-    msg.header.stamp = ros::Time::now();
-
-    // publish the message
-    _overlay_pub.publish(msg);
-
-    sensor_msgs::CameraInfo info = *color_info;
-    info.header.stamp = msg.header.stamp;
-
-    _overlay_info_pub.publish(info);
-    ROS_DEBUG("publishing %ux%u overlay image", width, height);
-
-    return true;
 }
