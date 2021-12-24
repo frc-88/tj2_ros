@@ -230,24 +230,64 @@ def apply_random_shapes(background, num_shapes_min, num_shapes_max, shape_blur_m
 
 
 def record_annotation(image, frame: PascalVOCFrame, directory, prefix="image"):
+    image_path = record_image(image, directory, prefix)
+    frame_path = os.path.splitext(image_path)[0] + ".xml"
+
+    frame.set_path(os.path.abspath(image_path))
+    frame.write(frame_path)
+
+    return image_path, frame_path
+
+
+def record_image(image, directory, prefix="image"):
     if not os.path.isdir(directory):
         os.makedirs(directory)
 
     count = 0
     image_path = None
-    frame_path = None
 
     while image_path is None:
         path = os.path.join(directory, "%s-%05d." % (prefix, count))
         image_path = path + "jpg"
-        frame_path = path + "xml"
         if os.path.isfile(image_path):
             image_path = None
             count += 1
     print("Writing to %s" % image_path)
     cv2.imwrite(image_path, image)
-    frame.set_path(os.path.abspath(image_path))
-    frame.write(frame_path)
+
+    return image_path
+
+
+def record_classify_paths(paths, directory):
+    for label, image_paths in paths.items():
+        label_path = os.path.join(directory, label + ".txt")
+        with open(label_path, 'w') as file:
+            file.write("\n".join(image_paths))
+
+
+def read_classify_paths(directory):
+    paths = {}
+    for filename in os.listdir(directory):
+        if not filename.lower().endswith(".txt"):
+            continue
+        label_path = os.path.join(directory, filename)
+        with open(label_path) as file:
+            contents = file.read()
+        label = os.path.splitext(filename)[0]
+        image_paths = contents.splitlines()
+        paths[label] = image_paths
+    return paths
+
+
+def crop_to_annotations(image, frame):
+    crops = {}
+    for obj in frame.objects:
+        if obj.name not in crops:
+            crops[obj.name] = []
+        xmin, ymin, xmax, ymax = obj.bndbox
+        cropped_image = image[ymin: ymax, xmin: xmax]
+        crops[obj.name].append(cropped_image)
+    return crops
 
 
 def apply_objects_to_background(image, background, frame, kwargs):

@@ -2,11 +2,8 @@
 tj2_detectnet/models
 tj2_detectnet/scripts/video_dataset/output 
 tj2_laser_slam/maps
-dataset_builder/limelight_targets/base_images
-dataset_builder/limelight_targets/output_images
-dataset_builder/limelight_targets/model
-dataset_builder/limelight_targets/pretrained
-dataset_builder/limelight_targets/dataset
+dataset_builder/limelight_targets/resources
+dataset_builder/limelight_targets/outputs
 
 .idea/
 .vscode/

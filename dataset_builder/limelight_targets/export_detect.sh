@@ -1,5 +1,5 @@
 
-MODEL_DIR=model
+MODEL_DIR=detect_model
 # MODEL_NAME=mb2-ssd-lite-Epoch-60-Loss-1.8050242725171541.pth
 MODEL_NAME=""  # picks lowest loss
 OUTPUT=limelight-mb2-ssd-lite.onnx
