@@ -1,12 +1,11 @@
 #include "tunnel_protocol.h"
 
 
-TunnelProtocol::TunnelProtocol(std::map<string, string> categories)
+TunnelProtocol::TunnelProtocol()
 {
     _read_packet_num = -1;
     _write_packet_num = 0;
     _read_buffer_index = 0;
-    _categories = categories;
 }
 
 TunnelProtocol::~TunnelProtocol()
@@ -157,7 +156,7 @@ int TunnelProtocol::parseBuffer(char* buffer, int start_index, int stop_index)
         // do not modify index from this point onward as the for loop increments index
         last_packet_index = index + 1;
         // ROS_DEBUG("Found a packet: %s", packetToString(buffer, packet_start, index).c_str());
-        PacketResult* result = parsePacket(buffer, packet_start, index + 1);
+        PacketResult* result = parsePacket(buffer, packet_start, last_packet_index);
         _result_queue.push_back(result);
     }
 
@@ -184,15 +183,6 @@ bool TunnelProtocol::isCodeError(int error_code)
         default:
             return true;
     }
-}
-
-string TunnelProtocol::packetToString(char* buffer, int start_index, int stop_index)
-{
-    string str = "";
-    for (size_t i = start_index; i < stop_index; i++) {
-        str += format_char(buffer[i]);
-    }
-    return str;
 }
 
 PacketResult* TunnelProtocol::parsePacket(char* buffer, int start_index, int stop_index)
@@ -223,14 +213,16 @@ PacketResult* TunnelProtocol::parsePacket(char* buffer, int start_index, int sto
         return new PacketResult(PACKET_STOP_ERROR, recv_time);
     }
 
+    int checksum_start = stop_index - 3;
+
     _read_buffer_index += LENGTH_BYTE_LENGTH;
     uint8_t calc_checksum = 0;
     // compute checksum using all characters except the checksum itself
-    for (int index = _read_buffer_index; index < stop_index - 3; index++) {
+    for (int index = _read_buffer_index; index < checksum_start; index++) {
         calc_checksum += (uint8_t)buffer[index];
     }
 
-    uint8_t recv_checksum = from_checksum(buffer + stop_index - 3);
+    uint8_t recv_checksum = from_checksum(buffer + checksum_start);
 
     if (calc_checksum != recv_checksum) {
         ROS_INFO("Checksum failed! recv %02x != calc %02x. %s", recv_checksum, calc_checksum, packetToString(buffer, start_index, stop_index).c_str());
@@ -281,31 +273,10 @@ PacketResult* TunnelProtocol::parsePacket(char* buffer, int start_index, int sto
     }
     result->setCategory(category);
 
-    std::map<std::string, string>::iterator it = _categories.find(category);
-    if (it == _categories.end()) { 
-        ROS_WARN(
-            "'%s' is not a recognized category. Buffer: %s",
-            category.c_str(),
-            packetToString(buffer, start_index, stop_index).c_str()
-        );
-        _read_packet_num++;
-        return new PacketResult(PACKET_CATEGORY_ERROR, recv_time);
-    }
+    // _read_buffer_index is currently the next index after category separator (\t)
+    result->setStart(_read_buffer_index);
+    result->setStop(checksum_start + 1);
 
-    string packet_format = it->second;
-
-    for (int format_index = 0; format_index < packet_format.size(); format_index++)
-    {
-        if (!parseNextSegment(buffer, stop_index, packet_format.at(format_index), result)) {
-            ROS_WARN(
-                "Failed to parse segment #%d. Buffer: %s",
-                format_index,
-                packetToString(buffer, start_index, stop_index).c_str()
-            );
-            _read_packet_num++;
-            return new PacketResult(INVALID_FORMAT_ERROR, recv_time);
-        }
-    }
     result->setBuffer(buffer);
     result->setErrorCode(NO_ERROR);
     _read_packet_num++;
@@ -356,28 +327,3 @@ bool TunnelProtocol::getNextSegment(char* buffer, int stop_index)
     }
     return true;
 }
-
-
-bool TunnelProtocol::parseNextSegment(char* buffer, int stop_index, char format, PacketResult* result) {
-    int length;
-    if (format == 'd' || format == 'u') {
-        length = 4;
-    }
-    else if (format == 'f') {
-        length = 8;
-    }
-    else {
-        length = -1;
-    }
-    if (!getNextSegment(buffer, stop_index, length)) {
-        return false;
-    }
-
-    result->add(_current_segment_start, _current_segment_stop - _current_segment_start);
-
-    if (format != 'd' && format != 'u' && format != 's' && format != 'x' && format != 'f') {
-        ROS_ERROR("Failed to parse segment '%s' as '%c'", packetToString(buffer, _current_segment_start, _current_segment_stop).c_str(), format);
-    }
-    return true;
-}
-

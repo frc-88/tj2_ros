@@ -5,6 +5,8 @@
 
 using namespace std;
 
+#define THROW_EXCEPTION(msg)  throw std::runtime_error(msg)
+
 
 typedef union uint16_union
 {
@@ -106,15 +108,32 @@ string format_char(unsigned char c)
     }
 }
 
+string packetToString(char* buffer, int start_index, int stop_index)
+{
+    string str = "";
+    for (size_t i = start_index; i < stop_index; i++) {
+        str += format_char(buffer[i]);
+    }
+    return str;
+}
+
 class PacketResult
 {
 private:
     string _category;
     int _error_code;
     ros::Time _recv_time;
-    vector<int> indices;
-    vector<int> lengths;
+    int _start_index;
+    int _stop_index;
     char* _buffer;
+    int _current_index;
+    
+    void checkIndex() {
+        if (_current_index >= _stop_index) {
+            ROS_ERROR("Index exceeds buffer limits. %d >= %d", _current_index, _stop_index);
+            THROW_EXCEPTION("Index exceeds buffer limits");
+        }
+    }
 public:
     PacketResult(int error_code, ros::Time recv_time) {
         _category = "";
@@ -150,21 +169,36 @@ public:
     void setBuffer(char* buffer) {
         _buffer = buffer;
     }
-    size_t size() {
-        return indices.size();
+    void setStart(int index) {
+        _start_index = index;
+        _current_index = _start_index;
     }
-    int32_t get_int(int index) {
-        return to_int32(_buffer + indices.at(index));
+    void setStop(int index) {
+        _stop_index = index;
     }
-    double get_double(int index) {
-        return to_double(_buffer + indices.at(index));
+    int32_t getInt() {
+        int32_t result = to_int32(_buffer + _current_index);
+        _current_index += sizeof(int32_t);
+        checkIndex();
+        return result;
     }
-    string get_string(int index) {
-        return to_string(_buffer + indices.at(index), lengths.at(index));
+    double getDouble() {
+        double result = to_double(_buffer + _current_index);
+        _current_index += sizeof(double);
+        checkIndex();
+        return result;
     }
-    void add(int index, int length) {
-        indices.push_back(index);
-        lengths.push_back(length);
+    string getString() {
+        int length = to_uint16(_buffer + _current_index);
+        _current_index += sizeof(uint16_t);
+        checkIndex();
+        return getString(length);
+    }
+    string getString(int length) {
+        string result = to_string(_buffer + _current_index, length);
+        _current_index += length;
+        checkIndex();
+        return result;
     }
 };
 
@@ -178,7 +212,6 @@ private:
     uint32_t _write_packet_num;
     int _current_segment_start;
     int _current_segment_stop;
-    std::map<string, string> _categories;
 
     PacketResult* parsePacket(char* buffer, int start_index, int stop_index);
     bool parseNextSegment(char* buffer, int stop_index, char format, PacketResult* result);
@@ -211,10 +244,8 @@ public:
     static const int SEGMENT_TOO_LONG_ERROR = 10;
     static const int PACKET_TIMEOUT_ERROR = 11;
 
-    TunnelProtocol(std::map<string, string> categories);
+    TunnelProtocol();
     ~TunnelProtocol();
-
-    string packetToString(char* buffer, int start_index, int stop_index);
 
     int parseBuffer(char* buffer, int start_index, int stop_index);
     PacketResult* popResult();
