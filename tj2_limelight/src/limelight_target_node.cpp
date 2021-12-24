@@ -120,7 +120,9 @@ void LimelightTargetNode::camera_callback(const ImageConstPtr& color_image, cons
         cv::Point3d dimensions;
         vision_msgs::Detection2D det_msg = target_to_detection(index, depth_cv_image, bndbox, dimensions);
 
-        det_msg.source_img = *color_image;
+        // if (index == 0) {
+        //     det_msg.source_img = *color_image;
+        // }
         det_msg.header.stamp = depth_image->header.stamp;
         det_msg.header.frame_id = _camera_model.tfFrame();
 

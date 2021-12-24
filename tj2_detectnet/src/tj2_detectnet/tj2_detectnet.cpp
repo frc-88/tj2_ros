@@ -179,26 +179,6 @@ int TJ2DetectNet::run()
         ROS_ERROR("failed to create imageConverter objects");
         return 0;
     }
-    // ros::Rate clock_rate(60);  // run loop at 60 Hz
-    //
-    // int exit_code = 0;
-    // while (ros::ok())
-    // {
-    //     // let ROS process any events
-    //     ros::spinOnce();
-    //     clock_rate.sleep();
-    //
-    //     try {
-    //
-    //     }
-    //     catch (exception& e) {
-    //         ROS_ERROR_STREAM("Exception in main loop: " << e.what());
-    //         exit_code = 1;
-    //         break;
-    //     }
-    // }
-    //
-    // return exit_code;
     ros::spin();
 
     // free resources

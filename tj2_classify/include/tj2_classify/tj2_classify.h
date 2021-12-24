@@ -91,7 +91,7 @@ ObjPoseDescription init_obj_desc()
     };
 }
 
-class TJ2DetectNet {
+class TJ2Classify {
 private:
     ros::NodeHandle nh;  // ROS node handle
 
@@ -106,11 +106,11 @@ private:
 
     string _color_topic;
     string _color_info_topic;
-    string _depth_topic;
-    string _depth_info_topic;
+    string _raw_detection_topic;
     int _bounding_box_border_px;
     double _marker_persistance_s;
     ros::Duration _marker_persistance;
+    double _threshold;
 
     bool _publish_with_frame;
     string _target_frame;
@@ -130,7 +130,7 @@ private:
     imageConverter* _input_cvt;
     imageConverter* _overlay_cvt;
 
-    void load_detectnet_model();
+    void load_imagenet_model();
     void load_labels();
 
     // bbox to pose variables
@@ -140,14 +140,15 @@ private:
     // Subscribers
     message_filters::Subscriber<Image> color_sub;
     message_filters::Subscriber<CameraInfo> color_info_sub;
-    message_filters::Subscriber<Image> depth_sub;
+    message_filters::Subscriber<vision_msgs::Detection2DArray> raw_detection_sub;
 
-    typedef message_filters::sync_policies::ApproximateTime<Image, CameraInfo, Image> ApproxSyncPolicy;
-    // typedef message_filters::sync_policies::ExactTime<Image, CameraInfo, Image> ExactSyncPolicy;
+    typedef message_filters::sync_policies::ApproximateTime<Image, CameraInfo, vision_msgs::Detection2DArray> ApproxSyncPolicy;
 
     typedef message_filters::Synchronizer<ApproxSyncPolicy> Sync;
-    // typedef message_filters::Synchronizer<ExactSyncPolicy> Sync;
     boost::shared_ptr<Sync> sync;
+
+    // Subscribers
+    ros::Subscriber _raw_detections_sub;
 
     // Publishers
     image_transport::ImageTransport _image_transport;
@@ -162,17 +163,12 @@ private:
     tf2_ros::TransformListener tfListener;
 
     // Sub callbacks
-    void rgbd_callback(const ImageConstPtr& color_image, const CameraInfoConstPtr& color_info, const ImageConstPtr& depth_image);
-    int detect(const ImageConstPtr& color_image, const CameraInfoConstPtr& color_info, vision_msgs::Detection2DArray* msg);
-    bool publish_overlay(const CameraInfoConstPtr& color_info, detectNet::Detection* detections, int num_detections);
+    void raw_detection_callback(const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info, const vision_msgs::Detection2DArrayConstPtr& raw_detection);
 
+    bool msg_to_frame(const ImageConstPtr msg, cv::Mat& image);
     void reset_label_counter();
-    ObjPoseDescription bbox_to_pose(cv::Mat depth_cv_image, vision_msgs::BoundingBox2D bbox, ros::Time stamp, string label, int label_index);
-    visualization_msgs::Marker make_marker(ObjPoseDescription* desc);
-    double get_z_dist(cv::Mat depth_cv_image, ObjPoseDescription* desc);
-    void tf_obj_to_target(const CameraInfoConstPtr color_info, ObjPoseDescription& obj_desc);
 
 public:
-    TJ2DetectNet(ros::NodeHandle* nodehandle);
+    TJ2Classify(ros::NodeHandle* nodehandle);
     int run();
 };

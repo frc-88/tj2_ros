@@ -189,6 +189,29 @@ bool imageConverter::Convert( sensor_msgs::Image& msg, imageFormat format, Pixel
 	return true;
 }
 
+// Convert opencv Mat
+bool imageConverter::Convert(cv::Mat input)
+{
+	cv::Size size = mat.size();
+	ROS_DEBUG("converting %ux%u CV Mat", size.width, size.height);
+
+	imageFormat inputFormat = IMAGE_BGR8;
+	// assure memory allocation
+	if (!Resize(size.width, size.height, input_format))
+		return false;
+
+	// copy input to shared memory
+	memcpy(mInputCPU, input.data, imageFormatSize(input_format, size.width, size.height));
+
+	// convert image format
+	if (CUDA_FAILED(cudaConvertColor(mInputGPU, input_format, mOutputGPU, InternalFormat, size.width, size.height)))
+	{
+		ROS_ERROR("failed to convert %ux%u image (from %s to %s) with CUDA", mWidth, mHeight, imageFormatToStr(input_format), imageFormatToStr(InternalFormat));
+		return false;
+	}
+
+	return true;
+}
 
 // Resize
 bool imageConverter::Resize( uint32_t width, uint32_t height, imageFormat inputFormat )
