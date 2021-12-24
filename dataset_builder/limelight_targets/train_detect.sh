@@ -1,5 +1,5 @@
-DATABASE=dataset
-OUTPUT=model
+DATABASE=detect_dataset
+OUTPUT=detect_model
 BASE_NET=mb2-ssd-lite
 PRETRAINED_NET=pretrained/mb2-ssd-lite-mp-0_686.pth
 #RESUME=/home/ben/jetson-inference/python/training/detection/ssd/models/tj2_2020_game/mb2-ssd-lite-Epoch-99-Loss-1.019632302224636.pth

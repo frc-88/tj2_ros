@@ -42,9 +42,8 @@ false_shapes_params = (1, 2, 1, 5, ("rect", "circ"), excluded_hues)
 false_window_params = (1, 3, 1, 9, ("rect",), list(range(0, 90)) + list(range(120, 256)))
 
 
-def with_gauss_background(image, frame):
-    background = gauss_background(*background_gauss_params, image.shape)
-    return apply_objects_to_background(image, background, frame, no_warps)
+def no_operation(image, frame):
+    return image
 
 
 def with_gauss_background(image, frame):

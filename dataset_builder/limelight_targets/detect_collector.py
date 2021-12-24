@@ -4,7 +4,7 @@ from tj2_tools.training.get_image_size import get_image_metadata
 from tj2_tools.training.pascal_voc import PascalVOCFrame, PascalVOCObject
 
 
-class ImageCollector:
+class DetectCollector:
     def __init__(self, base_dir):
         self.base_dir = base_dir
         self.frames = []
