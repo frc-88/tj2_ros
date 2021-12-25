@@ -31,6 +31,8 @@
 
 #include <image_geometry/pinhole_camera_model.h>
 
+#include <jetson-inference/imageNet.h>
+
 
 using namespace std;
 using namespace sensor_msgs;
@@ -50,12 +52,16 @@ private:
     image_transport::ImageTransport _image_transport;
     image_geometry::PinholeCameraModel _camera_model;
     sensor_msgs::CameraInfo _camera_info;
-    std::vector<std_msgs::ColorRGBA>* _marker_colors;
+    std::map<std::string, std_msgs::ColorRGBA> _marker_colors;
     double _min_contour_area, _max_contour_area;
     int _approx_sync_queue_size;
 
     cv::Scalar hsv_lower_bound;
     cv::Scalar hsv_upper_bound;
+
+    std::vector<std::string> _class_descriptions;
+    std::map<std::string, double> _z_depth_estimations;
+    uint32_t _num_classes;
 
     // Publishers
     ros::Publisher _detection_array_pub;
@@ -68,6 +74,9 @@ private:
     message_filters::Subscriber<Image>_depth_sub;
     message_filters::Subscriber<CameraInfo> _depth_info_sub;
     message_filters::Subscriber<tj2_limelight::LimelightTarget> _target_sub;
+
+    // imageNet variables
+    imageNet* _net;
 
     // ROS TF
     tf2_ros::Buffer _tf_buffer;
@@ -90,13 +99,24 @@ private:
     vector<int> _hsv_upper_bound_param;
     XmlRpc::XmlRpcValue _marker_colors_param;
 
+    string _model_name;
+    string _model_path;
+    string _prototxt_path;
+    string _class_labels_path;
+    string _input_blob;
+    string _output_blob;
+    double _threshold;
+
     bool msg_to_frame(const ImageConstPtr msg, cv::Mat& image);
-    vision_msgs::Detection2D target_to_detection(int id, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions);
+    vision_msgs::Detection2D target_to_detection(int class_index, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions);
     double get_target_z(cv::Mat depth_cv_image, cv::Rect target);
     void publish_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
     visualization_msgs::Marker make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
+    int classify(cv::Mat cropped_image);
+    void detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes, vector<int>* classes);
 
-    void detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes);
+    void load_imagenet_model();
+    void load_labels();
 
     // Callbacks
     void target_callback(const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info, const tj2_limelight::LimelightTargetConstPtr& target);
