@@ -77,6 +77,8 @@ private:
 	uchar3* _image_output_cpu;
     uchar3* _image_output_gpu;
 
+    cv::Size _classify_resize;
+
     // Publishers
     ros::Publisher _detection_array_pub;
     ros::Publisher _marker_pub;

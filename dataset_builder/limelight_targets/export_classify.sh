@@ -1,5 +1,5 @@
 
-MODEL_DIR=classify_model
+MODEL_DIR=./outputs/classify_model
 MODEL_NAME=""  # picks lowest loss
 OUTPUT=limelight-classify.onnx
 

@@ -1,11 +1,12 @@
-import os.path
+import os
+import shutil
 import random
 from pathlib import Path
 from tj2_tools.training.pascal_voc import PascalVOCFrame
 
 from detect_collector import DetectCollector
-from outputs.dataset_builder.detect_dataset_builder import DetectDatasetBuilder
-from outputs.dataset_builder.classify_dataset_builder import ClassifyDatasetBuilder
+from dataset_builder.detect_dataset_builder import DetectDatasetBuilder
+from dataset_builder.classify_dataset_builder import ClassifyDatasetBuilder
 from pipelines import *
 from helpers import record_annotation, debug_imshow, crop_to_annotations, record_image, record_classify_paths, \
     read_classify_paths
@@ -36,6 +37,9 @@ def generate_detect_images():
         "p_window_false_objects": (20, window_false_objects),
     }
 
+    output_dir = "outputs/output_detect_images"
+    shutil.rmtree(output_dir)
+
     count = 0
     for key, (iterations, pipeline) in pipelines.items():
         for _ in range(iterations):
@@ -45,7 +49,7 @@ def generate_detect_images():
                 output_image = pipeline(image, frame)
                 # debug_imshow(output_image, frame)
 
-                record_annotation(output_image, frame, "output_detect_images", key)
+                record_annotation(output_image, frame, output_dir, key)
                 count += 1
     print("Wrote %s images" % count)
 
@@ -75,6 +79,8 @@ def generate_classify_images():
         "p_window_false_objects": (5, window_false_objects),
     }
     output_dir = "outputs/output_classify_images"
+    shutil.rmtree(output_dir)
+
     image_paths = {}
 
     count = 0
@@ -89,7 +95,7 @@ def generate_classify_images():
                     for crop_image in images:
                         # debug_imshow(crop_image, frame)
                         prefix = key + "_" + label
-                        image_path = record_image(crop_image, output_dir, prefix)
+                        image_path = record_image(crop_image, output_dir, resize=(300, 300), prefix=prefix)
 
                         if label not in image_paths:
                             image_paths[label] = []
@@ -133,7 +139,7 @@ def main():
     # try_pipeline()
     # generate_detect_images()
     # format_detect_dataset()
-    # generate_classify_images()
+    generate_classify_images()
     format_classify_dataset()
 
 
