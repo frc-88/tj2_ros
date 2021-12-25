@@ -378,10 +378,10 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
         cv::Rect bndbox = cv::boundingRect(contours.at(index));
         cv::Mat cropped_frame = frame(bndbox);
 
-        // Mat resized_frame;
-        // cv::resize(cropped_frame, resized_frame, _classify_resize);
-        // int class_index = classify(resized_frame);
-        int class_index = classify(cropped_frame);
+        cv::Mat resized_frame;
+        cv::resize(cropped_frame, resized_frame, _classify_resize);
+        int class_index = classify(resized_frame);
+        // int class_index = classify(cropped_frame);
         if (class_index >= 0) {
             detection_boxes->push_back(bndbox);
             classes->push_back(class_index);
@@ -420,7 +420,7 @@ int LimelightTargetNode::classify(cv::Mat cropped_image)
     // classify the image
     float confidence = 0.0f;
 
-    imageFormat input_format = IMAGE_RGB8;
+    imageFormat input_format = IMAGE_BGR8;
 
     // assure memory allocation
 	if (!allocate_on_gpu(width, height, input_format)) {
