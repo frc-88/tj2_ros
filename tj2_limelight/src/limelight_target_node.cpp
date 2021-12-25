@@ -13,6 +13,16 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
     ros::param::param<int>("~approx_sync_queue_size", _approx_sync_queue_size, 10);
     _marker_persistance = ros::Duration(_marker_persistance_s);
 
+    ros::param::param<string>("~model_name", _model_name, "googlenet");
+    ros::param::param<string>("~model_path", _model_path, "");
+    ros::param::param<string>("~prototxt_path", _prototxt_path, "");
+    ros::param::param<string>("~class_labels_path", _class_labels_path, "");
+
+    ros::param::param<string>("~input_blob", _input_blob, IMAGENET_DEFAULT_INPUT);
+    ros::param::param<string>("~output_blob", _output_blob, IMAGENET_DEFAULT_OUTPUT);
+
+    ros::param::param<double>("~threshold", _threshold, 0.5);
+
     string key;
     if (!ros::param::search("hsv_lower_bound", key)) {
         THROW_EXCEPTION("Failed to find hsv_lower_bound parameter");
@@ -47,39 +57,53 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
         _hsv_upper_bound_param.at(2)
     );
 
-    if (ros::param::search("marker_colors", key))
+    if (!ros::param::search("marker_colors", key)) {
+        THROW_EXCEPTION("Failed to find marker_colors parameter");
+    }
+    ROS_DEBUG("Found marker_colors: %s", key.c_str());
+    nh.getParam(key, _marker_colors_param);
+
+    // _marker_colors_param is a map
+    if (_marker_colors_param.getType() != XmlRpc::XmlRpcValue::Type::TypeStruct ||
+        _marker_colors_param.size() == 0) {
+        THROW_EXCEPTION("marker_colors wrong type or size");
+    }
+    ROS_DEBUG("marker_colors is the correct type");
+
+    for (XmlRpc::XmlRpcValue::iterator it = _marker_colors_param.begin(); it != _marker_colors_param.end(); ++it)
     {
-        ROS_DEBUG("Found marker_colors: %s", key.c_str());
-        nh.getParam(key, _marker_colors_param);
-
-        // _marker_colors_param is an array
-        if (_marker_colors_param.getType() != XmlRpc::XmlRpcValue::Type::TypeArray ||
-            _marker_colors_param.size() == 0) {
-            THROW_EXCEPTION("marker_colors wrong type or size");
+        if (it->second.getType() != XmlRpc::XmlRpcValue::TypeArray) {
+            THROW_EXCEPTION("marker_colors element is not a list");
         }
-        ROS_DEBUG("marker_colors is the correct type");
+        ROS_DEBUG("\tFound marker_colors label");
+        string label = it->first;
 
-        _marker_colors = new std::vector<std_msgs::ColorRGBA>(_marker_colors_param.size());
-        for (size_t index = 0; index < _marker_colors_param.size(); index++)
-        {
-            if (_marker_colors_param[index].getType() != XmlRpc::XmlRpcValue::TypeArray) {
-                THROW_EXCEPTION("marker_colors element is not a list");
-            }
-            ROS_DEBUG("\tFound marker_colors entry");
+        std_msgs::ColorRGBA color;
+        color.r = (double)(it->second[0]);
+        color.g = (double)(it->second[1]);
+        color.b = (double)(it->second[2]);
+        color.a = (double)(it->second[3]);
+        _marker_colors[label] = color;
+        ROS_DEBUG("\t%s: R=%0.2f, G=%0.2f, B=%0.2f, A=%0.2f", label.c_str(), color.r, color.g, color.b, color.a);
+    }
 
-            std_msgs::ColorRGBA color;
-            color.r = (double)(_marker_colors_param[index][0]);
-            color.g = (double)(_marker_colors_param[index][1]);
-            color.b = (double)(_marker_colors_param[index][2]);
-            color.a = (double)(_marker_colors_param[index][3]);
-            _marker_colors->at(index) = color;
-            ROS_DEBUG("\tR=%0.2f, G=%0.2f, B=%0.2f, A=%0.2f", color.r, color.g, color.b, color.a);
-        }
+    if (_marker_colors.size() == 0) {
+        THROW_EXCEPTION("marker_colors has zero length!");
     }
-    else {
-        _marker_colors = new std::vector<std_msgs::ColorRGBA>(0);
+
+    if (!ros::param::search("z_depth_estimations", key)) {
+        THROW_EXCEPTION("Failed to find z_depth_estimations parameter");
     }
-    
+    ROS_DEBUG("Found z_depth_estimations: %s", key.c_str());
+    nh.getParam(key, _z_depth_estimations);
+    if (_z_depth_estimations.size() == 0) {
+        THROW_EXCEPTION("z_depth_estimations has zero length!");
+    }
+    ROS_DEBUG("z_depth_estimations is the correct size");
+
+    load_imagenet_model();
+    load_labels();
+
     _pipeline_pub = _image_transport.advertise("pipeline/image_raw", 2);
 
     _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("pipeline/markers", 10);
@@ -111,23 +135,22 @@ void LimelightTargetNode::camera_callback(const ImageConstPtr& color_image, cons
         return;
     }
     vector<cv::Rect>* detection_boxes = new vector<cv::Rect>();
-    detection_pipeline(color_cv_image, detection_boxes);
+    vector<int>* class_indices = new vector<int>();
+    detection_pipeline(color_cv_image, detection_boxes, class_indices);
     
     vision_msgs::Detection2DArray det_array_msg;
     det_array_msg.header = color_image->header;
     for (size_t index = 0; index < detection_boxes->size(); index++) {
         cv::Rect bndbox = detection_boxes->at(index);
+        int class_index = class_indices->at(index);
         cv::Point3d dimensions;
-        vision_msgs::Detection2D det_msg = target_to_detection(index, depth_cv_image, bndbox, dimensions);
+        vision_msgs::Detection2D det_msg = target_to_detection(class_index, depth_cv_image, bndbox, dimensions);
 
-        // if (index == 0) {
-        //     det_msg.source_img = *color_image;
-        // }
         det_msg.header.stamp = depth_image->header.stamp;
         det_msg.header.frame_id = _camera_model.tfFrame();
 
         det_array_msg.detections.push_back(det_msg);
-        publish_markers("limelight", index + 1, det_msg, dimensions);
+        publish_markers(_class_descriptions.at(class_index), index, det_msg, dimensions);
     }
     _detection_array_pub.publish(det_array_msg);
 }
@@ -151,7 +174,7 @@ void LimelightTargetNode::target_callback(const ImageConstPtr& depth_image, cons
         target->thor, target->tvert
     );
     cv::Point3d dimensions;
-    vision_msgs::Detection2D det_msg = target_to_detection(0, depth_cv_image, bndbox, dimensions);
+    vision_msgs::Detection2D det_msg = target_to_detection(-1, depth_cv_image, bndbox, dimensions);
 
     det_msg.header.stamp = depth_image->header.stamp;
     det_msg.header.frame_id = _camera_model.tfFrame();
@@ -160,7 +183,7 @@ void LimelightTargetNode::target_callback(const ImageConstPtr& depth_image, cons
     publish_markers("target", 0, det_msg, dimensions);
 }
 
-vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int id, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions)
+vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_index, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions)
 {
     vision_msgs::Detection2D det_msg;
     int width = bndbox.width;
@@ -196,7 +219,12 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int id, cv::Ma
 
     dimensions.x = 2.0 * (edge.x - center.x);
     dimensions.y = 2.0 * (edge.y - center.y);
-    dimensions.z = 0.005;  // We have no information on how deep the target goes.
+    if (0 <= class_index && class_index < _class_descriptions.size()) {
+        dimensions.z = _z_depth_estimations[_class_descriptions.at(class_index)];
+    }
+    else {
+        dimensions.z = 0.005;
+    }
 
     geometry_msgs::Pose object_pose;
     object_pose.position.x = center.x;
@@ -214,7 +242,7 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int id, cv::Ma
 
     vision_msgs::ObjectHypothesisWithPose hypothesis;
 
-    hypothesis.id = id;
+    hypothesis.id = class_index;
     hypothesis.score = 0.0;
     hypothesis.pose.pose = object_pose;
 
@@ -255,7 +283,7 @@ void LimelightTargetNode::publish_markers(string name, int index, vision_msgs::D
     text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     text_marker.text = text_marker.ns;
     text_marker.ns = "text_" + text_marker.ns;
-    text_marker.pose.position.y += dimensions.y;  // Z is perpendicular to camera plane. Y is up in world coordinates here
+    text_marker.pose.position.y += dimensions.y;  // Z is perpendicular to camera plane. -Y is up in world coordinates here
     text_marker.scale.x = 0.0;
     text_marker.scale.y = 0.0;
     text_marker.scale.z = _text_marker_size;
@@ -285,13 +313,11 @@ visualization_msgs::Marker LimelightTargetNode::make_marker(string name, int ind
     scale_vector.y = dimensions.y;
     scale_vector.z = dimensions.z;
     marker.scale = scale_vector;
-    if (_marker_colors->size() == 0) {
-        marker.color = std_msgs::ColorRGBA();
-        marker.color.r = 1.0;
-        marker.color.a = 0.5;
-    }
-    else {
-        marker.color = _marker_colors->at(index % _marker_colors->size());
+    marker.color = std_msgs::ColorRGBA();
+    marker.color.r = 1.0;
+    marker.color.a = 0.5;
+    if (_marker_colors.count(name)) {
+        marker.color = _marker_colors[name];
     }
 
     return marker;
@@ -320,7 +346,7 @@ double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, cv::Rect target
     return z_dist;
 }
 
-void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes)
+void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes, vector<int>* classes)
 {
     cv::Mat frame_hsv, contour_image;
     vector<vector<cv::Point>> contours;
@@ -328,7 +354,6 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     cv::cvtColor(frame, frame_hsv, cv::COLOR_BGR2HSV);
     cv::inRange(frame_hsv, hsv_lower_bound, hsv_upper_bound, contour_image);
     cv::findContours(contour_image, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
-    detection_boxes->resize(contours.size());
     for (size_t index = 0; index < contours.size(); index++) {
         double area = cv::contourArea(contours.at(index));
         if (area < _min_contour_area || area > _max_contour_area) {
@@ -337,7 +362,14 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
         }
     }
     for (size_t index = 0; index < contours.size(); index++) {
-        detection_boxes->at(index) = cv::boundingRect(contours.at(index));
+        cv::Rect bndbox = cv::boundingRect(contours.at(index));
+        cv::Mat cropped_frame = frame(bndbox);
+
+        int class_index = classify(cropped_frame);
+        if (class_index >= 0) {
+            detection_boxes->push_back(bndbox);
+            classes->push_back(class_index);
+        }
     }
 
     if (_pipeline_pub.getNumSubscribers() > 0) {
@@ -358,9 +390,103 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     }
 }
 
+int LimelightTargetNode::classify(cv::Mat cropped_image)
+{
+    int width = cropped_image.cols;
+    int height = cropped_image.rows;
+
+    // classify the image
+    float confidence = 0.0f;
+
+	uchar3* inputCPU;
+    memcpy(inputCPU, cropped_image.data, imageFormatSize(IMAGE_BGR8, width, height));
+
+    const int img_class = _net->Classify(inputCPU, width, height, &confidence);    
+
+    // verify the output	
+    if (img_class < 0) {            
+        return -1;
+    }
+    if (confidence < _threshold) {
+        return -1;
+    }
+    ROS_INFO("classified cropped image %f (class=%s)", confidence, _class_descriptions.at(img_class).c_str());
+
+    return img_class;
+}
+
+
+void LimelightTargetNode::load_imagenet_model()
+{
+    /*
+     * load image recognition network
+     */
+    ROS_DEBUG("Loading imagenet model.");
+    if (_model_path.size() > 0)
+    {
+        ROS_DEBUG("Loading model from %s", _model_path.c_str());
+        // create network using custom model paths
+        _net = imageNet::Create(_prototxt_path.c_str(), _model_path.c_str(),
+                            NULL, _class_labels_path.c_str(),
+                            _input_blob.c_str(), _output_blob.c_str());
+    }
+    else
+    {
+        ROS_DEBUG("Loading model from built-in set");
+        // determine which built-in model was requested
+        imageNet::NetworkType model = imageNet::NetworkTypeFromStr(_model_name.c_str());
+
+        if (model == imageNet::CUSTOM)
+        {
+            ROS_ERROR("invalid built-in pretrained model name '%s', defaulting to googlenet", _model_name.c_str());
+            model = imageNet::GOOGLENET;
+        }
+
+        // create network using the built-in model
+        _net = imageNet::Create(model);
+    }
+}
+
+
+void LimelightTargetNode::load_labels()
+{
+    /*
+     * create the class labels parameter vector
+     */
+    std::hash<std::string> model_hasher;  // hash the model path to avoid collisions on the param server
+    std::string model_hash_str = std::string(_net->GetModelPath()) + std::string(_net->GetClassPath());
+    const size_t model_hash = model_hasher(model_hash_str);
+
+    ROS_INFO("model hash => %zu", model_hash);
+    ROS_INFO("hash string => %s", model_hash_str.c_str());
+
+    // obtain the list of class descriptions
+    _num_classes = _net->GetNumClasses();
+    for (uint32_t n = 0; n < _num_classes; n++) {
+        _class_descriptions.push_back(_net->GetClassDesc(n));
+    }
+
+    // create the key on the param server
+    std::string class_key = std::string("class_labels_") + std::to_string(model_hash);
+
+    if (!nh.hasParam(class_key)) {
+        nh.setParam(class_key, _class_descriptions);
+    }
+}
+
+
 int LimelightTargetNode::run()
 {
+    if (!_net)
+    {
+        ROS_ERROR("failed to load detectNet model");
+        return 0;
+    }
+
     ros::spin();
+    
+    delete _net;
+
     return 0;
 }
 

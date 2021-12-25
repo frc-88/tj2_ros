@@ -24,6 +24,12 @@ find_package(catkin REQUIRED COMPONENTS
     tf2_ros
 )
 find_package(OpenCV REQUIRED)
+find_package(CUDA REQUIRED)
+
+find_package(jetson-utils REQUIRED)
+find_package(jetson-inference REQUIRED)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")	# enable c++11 (TensorRT requirement)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -140,6 +146,7 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
+    ${CUDA_INCLUDE_DIRS}
 )
 link_directories(${catkin_LIBRARY_DIRS})
 
@@ -185,6 +192,7 @@ target_link_libraries(${PROJECT_NAME}
 target_link_libraries(limelight_target_node
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
+    jetson-inference
 )
 
 #############
