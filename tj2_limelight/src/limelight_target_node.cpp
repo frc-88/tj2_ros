@@ -101,6 +101,16 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
     }
     ROS_DEBUG("z_depth_estimations is the correct size");
 
+    _input_size = 0;
+    _output_size = 0;
+    _image_width = 0;
+    _image_height = 0;
+
+    _image_input_cpu = NULL;
+    _image_input_gpu = NULL;
+    _image_output_cpu = NULL;
+    _image_output_gpu = NULL;
+
     load_imagenet_model();
     load_labels();
 
@@ -398,10 +408,31 @@ int LimelightTargetNode::classify(cv::Mat cropped_image)
     // classify the image
     float confidence = 0.0f;
 
-	uchar3* inputCPU;
-    memcpy(inputCPU, cropped_image.data, imageFormatSize(IMAGE_BGR8, width, height));
+    // imageFormat input_format = IMAGE_BGR8;
 
-    const int img_class = _net->Classify(inputCPU, width, height, &confidence);    
+    // // assure memory allocation
+	// if (!allocate_on_gpu(width, height, input_format)) {
+	// 	return -1;
+    // }
+
+    // memcpy(_image_input_cpu, cropped_image.data, imageFormatSize(input_format, width, height));
+
+    // // convert image format
+    // if (CUDA_FAILED(cudaConvertColor(_image_input_gpu, input_format, _image_output_gpu, _internal_format, width, height)))
+    // {
+    //     ROS_ERROR("failed to convert %ux%u image (from %s to %s) with CUDA", _image_width, _image_height, imageFormatToStr(input_format), imageFormatToStr(_internal_format));
+    //     return -1;
+    // }
+
+    ROS_INFO("Calculating image size");
+    int image_size = cropped_image.total() * cropped_image.elemSize();
+    uchar3* image_input = new uchar3[image_size];
+    ROS_INFO("Copying %d to image_input", image_size);
+    memcpy(image_input, cropped_image.data, image_size * sizeof(uchar3));
+
+    ROS_INFO("Classifying");
+    const int img_class = _net->Classify(image_input, width, height, &confidence);    
+    ROS_INFO("Image class: %d", img_class);
 
     // verify the output	
     if (img_class < 0) {            
@@ -415,6 +446,51 @@ int LimelightTargetNode::classify(cv::Mat cropped_image)
     return img_class;
 }
 
+void LimelightTargetNode::free_on_gpu()
+{
+    if (_image_input_cpu != NULL)
+    {
+        CUDA(cudaFreeHost(_image_input_cpu));
+
+        _image_input_cpu = NULL;
+        _image_input_gpu = NULL;
+    }
+
+    if (_image_output_cpu != NULL)
+    {
+        CUDA(cudaFreeHost(_image_output_cpu));
+
+        _image_output_cpu = NULL;
+        _image_output_gpu = NULL;
+    }
+}
+
+bool LimelightTargetNode::allocate_on_gpu(uint32_t width, uint32_t height, imageFormat inputFormat)
+{
+    const size_t input_size = imageFormatSize(inputFormat, width, height);
+    const size_t output_size = imageFormatSize(_internal_format, width, height);
+
+    if (input_size != _input_size || output_size != _output_size || width != _image_width || height != _image_height)
+    {
+        free_on_gpu();
+
+        if (!cudaAllocMapped((void**)&_image_input_cpu, (void**)&_image_input_gpu, input_size) ||
+            !cudaAllocMapped((void**)&_image_output_cpu, (void**)&_image_output_gpu, output_size))
+        {
+            ROS_ERROR("failed to allocate memory for %ux%u image conversion", width, height);
+            return false;
+        }
+
+        ROS_INFO("allocated CUDA memory for %ux%u image conversion", width, height);
+
+        _image_width = width;
+        _image_height = height;
+        _input_size = input_size;
+        _output_size = output_size;		
+    }
+
+    return true;
+}
 
 void LimelightTargetNode::load_imagenet_model()
 {

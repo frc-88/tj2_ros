@@ -32,6 +32,11 @@
 #include <image_geometry/pinhole_camera_model.h>
 
 #include <jetson-inference/imageNet.h>
+#include <jetson-utils/cudaUtility.h>
+#include <jetson-utils/cudaColorspace.h>
+#include <jetson-utils/cudaMappedMemory.h>
+#include <jetson-utils/imageFormat.h>
+
 
 
 using namespace std;
@@ -62,6 +67,15 @@ private:
     std::vector<std::string> _class_descriptions;
     std::map<std::string, double> _z_depth_estimations;
     uint32_t _num_classes;
+
+    size_t _input_size, _output_size;
+    uint32_t _image_width, _image_height;
+	static const imageFormat _internal_format = IMAGE_RGB8;
+
+	void* _image_input_cpu;
+    void* _image_input_gpu;
+	uchar3* _image_output_cpu;
+    uchar3* _image_output_gpu;
 
     // Publishers
     ros::Publisher _detection_array_pub;
@@ -112,8 +126,10 @@ private:
     double get_target_z(cv::Mat depth_cv_image, cv::Rect target);
     void publish_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
     visualization_msgs::Marker make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
-    int classify(cv::Mat cropped_image);
     void detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes, vector<int>* classes);
+    int classify(cv::Mat cropped_image);
+    bool allocate_on_gpu(uint32_t width, uint32_t height, imageFormat inputFormat);
+    void free_on_gpu();
 
     void load_imagenet_model();
     void load_labels();

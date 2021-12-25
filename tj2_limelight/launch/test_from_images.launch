@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="limelight">
+        <node pkg="tj2_limelight" type="publish_images.py" name="limelight_publish_images" output="screen">
+            <param name="images_dir" value="$(find tj2_limelight)/scripts/images" />
+            <param name="camera_info_path" value="$(find tj2_limelight)/config/320x240.yaml" />
+        </node>
+
+        <node pkg="tj2_limelight" type="limelight_target_node" name="limelight_target" output="screen">
+            <param name="approx_sync_queue_size" value="25" />
+            <!-- <remap from="color/image_raw" to="color/image_raw" /> -->
+            <remap from="depth/image_raw" to="aligned_depth_to_color/image_raw" />
+            <remap from="depth/camera_info" to="aligned_depth_to_color/camera_info" />
+            <rosparam file="$(find tj2_limelight)/config/pipeline.yaml" command="load" ns=""/>
+
+            <param name="model_name" value=""/>
+            <param name="model_path" value="$(find tj2_limelight)/models/limelight-classify-round-1.onnx"/>
+            <param name="class_labels_path" value="$(find tj2_limelight)/models/limelight-labels.txt"/>
+            <param name="threshold" value="0.5"/>
+            <param name="input_blob" value="input_0"/>
+            <param name="output_blob" value="output_0"/>
+        </node>
+    </group>
+
+    <node pkg="tf" type="static_transform_publisher" name="limelight_frame_to_optical" args="0.0 0.0 0.0  -0.500 0.500 -0.500 0.500 limelight_link limelight_optical_link 33" />
+</launch>
