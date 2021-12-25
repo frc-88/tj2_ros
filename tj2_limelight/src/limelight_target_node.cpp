@@ -316,7 +316,7 @@ visualization_msgs::Marker LimelightTargetNode::make_marker(string name, int ind
     marker.header = det_msg.header;
     marker.lifetime = _marker_persistance;
     marker.ns = name;
-    marker.id = det_msg.results[0].id;
+    marker.id = index;
 
     geometry_msgs::Vector3 scale_vector;
     scale_vector.x = dimensions.x;
@@ -371,6 +371,7 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
             index--;
         }
     }
+    vector<cv::Rect> rejected_boxes;
     for (size_t index = 0; index < contours.size(); index++) {
         cv::Rect bndbox = cv::boundingRect(contours.at(index));
         cv::Mat cropped_frame = frame(bndbox);
@@ -379,6 +380,9 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
         if (class_index >= 0) {
             detection_boxes->push_back(bndbox);
             classes->push_back(class_index);
+        }
+        else {
+            rejected_boxes.push_back(bndbox);
         }
     }
 
@@ -390,6 +394,9 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
         {
             for (size_t index = 0; index < detection_boxes->size(); index++) {
                 cv::rectangle(result_image, detection_boxes->at(index), cv::Scalar(255, 0, 0), 2);
+            }
+            for (size_t index = 0; index < rejected_boxes.size(); index++) {
+                cv::rectangle(result_image, rejected_boxes.at(index), cv::Scalar(0, 0, 255), 2);
             }
 
             std_msgs::Header header;
@@ -408,31 +415,31 @@ int LimelightTargetNode::classify(cv::Mat cropped_image)
     // classify the image
     float confidence = 0.0f;
 
-    // imageFormat input_format = IMAGE_BGR8;
+    imageFormat input_format = IMAGE_BGR8;
 
-    // // assure memory allocation
-	// if (!allocate_on_gpu(width, height, input_format)) {
-	// 	return -1;
-    // }
+    // assure memory allocation
+	if (!allocate_on_gpu(width, height, input_format)) {
+		return -1;
+    }
 
-    // memcpy(_image_input_cpu, cropped_image.data, imageFormatSize(input_format, width, height));
+    memcpy(_image_input_cpu, cropped_image.data, imageFormatSize(input_format, width, height));
 
-    // // convert image format
-    // if (CUDA_FAILED(cudaConvertColor(_image_input_gpu, input_format, _image_output_gpu, _internal_format, width, height)))
-    // {
-    //     ROS_ERROR("failed to convert %ux%u image (from %s to %s) with CUDA", _image_width, _image_height, imageFormatToStr(input_format), imageFormatToStr(_internal_format));
-    //     return -1;
-    // }
+    // convert image format
+    if (CUDA_FAILED(cudaConvertColor(_image_input_gpu, input_format, _image_output_gpu, _internal_format, width, height)))
+    {
+        ROS_ERROR("failed to convert %ux%u image (from %s to %s) with CUDA", _image_width, _image_height, imageFormatToStr(input_format), imageFormatToStr(_internal_format));
+        return -1;
+    }
 
-    ROS_INFO("Calculating image size");
-    int image_size = cropped_image.total() * cropped_image.elemSize();
-    uchar3* image_input = new uchar3[image_size];
-    ROS_INFO("Copying %d to image_input", image_size);
-    memcpy(image_input, cropped_image.data, image_size * sizeof(uchar3));
+    // ROS_INFO("Calculating image size");
+    // int image_size = cropped_image.total() * cropped_image.elemSize();
+    // uchar3* image_input = new uchar3[image_size];
+    // ROS_INFO("Copying %d to image_input", image_size);
+    // memcpy(image_input, cropped_image.data, image_size * sizeof(uchar3));
 
-    ROS_INFO("Classifying");
-    const int img_class = _net->Classify(image_input, width, height, &confidence);    
-    ROS_INFO("Image class: %d", img_class);
+    // ROS_INFO("Classifying");
+    const int img_class = _net->Classify(_image_output_gpu, width, height, &confidence);    
+    // ROS_INFO("Image class: %d", img_class);
 
     // verify the output	
     if (img_class < 0) {            
