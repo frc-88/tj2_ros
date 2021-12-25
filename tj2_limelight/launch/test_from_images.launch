@@ -19,6 +19,8 @@
             <param name="threshold" value="0.5"/>
             <param name="input_blob" value="input_0"/>
             <param name="output_blob" value="output_0"/>
+
+            <param name="threshold" value="0.6"/>
         </node>
     </group>
 

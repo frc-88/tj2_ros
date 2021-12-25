@@ -26,8 +26,8 @@ class LimelightImagePublisher:
         self.camera_info_path = rospy.get_param("~camera_info_path", "./config/320x240.yaml")
 
         self.image_paths = [os.path.join(self.images_dir, filename) for filename in os.listdir(self.images_dir)]
-        self.frame_dwell = 1.0
-        self.fps = 15
+        self.frame_dwell = 5.0
+        self.fps = 10
         self.image_index = 0
         self.dwell_timer = time.time()
 
@@ -44,10 +44,12 @@ class LimelightImagePublisher:
         while not rospy.is_shutdown():
             frame = self.get_next_color_frame()
             msg = self.bridge.cv2_to_imgmsg(frame, encoding="bgr8")
+            msg.header = self.camera_info.header
             self.color_image_pub.publish(msg)
 
             frame = self.get_next_depth_frame()
             msg = self.bridge.cv2_to_imgmsg(frame, encoding="passthrough")
+            msg.header = self.camera_info.header
             self.depth_image_pub.publish(msg)
 
             self.color_info_pub.publish(self.camera_info)
@@ -60,12 +62,16 @@ class LimelightImagePublisher:
             if time.time() - self.dwell_timer > self.frame_dwell:
                 self.dwell_timer = time.time()
                 self.image_index += 1
+        else:
+            self.image_index += 1
+        if self.image_index >= len(self.image_paths):
+            self.image_index = 0
         frame = cv2.imread(path)
         return frame
     
     def get_next_depth_frame(self):
         depth_frame = np.zeros((self.camera_info.height, self.camera_info.width), np.uint16)
-        depth_frame[:] = 5000
+        depth_frame[:] = 250
         return depth_frame
     
     def load_camera_info(self, path):
