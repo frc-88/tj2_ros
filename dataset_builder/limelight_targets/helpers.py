@@ -239,7 +239,7 @@ def record_annotation(image, frame: PascalVOCFrame, directory, prefix="image"):
     return image_path, frame_path
 
 
-def record_image(image, directory, prefix="image"):
+def record_image(image, directory, resize=None, prefix="image"):
     if not os.path.isdir(directory):
         os.makedirs(directory)
 
@@ -253,6 +253,8 @@ def record_image(image, directory, prefix="image"):
             image_path = None
             count += 1
     print("Writing to %s" % image_path)
+    if resize is not None:
+        image = cv2.resize(image, resize)
     cv2.imwrite(image_path, image)
 
     return image_path
