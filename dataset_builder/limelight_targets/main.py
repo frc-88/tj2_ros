@@ -9,7 +9,7 @@ from dataset_builder.detect_dataset_builder import DetectDatasetBuilder
 from dataset_builder.classify_dataset_builder import ClassifyDatasetBuilder
 from pipelines import *
 from helpers import record_annotation, debug_imshow, crop_to_annotations, record_image, record_classify_paths, \
-    read_classify_paths
+    read_classify_paths, crop_to_background
 
 
 def generate_detect_images():
@@ -38,7 +38,8 @@ def generate_detect_images():
     }
 
     output_dir = "outputs/output_detect_images"
-    shutil.rmtree(output_dir)
+    if os.path.isdir(output_dir):
+        shutil.rmtree(output_dir)
 
     count = 0
     for key, (iterations, pipeline) in pipelines.items():
@@ -79,7 +80,8 @@ def generate_classify_images():
         "p_window_false_objects": (5, window_false_objects),
     }
     output_dir = "outputs/output_classify_images"
-    shutil.rmtree(output_dir)
+    if os.path.isdir(output_dir):
+        shutil.rmtree(output_dir)
 
     image_paths = {}
 
@@ -91,6 +93,9 @@ def generate_classify_images():
 
                 output_image = pipeline(image, frame)
                 crops = crop_to_annotations(output_image, frame)
+                backgrounds = crop_to_background(output_image, frame, (20, 20), (60, 60), 2)
+
+                crops.update(backgrounds)
                 for label, images in crops.items():
                     for crop_image in images:
                         # debug_imshow(crop_image, frame)
