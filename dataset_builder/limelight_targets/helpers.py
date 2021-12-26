@@ -35,6 +35,12 @@ def do_boxes_overlap(box, other):
 
 
 def check_bndbox(bndbox, other_bndboxes, w_bndbox, shape, min_percentage, max_percentage, lower_ratio, upper_ratio):
+    # Bounding box is not ok if
+    #   warped bounding box extends out of the image
+    #   is smaller in width or height than the original bounding box by X * min_percentage
+    #   is larger in width or height than the original bounding box by X * max_percentage
+    #   new_width/new_height - old_width/old_height is less than lower_ratio or greater than upper_ratio 
+    #   the new bounding box intersects with another bounding box in other_bndboxes
     w_xmin, w_ymin, w_xmax, w_ymax = w_bndbox
     xmin, ymin, xmax, ymax = bndbox
     height, width = shape[0:2]
@@ -289,6 +295,40 @@ def crop_to_annotations(image, frame):
         xmin, ymin, xmax, ymax = obj.bndbox
         cropped_image = image[ymin: ymax, xmin: xmax]
         crops[obj.name].append(cropped_image)
+    return crops
+
+
+def crop_to_background(image, frame, min_box, max_box, num_backgrounds, background_name="background"):
+    crops = {}
+    other_bndboxes = []
+    for obj in frame.objects:
+        other_bndboxes.append(obj.bndbox)
+    
+    image_height, image_width = image.shape[:2]
+    for count in range(num_backgrounds):
+        background_box = None
+        for _ in range(5000):
+            box_width = random.randint(min_box[0], max_box[0])
+            box_height = random.randint(min_box[1], max_box[1])
+            box_x = random.randint(0, image_width - box_width)
+            box_y = random.randint(0, image_height - box_height)
+            bndbox = [box_x, box_y, box_x + box_width, box_y + box_height]
+            does_overlap = False
+            for other_bndbox in other_bndboxes:
+                if do_boxes_overlap(bndbox, other_bndbox):
+                    does_overlap = True
+            if does_overlap:
+                continue
+            background_box = bndbox
+            break
+        if background_box is None:
+            raise RuntimeError("Failed to find a suitable background box for image size (%s, %s)" % (image_width, image_height))
+        
+        xmin, ymin, xmax, ymax = background_box
+        cropped_image = image[ymin: ymax, xmin: xmax]
+        if obj.name not in crops:
+            crops[background_name] = []
+        crops[background_name].append(cropped_image)
     return crops
 
 
