@@ -8,5 +8,5 @@ z_depth_estimations:
   target_2: 0.002
 
 text_marker_size: 0.05
-min_contour_area: 25
+min_contour_area: 3
 max_contour_area: 1000

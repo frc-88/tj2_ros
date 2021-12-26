@@ -25,7 +25,8 @@ class LimelightImagePublisher:
         self.images_dir = rospy.get_param("~images_dir", "./images")
         self.camera_info_path = rospy.get_param("~camera_info_path", "./config/320x240.yaml")
 
-        self.image_paths = [os.path.join(self.images_dir, filename) for filename in os.listdir(self.images_dir)]
+        # self.image_paths = [os.path.join(self.images_dir, filename) for filename in os.listdir(self.images_dir)]
+        self.image_paths = [os.path.join(self.images_dir, filename) for filename in ("00_original-00001.jpg", "00_original-00020.jpg", "00_original-00026.jpg", "00_original-00027.jpg", "00_original-00028.jpg", "00_original-00039.jpg", )]
         self.frame_dwell = 2.0
         self.fps = 10
         self.image_index = 0
