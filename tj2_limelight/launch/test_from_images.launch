@@ -14,8 +14,8 @@
             <rosparam file="$(find tj2_limelight)/config/pipeline.yaml" command="load" ns=""/>
 
             <param name="model_name" value=""/>
-            <param name="model_path" value="$(find tj2_limelight)/models/limelight-classify-round-2.onnx"/>
-            <param name="class_labels_path" value="$(find tj2_limelight)/models/limelight-labels.txt"/>
+            <param name="model_path" value="$(find tj2_limelight)/models/limelight-classify-round-3.onnx"/>
+            <param name="class_labels_path" value="$(find tj2_limelight)/models/limelight-labels-round-3.txt"/>
             <param name="threshold" value="0.5"/>
             <param name="input_blob" value="input_0"/>
             <param name="output_blob" value="output_0"/>
