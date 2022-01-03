@@ -113,22 +113,23 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
     _image_output_cpu = NULL;
     _image_output_gpu = NULL;
 
+    _current_targets = new vector<cv::Rect>();
+
     load_imagenet_model();
     load_labels();
 
     _pipeline_pub = _image_transport.advertise("pipeline/image_raw", 2);
 
-    _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("pipeline/markers", 10);
-    _target_detection_pub = nh.advertise<vision_msgs::Detection2D>("detections/target", 10);
-    _detection_array_pub = nh.advertise<vision_msgs::Detection2DArray>("detections/array", 10);
+    _marker_target_pub = nh.advertise<visualization_msgs::MarkerArray>("markers/targets", 10);
+    _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("markers/pipeline", 10);
+    _target_detection_pub = nh.advertise<vision_msgs::Detection2DArray>("detections/targets", 10);
+    _detection_array_pub = nh.advertise<vision_msgs::Detection2DArray>("detections/pipeline", 10);
 
     _color_sub.subscribe(nh, "color/image_raw", 10);
     _depth_sub.subscribe(nh, "depth/image_raw", 10);
     _depth_info_sub.subscribe(nh, "depth/camera_info", 10);
-    _target_sub.subscribe(nh, "/limelight/target", 10);
-
-    target_sync.reset(new TargetSync(TargetApproxSyncPolicy(_approx_sync_queue_size), _depth_sub, _depth_info_sub, _target_sub));
-    target_sync->registerCallback(boost::bind(&LimelightTargetNode::target_callback, this, _1, _2, _3));
+    
+    _target_sub = nh.subscribe("targets", 1, &LimelightTargetNode::target_callback, this);
 
     camera_sync.reset(new CameraSync(CameraApproxSyncPolicy(_approx_sync_queue_size), _color_sub, _depth_sub, _depth_info_sub));
     camera_sync->registerCallback(boost::bind(&LimelightTargetNode::camera_callback, this, _1, _2, _3));
@@ -147,52 +148,52 @@ void LimelightTargetNode::camera_callback(const ImageConstPtr& color_image, cons
         return;
     }
     vector<cv::Rect>* detection_boxes = new vector<cv::Rect>();
+    contour_pipeline(color_cv_image, detection_boxes);
+
+    publish_markers_and_detections(_detection_array_pub, _marker_pub, detection_boxes, color_image->header, color_cv_image, depth_cv_image);
+    publish_markers_and_detections(_target_detection_pub, _marker_target_pub, _current_targets, color_image->header, color_cv_image, depth_cv_image);
+}
+
+void LimelightTargetNode::publish_markers_and_detections(ros::Publisher& detection_array_pub, ros::Publisher& marker_pub, vector<cv::Rect>* detection_boxes, std_msgs::Header header, cv::Mat color_cv_image, cv::Mat depth_cv_image)
+{
     vector<int>* class_indices = new vector<int>();
     detection_pipeline(color_cv_image, detection_boxes, class_indices);
-    
     vision_msgs::Detection2DArray det_array_msg;
-    det_array_msg.header = color_image->header;
+    det_array_msg.header = header;
+    det_array_msg.header.frame_id = _camera_model.tfFrame();
     for (size_t index = 0; index < detection_boxes->size(); index++) {
         cv::Rect bndbox = detection_boxes->at(index);
         int class_index = class_indices->at(index);
         cv::Point3d dimensions;
         vision_msgs::Detection2D det_msg = target_to_detection(class_index, depth_cv_image, bndbox, dimensions);
 
-        det_msg.header.stamp = depth_image->header.stamp;
+        det_msg.header = header;
         det_msg.header.frame_id = _camera_model.tfFrame();
 
         det_array_msg.detections.push_back(det_msg);
-        publish_markers(_class_descriptions.at(class_index), index, det_msg, dimensions);
-    }
-    _detection_array_pub.publish(det_array_msg);
-}
-
-void LimelightTargetNode::target_callback(const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info, const tj2_limelight::LimelightTargetConstPtr& target)
-{
-    if (!target->tv) {
-        return;
-    }
-
-    _camera_model.fromCameraInfo(depth_info);
-
-    cv::Mat depth_cv_image;
-    if (!msg_to_frame(depth_image, depth_cv_image)) {
-        return;
+        visualization_msgs::MarkerArray markers = create_markers(_class_descriptions.at(class_index), index, det_msg, dimensions);
+        marker_pub.publish(markers);
     }
     
-    cv::Rect bndbox(
-        target->tx - target->thor / 2,
-        target->ty - target->tvert / 2,
-        target->thor, target->tvert
-    );
-    cv::Point3d dimensions;
-    vision_msgs::Detection2D det_msg = target_to_detection(-1, depth_cv_image, bndbox, dimensions);
+    detection_array_pub.publish(det_array_msg);
+}
 
-    det_msg.header.stamp = depth_image->header.stamp;
-    det_msg.header.frame_id = _camera_model.tfFrame();
+void LimelightTargetNode::target_callback(const tj2_limelight::LimelightTargetArrayConstPtr& targets)
+{
+    _current_targets->clear();
+    if (targets->targets.size() == 0) {
+        return;
+    }
 
-    _target_detection_pub.publish(det_msg);
-    publish_markers("target", 0, det_msg, dimensions);
+    for (size_t index = 0; index < targets->targets.size(); index++) {
+        tj2_limelight::LimelightTarget target = targets->targets.at(index);
+        cv::Rect bndbox(
+            target.tx - target.thor / 2,
+            target.ty - target.tvert / 2,
+            target.thor, target.tvert
+        );
+        _current_targets->push_back(bndbox);
+    }
 }
 
 vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_index, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions)
@@ -283,7 +284,7 @@ bool LimelightTargetNode::msg_to_frame(const ImageConstPtr msg, cv::Mat& image)
     return true;
 }
 
-void LimelightTargetNode::publish_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
+visualization_msgs::MarkerArray LimelightTargetNode::create_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
 {
     visualization_msgs::MarkerArray markers;
     visualization_msgs::Marker rect_marker = make_marker(name, index, det_msg, dimensions);
@@ -307,7 +308,7 @@ void LimelightTargetNode::publish_markers(string name, int index, vision_msgs::D
     markers.markers.push_back(rect_marker);
     markers.markers.push_back(text_marker);
 
-    _marker_pub.publish(markers);
+    return markers;
 }
 
 visualization_msgs::Marker LimelightTargetNode::make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
@@ -358,7 +359,7 @@ double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, cv::Rect target
     return z_dist;
 }
 
-void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes, vector<int>* classes)
+void LimelightTargetNode::contour_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes)
 {
     cv::Mat frame_hsv, contour_image;
     vector<vector<cv::Point>> contours;
@@ -373,15 +374,22 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
             index--;
         }
     }
-    vector<cv::Rect> rejected_boxes;
     for (size_t index = 0; index < contours.size(); index++) {
         cv::Rect bndbox = cv::boundingRect(contours.at(index));
+        detection_boxes->push_back(bndbox);
+    }
+}
+
+void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes, vector<int>* classes)
+{
+    vector<cv::Rect> rejected_boxes;
+    for (size_t index = 0; index < detection_boxes->size(); index++) {
+        cv::Rect bndbox = detection_boxes->at(index);
         cv::Mat cropped_frame = frame(bndbox);
 
         cv::Mat resized_frame;
         cv::resize(cropped_frame, resized_frame, _classify_resize);
         int class_index = classify(resized_frame);
-        // int class_index = classify(cropped_frame);
         if (class_index >= 0) {
             detection_boxes->push_back(bndbox);
             classes->push_back(class_index);
@@ -392,9 +400,7 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     }
 
     if (_pipeline_pub.getNumSubscribers() > 0) {
-        cv::Mat result_image;
-        cv::cvtColor(contour_image, result_image, cv::COLOR_GRAY2BGR);
-        cv::drawContours(result_image, contours, -1, cv::Scalar(0, 255, 0), 1);
+        cv::Mat result_image = frame.clone();
         if (!result_image.empty())
         {
             for (size_t index = 0; index < detection_boxes->size(); index++) {
