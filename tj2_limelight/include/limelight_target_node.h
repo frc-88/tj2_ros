@@ -45,6 +45,8 @@ using namespace sensor_msgs;
 
 #define THROW_EXCEPTION(msg)  throw std::runtime_error(msg)
 
+float magnitude_vec3f(cv::Vec3f vector);
+
 
 class LimelightTargetNode
 {
@@ -127,6 +129,8 @@ private:
     bool msg_to_frame(const ImageConstPtr msg, cv::Mat& image);
     vision_msgs::Detection2D target_to_detection(int class_index, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions);
     double get_target_z(cv::Mat depth_cv_image, cv::Rect target);
+    cv::Vec3f get_target_normal(cv::Mat depth_cv_image, cv::Rect target);
+    geometry_msgs::Quaternion vector_to_quat(cv::Vec3f vector);
     visualization_msgs::MarkerArray create_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
     visualization_msgs::Marker make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
     void contour_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes);
