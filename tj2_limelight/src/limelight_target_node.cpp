@@ -211,6 +211,7 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_inde
     cv::Point3d ray = _camera_model.projectPixelTo3dRay(target_point);
 
     double z_dist = get_target_z(depth_cv_image, bndbox);
+    geometry_msgs::Quaternion quat = vector_to_quat(get_target_normal(depth_cv_image, bndbox));
     
     cv::Point3d center;
     center.x = ray.x * z_dist;
@@ -243,10 +244,7 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_inde
     object_pose.position.x = center.x;
     object_pose.position.y = center.y;
     object_pose.position.z = center.z;
-    object_pose.orientation.x = 0.0;
-    object_pose.orientation.y = 0.0;
-    object_pose.orientation.z = 0.0;
-    object_pose.orientation.w = 1.0;
+    object_pose.orientation = quat;
 
     det_msg.bbox.center.x = bndbox.x;
     det_msg.bbox.center.y = bndbox.y;
@@ -338,18 +336,14 @@ visualization_msgs::Marker LimelightTargetNode::make_marker(string name, int ind
 
 double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, cv::Rect target)
 {
-    ROS_DEBUG("Depth image size: w=%d, h=%d", depth_cv_image.rows, depth_cv_image.cols);
     cv::Mat rectangle_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
     cv::rectangle(rectangle_mask, target, cv::Scalar(255, 255, 255), cv::FILLED);
-    ROS_DEBUG("Created rectangle mask");
 
     cv::Mat nonzero_mask = (depth_cv_image > 0.0);
     nonzero_mask.convertTo(nonzero_mask, CV_8U);
-    ROS_DEBUG("Created nonzero mask");
 
     cv::Mat target_mask;
     cv::bitwise_and(rectangle_mask, nonzero_mask, target_mask);
-    ROS_DEBUG("Created target mask");
 
     double z_dist = cv::mean(depth_cv_image, target_mask)[0];  // depth values are in mm
     ROS_DEBUG("z_dist mm: %f", z_dist);
@@ -357,6 +351,62 @@ double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, cv::Rect target
     z_dist /= 1000.0;
 
     return z_dist;
+}
+
+
+cv::Vec3f LimelightTargetNode::get_target_normal(cv::Mat depth_cv_image, cv::Rect target)
+{
+    // from: https://stackoverflow.com/questions/34644101/calculate-surface-normals-from-depth-image-using-neighboring-pixels-cross-produc
+    cv::Mat depth;
+    depth_cv_image.convertTo(depth, CV_32FC3, 1.0 / 0xffff);
+
+    cv::Vec3f normal_sum;
+    size_t sum_count;
+
+    for (int x = target.x; x < target.x + target.width; x++)
+    {
+        for (int y = target.y; y < target.y + target.height; y++)
+        {
+            float dzdx = (depth.at<float>(x+1, y) - depth.at<float>(x-1, y)) / 2.0;
+            float dzdy = (depth.at<float>(x, y+1) - depth.at<float>(x, y-1)) / 2.0;
+
+            cv::Vec3f d(-dzdx, -dzdy, 1.0f);
+            cv::Vec3f normal = normalize(d);
+
+            normal_sum += normal;
+            sum_count++;
+        }
+    }
+    cv::Vec3f mean_normal(
+        normal_sum[0] / sum_count,
+        normal_sum[1] / sum_count,
+        normal_sum[2] / sum_count
+    );
+    return mean_normal;
+}
+
+float magnitude_vec3f(cv::Vec3f vector)
+{
+    return sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
+}
+
+geometry_msgs::Quaternion LimelightTargetNode::vector_to_quat(cv::Vec3f vector)
+{
+    // from: https://math.stackexchange.com/questions/2356649/how-to-find-the-quaternion-representing-the-rotation-between-two-3-d-vectors
+    cv::Vec3f null_vector(1.0f, 0.0f, 0.0f);
+    cv::Vec3f cross = null_vector.cross(vector);
+    float cross_mag = magnitude_vec3f(cross);
+    float dot = null_vector[0] * vector[0] + null_vector[1] * vector[1] + null_vector[2] * vector[2];
+    float theta = atan(cross_mag / dot);
+    cv::Vec3f axis_n = cross / cross_mag;
+    cv::Vec3f quat_xyz = axis_n * sin(theta / 2.0f);
+
+    geometry_msgs::Quaternion quat;
+    quat.w = cos(theta / 2.0);
+    quat.x = quat_xyz[0];
+    quat.y = quat_xyz[1];
+    quat.z = quat_xyz[2];
+    return quat;
 }
 
 void LimelightTargetNode::contour_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes)
