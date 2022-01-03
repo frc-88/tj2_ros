@@ -27,6 +27,7 @@ class TJ2NetworkTables:
         self.remote_linear_units_conversion = rospy.get_param("~remote_linear_units_conversion", 1.0)
         self.remote_angular_units_conversion = rospy.get_param("~remote_angular_units_conversion", 1.0)
         self.limelight_target_frame_id = rospy.get_param("~limelight_target_frame_id", "limelight")
+        self.num_limelight_targets = rospy.get_param("~num_limelight_targets", 3)
         
         self.match_time_pub = rospy.Publisher("match_time", Float64, queue_size=5)
         self.is_autonomous_pub = rospy.Publisher("is_autonomous", Bool, queue_size=5)
@@ -72,7 +73,7 @@ class TJ2NetworkTables:
         msg.header.frame_id = self.limelight_target_frame_id
         has_targets = self.nt.getEntry(self.limelight_table_key + "/tv").getDouble(0.0) == 1.0
         if has_targets:
-            for index in range(self.num_limelight_targets):  # TODO: find num_limelight_targets
+            for index in range(self.num_limelight_targets):
                 target_msg = LimelightTarget()
                 tx = self.nt.getEntry(self.limelight_table_key + "/tx%s" % index).getDouble(0.0)
                 ty = self.nt.getEntry(self.limelight_table_key + "/ty%s" % index).getDouble(0.0)
