@@ -18,20 +18,15 @@ from tj2_tools.tunnel.client import TunnelClient
 
 class TJ2Tunnel(TunnelClient):
     def __init__(self):
-        self.categories = {
-            "ping": "f",
-            "odom": "ffffff"
-        }
-
         self.node_name = "tj2_tunnel"
         rospy.init_node(
             self.node_name,
             # disable_signals=True,
-            log_level=rospy.DEBUG
+            # log_level=rospy.DEBUG
         )
 
         self.host = rospy.get_param("~host", "10.0.88.2")
-        self.port = rospy.get_param("~port", 3000)
+        self.port = rospy.get_param("~port", 5800)
         
         self.publish_odom_tf = rospy.get_param("~publish_odom_tf", False)
         self.base_frame_name = rospy.get_param("~base_frame", "base_link")
@@ -84,20 +79,23 @@ class TJ2Tunnel(TunnelClient):
         self.clock_rate = rospy.Rate(100.0)
         self.ping_timer = rospy.Timer(rospy.Duration(1.0), self.ping_callback)
 
-        super(TJ2Tunnel, self).__init__(self.host, self.port, self.categories)
+        super(TJ2Tunnel, self).__init__(self.host, self.port)
         rospy.loginfo("%s init complete" % self.node_name)
 
-    def packet_callback(self, error_code, recv_time, category, data):
+    def packet_callback(self, result):
+        category = result.category
         if category == "ping":
             msg = Float64()
-            dt = self.get_local_time() - data[0]
+            ping_time = result.get_double()
+            dt = self.get_local_time() - ping_time
             msg.data = dt
-            rospy.logdebug("Publishing ping time: %s. (Return time: %s)", dt, data[0]);
+            rospy.logdebug("Publishing ping time: %s. (Return time: %s)", dt, ping_time);
             self.ping_pub.publish(msg)
 
         elif category == "odom":
             # rospy.loginfo("Odometry. x=%0.4f, y=%0.4f, t=%0.4f, vx=%0.4f, vy=%0.4f, vt=%0.4f" % tuple(data))
-            self.publish_odom(recv_time, *data)
+            data = tuple([result.get_double() for _ in range(6)])
+            self.publish_odom(result.recv_time, *data)
 
     def run(self):
         try:
