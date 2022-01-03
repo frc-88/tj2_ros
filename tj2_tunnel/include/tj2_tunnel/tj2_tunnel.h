@@ -104,8 +104,6 @@ private:
 
     boost::thread* _poll_socket_thread;
 
-    XmlRpc::XmlRpcValue _categories_param;
-    std::map<string, string> _categories;
     TunnelProtocol* protocol;
 
     ros::Time _last_read_time;

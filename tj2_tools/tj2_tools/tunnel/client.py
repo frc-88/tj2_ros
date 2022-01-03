@@ -10,12 +10,10 @@ from .protocol import TunnelProtocol
 
 
 class TunnelClient:
-    def __init__(self, address, port, categories):
+    def __init__(self, address, port):
         self.address = address
         self.port = port
         self.device = None
-
-        self.categories = categories
 
         self.protocol = TunnelProtocol()
 
@@ -44,17 +42,15 @@ class TunnelClient:
                 recv_msg = stream.recv(self.read_block_size)
                 rospy.logdebug("Received: %s" % recv_msg)
                 self.buffer += recv_msg
-                self.buffer, results = self.protocol.parse_buffer(self.buffer, self.categories)
+                self.buffer, results = self.protocol.parse_buffer(self.buffer)
                 for result in results:
-                    error_code, recv_time, data = result
-                    if not self.protocol.is_code_error(error_code):
+                    if not self.protocol.is_code_error(result.error_code):
                         continue
-                    category = data[0]
-                    data = data[1:]
+                    category = result.category
                     if category == "__msg__":
-                        rospy.loginfo("Tunnel message: %s" % data[0])
+                        rospy.loginfo("Tunnel message: %s" % result.get_string())
                     else:
-                        self.packet_callback(error_code, recv_time, category, data)
+                        self.packet_callback(result)
         
         for stream in writable:
             if self.message_queue.qsize() == 0:
@@ -87,7 +83,7 @@ class TunnelClient:
             rospy.logdebug("Queueing packet: %s" % repr(packet))
             self.message_queue.put(packet)
     
-    def packet_callback(self, error_code, recv_time, category, data):
+    def packet_callback(self, result):
         pass
 
     def stop(self):
