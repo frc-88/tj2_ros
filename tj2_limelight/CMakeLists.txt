@@ -68,6 +68,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")	# enable c++11 (TensorRT re
 add_message_files(
   FILES
   LimelightTarget.msg
+  LimelightTargetArray.msg
 )
 
 ## Generate services in the 'srv' folder

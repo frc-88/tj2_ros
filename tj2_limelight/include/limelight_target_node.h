@@ -28,6 +28,7 @@
 #include <vision_msgs/BoundingBox2D.h>
 
 #include <tj2_limelight/LimelightTarget.h>
+#include <tj2_limelight/LimelightTargetArray.h>
 
 #include <image_geometry/pinhole_camera_model.h>
 
@@ -79,9 +80,12 @@ private:
 
     cv::Size _classify_resize;
 
+    vector<cv::Rect>* _current_targets;
+
     // Publishers
-    ros::Publisher _detection_array_pub;
     ros::Publisher _marker_pub;
+    ros::Publisher _marker_target_pub;
+    ros::Publisher _detection_array_pub;
     ros::Publisher _target_detection_pub;
     image_transport::Publisher _pipeline_pub;
 
@@ -89,7 +93,7 @@ private:
     message_filters::Subscriber<Image>_color_sub;
     message_filters::Subscriber<Image>_depth_sub;
     message_filters::Subscriber<CameraInfo> _depth_info_sub;
-    message_filters::Subscriber<tj2_limelight::LimelightTarget> _target_sub;
+    ros::Subscriber _target_sub;
 
     // imageNet variables
     imageNet* _net;
@@ -99,11 +103,8 @@ private:
     tf2_ros::TransformListener _tf_listener;
 
     // Topic synchronization
-    typedef message_filters::sync_policies::ApproximateTime<Image, CameraInfo, tj2_limelight::LimelightTarget> TargetApproxSyncPolicy;
     typedef message_filters::sync_policies::ApproximateTime<Image, Image, CameraInfo> CameraApproxSyncPolicy;
-    typedef message_filters::Synchronizer<TargetApproxSyncPolicy> TargetSync;
     typedef message_filters::Synchronizer<CameraApproxSyncPolicy> CameraSync;
-    boost::shared_ptr<TargetSync> target_sync;
     boost::shared_ptr<CameraSync> camera_sync;
 
     // Parameters
@@ -126,9 +127,11 @@ private:
     bool msg_to_frame(const ImageConstPtr msg, cv::Mat& image);
     vision_msgs::Detection2D target_to_detection(int class_index, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions);
     double get_target_z(cv::Mat depth_cv_image, cv::Rect target);
-    void publish_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
+    visualization_msgs::MarkerArray create_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
     visualization_msgs::Marker make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
+    void contour_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes);
     void detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes, vector<int>* classes);
+    void publish_markers_and_detections(ros::Publisher& detection_array_pub, ros::Publisher& marker_pub, vector<cv::Rect>* detection_boxes, std_msgs::Header header, cv::Mat color_cv_image, cv::Mat depth_cv_image);
     int classify(cv::Mat cropped_image);
     bool allocate_on_gpu(uint32_t width, uint32_t height, imageFormat inputFormat);
     void free_on_gpu();
@@ -137,6 +140,6 @@ private:
     void load_labels();
 
     // Callbacks
-    void target_callback(const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info, const tj2_limelight::LimelightTargetConstPtr& target);
+    void target_callback(const tj2_limelight::LimelightTargetArrayConstPtr& target);
     void camera_callback(const ImageConstPtr& color_image, const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info);
 };

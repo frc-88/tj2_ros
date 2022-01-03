@@ -7,6 +7,7 @@ from sensor_msgs.msg import CameraInfo
 
 from networktables import NetworkTables
 from tj2_limelight.msg import LimelightTarget
+from tj2_limelight.msg import LimelightTargetArray
 
 
 class TJ2NetworkTables:
@@ -25,10 +26,11 @@ class TJ2NetworkTables:
 
         self.remote_linear_units_conversion = rospy.get_param("~remote_linear_units_conversion", 1.0)
         self.remote_angular_units_conversion = rospy.get_param("~remote_angular_units_conversion", 1.0)
+        self.limelight_target_frame_id = rospy.get_param("~limelight_target_frame_id", "limelight")
         
         self.match_time_pub = rospy.Publisher("match_time", Float64, queue_size=5)
         self.is_autonomous_pub = rospy.Publisher("is_autonomous", Bool, queue_size=5)
-        self.limelight_target_pub = rospy.Publisher("/limelight/target", LimelightTarget, queue_size=5)
+        self.limelight_target_pub = rospy.Publisher("/limelight/targets", LimelightTargetArray, queue_size=5)
         self.limelight_led_mode_sub = rospy.Subscriber("/limelight/led_mode", Bool, self.limelight_led_mode_callback, queue_size=5)
         self.limelight_cam_mode_sub = rospy.Subscriber("/limelight/cam_mode", Bool, self.limelight_cam_mode_callback, queue_size=5)
         self.limelight_info_sub = rospy.Subscriber("limelight/camera_info", CameraInfo, self.limelight_info_callback, queue_size=5)
@@ -65,19 +67,23 @@ class TJ2NetworkTables:
         self.limelight_camera_info = msg
 
     def publish_limelight_target(self):
-        msg = LimelightTarget()
-        msg.tv = self.nt.getEntry(self.limelight_table_key + "/tv").getDouble(0.0) == 1.0
-        tx = self.nt.getEntry(self.limelight_table_key + "/tx0").getDouble(0.0)
-        ty = self.nt.getEntry(self.limelight_table_key + "/ty0").getDouble(0.0)
-        msg.thor = int(self.nt.getEntry(self.limelight_table_key + "/thor0").getDouble(0.0))
-        msg.tvert = int(self.nt.getEntry(self.limelight_table_key + "/tvert0").getDouble(0.0))
-
-        width = self.limelight_camera_info.width
-        height = self.limelight_camera_info.height
-
-        msg.tx = int((tx + 1.0) / 2.0 * width)
-        msg.ty = int((-ty + 1.0) / 2.0 * height)
+        msg = LimelightTargetArray()
         msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = self.limelight_target_frame_id
+        has_targets = self.nt.getEntry(self.limelight_table_key + "/tv").getDouble(0.0) == 1.0
+        if has_targets:
+            for index in range(self.num_limelight_targets):  # TODO: find num_limelight_targets
+                target_msg = LimelightTarget()
+                tx = self.nt.getEntry(self.limelight_table_key + "/tx%s" % index).getDouble(0.0)
+                ty = self.nt.getEntry(self.limelight_table_key + "/ty%s" % index).getDouble(0.0)
+                target_msg.thor = int(self.nt.getEntry(self.limelight_table_key + "/thor%s" % index).getDouble(0.0))
+                target_msg.tvert = int(self.nt.getEntry(self.limelight_table_key + "/tvert%s" % index).getDouble(0.0))
+
+                width = self.limelight_camera_info.width
+                height = self.limelight_camera_info.height
+
+                target_msg.tx = int((tx + 1.0) / 2.0 * width)
+                target_msg.ty = int((-ty + 1.0) / 2.0 * height)
 
         self.limelight_target_pub.publish(msg)
 
