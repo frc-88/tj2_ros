@@ -118,6 +118,8 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
     load_imagenet_model();
     load_labels();
 
+    Log::SetLevel(Log::LevelFromStr("info"));  // set jetson-inference log level
+
     _pipeline_pub = _image_transport.advertise("pipeline/image_raw", 2);
 
     _marker_target_pub = nh.advertise<visualization_msgs::MarkerArray>("markers/targets", 10);
@@ -150,11 +152,11 @@ void LimelightTargetNode::camera_callback(const ImageConstPtr& color_image, cons
     vector<cv::Rect>* detection_boxes = new vector<cv::Rect>();
     contour_pipeline(color_cv_image, detection_boxes);
 
-    publish_markers_and_detections(_detection_array_pub, _marker_pub, detection_boxes, color_image->header, color_cv_image, depth_cv_image);
-    publish_markers_and_detections(_target_detection_pub, _marker_target_pub, _current_targets, color_image->header, color_cv_image, depth_cv_image);
+    publish_markers_and_detections(&_detection_array_pub, &_marker_pub, detection_boxes, color_image->header, color_cv_image, depth_cv_image);
+    publish_markers_and_detections(&_target_detection_pub, &_marker_target_pub, _current_targets, color_image->header, color_cv_image, depth_cv_image);
 }
 
-void LimelightTargetNode::publish_markers_and_detections(ros::Publisher& detection_array_pub, ros::Publisher& marker_pub, vector<cv::Rect>* detection_boxes, std_msgs::Header header, cv::Mat color_cv_image, cv::Mat depth_cv_image)
+void LimelightTargetNode::publish_markers_and_detections(ros::Publisher* detection_array_pub, ros::Publisher* marker_pub, vector<cv::Rect>* detection_boxes, std_msgs::Header header, cv::Mat color_cv_image, cv::Mat depth_cv_image)
 {
     vector<int>* class_indices = new vector<int>();
     detection_pipeline(color_cv_image, detection_boxes, class_indices);
@@ -172,10 +174,10 @@ void LimelightTargetNode::publish_markers_and_detections(ros::Publisher& detecti
 
         det_array_msg.detections.push_back(det_msg);
         visualization_msgs::MarkerArray markers = create_markers(_class_descriptions.at(class_index), index, det_msg, dimensions);
-        marker_pub.publish(markers);
+        marker_pub->publish(markers);
     }
     
-    detection_array_pub.publish(det_array_msg);
+    detection_array_pub->publish(det_array_msg);
 }
 
 void LimelightTargetNode::target_callback(const tj2_limelight::LimelightTargetArrayConstPtr& targets)
@@ -187,6 +189,9 @@ void LimelightTargetNode::target_callback(const tj2_limelight::LimelightTargetAr
 
     for (size_t index = 0; index < targets->targets.size(); index++) {
         tj2_limelight::LimelightTarget target = targets->targets.at(index);
+        if (target.thor <= 0 || target.tvert <= 0) {
+            continue;
+        }
         cv::Rect bndbox(
             target.tx - target.thor / 2,
             target.ty - target.tvert / 2,
@@ -238,6 +243,16 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_inde
     }
     else {
         dimensions.z = 0.005;
+    }
+
+    if (dimensions.x <= 1E-9) {
+        dimensions.x = 0.002;
+    }
+    if (dimensions.y <= 1E-9) {
+        dimensions.y = 0.002;
+    }
+    if (dimensions.z <= 1E-9) {
+        dimensions.z = 0.002;
     }
 
     geometry_msgs::Pose object_pose;
@@ -295,8 +310,8 @@ visualization_msgs::MarkerArray LimelightTargetNode::create_markers(string name,
     text_marker.text = text_marker.ns;
     text_marker.ns = "text_" + text_marker.ns;
     text_marker.pose.position.y += dimensions.y;  // Z is perpendicular to camera plane. -Y is up in world coordinates here
-    text_marker.scale.x = 0.0;
-    text_marker.scale.y = 0.0;
+    // text_marker.scale.x = 0.0;
+    // text_marker.scale.y = 0.0;
     text_marker.scale.z = _text_marker_size;
     text_marker.color.r = 1.0;
     text_marker.color.g = 1.0;
@@ -370,6 +385,10 @@ cv::Vec3f LimelightTargetNode::get_target_normal(cv::Mat depth_cv_image, cv::Rec
             float dzdx = (depth.at<float>(x+1, y) - depth.at<float>(x-1, y)) / 2.0;
             float dzdy = (depth.at<float>(x, y+1) - depth.at<float>(x, y-1)) / 2.0;
 
+            if (isnan(dzdx) || isnan(dzdy)) {
+                continue;
+            }
+
             cv::Vec3f d(-dzdx, -dzdy, 1.0f);
             cv::Vec3f normal = normalize(d);
 
@@ -393,19 +412,28 @@ float magnitude_vec3f(cv::Vec3f vector)
 geometry_msgs::Quaternion LimelightTargetNode::vector_to_quat(cv::Vec3f vector)
 {
     // from: https://math.stackexchange.com/questions/2356649/how-to-find-the-quaternion-representing-the-rotation-between-two-3-d-vectors
-    cv::Vec3f null_vector(1.0f, 0.0f, 0.0f);
+    cv::Vec3f null_vector(0.0f, 0.0f, 1.0f);
     cv::Vec3f cross = null_vector.cross(vector);
     float cross_mag = magnitude_vec3f(cross);
     float dot = null_vector[0] * vector[0] + null_vector[1] * vector[1] + null_vector[2] * vector[2];
     float theta = atan(cross_mag / dot);
-    cv::Vec3f axis_n = cross / cross_mag;
+    cv::Vec3f axis_n;
+    axis_n = cross / cross_mag;
     cv::Vec3f quat_xyz = axis_n * sin(theta / 2.0f);
 
     geometry_msgs::Quaternion quat;
-    quat.w = cos(theta / 2.0);
-    quat.x = quat_xyz[0];
-    quat.y = quat_xyz[1];
-    quat.z = quat_xyz[2];
+    if (cross_mag == 0.0) {
+        quat.w = 1.0;
+        quat.x = 0.0;
+        quat.y = 0.0;
+        quat.z = 0.0;
+    }
+    else {
+        quat.w = cos(theta / 2.0);
+        quat.x = quat_xyz[0];
+        quat.y = quat_xyz[1];
+        quat.z = quat_xyz[2];
+    }
     return quat;
 }
 
@@ -440,11 +468,12 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
         cv::Mat resized_frame;
         cv::resize(cropped_frame, resized_frame, _classify_resize);
         int class_index = classify(resized_frame);
-        if (class_index >= 0) {
-            detection_boxes->push_back(bndbox);
+        if (is_bndbox_ok(bndbox) && class_index >= 0) {
             classes->push_back(class_index);
         }
         else {
+            detection_boxes->erase(std::next(detection_boxes->begin(), index));
+            index--;
             rejected_boxes.push_back(bndbox);
         }
     }
@@ -466,6 +495,11 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
             _pipeline_pub.publish(msg);
         }
     }
+}
+
+bool LimelightTargetNode::is_bndbox_ok(cv::Rect bndbox)
+{
+    return bndbox.x >= 0 && bndbox.y >= 0 && bndbox.width > 0 && bndbox.height > 0;
 }
 
 int LimelightTargetNode::classify(cv::Mat cropped_image)
@@ -509,7 +543,7 @@ int LimelightTargetNode::classify(cv::Mat cropped_image)
     if (confidence < _threshold) {
         return -1;
     }
-    ROS_INFO("classified cropped image %f (class=%s)", confidence, _class_descriptions.at(img_class).c_str());
+    // ROS_INFO("classified cropped image %f (class=%s)", confidence, _class_descriptions.at(img_class).c_str());
 
     return img_class;
 }
