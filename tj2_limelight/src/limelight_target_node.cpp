@@ -373,15 +373,18 @@ cv::Vec3f LimelightTargetNode::get_target_normal(cv::Mat depth_cv_image, cv::Rec
 {
     // from: https://stackoverflow.com/questions/34644101/calculate-surface-normals-from-depth-image-using-neighboring-pixels-cross-produc
     cv::Mat depth;
-    depth_cv_image.convertTo(depth, CV_32FC3, 1.0 / 0xffff);
+    depth_cv_image.convertTo(depth, CV_32FC1, 1.0 / 0xffff);
 
     cv::Vec3f normal_sum;
     size_t sum_count;
 
-    for (int x = target.x; x < target.x + target.width; x++)
+    for (int x = std::max(1, target.x); x < std::min(depth.rows, target.x + target.width) - 1; x++)
     {
-        for (int y = target.y; y < target.y + target.height; y++)
+        for (int y = std::max(1, target.y); y < std::min(depth.cols, target.y + target.height) - 1; y++)
         {
+            if (depth.at<float>(x, y) == 0.0) {
+                continue;
+            }
             float dzdx = (depth.at<float>(x+1, y) - depth.at<float>(x-1, y)) / 2.0;
             float dzdy = (depth.at<float>(x, y+1) - depth.at<float>(x, y-1)) / 2.0;
 
