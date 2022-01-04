@@ -127,18 +127,23 @@ private:
     string _output_blob;
     double _threshold;
 
-    bool msg_to_frame(const ImageConstPtr msg, cv::Mat& image);
-    vision_msgs::Detection2D target_to_detection(int class_index, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions);
-    double get_target_z(cv::Mat depth_cv_image, cv::Rect target);
+
     cv::Vec3f get_target_normal(cv::Mat depth_cv_image, cv::Rect target);
+    cv::Vec3f get_target_centeroid(cv::Mat depth_cv_image, cv::Rect target);
     bool is_bndbox_ok(cv::Rect bndbox);
     geometry_msgs::Quaternion vector_to_quat(cv::Vec3f vector);
+    
     visualization_msgs::MarkerArray create_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
     visualization_msgs::Marker make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
+    
     void contour_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes);
     void detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes, vector<int>* classes);
+    vision_msgs::Detection2D target_to_detection(int class_index, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions);
+    double get_target_z(cv::Mat depth_cv_image, cv::Rect target);
+    bool msg_to_frame(const ImageConstPtr msg, cv::Mat& image);
     void publish_markers_and_detections(ros::Publisher* detection_array_pub, ros::Publisher* marker_pub, vector<cv::Rect>* detection_boxes, std_msgs::Header header, cv::Mat color_cv_image, cv::Mat depth_cv_image);
     int classify(cv::Mat cropped_image);
+    
     bool allocate_on_gpu(uint32_t width, uint32_t height, imageFormat inputFormat);
     void free_on_gpu();
 

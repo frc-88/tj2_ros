@@ -368,7 +368,7 @@ double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, cv::Rect target
     return z_dist;
 }
 
-
+/*
 cv::Vec3f LimelightTargetNode::get_target_normal(cv::Mat depth_cv_image, cv::Rect target)
 {
     // from: https://stackoverflow.com/questions/34644101/calculate-surface-normals-from-depth-image-using-neighboring-pixels-cross-produc
@@ -405,6 +405,43 @@ cv::Vec3f LimelightTargetNode::get_target_normal(cv::Mat depth_cv_image, cv::Rec
         normal_sum[2] / sum_count
     );
     return mean_normal;
+}*/
+
+cv::Vec3f LimelightTargetNode::get_target_normal(cv::Mat depth_cv_image, cv::Rect target)
+{
+    cv::Mat depth;
+    depth_cv_image.convertTo(depth, CV_32FC1, 1.0 / 0xffff);
+    cv::Vec3f centeroid = get_target_centeroid(depth, target);
+
+    cv::Mat w, u, v;
+    cv::SVD::compute(depth - centeroid, w, u, v);
+
+    cv::Vec3f normal = u.col(2);
+    return normal;
+}
+
+cv::Vec3f LimelightTargetNode::get_target_centeroid(cv::Mat depth, cv::Rect target)
+{
+    cv::Vec3f centeroid_sum(0.0f, 0.0f, 0.0f);
+    size_t sum_count;
+
+    for (int x = std::max(1, target.x); x < std::min(depth.rows, target.x + target.width) - 1; x++)
+    {
+        for (int y = std::max(1, target.y); y < std::min(depth.cols, target.y + target.height) - 1; y++)
+        {
+            if (depth.at<float>(x, y) == 0.0 || std::isnan(depth.at<float>(x, y))) {
+                continue;
+            }
+            centeroid_sum[0] += (float)x;
+            centeroid_sum[1] += (float)y;
+            centeroid_sum[2] += depth.at<float>(x, y);
+
+            sum_count++;
+        }
+    }
+    cv::Vec3f centeroid = centeroid_sum / (float)sum_count;
+
+    return centeroid;
 }
 
 float magnitude_vec3f(cv::Vec3f vector)
