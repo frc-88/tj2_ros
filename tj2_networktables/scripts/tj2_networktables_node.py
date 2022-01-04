@@ -85,6 +85,7 @@ class TJ2NetworkTables:
 
                 target_msg.tx = int((tx + 1.0) / 2.0 * width)
                 target_msg.ty = int((-ty + 1.0) / 2.0 * height)
+                msg.targets.append(target_msg)
 
         self.limelight_target_pub.publish(msg)
 
