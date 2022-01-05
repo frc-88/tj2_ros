@@ -22,6 +22,11 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~output_blob", _output_blob, IMAGENET_DEFAULT_OUTPUT);
 
     ros::param::param<double>("~threshold", _threshold, 0.5);
+    ros::param::param<bool>("~enable_target_detections", _enable_target_detections, true);
+    ros::param::param<bool>("~enable_pipeline_detections", _enable_pipeline_detections, true);
+
+    bool show_classify_log_messages;
+    ros::param::param<bool>("~show_classify_log_messages", show_classify_log_messages, false);
 
     string key;
     if (!ros::param::search("hsv_lower_bound", key)) {
@@ -118,7 +123,9 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
     load_imagenet_model();
     load_labels();
 
-    Log::SetLevel(Log::LevelFromStr("info"));  // set jetson-inference log level
+    if (!show_classify_log_messages) {
+        Log::SetLevel(Log::LevelFromStr("info"));  // set jetson-inference log level
+    }
 
     _pipeline_pub = _image_transport.advertise("pipeline/image_raw", 2);
 
@@ -139,21 +146,32 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
 
 void LimelightTargetNode::camera_callback(const ImageConstPtr& color_image, const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info)
 {
+    if (!_enable_pipeline_detections && !_enable_target_detections) {
+        ROS_WARN_ONCE("Neither pipeline or target detections are enabled! No detections will be published");
+        return;
+    }
     _camera_model.fromCameraInfo(depth_info);
     
     cv::Mat color_cv_image;
     if (!msg_to_frame(color_image, color_cv_image)) {
+        ROS_ERROR("Failed to process color image");
         return;
     }
     cv::Mat depth_cv_image;
     if (!msg_to_frame(depth_image, depth_cv_image)) {
+        ROS_ERROR("Failed to process depth image");
         return;
     }
-    vector<cv::Rect>* detection_boxes = new vector<cv::Rect>();
-    contour_pipeline(color_cv_image, detection_boxes);
 
-    publish_markers_and_detections(&_detection_array_pub, &_marker_pub, detection_boxes, color_image->header, color_cv_image, depth_cv_image);
-    publish_markers_and_detections(&_target_detection_pub, &_marker_target_pub, _current_targets, color_image->header, color_cv_image, depth_cv_image);
+    if (_enable_pipeline_detections) {
+        vector<cv::Rect>* detection_boxes = new vector<cv::Rect>();
+        contour_pipeline(color_cv_image, detection_boxes);
+        publish_markers_and_detections(&_detection_array_pub, &_marker_pub, detection_boxes, color_image->header, color_cv_image, depth_cv_image);
+    }
+    
+    if (_enable_target_detections) {
+        publish_markers_and_detections(&_target_detection_pub, &_marker_target_pub, _current_targets, color_image->header, color_cv_image, depth_cv_image);
+    }
 }
 
 void LimelightTargetNode::publish_markers_and_detections(ros::Publisher* detection_array_pub, ros::Publisher* marker_pub, vector<cv::Rect>* detection_boxes, std_msgs::Header header, cv::Mat color_cv_image, cv::Mat depth_cv_image)
@@ -216,8 +234,7 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_inde
     cv::Point3d ray = _camera_model.projectPixelTo3dRay(target_point);
 
     double z_dist = get_target_z(depth_cv_image, bndbox);
-    geometry_msgs::Quaternion quat = vector_to_quat(get_target_normal(depth_cv_image, bndbox));
-    
+
     cv::Point3d center;
     center.x = ray.x * z_dist;
     center.y = ray.y * z_dist;
@@ -259,7 +276,10 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_inde
     object_pose.position.x = center.x;
     object_pose.position.y = center.y;
     object_pose.position.z = center.z;
-    object_pose.orientation = quat;
+    object_pose.orientation.w = 1.0;
+    object_pose.orientation.x = 0.0;
+    object_pose.orientation.y = 0.0;
+    object_pose.orientation.z = 0.0;
 
     det_msg.bbox.center.x = bndbox.x;
     det_msg.bbox.center.y = bndbox.y;
@@ -368,119 +388,6 @@ double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, cv::Rect target
     return z_dist;
 }
 
-/*
-cv::Vec3f LimelightTargetNode::get_target_normal(cv::Mat depth_cv_image, cv::Rect target)
-{
-    // from: https://stackoverflow.com/questions/34644101/calculate-surface-normals-from-depth-image-using-neighboring-pixels-cross-produc
-    cv::Mat depth;
-    depth_cv_image.convertTo(depth, CV_32FC1, 1.0 / 0xffff);
-
-    cv::Vec3f normal_sum;
-    size_t sum_count;
-
-    for (int x = std::max(1, target.x); x < std::min(depth.rows, target.x + target.width) - 1; x++)
-    {
-        for (int y = std::max(1, target.y); y < std::min(depth.cols, target.y + target.height) - 1; y++)
-        {
-            if (depth.at<float>(x, y) == 0.0) {
-                continue;
-            }
-            float dzdx = (depth.at<float>(x+1, y) - depth.at<float>(x-1, y)) / 2.0;
-            float dzdy = (depth.at<float>(x, y+1) - depth.at<float>(x, y-1)) / 2.0;
-
-            if (isnan(dzdx) || isnan(dzdy)) {
-                continue;
-            }
-
-            cv::Vec3f d(-dzdx, -dzdy, 1.0f);
-            cv::Vec3f normal = normalize(d);
-
-            normal_sum += normal;
-            sum_count++;
-        }
-    }
-    cv::Vec3f mean_normal(
-        normal_sum[0] / sum_count,
-        normal_sum[1] / sum_count,
-        normal_sum[2] / sum_count
-    );
-    return mean_normal;
-}*/
-
-cv::Vec3f LimelightTargetNode::get_target_normal(cv::Mat depth_cv_image, cv::Rect target)
-{
-    cv::Mat depth;
-    depth_cv_image.convertTo(depth, CV_32FC1);
-
-    cv::Mat points(cv::Size(target.width * target.height, 3), CV_32FC1);
-
-    cv::Vec3f centeroid = get_target_centeroid(depth, target);
-    ROS_INFO("centeroid: %f, %f, %f", centeroid[0], centeroid[1], centeroid[2]);
-
-    cv::Mat w, u, v;
-    cv::SVD::compute(points - centeroid, w, u, v);
-
-    cv::Vec3f normal = u.col(2);
-    return normal;
-}
-
-cv::Vec3f LimelightTargetNode::get_target_centeroid(cv::Mat depth, cv::Rect target)
-{
-    cv::Vec3f centeroid_sum(0.0f, 0.0f, 0.0f);
-    size_t sum_count;
-
-    for (int x = std::max(0, target.x); x < std::min(depth.rows, target.x + target.width); x++)
-    {
-        for (int y = std::max(0, target.y); y < std::min(depth.cols, target.y + target.height); y++)
-        {
-            if (depth.at<float>(x, y) == 0.0 || std::isnan(depth.at<float>(x, y))) {
-                continue;
-            }
-            centeroid_sum[0] += (float)x;
-            centeroid_sum[1] += (float)y;
-            centeroid_sum[2] += depth.at<float>(x, y);
-
-            sum_count++;
-        }
-    }
-    cv::Vec3f centeroid = centeroid_sum / (float)sum_count;
-
-    return centeroid;
-}
-
-float magnitude_vec3f(cv::Vec3f vector)
-{
-    return sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
-}
-
-geometry_msgs::Quaternion LimelightTargetNode::vector_to_quat(cv::Vec3f vector)
-{
-    // from: https://math.stackexchange.com/questions/2356649/how-to-find-the-quaternion-representing-the-rotation-between-two-3-d-vectors
-    cv::Vec3f null_vector(0.0f, 0.0f, 1.0f);
-    cv::Vec3f cross = null_vector.cross(vector);
-    float cross_mag = magnitude_vec3f(cross);
-    float dot = null_vector[0] * vector[0] + null_vector[1] * vector[1] + null_vector[2] * vector[2];
-    float theta = atan(cross_mag / dot);
-    cv::Vec3f axis_n;
-    axis_n = cross / cross_mag;
-    cv::Vec3f quat_xyz = axis_n * sin(theta / 2.0f);
-
-    geometry_msgs::Quaternion quat;
-    if (cross_mag == 0.0) {
-        quat.w = 1.0;
-        quat.x = 0.0;
-        quat.y = 0.0;
-        quat.z = 0.0;
-    }
-    else {
-        quat.w = cos(theta / 2.0);
-        quat.x = quat_xyz[0];
-        quat.y = quat_xyz[1];
-        quat.z = quat_xyz[2];
-    }
-    return quat;
-}
-
 void LimelightTargetNode::contour_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes)
 {
     cv::Mat frame_hsv, contour_image;
@@ -508,6 +415,9 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     for (size_t index = 0; index < detection_boxes->size(); index++) {
         cv::Rect bndbox = detection_boxes->at(index);
         cv::Mat cropped_frame = frame(bndbox);
+        if (bndbox.width <= 0 || bndbox.height <= 0) {
+            continue;
+        }
 
         cv::Mat resized_frame;
         cv::resize(cropped_frame, resized_frame, _classify_resize);

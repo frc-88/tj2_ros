@@ -126,13 +126,12 @@ private:
     string _input_blob;
     string _output_blob;
     double _threshold;
-
-
-    cv::Vec3f get_target_normal(cv::Mat depth_cv_image, cv::Rect target);
-    cv::Vec3f get_target_centeroid(cv::Mat depth_cv_image, cv::Rect target);
-    bool is_bndbox_ok(cv::Rect bndbox);
-    geometry_msgs::Quaternion vector_to_quat(cv::Vec3f vector);
     
+    bool _enable_target_detections;
+    bool _enable_pipeline_detections;
+    
+    bool is_bndbox_ok(cv::Rect bndbox);
+
     visualization_msgs::MarkerArray create_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
     visualization_msgs::Marker make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
     
