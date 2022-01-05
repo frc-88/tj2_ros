@@ -25,8 +25,7 @@ class LimelightImagePublisher:
         self.images_dir = rospy.get_param("~images_dir", "./images")
         self.camera_info_path = rospy.get_param("~camera_info_path", "./config/320x240.yaml")
 
-        # self.image_paths = [os.path.join(self.images_dir, filename) for filename in os.listdir(self.images_dir)]
-        self.image_paths = [os.path.join(self.images_dir, filename) for filename in ("00_original-00001.jpg", "00_original-00020.jpg", "00_original-00026.jpg", "00_original-00027.jpg", "00_original-00028.jpg", "00_original-00039.jpg", )]
+        self.image_paths = self.load_image_paths(self.images_dir)
         self.frame_dwell = 2.0
         self.fps = 10
         self.image_index = 0
@@ -40,16 +39,34 @@ class LimelightImagePublisher:
         self.depth_info_pub = rospy.Publisher("aligned_depth_to_color/camera_info", CameraInfo, queue_size=10)
 
         rospy.loginfo("%s init complete" % self.node_name)
+    
+    def load_image_paths(self, images_dir):
+        image_paths = []
+        for filename in os.listdir(images_dir):
+            ext = os.path.splitext(filename)[-1].lower()
+            if not (ext == ".jpg" or ext == ".jpeg"):
+                continue
+            path = os.path.join(images_dir, filename)
+            image_paths.append(path)
+        return image_paths
 
     def run(self):
         while not rospy.is_shutdown():
             frame = self.get_next_color_frame()
-            msg = self.bridge.cv2_to_imgmsg(frame, encoding="bgr8")
+            try:
+                msg = self.bridge.cv2_to_imgmsg(frame, encoding="bgr8")
+            except TypeError as e:
+                rospy.logerr("Exception occurred while converting frame: %s. %s" % (e, frame))
+                continue
             msg.header = self.camera_info.header
             self.color_image_pub.publish(msg)
 
             frame = self.get_next_depth_frame()
-            msg = self.bridge.cv2_to_imgmsg(frame, encoding="passthrough")
+            try:
+                msg = self.bridge.cv2_to_imgmsg(frame, encoding="passthrough")
+            except TypeError as e:
+                rospy.logerr("Exception occurred while converting frame: %s. %s" % (e, frame))
+                continue
             msg.header = self.camera_info.header
             self.depth_image_pub.publish(msg)
 
@@ -67,7 +84,10 @@ class LimelightImagePublisher:
             self.image_index += 1
         if self.image_index >= len(self.image_paths):
             self.image_index = 0
+        assert os.path.isfile(path), path
         frame = cv2.imread(path)
+        if frame is None:
+            rospy.logerr("%s did not load" % str(path))
         return frame
     
     def get_next_depth_frame(self):

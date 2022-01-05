@@ -410,11 +410,15 @@ cv::Vec3f LimelightTargetNode::get_target_normal(cv::Mat depth_cv_image, cv::Rec
 cv::Vec3f LimelightTargetNode::get_target_normal(cv::Mat depth_cv_image, cv::Rect target)
 {
     cv::Mat depth;
-    depth_cv_image.convertTo(depth, CV_32FC1, 1.0 / 0xffff);
+    depth_cv_image.convertTo(depth, CV_32FC1);
+
+    cv::Mat points(cv::Size(target.width * target.height, 3), CV_32FC1);
+
     cv::Vec3f centeroid = get_target_centeroid(depth, target);
+    ROS_INFO("centeroid: %f, %f, %f", centeroid[0], centeroid[1], centeroid[2]);
 
     cv::Mat w, u, v;
-    cv::SVD::compute(depth - centeroid, w, u, v);
+    cv::SVD::compute(points - centeroid, w, u, v);
 
     cv::Vec3f normal = u.col(2);
     return normal;
@@ -425,9 +429,9 @@ cv::Vec3f LimelightTargetNode::get_target_centeroid(cv::Mat depth, cv::Rect targ
     cv::Vec3f centeroid_sum(0.0f, 0.0f, 0.0f);
     size_t sum_count;
 
-    for (int x = std::max(1, target.x); x < std::min(depth.rows, target.x + target.width) - 1; x++)
+    for (int x = std::max(0, target.x); x < std::min(depth.rows, target.x + target.width); x++)
     {
-        for (int y = std::max(1, target.y); y < std::min(depth.cols, target.y + target.height) - 1; y++)
+        for (int y = std::max(0, target.y); y < std::min(depth.cols, target.y + target.height); y++)
         {
             if (depth.at<float>(x, y) == 0.0 || std::isnan(depth.at<float>(x, y))) {
                 continue;
