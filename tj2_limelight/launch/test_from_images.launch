@@ -2,7 +2,7 @@
 <launch>
     <group ns="limelight">
         <node pkg="tj2_limelight" type="publish_images.py" name="limelight_publish_images" output="screen">
-            <param name="images_dir" value="$(find tj2_limelight)/scripts/images" />
+            <param name="images_dir" value="/home/ben/Diff-Swerve-ROS/dataset_builder/limelight_targets/resources/base_images/" />
             <param name="camera_info_path" value="$(find tj2_limelight)/config/320x240.yaml" />
         </node>
 
