@@ -327,6 +327,8 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         bool is_continuous = result->getInt();
         bool ignore_orientation = result->getInt();
         double intermediate_tolerance = result->getDouble();
+        bool ignore_obstacles = result->getInt();
+        bool ignore_walls = result->getInt();
         if (_waypoints.waypoints.size() == 0 && is_continuous) {
             is_continuous = false;
             ROS_WARN("First goal must be discontinuous. Setting waypoint to discontinuous");
@@ -336,8 +338,16 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         waypoint.is_continuous = is_continuous;
         waypoint.ignore_orientation = ignore_orientation;
         waypoint.intermediate_tolerance = intermediate_tolerance;
+        waypoint.ignore_obstacles = ignore_obstacles;
+        waypoint.ignore_walls = ignore_walls;
         _waypoints.waypoints.insert(_waypoints.waypoints.end(), waypoint);
-        ROS_INFO("Received a waypoint: %s. is_continuous: %d, ignore_orientation: %d", waypoint_name.c_str(), is_continuous, ignore_orientation);
+        ROS_INFO("Received a waypoint: %s. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d",
+            waypoint_name.c_str(),
+            is_continuous,
+            ignore_orientation,
+            ignore_obstacles,
+            ignore_walls
+        );
     }
     else if (category.compare("exec") == 0) {
         ROS_INFO("Received execute plan command");
