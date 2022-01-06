@@ -36,15 +36,17 @@ class GoToWaypointState(State):
         self.is_move_base_done = False
         self.distance_to_goal = None
         self.epsilon = 1E-100
+
+        self.costmap_toggle_delay = 0.5
     
-    def toggle_obstacles(self, userdata, ignore_obstacles):
+    def set_ignore_obstacles(self, userdata, ignore_obstacles):
         userdata.state_machine.waypoints_node.toggle_obstacles(not ignore_obstacles)
 
-    def toggle_layers(self, userdata, ignore_walls, ignore_obstacles):
+    def set_ignore_layers(self, userdata, ignore_walls, ignore_obstacles):
         did_change = userdata.state_machine.waypoints_node.toggle_walls(not ignore_walls)
-        if not ignore_walls:
-            return self.toggle_obstacles(userdata, False) or did_change
-        return self.toggle_obstacles(userdata, ignore_obstacles)
+        if ignore_walls:
+            return self.set_ignore_obstacles(userdata, True) or did_change
+        return self.set_ignore_obstacles(userdata, ignore_obstacles)
 
     def execute(self, userdata):
         rospy.loginfo("Executing waypoint")
@@ -72,8 +74,8 @@ class GoToWaypointState(State):
         self.ignore_obstacles = first_waypoint.ignore_obstacles
         self.ignore_walls = first_waypoint.ignore_walls
 
-        if self.toggle_layers(userdata, self.ignore_walls, self.ignore_obstacles):
-            time.sleep(1.0)
+        if self.set_ignore_layers(userdata, self.ignore_walls, self.ignore_obstacles):
+            time.sleep(self.costmap_toggle_delay)
 
         if self.ignore_orientation and abs(self.intermediate_tolerance) < self.epsilon:
             self.intermediate_tolerance = 0.075  # TODO: pull this from move_base local planner parameters

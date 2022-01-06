@@ -13,9 +13,9 @@ rolling_window: true
 footprint_padding: 0.0
 
 inflation:
-    enabled: true
-    cost_scaling_factor: 30.0
-    inflation_radius: 0.1
+    enabled: false
+    cost_scaling_factor: 3.0
+    inflation_radius: 0.35
 
 plugins:
     - {name: static,                    type: "costmap_2d::StaticLayer"}
