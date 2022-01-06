@@ -2,3 +2,5 @@ string name
 bool is_continuous
 bool ignore_orientation
 float64 intermediate_tolerance
+bool ignore_obstacles
+bool ignore_walls

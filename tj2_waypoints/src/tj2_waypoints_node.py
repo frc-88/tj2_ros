@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 import rospy
 import actionlib
+import dynamic_reconfigure.client
 
 import tf2_ros
 import tf_conversions
@@ -36,6 +37,27 @@ from tj2_waypoints.msg import Waypoint, WaypointArray
 from state_machine import WaypointStateMachine
 
 
+class SimpleDynamicToggle:
+    def __init__(self, topic_name, config_key="enabled", **kwargs):
+        self.topic_name = topic_name
+        self.state = None
+        self.dyn_client = dynamic_reconfigure.client.Client(
+            self.topic_name,
+            config_callback=self.callback,
+            **kwargs
+        )
+        self.config_key = config_key
+
+    def callback(self, config):
+        self.state = config[self.config_key]
+    
+    def set_state(self, state):
+        self.dyn_client.update_configuration({self.config_key: bool(state)})
+
+    def get_state(self):
+        return self.state
+
+
 class Tj2Waypoints:
     def __init__(self):
         self.node_name = "tj2_waypoints"
@@ -54,9 +76,13 @@ class Tj2Waypoints:
         self.marker_color = rospy.get_param("~marker_color", (0.0, 0.0, 1.0, 1.0))
         self.enable_waypoint_navigation = rospy.get_param("~enable_waypoint_navigation", False)
         self.move_base_namespace = rospy.get_param("~move_base_namespace", "/move_base")
+        self.local_obstacle_layer_topic = rospy.get_param("~local_obstacle_layer_topic", "/move_base/local_costmap/obstacle_layer")
+        self.global_obstacle_layer_topic = rospy.get_param("~global_obstacle_layer_topic", "/move_base/global_costmap/obstacle_layer")
+        self.local_static_layer_topic = rospy.get_param("~local_static_layer_topic", "/move_base/local_costmap/static")
+        self.global_static_layer_topic = rospy.get_param("~global_static_layer_topic", "/move_base/global_costmap/static")
         assert (type(self.marker_color) == tuple or type(self.marker_color) == list), "type(%s) != tuple or list" % type(self.marker_color)
         assert len(self.marker_color) == 4, "len(%s) != 4" % len(self.marker_color)
-        
+
         self.waypoints_path = self.process_path(waypoints_path_param)
         self.waypoint_config = OrderedDict()
 
@@ -89,8 +115,15 @@ class Tj2Waypoints:
             rospy.loginfo("Connecting to move_base...")
             self.move_base.wait_for_server()
             rospy.loginfo("move_base connected")
+            self.local_obstacle_layer_toggle = SimpleDynamicToggle(self.local_obstacle_layer_topic, timeout=5)
+            self.global_obstacle_layer_toggle = SimpleDynamicToggle(self.global_obstacle_layer_topic, timeout=5)
+            self.local_static_layer_toggle = SimpleDynamicToggle(self.local_static_layer_topic, timeout=5)
+            self.global_static_layer_toggle = SimpleDynamicToggle(self.global_static_layer_topic, timeout=5)
+            rospy.loginfo("obstacle layer configs connected")
         else:
             self.move_base = None
+            self.local_obstacle_layer_dyn_client = None
+            self.global_obstacle_layer_dyn_client = None
 
         self.follow_path_server = actionlib.SimpleActionServer("follow_path", FollowPathAction, self.follow_path_callback, auto_start=False)
         self.follow_path_server.start()
@@ -116,7 +149,7 @@ class Tj2Waypoints:
         rospy.loginfo("Waypoint plan complete")
 
     def get_waypoint_plan(self, waypoints: WaypointArray):
-        sub_plan = []  # array of geometry_msgs/Pose
+        sub_plan = dict()
         full_plan = []
         waypoint = None
         array_header = None
@@ -124,26 +157,37 @@ class Tj2Waypoints:
         if len(waypoints.waypoints) <= 0:
             return full_plan
 
+        def reset_sub_plan():
+            nonlocal sub_plan
+            sub_plan = dict(
+                waypoints=[],  # list of tj2_waypoints/Waypoints
+                poses=[]  # list of geometry_msgs/Pose
+            )
+
         def append_to_sub_plan(waypoint):
             nonlocal array_header, sub_plan
             pose_stamped = self.get_waypoint_pose(waypoint)
 
             if array_header is None:
                 array_header = pose_stamped.header
-            sub_plan.append(pose_stamped.pose)
+            sub_plan["waypoints"].append(waypoint)
+            sub_plan["poses"].append(pose_stamped.pose)
         
         def append_to_full_plan(waypoint):
             nonlocal array_header, sub_plan
             assert array_header is not None
+            assert len(sub_plan["waypoints"]) == len(sub_plan["poses"]), "%s != %s" % (len(sub_plan["waypoints"]), len(sub_plan["poses"]))
             pose_array = geometry_msgs.msg.PoseArray()
             pose_array.header = array_header
-            pose_array.poses = sub_plan
+            pose_array.poses = sub_plan["poses"]
 
             # insert pose array to send to move_base.
-            # only last waypoint in continuous sequence matters for other parameters like
+            # only first waypoint in continuous sequence matters for other parameters like
             # ignore_orientation and intermediate_tolerance
-            full_plan.append((waypoint, pose_array))
-            sub_plan = []
+            full_plan.append((sub_plan["waypoints"], pose_array))
+            reset_sub_plan()
+        
+        reset_sub_plan()
 
         first_waypoint = waypoints.waypoints.pop(0)
         first_waypoint.is_continuous = False  # first waypoint must always be discontinuous
@@ -151,11 +195,11 @@ class Tj2Waypoints:
         append_to_full_plan(first_waypoint)
 
         for waypoint in waypoints.waypoints:
-            if not waypoint.is_continuous and len(sub_plan) > 0:
+            if not waypoint.is_continuous and len(sub_plan["poses"]) > 0:
                 append_to_full_plan(waypoint)
             append_to_sub_plan(waypoint)
-                
-        if len(sub_plan) > 0 and waypoint is not None:
+
+        if len(sub_plan["poses"]) > 0 and waypoint is not None:
             append_to_full_plan(waypoint)
         return full_plan
 
@@ -167,6 +211,32 @@ class Tj2Waypoints:
         pose_2d = self.get_waypoint(name)
         pose = self.waypoint_to_pose(pose_2d)
         return pose
+
+    # ---
+    # set move_base parameters
+    # ---
+
+    def is_obstacle_layer_enabled(self):
+        return self.local_obstacle_layer_toggle.get_state() and self.global_obstacle_layer_toggle.get_state()
+
+    def toggle_local_costmap(self, state):
+        state = bool(state)
+        if state == self.is_obstacle_layer_enabled():
+            return
+        rospy.loginfo(("Enabling" if state else "Disabling") + " obstacle layer")
+        self.local_obstacle_layer_toggle.set_state(state)
+        self.global_obstacle_layer_toggle.set_state(state)
+    
+    def is_static_layer_enabled(self):
+        return self.local_static_layer_toggle.get_state() and self.global_static_layer_toggle.get_state()
+
+    def toggle_walls(self, state):
+        state = bool(state)
+        if state == self.is_static_layer_enabled():
+            return
+        rospy.loginfo(("Enabling" if state else "Disabling") + " static layer")
+        self.local_static_layer_toggle.set_state(state)
+        self.global_static_layer_toggle.set_state(state)
 
     # ---
     # Service callbacks

@@ -27,6 +27,7 @@ class GoToWaypointState(State):
 
         self.intermediate_tolerance = 0.0
         self.ignore_orientation = False
+        self.ignore_obstacles = False
 
         self.intermediate_settle_time = rospy.Duration(0.25)  # TODO: change to launch param or goal param
         self.within_range_time = None
@@ -34,7 +35,15 @@ class GoToWaypointState(State):
         self.is_move_base_done = False
         self.distance_to_goal = None
         self.epsilon = 1E-100
-        
+    
+    def toggle_obstacles(self, userdata, state):
+        userdata.state_machine.waypoints_node.toggle_local_costmap(state)
+
+    def toggle_walls(self, userdata, state):
+        userdata.state_machine.waypoints_node.toggle_walls(state)
+        if not state:
+            self.toggle_obstacles(userdata, False)
+
     def execute(self, userdata):
         rospy.loginfo("Executing waypoint")
         self.reset()
@@ -52,10 +61,17 @@ class GoToWaypointState(State):
         if userdata.waypoint_index_in >= self.num_waypoints:
             return "finished"
         
-        waypoint, pose_array = userdata.waypoints_plan[userdata.waypoint_index_in]
+        waypoints, pose_array = userdata.waypoints_plan[userdata.waypoint_index_in]
 
-        self.intermediate_tolerance = waypoint.intermediate_tolerance
-        self.ignore_orientation = waypoint.ignore_orientation
+        first_waypoint = waypoints[0]  # for some parameters, only the first waypoint's values matter
+
+        self.intermediate_tolerance = first_waypoint.intermediate_tolerance
+        self.ignore_orientation = first_waypoint.ignore_orientation
+        self.ignore_obstacles = first_waypoint.ignore_obstacles
+        self.ignore_walls = first_waypoint.ignore_walls
+
+        self.toggle_obstacles(userdata, not self.ignore_obstacles)
+        self.toggle_walls(userdata, not self.ignore_walls)
 
         if self.ignore_orientation and abs(self.intermediate_tolerance) < self.epsilon:
             self.intermediate_tolerance = 0.075  # TODO: pull this from move_base local planner parameters
@@ -180,6 +196,13 @@ class WaypointStateMachine(object):
                     "state_machine": "sm_state_machine",
                 }
             )
+
+    def close(self):
+        if self.waypoints_node is None:
+            return
+        self.waypoints_node.move_base.cancel_goal()
+        self.waypoints_node.toggle_local_costmap(True)
+        self.waypoints_node.toggle_walls(True)
 
     def execute(self, waypoints_plan, waypoints_node):
         rospy.loginfo("To cancel the waypoint follower, run: 'rostopic pub -1 /tj2/follow_path/cancel actionlib_msgs/GoalID -- {}'")
