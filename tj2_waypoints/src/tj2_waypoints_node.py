@@ -52,7 +52,10 @@ class SimpleDynamicToggle:
         self.state = config[self.config_key]
     
     def set_state(self, state):
+        if state == self.state:
+            return False
         self.dyn_client.update_configuration({self.config_key: bool(state)})
+        return True
 
     def get_state(self):
         return self.state
@@ -149,13 +152,13 @@ class Tj2Waypoints:
         rospy.loginfo("Waypoint plan complete")
 
     def get_waypoint_plan(self, waypoints: WaypointArray):
-        sub_plan = dict()
         full_plan = []
-        waypoint = None
-        array_header = None
 
         if len(waypoints.waypoints) <= 0:
             return full_plan
+
+        array_header = None
+        sub_plan = dict()
 
         def reset_sub_plan():
             nonlocal sub_plan
@@ -173,7 +176,7 @@ class Tj2Waypoints:
             sub_plan["waypoints"].append(waypoint)
             sub_plan["poses"].append(pose_stamped.pose)
         
-        def append_to_full_plan(waypoint):
+        def append_to_full_plan():
             nonlocal array_header, sub_plan
             assert array_header is not None
             assert len(sub_plan["waypoints"]) == len(sub_plan["poses"]), "%s != %s" % (len(sub_plan["waypoints"]), len(sub_plan["poses"]))
@@ -189,18 +192,14 @@ class Tj2Waypoints:
         
         reset_sub_plan()
 
-        first_waypoint = waypoints.waypoints.pop(0)
-        first_waypoint.is_continuous = False  # first waypoint must always be discontinuous
-        append_to_sub_plan(first_waypoint)
-        append_to_full_plan(first_waypoint)
-
+        waypoint = None
         for waypoint in waypoints.waypoints:
-            if not waypoint.is_continuous and len(sub_plan["poses"]) > 0:
-                append_to_full_plan(waypoint)
             append_to_sub_plan(waypoint)
+            if not waypoint.is_continuous:
+                append_to_full_plan()
 
-        if len(sub_plan["poses"]) > 0 and waypoint is not None:
-            append_to_full_plan(waypoint)
+        if len(sub_plan["poses"]) > 0:  # if the last waypoint is continuous, make it discontinuous
+            append_to_full_plan()
         return full_plan
 
     def get_waypoint_pose(self, waypoint: Waypoint):
@@ -216,27 +215,19 @@ class Tj2Waypoints:
     # set move_base parameters
     # ---
 
-    def is_obstacle_layer_enabled(self):
-        return self.local_obstacle_layer_toggle.get_state() and self.global_obstacle_layer_toggle.get_state()
-
-    def toggle_local_costmap(self, state):
+    def toggle_obstacles(self, state):
         state = bool(state)
-        if state == self.is_obstacle_layer_enabled():
-            return
         rospy.loginfo(("Enabling" if state else "Disabling") + " obstacle layer")
-        self.local_obstacle_layer_toggle.set_state(state)
-        self.global_obstacle_layer_toggle.set_state(state)
+        local_changed = self.local_obstacle_layer_toggle.set_state(state)
+        global_changed = self.global_obstacle_layer_toggle.set_state(state)
+        return local_changed or global_changed
     
-    def is_static_layer_enabled(self):
-        return self.local_static_layer_toggle.get_state() and self.global_static_layer_toggle.get_state()
-
     def toggle_walls(self, state):
         state = bool(state)
-        if state == self.is_static_layer_enabled():
-            return
         rospy.loginfo(("Enabling" if state else "Disabling") + " static layer")
-        self.local_static_layer_toggle.set_state(state)
-        self.global_static_layer_toggle.set_state(state)
+        local_changed = self.local_static_layer_toggle.set_state(state)
+        global_changed = self.global_static_layer_toggle.set_state(state)
+        return local_changed or global_changed
 
     # ---
     # Service callbacks
