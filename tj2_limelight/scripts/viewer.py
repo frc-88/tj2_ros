@@ -43,7 +43,7 @@ def main():
     loop_times = []
     window_size = 20
     resize_width = 1920
-    show_checkerboard = False
+    show_checkerboard = True
 
     try:
         while True:
@@ -52,7 +52,7 @@ def main():
             t1 = time.time()
 
             if show_checkerboard:
-                result = draw_checkerboard(frame)
+                result = draw_checkerboard(np.copy(frame))
                 if result is not None:
                     draw_frame = result
                 else:
@@ -72,7 +72,7 @@ def main():
                 break
             elif key == "s":
                 if frame is not None:
-                    record_image(frame, "../../dataset_builder/limelight_targets/base_images")
+                    record_image(frame, "./images")
             t2 = time.time()
 
             read_times.append(t1 - t0)
