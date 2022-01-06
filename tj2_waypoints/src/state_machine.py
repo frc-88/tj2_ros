@@ -1,4 +1,5 @@
 import math
+import time
 import rospy
 import actionlib
 from geometry_msgs.msg import PoseStamped
@@ -36,13 +37,14 @@ class GoToWaypointState(State):
         self.distance_to_goal = None
         self.epsilon = 1E-100
     
-    def toggle_obstacles(self, userdata, state):
-        userdata.state_machine.waypoints_node.toggle_local_costmap(state)
+    def toggle_obstacles(self, userdata, ignore_obstacles):
+        userdata.state_machine.waypoints_node.toggle_obstacles(not ignore_obstacles)
 
-    def toggle_walls(self, userdata, state):
-        userdata.state_machine.waypoints_node.toggle_walls(state)
-        if not state:
-            self.toggle_obstacles(userdata, False)
+    def toggle_layers(self, userdata, ignore_walls, ignore_obstacles):
+        did_change = userdata.state_machine.waypoints_node.toggle_walls(not ignore_walls)
+        if not ignore_walls:
+            return self.toggle_obstacles(userdata, False) or did_change
+        return self.toggle_obstacles(userdata, ignore_obstacles)
 
     def execute(self, userdata):
         rospy.loginfo("Executing waypoint")
@@ -70,8 +72,8 @@ class GoToWaypointState(State):
         self.ignore_obstacles = first_waypoint.ignore_obstacles
         self.ignore_walls = first_waypoint.ignore_walls
 
-        self.toggle_obstacles(userdata, not self.ignore_obstacles)
-        self.toggle_walls(userdata, not self.ignore_walls)
+        if self.toggle_layers(userdata, self.ignore_walls, self.ignore_obstacles):
+            time.sleep(1.0)
 
         if self.ignore_orientation and abs(self.intermediate_tolerance) < self.epsilon:
             self.intermediate_tolerance = 0.075  # TODO: pull this from move_base local planner parameters

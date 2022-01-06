@@ -329,10 +329,7 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         double intermediate_tolerance = result->getDouble();
         bool ignore_obstacles = result->getInt();
         bool ignore_walls = result->getInt();
-        if (_waypoints.waypoints.size() == 0 && is_continuous) {
-            is_continuous = false;
-            ROS_WARN("First goal must be discontinuous. Setting waypoint to discontinuous");
-        }
+        
         tj2_waypoints::Waypoint waypoint;
         waypoint.name = waypoint_name;
         waypoint.is_continuous = is_continuous;
