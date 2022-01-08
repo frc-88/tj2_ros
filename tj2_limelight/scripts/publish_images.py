@@ -26,7 +26,7 @@ class LimelightImagePublisher:
         self.camera_info_path = rospy.get_param("~camera_info_path", "./config/320x240.yaml")
 
         self.image_paths = self.load_image_paths(self.images_dir)
-        self.frame_dwell = 2.0
+        self.frame_dwell = 10.0
         self.fps = 10
         self.image_index = 0
         self.dwell_timer = time.time()
@@ -92,7 +92,9 @@ class LimelightImagePublisher:
     
     def get_next_depth_frame(self):
         depth_frame = np.zeros((self.camera_info.height, self.camera_info.width), np.uint16)
-        depth_frame[:] = 250
+        # depth_frame[:] = 1000
+        for column_index, column_dist in enumerate(np.linspace(1000, 2000, self.camera_info.width)):
+            depth_frame[:, column_index] = column_dist
         return depth_frame
     
     def load_camera_info(self, path):

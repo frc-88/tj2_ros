@@ -33,11 +33,11 @@ def get_plane_mesh(a, b, c, d, x_lim=(-1.0, 1.0), y_lim=(-1.0, 1.0)):
 
 
 def main():
-    # np.random.seed(8000)
+    np.random.seed(8000)
 
     # generate some random test points 
-    m = 1000 # number of points
-    delta = 0.1 # size of random displacement
+    m = 10 # number of points
+    delta = 1.0 # size of random displacement
     origin = np.random.rand(3, 1) # random origin for the plane
     # origin = np.zeros((3, 1))
     basis = np.random.rand(3, 2) # random basis vectors for the plane
