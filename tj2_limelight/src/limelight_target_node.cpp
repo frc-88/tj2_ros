@@ -276,10 +276,7 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_inde
     object_pose.position.x = center.x;
     object_pose.position.y = center.y;
     object_pose.position.z = center.z;
-    object_pose.orientation.w = 1.0;
-    object_pose.orientation.x = 0.0;
-    object_pose.orientation.y = 0.0;
-    object_pose.orientation.z = 0.0;
+    object_pose.orientation = get_target_orientation(depth_cv_image, bndbox);
 
     det_msg.bbox.center.x = bndbox.x;
     det_msg.bbox.center.y = bndbox.y;
@@ -295,6 +292,111 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_inde
     det_msg.results.push_back(hypothesis);
 
     return det_msg;
+}
+
+geometry_msgs::Quaternion LimelightTargetNode::get_target_orientation(cv::Mat depth_cv_image, cv::Rect target)
+{
+    int x_min = target.x;
+    int x_max = target.x + target.width;
+    
+    int y_min = target.y;
+    int y_max = target.y + target.height;
+    
+    int depth_size = (x_max - x_min) * (y_max - y_min);
+    cv::Mat data_pts = cv::Mat(depth_size, 3, CV_64F);
+
+    size_t row_count = 0;
+    ROS_INFO("%d, %d, %d, %d", x_max, x_min, y_max, y_min);
+    for (int x = x_min; x < x_max; x++)
+    {
+        for (int y = y_min; y < y_max; y++)
+        {
+            double depth_value = (double)depth_cv_image.at<uint16_t>(x, y) / 1000.0;
+            if (depth_value == 0.0 || isnan(depth_value)) {
+                continue;
+            }
+            cv::Point2d point;
+            point.x = x;
+            point.y = y;
+
+            cv::Point3d ray = _camera_model.projectPixelTo3dRay(point);
+
+            data_pts.at<double>(row_count, 0) = (double)ray.x * depth_value;
+            data_pts.at<double>(row_count, 1) = (double)ray.y * depth_value;
+            data_pts.at<double>(row_count, 2) = (double)depth_value;
+
+            // if ((x == x_min && y == y_min) ||
+            //     (x == x_min && y == y_max - 1) ||
+            //     (x == x_max - 1 && y == y_min) ||
+            //     (x == x_max - 1 && y == y_max - 1)) {
+            //     ROS_INFO("%d, %d, \tX: %f\tY: %f\tZ: %f", x, y,
+            //         data_pts.at<double>(row_count, 0),
+            //         data_pts.at<double>(row_count, 1),
+            //         data_pts.at<double>(row_count, 2)
+            //     );
+            // }
+
+            row_count++;
+        }
+    }
+    cv::PCA pca_analysis(data_pts, cv::Mat(), cv::PCA::DATA_AS_ROW);
+    // cv::Point3d center = cv::Point3d(
+    //     pca_analysis.mean.at<double>(0, 0),
+    //     pca_analysis.mean.at<double>(0, 1)
+    //     pca_analysis.mean.at<double>(0, 2)
+    // );
+    
+    vector<cv::Point3d> eigen_vecs(3);
+    // vector<double> eigen_val(3);
+    for (int i = 0; i < 3; i++)
+    {
+        eigen_vecs[i] = cv::Point3d(
+            pca_analysis.eigenvectors.at<double>(i, 0),
+            pca_analysis.eigenvectors.at<double>(i, 1),
+            pca_analysis.eigenvectors.at<double>(i, 2)
+        );
+        ROS_INFO("\t%d, (%f, %f, %f)", i, 
+            pca_analysis.eigenvectors.at<double>(i, 0),
+            pca_analysis.eigenvectors.at<double>(i, 1),
+            pca_analysis.eigenvectors.at<double>(i, 2)
+        );
+        // eigen_val[i] = pca_analysis.eigenvalues.at<double>(i);
+    }
+    cv::Vec3d vector(eigen_vecs[1].x, eigen_vecs[1].y, eigen_vecs[1].z);
+    return vector_to_quat(vector);
+}
+
+double magnitude_vec3d(cv::Vec3d vector)
+{
+    return sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
+}
+
+geometry_msgs::Quaternion LimelightTargetNode::vector_to_quat(cv::Vec3d vector)
+{
+    // from: https://math.stackexchange.com/questions/2356649/how-to-find-the-quaternion-representing-the-rotation-between-two-3-d-vectors
+    cv::Vec3d null_vector(1.0, 0.0, 0.0);
+    cv::Vec3d cross = null_vector.cross(vector);
+    double cross_mag = magnitude_vec3d(cross);
+    double dot = null_vector[0] * vector[0] + null_vector[1] * vector[1] + null_vector[2] * vector[2];
+    double theta = atan(cross_mag / dot);
+    cv::Vec3d axis_n;
+    axis_n = cross / cross_mag;
+    cv::Vec3d quat_xyz = axis_n * sin(theta / 2.0);
+
+    geometry_msgs::Quaternion quat;
+    if (cross_mag == 0.0) {
+        quat.w = 1.0;
+        quat.x = 0.0;
+        quat.y = 0.0;
+        quat.z = 0.0;
+    }
+    else {
+        quat.w = cos(theta / 2.0);
+        quat.x = quat_xyz[0];
+        quat.y = quat_xyz[1];
+        quat.z = quat_xyz[2];
+    }
+    return quat;
 }
 
 
@@ -415,21 +517,19 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     for (size_t index = 0; index < detection_boxes->size(); index++) {
         cv::Rect bndbox = detection_boxes->at(index);
         cv::Mat cropped_frame = frame(bndbox);
-        if (bndbox.width <= 0 || bndbox.height <= 0) {
-            continue;
-        }
 
-        cv::Mat resized_frame;
-        cv::resize(cropped_frame, resized_frame, _classify_resize);
-        int class_index = classify(resized_frame);
-        if (is_bndbox_ok(bndbox) && class_index >= 0) {
-            classes->push_back(class_index);
+        if (is_bndbox_ok(frame.size(), bndbox)) {
+            cv::Mat resized_frame;
+            cv::resize(cropped_frame, resized_frame, _classify_resize);
+            int class_index = classify(resized_frame);
+            if (class_index >= 0) {
+                classes->push_back(class_index);
+                continue;
+            }
         }
-        else {
-            detection_boxes->erase(std::next(detection_boxes->begin(), index));
-            index--;
-            rejected_boxes.push_back(bndbox);
-        }
+        detection_boxes->erase(std::next(detection_boxes->begin(), index));
+        index--;
+        rejected_boxes.push_back(bndbox);
     }
 
     if (_pipeline_pub.getNumSubscribers() > 0) {
@@ -451,9 +551,13 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     }
 }
 
-bool LimelightTargetNode::is_bndbox_ok(cv::Rect bndbox)
+bool LimelightTargetNode::is_bndbox_ok(cv::Size image_size, cv::Rect bndbox)
 {
-    return bndbox.x >= 0 && bndbox.y >= 0 && bndbox.width > 0 && bndbox.height > 0;
+    return (
+        bndbox.x >= 0 && bndbox.y >= 0 && 
+        bndbox.width > 0 && bndbox.height > 0 &&
+        (bndbox.x + bndbox.width) < image_size.width && (bndbox.y + bndbox.height) < image_size.height
+    );
 }
 
 int LimelightTargetNode::classify(cv::Mat cropped_image)
