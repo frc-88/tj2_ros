@@ -10,7 +10,7 @@ for h in range(0, max_value + 1):
     pixel = cv2.cvtColor(pixel, cv2.COLOR_HSV2BGR)
     column = np.zeros((height, column_width, 3), np.uint8)
     # if h < 90 or h > 120:
-    if h < 35 or h > 90:
+    if h < 20 or h > 35:
         column[..., 0:3] = np.array([0, 0, 0])
     else:
         column[..., 0:3] = pixel[0:3]
