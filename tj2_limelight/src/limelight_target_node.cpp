@@ -415,21 +415,18 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     for (size_t index = 0; index < detection_boxes->size(); index++) {
         cv::Rect bndbox = detection_boxes->at(index);
         cv::Mat cropped_frame = frame(bndbox);
-        if (bndbox.width <= 0 || bndbox.height <= 0) {
-            continue;
+        if (is_bndbox_ok(frame.size(), bndbox)) {
+            cv::Mat resized_frame;
+            cv::resize(cropped_frame, resized_frame, _classify_resize);
+            int class_index = classify(resized_frame);
+            if (class_index >= 0) {
+                classes->push_back(class_index);
+                continue;
+            }
         }
-
-        cv::Mat resized_frame;
-        cv::resize(cropped_frame, resized_frame, _classify_resize);
-        int class_index = classify(resized_frame);
-        if (is_bndbox_ok(bndbox) && class_index >= 0) {
-            classes->push_back(class_index);
-        }
-        else {
-            detection_boxes->erase(std::next(detection_boxes->begin(), index));
-            index--;
-            rejected_boxes.push_back(bndbox);
-        }
+        detection_boxes->erase(std::next(detection_boxes->begin(), index));
+        index--;
+        rejected_boxes.push_back(bndbox);
     }
 
     if (_pipeline_pub.getNumSubscribers() > 0) {
@@ -451,9 +448,13 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     }
 }
 
-bool LimelightTargetNode::is_bndbox_ok(cv::Rect bndbox)
+bool LimelightTargetNode::is_bndbox_ok(cv::Size image_size, cv::Rect bndbox)
 {
-    return bndbox.x >= 0 && bndbox.y >= 0 && bndbox.width > 0 && bndbox.height > 0;
+    return (
+        bndbox.x >= 0 && bndbox.y >= 0 && 
+        bndbox.width > 0 && bndbox.height > 0 &&
+        (bndbox.x + bndbox.width) < image_size.width && (bndbox.y + bndbox.height) < image_size.height
+    );
 }
 
 int LimelightTargetNode::classify(cv::Mat cropped_image)
