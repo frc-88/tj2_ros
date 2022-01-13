@@ -130,7 +130,7 @@ private:
     bool _enable_target_detections;
     bool _enable_pipeline_detections;
     
-    bool is_bndbox_ok(cv::Rect bndbox);
+    bool is_bndbox_ok(cv::Size image_size, cv::Rect bndbox);
 
     visualization_msgs::MarkerArray create_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
     visualization_msgs::Marker make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
