@@ -4,11 +4,11 @@ import random
 from pathlib import Path
 from tj2_tools.training.pascal_voc import PascalVOCFrame
 
-from detect_collector import DetectCollector
-from dataset_builder.detect_dataset_builder import DetectDatasetBuilder
-from dataset_builder.classify_dataset_builder import ClassifyDatasetBuilder
+from tj2_tools.training.detect_collector import DetectCollector
+from tj2_tools.training.dataset_builder.detect_dataset_builder import DetectDatasetBuilder
+from tj2_tools.training.dataset_builder.classify_dataset_builder import ClassifyDatasetBuilder
 from pipelines import *
-from helpers import record_annotation, debug_imshow, crop_to_annotations, record_image, record_classify_paths, \
+from tj2_tools.training.helpers import record_annotation, debug_imshow, crop_to_annotations, record_image, record_classify_paths, \
     read_classify_paths, crop_to_background
 
 

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2">
+        <node pkg="tj2_gameobjects" type="tj2_gameobjects_node" name="tj2_gameobjects" output="screen">
+            <param name="approx_sync_queue_size" value="25" />
+            <remap from="color/image_raw" to="color/image_raw" />
+            <remap from="depth/image_raw" to="aligned_depth_to_color/image_raw" />
+            <remap from="depth/camera_info" to="aligned_depth_to_color/camera_info" />
+            <rosparam file="$(find tj2_gameobjects)/config/pipeline.yaml" command="load" ns=""/>
+            <param name="enable_target_detections" value="false"/>
+            <param name="enable_pipeline_detections" value="true"/>
+
+            <param name="min_contour_area" value="40"/>
+            <param name="max_contour_area" value="1000"/>
+
+            <param name="model_name" value=""/>
+            <param name="model_path" value="$(find tj2_gameobjects)/models/.onnx"/>
+            <param name="class_labels_path" value="$(find tj2_gameobjects)/models/.txt"/>
+            <param name="threshold" value="0.9"/>
+            <param name="input_blob" value="input_0"/>
+            <param name="output_blob" value="output_0"/>
+        </node>
+    </group>
+</launch>

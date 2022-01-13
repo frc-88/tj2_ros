@@ -1,6 +1,6 @@
-#include "limelight_target_node.h"
+#include "tj2_gameobjects_node.h"
 
-LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
+TJ2GameObjects::TJ2GameObjects(ros::NodeHandle* nodehandle) :
     nh(*nodehandle),
     _image_transport(nh),
     _tf_listener(_tf_buffer)
@@ -22,8 +22,6 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~output_blob", _output_blob, IMAGENET_DEFAULT_OUTPUT);
 
     ros::param::param<double>("~threshold", _threshold, 0.5);
-    ros::param::param<bool>("~enable_target_detections", _enable_target_detections, true);
-    ros::param::param<bool>("~enable_pipeline_detections", _enable_pipeline_detections, true);
 
     bool show_classify_log_messages;
     ros::param::param<bool>("~show_classify_log_messages", show_classify_log_messages, false);
@@ -129,27 +127,39 @@ LimelightTargetNode::LimelightTargetNode(ros::NodeHandle* nodehandle) :
 
     _pipeline_pub = _image_transport.advertise("pipeline/image_raw", 2);
 
-    _marker_target_pub = nh.advertise<visualization_msgs::MarkerArray>("markers/targets", 10);
-    _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("markers/pipeline", 10);
-    _target_detection_pub = nh.advertise<vision_msgs::Detection2DArray>("detections/targets", 10);
-    _detection_array_pub = nh.advertise<vision_msgs::Detection2DArray>("detections/pipeline", 10);
+    _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("gameobjects/markers", 10);
+    _detection_array_pub = nh.advertise<vision_msgs::Detection2DArray>("gameobjects/detections", 10);
 
     _color_sub.subscribe(nh, "color/image_raw", 10);
     _depth_sub.subscribe(nh, "depth/image_raw", 10);
     _depth_info_sub.subscribe(nh, "depth/camera_info", 10);
-    
-    _target_sub = nh.subscribe("targets", 1, &LimelightTargetNode::target_callback, this);
 
     camera_sync.reset(new CameraSync(CameraApproxSyncPolicy(_approx_sync_queue_size), _color_sub, _depth_sub, _depth_info_sub));
-    camera_sync->registerCallback(boost::bind(&LimelightTargetNode::camera_callback, this, _1, _2, _3));
+    camera_sync->registerCallback(boost::bind(&TJ2GameObjects::camera_callback, this, _1, _2, _3));
+
+    dyn_cfg_wrapped_callback = boost::bind(&TJ2GameObjects::dynamic_callback, this, _1, _2);
+    dyn_cfg.setCallback(dyn_cfg_wrapped_callback);
 }
 
-void LimelightTargetNode::camera_callback(const ImageConstPtr& color_image, const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info)
+void TJ2GameObjects::dynamic_callback(tj2_gameobjects::GameObjectsPipelineConfig &config, uint32_t level)
 {
-    if (!_enable_pipeline_detections && !_enable_target_detections) {
-        ROS_WARN_ONCE("Neither pipeline or target detections are enabled! No detections will be published");
-        return;
-    }
+    hsv_lower_bound = cv::Scalar(
+        config.h_lower,
+        config.s_lower,
+        config.v_lower
+    );
+    hsv_upper_bound = cv::Scalar(
+        config.h_upper,
+        config.s_upper,
+        config.v_upper
+    );
+    _min_contour_area = config.min_contour_area;
+    _max_contour_area = config.max_contour_area;
+    ROS_INFO("Pipeline parameters updated");
+}
+
+void TJ2GameObjects::camera_callback(const ImageConstPtr& color_image, const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info)
+{
     _camera_model.fromCameraInfo(depth_info);
     
     cv::Mat color_cv_image;
@@ -163,18 +173,12 @@ void LimelightTargetNode::camera_callback(const ImageConstPtr& color_image, cons
         return;
     }
 
-    if (_enable_pipeline_detections) {
-        vector<cv::Rect>* detection_boxes = new vector<cv::Rect>();
-        contour_pipeline(color_cv_image, detection_boxes);
-        publish_markers_and_detections(&_detection_array_pub, &_marker_pub, detection_boxes, color_image->header, color_cv_image, depth_cv_image);
-    }
-    
-    if (_enable_target_detections) {
-        publish_markers_and_detections(&_target_detection_pub, &_marker_target_pub, _current_targets, color_image->header, color_cv_image, depth_cv_image);
-    }
+    vector<cv::Rect>* detection_boxes = new vector<cv::Rect>();
+    contour_pipeline(color_cv_image, detection_boxes);
+    publish_markers_and_detections(&_detection_array_pub, &_marker_pub, detection_boxes, color_image->header, color_cv_image, depth_cv_image);
 }
 
-void LimelightTargetNode::publish_markers_and_detections(ros::Publisher* detection_array_pub, ros::Publisher* marker_pub, vector<cv::Rect>* detection_boxes, std_msgs::Header header, cv::Mat color_cv_image, cv::Mat depth_cv_image)
+void TJ2GameObjects::publish_markers_and_detections(ros::Publisher* detection_array_pub, ros::Publisher* marker_pub, vector<cv::Rect>* detection_boxes, std_msgs::Header header, cv::Mat color_cv_image, cv::Mat depth_cv_image)
 {
     vector<int>* class_indices = new vector<int>();
     detection_pipeline(color_cv_image, detection_boxes, class_indices);
@@ -198,28 +202,7 @@ void LimelightTargetNode::publish_markers_and_detections(ros::Publisher* detecti
     detection_array_pub->publish(det_array_msg);
 }
 
-void LimelightTargetNode::target_callback(const tj2_limelight::LimelightTargetArrayConstPtr& targets)
-{
-    _current_targets->clear();
-    if (targets->targets.size() == 0) {
-        return;
-    }
-
-    for (size_t index = 0; index < targets->targets.size(); index++) {
-        tj2_limelight::LimelightTarget target = targets->targets.at(index);
-        if (target.thor <= 0 || target.tvert <= 0) {
-            continue;
-        }
-        cv::Rect bndbox(
-            target.tx - target.thor / 2,
-            target.ty - target.tvert / 2,
-            target.thor, target.tvert
-        );
-        _current_targets->push_back(bndbox);
-    }
-}
-
-vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_index, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions)
+vision_msgs::Detection2D TJ2GameObjects::target_to_detection(int class_index, cv::Mat depth_cv_image, cv::Rect bndbox, cv::Point3d& dimensions)
 {
     vision_msgs::Detection2D det_msg;
     int width = bndbox.width;
@@ -263,20 +246,23 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_inde
     }
 
     if (dimensions.x <= 1E-9) {
-        dimensions.x = 0.002;
+        dimensions.x = 0.001;
     }
     if (dimensions.y <= 1E-9) {
-        dimensions.y = 0.002;
+        dimensions.y = 0.001;
     }
     if (dimensions.z <= 1E-9) {
-        dimensions.z = 0.002;
+        dimensions.z = 0.001;
     }
 
     geometry_msgs::Pose object_pose;
     object_pose.position.x = center.x;
     object_pose.position.y = center.y;
     object_pose.position.z = center.z;
-    object_pose.orientation = get_target_orientation(depth_cv_image, bndbox);
+    object_pose.orientation.w = 1.0;
+    object_pose.orientation.x = 0.0;
+    object_pose.orientation.y = 0.0;
+    object_pose.orientation.z = 0.0;
 
     det_msg.bbox.center.x = bndbox.x;
     det_msg.bbox.center.y = bndbox.y;
@@ -294,136 +280,7 @@ vision_msgs::Detection2D LimelightTargetNode::target_to_detection(int class_inde
     return det_msg;
 }
 
-geometry_msgs::Quaternion LimelightTargetNode::get_target_orientation(cv::Mat depth_cv_image, cv::Rect target)
-{
-    int x_min = target.x;
-    int x_max = target.x + target.width;
-    
-    int y_min = target.y;
-    int y_max = target.y + target.height;
-    
-    int depth_size = (x_max - x_min) * (y_max - y_min);
-    cv::Mat A = cv::Mat(depth_size, 3, CV_64F);
-    cv::Mat b = cv::Mat(depth_size, 1, CV_64F);
-
-    size_t row_count = 0;
-    ROS_INFO("%d, %d, %d, %d", x_max, x_min, y_max, y_min);
-    double x_sum = 0.0;
-    double y_sum = 0.0;
-    double z_sum = 0.0;
-    for (int x = x_min; x < x_max; x++)
-    {
-        for (int y = y_min; y < y_max; y++)
-        {
-            double depth_value = (double)depth_cv_image.at<uint16_t>(x, y) / 1000.0;
-            if (depth_value == 0.0 || isnan(depth_value)) {
-                continue;
-            }
-            cv::Point2d point;
-            point.x = x;
-            point.y = y;
-
-            cv::Point3d ray = _camera_model.projectPixelTo3dRay(point);
-
-            double x_val = (double)ray.x * depth_value;
-            double y_val = (double)ray.y * depth_value;
-            double z_val = (double)depth_value;
-
-            x_sum += x_val;
-            y_sum += y_val;
-            z_sum += z_val;
-
-            A.at<double>(row_count, 0) = x_val;
-            A.at<double>(row_count, 1) = y_val;
-            A.at<double>(row_count, 2) = 1.0;
-            b.at<double>(row_count) = z_val;
-
-            // if ((x == x_min && y == y_min) ||
-            //     (x == x_min && y == y_max - 1) ||
-            //     (x == x_max - 1 && y == y_min) ||
-            //     (x == x_max - 1 && y == y_max - 1)) {
-            //     ROS_INFO("%d, %d, \tX: %f\tY: %f\tZ: %f", x, y,
-            //         data_pts.at<double>(row_count, 0),
-            //         data_pts.at<double>(row_count, 1),
-            //         data_pts.at<double>(row_count, 2)
-            //     );
-            // }
-            cout << "\t" << x_val << ", " << y_val << ", " << z_val << endl;
-
-            row_count++;
-        }
-    }
-    
-    double x_mean = x_sum / row_count;
-    double y_mean = y_sum / row_count;
-    double z_mean = z_sum / row_count;
-    for (size_t row = 0; row < row_count; row++) {
-        A.at<double>(row, 0) -= x_mean;
-        A.at<double>(row, 1) -= y_mean;
-        b.at<double>(row) -= z_mean;
-    }
-
-    cv::Mat A_inv;
-    cv::invert(A, A_inv, cv::DECOMP_SVD);
-    cv::Vec3d fit(0.0, 0.0, 0.0);
-    for (size_t row = 0; row < A_inv.size().height; row++) {
-        double summed_result = 0.0;
-        for (size_t col = 0; col < A_inv.size().width; col++) {
-            summed_result += A_inv.at<double>(row, col) * b.at<double>(col);
-            // cout << A_inv.at<double>(row, col) << ", ";
-        }
-        // cout << endl;
-        fit[row] = summed_result;
-    }
-    // cv::Vec3d normal(fit[0], fit[1], -1.0);
-    ROS_INFO("solution: %f x + %f y + %f = z", fit[0], fit[1], fit[2]);
-    cv::Vec3d vec1(1.0, 0.0, 1.0);
-    cv::Vec3d vec2(0.0, 1.0, 1.0);
-    vec1[2] = fit.dot(vec1);
-    vec2[2] = fit.dot(vec2);
-    cv::Vec3d normal = vec1.cross(vec2);
-    ROS_INFO("normal: %f, %f, %f", normal[0], normal[1], normal[2]);
-    cv::Vec3d normal_flip(normal[1], normal[0], normal[2]);
-
-    return vector_to_quat(normal_flip);
-}
-
-double magnitude_vec3d(cv::Vec3d vector)
-{
-    return sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
-}
-
-geometry_msgs::Quaternion LimelightTargetNode::vector_to_quat(cv::Vec3d vector)
-{
-    // from: https://math.stackexchange.com/questions/2356649/how-to-find-the-quaternion-representing-the-rotation-between-two-3-d-vectors
-    cv::Vec3d null_vector(0.0, 0.0, 1.0);
-    cv::Vec3d cross = null_vector.cross(vector);
-    double cross_mag = magnitude_vec3d(cross);
-    double dot = null_vector[0] * vector[0] + null_vector[1] * vector[1] + null_vector[2] * vector[2];
-    double theta = atan(cross_mag / dot);
-    cv::Vec3d axis_n;
-    axis_n = cross / cross_mag;
-    cv::Vec3d quat_xyz = axis_n * sin(theta / 2.0);
-
-    geometry_msgs::Quaternion quat;
-    if (cross_mag == 0.0) {
-        quat.w = 1.0;
-        quat.x = 0.0;
-        quat.y = 0.0;
-        quat.z = 0.0;
-    }
-    else {
-        quat.w = cos(theta / 2.0);
-        quat.x = quat_xyz[0];
-        quat.y = quat_xyz[1];
-        quat.z = quat_xyz[2];
-    }
-    ROS_INFO("quat: %f, %f, %f, %f", quat.w, quat.x, quat.y, quat.z);
-    return quat;
-}
-
-
-bool LimelightTargetNode::msg_to_frame(const ImageConstPtr msg, cv::Mat& image)
+bool TJ2GameObjects::msg_to_frame(const ImageConstPtr msg, cv::Mat& image)
 {
     cv_bridge::CvImagePtr cv_ptr;
     try {
@@ -442,7 +299,7 @@ bool LimelightTargetNode::msg_to_frame(const ImageConstPtr msg, cv::Mat& image)
     return true;
 }
 
-visualization_msgs::MarkerArray LimelightTargetNode::create_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
+visualization_msgs::MarkerArray TJ2GameObjects::create_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
 {
     visualization_msgs::MarkerArray markers;
     visualization_msgs::Marker rect_marker = make_marker(name, index, det_msg, dimensions);
@@ -469,7 +326,7 @@ visualization_msgs::MarkerArray LimelightTargetNode::create_markers(string name,
     return markers;
 }
 
-visualization_msgs::Marker LimelightTargetNode::make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
+visualization_msgs::Marker TJ2GameObjects::make_marker(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions)
 {
     visualization_msgs::Marker marker;
     marker.action = visualization_msgs::Marker::ADD;
@@ -494,7 +351,7 @@ visualization_msgs::Marker LimelightTargetNode::make_marker(string name, int ind
     return marker;
 }
 
-double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, cv::Rect target)
+double TJ2GameObjects::get_target_z(cv::Mat depth_cv_image, cv::Rect target)
 {
     cv::Mat rectangle_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
     cv::rectangle(rectangle_mask, target, cv::Scalar(255, 255, 255), cv::FILLED);
@@ -513,7 +370,7 @@ double LimelightTargetNode::get_target_z(cv::Mat depth_cv_image, cv::Rect target
     return z_dist;
 }
 
-void LimelightTargetNode::contour_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes)
+void TJ2GameObjects::contour_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes)
 {
     cv::Mat frame_hsv, contour_image;
     vector<vector<cv::Point>> contours;
@@ -534,7 +391,7 @@ void LimelightTargetNode::contour_pipeline(cv::Mat frame, vector<cv::Rect>* dete
     }
 }
 
-void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes, vector<int>* classes)
+void TJ2GameObjects::detection_pipeline(cv::Mat frame, vector<cv::Rect>* detection_boxes, vector<int>* classes)
 {
     vector<cv::Rect> rejected_boxes;
     for (size_t index = 0; index < detection_boxes->size(); index++) {
@@ -574,7 +431,7 @@ void LimelightTargetNode::detection_pipeline(cv::Mat frame, vector<cv::Rect>* de
     }
 }
 
-bool LimelightTargetNode::is_bndbox_ok(cv::Size image_size, cv::Rect bndbox)
+bool TJ2GameObjects::is_bndbox_ok(cv::Size image_size, cv::Rect bndbox)
 {
     return (
         bndbox.x >= 0 && bndbox.y >= 0 && 
@@ -583,7 +440,7 @@ bool LimelightTargetNode::is_bndbox_ok(cv::Size image_size, cv::Rect bndbox)
     );
 }
 
-int LimelightTargetNode::classify(cv::Mat cropped_image)
+int TJ2GameObjects::classify(cv::Mat cropped_image)
 {
     int width = cropped_image.cols;
     int height = cropped_image.rows;
@@ -607,13 +464,6 @@ int LimelightTargetNode::classify(cv::Mat cropped_image)
         return -1;
     }
 
-    // ROS_INFO("Calculating image size");
-    // int image_size = cropped_image.total() * cropped_image.elemSize();
-    // uchar3* image_input = new uchar3[image_size];
-    // ROS_INFO("Copying %d to image_input", image_size);
-    // memcpy(image_input, cropped_image.data, image_size * sizeof(uchar3));
-
-    // ROS_INFO("Classifying");
     const int img_class = _net->Classify(_image_output_gpu, width, height, &confidence);    
     // ROS_INFO("Image class: %d", img_class);
 
@@ -629,7 +479,7 @@ int LimelightTargetNode::classify(cv::Mat cropped_image)
     return img_class;
 }
 
-void LimelightTargetNode::free_on_gpu()
+void TJ2GameObjects::free_on_gpu()
 {
     if (_image_input_cpu != NULL)
     {
@@ -648,7 +498,7 @@ void LimelightTargetNode::free_on_gpu()
     }
 }
 
-bool LimelightTargetNode::allocate_on_gpu(uint32_t width, uint32_t height, imageFormat inputFormat)
+bool TJ2GameObjects::allocate_on_gpu(uint32_t width, uint32_t height, imageFormat inputFormat)
 {
     const size_t input_size = imageFormatSize(inputFormat, width, height);
     const size_t output_size = imageFormatSize(_internal_format, width, height);
@@ -675,7 +525,7 @@ bool LimelightTargetNode::allocate_on_gpu(uint32_t width, uint32_t height, image
     return true;
 }
 
-void LimelightTargetNode::load_imagenet_model()
+void TJ2GameObjects::load_imagenet_model()
 {
     /*
      * load image recognition network
@@ -707,7 +557,7 @@ void LimelightTargetNode::load_imagenet_model()
 }
 
 
-void LimelightTargetNode::load_labels()
+void TJ2GameObjects::load_labels()
 {
     /*
      * create the class labels parameter vector
@@ -734,7 +584,7 @@ void LimelightTargetNode::load_labels()
 }
 
 
-int LimelightTargetNode::run()
+int TJ2GameObjects::run()
 {
     if (!_net)
     {
@@ -751,8 +601,8 @@ int LimelightTargetNode::run()
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "tj2_limelight");
+    ros::init(argc, argv, "tj2_gameobjects");
     ros::NodeHandle nh;
-    LimelightTargetNode node(&nh);
+    TJ2GameObjects node(&nh);
     return node.run();
 }

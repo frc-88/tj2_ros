@@ -1,5 +1,6 @@
+import cv2
 import numpy as np
-from helpers import apply_objects_to_background, \
+from tj2_tools.training.helpers import apply_objects_to_background, \
     blank_background, gauss_background, gauss_foreground, random_color_background, \
     apply_random_shapes
 
@@ -42,13 +43,27 @@ false_shapes_params = (1, 2, 1, 5, ("rect", "circ"), excluded_hues)
 false_window_params = (1, 3, 1, 9, ("rect",), list(range(0, 90)) + list(range(120, 256)))
 
 
+def get_object_mask(bndbox, image):
+    annotated_image = image[bndbox[1]:bndbox[3], bndbox[0]:bndbox[2]]  # crop to annotation ROI
+
+    # hsv_anno_image = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2HSV)
+    # print("Median hue:", np.median(hsv_anno_image[..., 0]))
+
+    annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2GRAY)
+    result, thresholded = cv2.threshold(annotated_image, 127, 255, cv2.THRESH_BINARY)
+    obj_mask = np.zeros(image.shape[0:2], dtype=np.uint8)
+    obj_mask[bndbox[1]:bndbox[3], bndbox[0]:bndbox[2]] = thresholded
+
+    return obj_mask
+
+
 def no_operation(image, frame):
     return image
 
 
 def with_gauss_background(image, frame):
     background = gauss_background(*background_gauss_params, image.shape)
-    return apply_objects_to_background(image, background, frame, no_warps)
+    return apply_objects_to_background(image, background, frame, get_object_mask, no_warps)
 
 
 def with_gauss(image, frame):
@@ -57,78 +72,78 @@ def with_gauss(image, frame):
 
 def with_colored_background(image, frame):
     background = random_color_background(image.shape, excluded_hues)
-    return apply_objects_to_background(image, background, frame, no_warps)
+    return apply_objects_to_background(image, background, frame, get_object_mask, no_warps)
 
 
 def move_objects_subtle(image, frame):
     background = blank_background(image.shape)
-    return apply_objects_to_background(image, background, frame, subtle_warps)
+    return apply_objects_to_background(image, background, frame, get_object_mask, subtle_warps)
 
 
 def move_objects_subtle_gauss_background(image, frame):
     background = gauss_background(*background_gauss_params, image.shape)
-    return apply_objects_to_background(image, background, frame, subtle_warps)
+    return apply_objects_to_background(image, background, frame, get_object_mask, subtle_warps)
 
 
 def move_objects_subtle_gauss(image, frame):
     background = blank_background(image.shape)
-    output_image = apply_objects_to_background(image, background, frame, subtle_warps)
+    output_image = apply_objects_to_background(image, background, frame, get_object_mask, subtle_warps)
     return gauss_foreground(output_image, *foreground_gauss_params, image.shape)
 
 
 def false_objects_subtle(image, frame):
     background = blank_background(image.shape)
     background = apply_random_shapes(background, *false_shapes_params)
-    return apply_objects_to_background(image, background, frame, subtle_warps)
+    return apply_objects_to_background(image, background, frame, get_object_mask, subtle_warps)
 
 
 def false_objects_subtle_gauss_background(image, frame):
     background = gauss_background(*background_gauss_params, image.shape)
     background = apply_random_shapes(background, *false_shapes_params)
-    return apply_objects_to_background(image, background, frame, subtle_warps)
+    return apply_objects_to_background(image, background, frame, get_object_mask, subtle_warps)
 
 
 def false_objects_subtle_gauss(image, frame):
     background = blank_background(image.shape)
     background = apply_random_shapes(background, *false_shapes_params)
-    output_image = apply_objects_to_background(image, background, frame, subtle_warps)
+    output_image = apply_objects_to_background(image, background, frame, get_object_mask, subtle_warps)
     return gauss_foreground(output_image, *foreground_gauss_params, image.shape)
 
 
 def move_objects_medium(image, frame):
     background = blank_background(image.shape)
-    return apply_objects_to_background(image, background, frame, medium_warps)
+    return apply_objects_to_background(image, background, frame, get_object_mask, medium_warps)
 
 
 def move_objects_medium_gauss_background(image, frame):
     background = gauss_background(*background_gauss_params, image.shape)
-    return apply_objects_to_background(image, background, frame, medium_warps)
+    return apply_objects_to_background(image, background, frame, get_object_mask, medium_warps)
 
 
 def move_objects_medium_gauss(image, frame):
     background = blank_background(image.shape)
-    output_image = apply_objects_to_background(image, background, frame, medium_warps)
+    output_image = apply_objects_to_background(image, background, frame, get_object_mask, medium_warps)
     return gauss_foreground(output_image, *foreground_gauss_params, image.shape)
 
 
 def move_objects_erratic(image, frame):
     background = blank_background(image.shape)
-    return apply_objects_to_background(image, background, frame, erratic_warps)
+    return apply_objects_to_background(image, background, frame, get_object_mask, erratic_warps)
 
 
 def move_objects_erratic_gauss_background(image, frame):
     background = gauss_background(*background_gauss_params, image.shape)
-    return apply_objects_to_background(image, background, frame, erratic_warps)
+    return apply_objects_to_background(image, background, frame, get_object_mask, erratic_warps)
 
 
 def move_objects_erratic_gauss(image, frame):
     background = blank_background(image.shape)
-    output_image = apply_objects_to_background(image, background, frame, erratic_warps)
+    output_image = apply_objects_to_background(image, background, frame, get_object_mask, erratic_warps)
     return gauss_foreground(output_image, *foreground_gauss_params, image.shape)
 
 
 def window_false_objects(image, frame):
     background = blank_background(image.shape)
     background = apply_random_shapes(background, *false_window_params)
-    output_image = apply_objects_to_background(image, background, frame, subtle_warps)
+    output_image = apply_objects_to_background(image, background, frame, get_object_mask, subtle_warps)
     return gauss_foreground(output_image, *foreground_gauss_params, image.shape)
