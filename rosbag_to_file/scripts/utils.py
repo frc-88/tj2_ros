@@ -46,13 +46,15 @@ def iter_msg(msg, key=None):
                 yield result
 
     elif is_list(msg):
-        yield key, msg
-        # for index, attr in enumerate(msg):
-        #     key[-1] = index
-        #     for result in iter_msg(attr, key):
-        #         yield result
+        key.append(None)
+        for index, attr in enumerate(msg):
+            key[-1] = index
+            for result in iter_msg(attr, key):
+                yield result
 
     else:
+        if type(msg) == bytes:
+            msg = msg.decode()
         yield key, msg
 
 def get_output_path(options, topic_name=None):

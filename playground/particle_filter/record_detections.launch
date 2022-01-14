@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_record_detections"
+       args="record -o /media/storage/bags/detections
+            /tj2/odom
+            /tj2/cmd_vel
+            /tj2/tj2_2020/detections
+            " />
+</launch>
