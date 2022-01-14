@@ -9,7 +9,7 @@ from .particle_filter import ParticleFilter
 
 
 @njit
-def jit_particle_noise(num_particles, std_dev):
+def particle_noise(num_particles, std_dev):
     return randn(num_particles) * std_dev
 
 
@@ -23,6 +23,9 @@ def jit_predict(particles, input_std_error, num_particles, u, dt):
     x_0 = particles[:, 0]
     y_0 = particles[:, 1]
     z_0 = particles[:, 2]
+    # vx_0 = particles[:, 3]
+    # vy_0 = particles[:, 4]
+    # vz_0 = particles[:, 5]
 
     vx_u = u[0]
     vy_u = u[1]
@@ -33,20 +36,28 @@ def jit_predict(particles, input_std_error, num_particles, u, dt):
     vy_sd_u = input_std_error[1]
     vz_sd_u = input_std_error[2]
     vt_sd_u = input_std_error[3]
-
-    # angular update
-    theta_delta = vt_u * dt + jit_particle_noise(num_particles, vt_sd_u)
+    
+    # angular predict
+    theta_delta = vt_u * dt + particle_noise(num_particles, vt_sd_u)
     x_a = x_0 * np.cos(theta_delta) - y_0 * np.sin(theta_delta)
     y_a = x_0 * np.sin(theta_delta) + y_0 * np.cos(theta_delta)
 
-    # x, y linear update
-    x_1 = x_a + vx_u * dt + jit_particle_noise(num_particles, vx_sd_u)
-    y_1 = y_a + vy_u * dt + jit_particle_noise(num_particles, vy_sd_u)
-    z_1 = z_0 + vz_u * dt + jit_particle_noise(num_particles, vz_sd_u)
+    # x, y linear predict
+    x_1 = x_a + vx_u * dt + particle_noise(num_particles, vx_sd_u)
+    y_1 = y_a + vy_u * dt + particle_noise(num_particles, vy_sd_u)
+    z_1 = z_0 + vz_u * dt + particle_noise(num_particles, vz_sd_u)
+
+    # linear velocity predict
+    vx_1 = vx_u + particle_noise(num_particles, vx_sd_u)
+    vy_1 = vy_u + particle_noise(num_particles, vy_sd_u)
+    vz_1 = vz_u + particle_noise(num_particles, vz_sd_u)
 
     particles[:, 0] = x_1
     particles[:, 1] = y_1
     particles[:, 2] = z_1
+    particles[:, 3] = vx_1
+    particles[:, 4] = vy_1
+    particles[:, 5] = vz_1
 
 
 @njit

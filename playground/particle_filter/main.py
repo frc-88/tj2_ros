@@ -19,6 +19,7 @@ def main():
     # path = "./data/detections_2022-01-14-12-39-34.json"
     # path = "./data/detections_2022-01-14-13-42-43.json"
     path = "./data/detections_2022-01-14-14-05-17.json"
+    # path = "./data/detections_2022-01-14-18-22-38.json"
 
     states = state_loader.read_pkl(path, repickle)
 

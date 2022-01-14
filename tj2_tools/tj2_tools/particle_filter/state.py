@@ -36,8 +36,8 @@ class State:
 
     @classmethod
     def from_odom(cls, msg):
-        if not isinstance(other, Odometry):
-            raise ValueError("%s is not of type %s" % (repr(other), Odometry))
+        if not isinstance(msg, Odometry):
+            raise ValueError("%s is not of type %s" % (repr(msg), Odometry))
         self = cls()
         self.type = "odom"
         self.stamp = msg.header.stamp.to_sec()
@@ -53,8 +53,8 @@ class State:
 
     @classmethod
     def from_detect(cls, msg):
-        if not isinstance(other, Detection2D):
-            raise ValueError("%s is not of type %s" % (repr(other), Detection2D))
+        if not isinstance(msg, Detection2D):
+            raise ValueError("%s is not of type %s" % (repr(msg), Detection2D))
         self = cls()
         self.type = msg.results[0].id
         self.stamp = msg.header.stamp.to_sec()

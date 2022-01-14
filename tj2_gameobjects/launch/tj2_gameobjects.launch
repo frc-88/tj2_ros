@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <group ns="dodobot" >
-        <node name="tj2_gameobjects" pkg="tj2_gameobjects" type="tj2_gameobjects_node.py" output="log">
-            <rosparam param="class_labels" file="$(find db_detectnet)/config/labels.yaml" command="load"/>
-            <rosparam file="$(find tj2_gameobjects)/config/object_filter.yaml" command="load"/>
+    <group ns="tj2" >
+        <node name="tj2_gameobjects" pkg="tj2_gameobjects" type="tj2_gameobjects_node.py" output="screen">
+            <rosparam file="$(find tj2_gameobjects)/config/tj2_2020.yaml" command="load"/>
+            <remap from="detections" to="tj2_2020/detections"/>
+            <remap from="pf_particles" to="tj2_2020/pf_particles"/>
+            <!-- <remap from="odom" to="/tj2/odom"/> -->
         </node>
     </group>
 </launch>

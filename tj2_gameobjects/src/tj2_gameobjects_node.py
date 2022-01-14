@@ -17,7 +17,7 @@ from geometry_msgs.msg import TransformStamped
 from tj2_tools.particle_filter import FilterSerial
 from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
 # from tj2_tools.particle_filter import ParticleFilter
-from tj2_tools.particle_filter.state import InputVector
+from tj2_tools.particle_filter.state import InputVector, State
 
 
 class Tj2GameobjectsNode:
@@ -87,30 +87,33 @@ class Tj2GameobjectsNode:
             self.inputs[label][index].meas_update(state)
             pf = self.pfs[label][index]
 
-            if not pf.is_initialized() or pf.is_stale():
-                rospy.loginfo("initializing with %s" % meas_z)
-                pf.create_uniform_particles(meas_z, initial_range)
-            else:
-                pf.update(meas_z)
+            meas_z = np.array([state.x, state.y, state.z, state.vx, state.vy, state.vz])
+            if not pf.is_initialized(): # or pf.is_stale():
+                rospy.loginfo("initializing with %s" % state)
+                pf.create_uniform_particles(meas_z, self.initial_range)
+            pf.update(meas_z)
 
             obj_count[label] += 1
 
     def odom_callback(self, msg):
         state = State.from_odom(msg)
         for label, index in self.iter_serials():
+            pf = self.pfs[label][index]
+            if not pf.is_initialized(): # or pf.is_stale():
+                continue
             input_u = self.inputs[label][index]
             dt = input_u.odom_update(state)
             vector = input_u.get_vector()
-            self.pfs[label][index].predict(vector, dt)
+            pf.predict(vector, dt)
 
     def iter_serials(self):
         for label in self.pfs.keys():
             for index in range(len(self.pfs[label])):
-                return label, index
+                yield label, index
 
     def publish_all_poses(self):
         for label, index in self.iter_serials():
-            pf = self.pf[label][index]
+            pf = self.pfs[label][index]
             mean = pf.mean()
 
             msg = TransformStamped()
@@ -131,7 +134,7 @@ class Tj2GameobjectsNode:
         particles_msg.header.stamp = rospy.Time.now()
 
         for label, index in self.iter_serials():
-            pf = self.pf[label][index]
+            pf = self.pfs[label][index]
             for particle in pf.particles:
                 pose_msg = Pose()
                 pose_msg.position.x = particle[0]
@@ -148,9 +151,11 @@ class Tj2GameobjectsNode:
             rate.sleep()
             if rospy.is_shutdown():
                 break
-            
+
             for label, index in self.iter_serials():
-                pf = self.pf[label][index]
+                pf = self.pfs[label][index]
+                if not pf.is_initialized() or pf.is_stale():
+                    continue
                 pf.check_resample()
 
             self.publish_all_poses()
