@@ -45,7 +45,7 @@ def make_pkl(path):
         elif topic == "/tj2/tj2_2020/detections":
             stamp = header_to_stamp(get_key(msg, "header.stamp"))
             detections = get_key(msg, "detections")
-            for detection in detections.values():
+            for index, detection in enumerate(detections.values()):
                 object_id = get_key(detection, "results.0.id")
                 object_label = OBJECT_NAMES[object_id]
 
