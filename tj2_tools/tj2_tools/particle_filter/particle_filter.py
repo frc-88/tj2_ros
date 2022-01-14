@@ -10,7 +10,7 @@ FilterSerial = collections.namedtuple("FilterSerial", "label index")
 
 
 class ParticleFilter:
-    def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time, friction_acceleration):
+    def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time):
         self.serial = serial
         self.num_states = 3  # x, y, z
         self.particles = np.zeros((num_particles, self.num_states))
@@ -19,10 +19,6 @@ class ParticleFilter:
         self.input_std_error = np.array(input_std_error)
         self.last_measurement_time = 0.0
         self.stale_filter_time = stale_filter_time
-        self.is_stale = False
-        self.friction_acceleration = friction_acceleration  # constant deceleration due to friction
-        assert self.friction_acceleration < 0.0, self.friction_acceleration
-        self.g = 9.81  # acceleration due to gravity
 
         self.measure_distribution = scipy.stats.norm(0.0, self.measure_std_error)
         self.weights = np.array([])
@@ -103,10 +99,9 @@ class ParticleFilter:
         self.weights /= np.sum(self.weights)  # normalize
         self.last_measurement_time = time.time()
 
-    def is_filter_stale(self):
+    def is_stale(self):
         last_measurement_dt = time.time() - self.last_measurement_time
-        self.is_stale = self.stale_filter_time is not None and last_measurement_dt > self.stale_filter_time
-        return self.is_stale
+        return self.stale_filter_time is not None and last_measurement_dt > self.stale_filter_time
 
     def neff(self):
         return 1.0 / np.sum(np.square(self.weights))

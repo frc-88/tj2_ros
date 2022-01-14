@@ -1,8 +1,13 @@
 import os
 import pickle
-from state import State, OBJECT_NAMES
+from tj2_tools.particle_filter.state import State
 from data_loader import iter_bag, get_key, header_to_stamp, yaw_from_quat
 
+
+OBJECT_NAMES = [
+    "BACKGROUND",
+    "power_cell"
+]
 
 def get_pkl_path(path):
     pkl_dir = os.path.dirname(path)
