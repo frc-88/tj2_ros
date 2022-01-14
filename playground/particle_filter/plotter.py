@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
 
-from state import State
+from tj2_tools.particle_filter.state import State
 
 
 class ParticleFilterPlotterBase:

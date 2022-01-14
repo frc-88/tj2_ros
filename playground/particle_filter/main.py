@@ -1,87 +1,12 @@
 import time
 import numpy as np
-from jit_particle_filter import JitParticleFilter as ParticleFilter
-# from particle_filter import ParticleFilter
-from particle_filter import FilterSerial
-from state import State, OBJECT_NAMES
+from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
+# from tj2_tools.particle_filter import ParticleFilter
+from tj2_tools.particle_filter import FilterSerial
+from tj2_tools.particle_filter.state import *
 import state_loader
+from state_loader import OBJECT_NAMES
 from plotter import ParticleFilterPlotter3D, ParticleFilterPlotter2D
-
-
-class DeltaTimer:
-    def __init__(self):
-        self.prev_stamp = None
-
-    def dt(self, timestamp):
-        if self.prev_stamp is None:
-            self.prev_stamp = timestamp
-        dt = timestamp - self.prev_stamp
-        self.prev_stamp = timestamp
-        return dt
-
-
-class VelocityFilter:
-    def __init__(self, k):
-        self.k = k
-        self.prev_value = None
-        self.speed = 0.0
-
-    def update(self, dt, value):
-        if self.prev_value is None:
-            self.prev_value = value
-        raw_delta = (value - self.prev_value) / dt
-        self.prev_value = value
-        if self.k is None:
-            self.speed = raw_delta
-        else:
-            self.speed = self.k * (raw_delta - self.speed)
-        return self.speed
-
-
-class DeltaMeasurement:
-    def __init__(self):
-        smooth_k = None
-        self.vx_filter = VelocityFilter(smooth_k)
-        self.vy_filter = VelocityFilter(smooth_k)
-        self.vz_filter = VelocityFilter(smooth_k)
-        self.timer = DeltaTimer()
-
-    def update(self, state: State):
-        dt = self.timer.dt(state.stamp)
-        if dt == 0.0:
-            return state
-        new_state = State.from_state(state)
-        new_state.vx = self.vx_filter.update(dt, state.x)
-        new_state.vy = self.vy_filter.update(dt, state.y)
-        new_state.vz = self.vz_filter.update(dt, state.z)
-        return new_state
-
-
-class InputVector:
-    def __init__(self):
-        self.odom_timer = DeltaTimer()
-        # self.meas = {}
-        self.meas = DeltaMeasurement()
-        self.meas_input = np.array([0.0, 0.0, 0.0, 0.0])
-        self.vector = np.array([0.0, 0.0, 0.0, 0.0])
-
-    def odom_update(self, odom_state: State):
-        dt = self.odom_timer.dt(odom_state.stamp)
-        self.vector = np.array([odom_state.vx, odom_state.vy, odom_state.vz, odom_state.vt])
-        self.vector += self.meas_input
-        return dt
-
-    def meas_update(self, meas_state: State):
-        # TODO: add trackers for each instance of an object
-        # name = meas_state.type
-        # if name not in self.meas:
-        #     self.meas[name] = DeltaMeasurement()
-        # self.meas[name].update(meas_state)
-        new_state = self.meas.update(meas_state)
-        self.meas_input = np.array([new_state.vx, new_state.vy, new_state.vz, new_state.vt])
-
-    def get_vector(self):
-        return self.vector
 
 
 def main():
@@ -97,7 +22,7 @@ def main():
     u_std = [0.007, 0.007, 0.007, 0.007]
     initial_range = [1.0, 1.0, 1.0]
 
-    pf = ParticleFilter(FilterSerial("power_cell", "0"), 50, meas_std_val, u_std, 1.0, -0.1)
+    pf = ParticleFilter(FilterSerial("power_cell", "0"), 50, meas_std_val, u_std, 1.0)
 
     x_width = 10.0
     y_width = 10.0

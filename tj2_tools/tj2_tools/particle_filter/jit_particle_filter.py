@@ -5,7 +5,7 @@ import scipy.stats
 
 from numba import njit
 
-from particle_filter import ParticleFilter
+from .particle_filter import ParticleFilter
 
 
 @njit
@@ -95,10 +95,9 @@ def jit_resample(particles, weights, num_particles):
 
 
 class JitParticleFilter(ParticleFilter):
-    def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time,
-                 friction_acceleration):
+    def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time):
         super(JitParticleFilter, self).__init__(serial, num_particles, measure_std_error, input_std_error,
-                                                stale_filter_time, friction_acceleration)
+                                                stale_filter_time)
 
     def predict(self, u, dt):
         jit_predict(self.particles, self.input_std_error, self.num_particles, u, dt)
