@@ -12,7 +12,7 @@ FilterSerial = collections.namedtuple("FilterSerial", "label index")
 class ParticleFilter:
     def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time):
         self.serial = serial
-        self.num_states = 3  # x, y, z
+        self.num_states = 6  # x, y, z, vx, vy, vz
         self.particles = np.zeros((num_particles, self.num_states))
         self.num_particles = num_particles
         self.measure_std_error = measure_std_error
@@ -60,6 +60,9 @@ class ParticleFilter:
         x_0 = self.particles[:, 0]
         y_0 = self.particles[:, 1]
         z_0 = self.particles[:, 2]
+        vx_0 = self.particles[:, 3]
+        vy_0 = self.particles[:, 4]
+        vz_0 = self.particles[:, 5]
 
         vx_u = u[0]
         vy_u = u[1]
@@ -71,19 +74,27 @@ class ParticleFilter:
         vz_sd_u = self.input_std_error[2]
         vt_sd_u = self.input_std_error[3]
         
-        # angular update
+        # angular predict
         theta_delta = vt_u * dt + self.particle_noise(vt_sd_u)
         x_a = x_0 * np.cos(theta_delta) - y_0 * np.sin(theta_delta)
         y_a = x_0 * np.sin(theta_delta) + y_0 * np.cos(theta_delta)
 
-        # x, y linear update
+        # x, y linear predict
         x_1 = x_a + vx_u * dt + self.particle_noise(vx_sd_u)
         y_1 = y_a + vy_u * dt + self.particle_noise(vy_sd_u)
         z_1 = z_0 + vz_u * dt + self.particle_noise(vz_sd_u)
 
+        # linear velocity predict
+        vx_1 = vx_u + self.particle_noise(vx_sd_u)
+        vy_1 = vy_u + self.particle_noise(vy_sd_u)
+        vz_1 = vz_u + self.particle_noise(vz_sd_u)
+
         self.particles[:, 0] = x_1
         self.particles[:, 1] = y_1
         self.particles[:, 2] = z_1
+        self.particles[:, 3] = x_1
+        self.particles[:, 4] = y_1
+        self.particles[:, 5] = z_1
     
     def particle_noise(self, std_dev):
         return randn(self.num_particles) * std_dev

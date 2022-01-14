@@ -137,7 +137,6 @@ class DeltaMeasurement:
 class InputVector:
     def __init__(self):
         self.odom_timer = DeltaTimer()
-        # self.meas = {}
         self.meas = DeltaMeasurement()
         self.meas_input = np.array([0.0, 0.0, 0.0, 0.0])
         self.vector = np.array([0.0, 0.0, 0.0, 0.0])
@@ -149,13 +148,9 @@ class InputVector:
         return dt
 
     def meas_update(self, meas_state: State):
-        # TODO: add trackers for each instance of an object
-        # name = meas_state.type
-        # if name not in self.meas:
-        #     self.meas[name] = DeltaMeasurement()
-        # self.meas[name].update(meas_state)
         new_state = self.meas.update(meas_state)
         self.meas_input = np.array([new_state.vx, new_state.vy, new_state.vz, new_state.vt])
+        return new_state
 
     def get_vector(self):
         return self.vector

@@ -1,3 +1,7 @@
+import sys
+
+sys.path.insert(0, "../../tj2_tools")
+
 import time
 import numpy as np
 from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
@@ -20,7 +24,7 @@ def main():
 
     meas_std_val = 0.03
     u_std = [0.007, 0.007, 0.007, 0.007]
-    initial_range = [1.0, 1.0, 1.0]
+    initial_range = [1.0, 1.0, 1.0, 0.25, 0.25, 0.25]
 
     pf = ParticleFilter(FilterSerial("power_cell", "0"), 50, meas_std_val, u_std, 1.0)
 
@@ -55,8 +59,8 @@ def main():
             pf.predict(vector, dt)
             plotter.update_odom(state)
         elif state.type in OBJECT_NAMES:
-            input_u.meas_update(state)
-            meas_z = np.array([state.x, state.y, state.z])
+            state = input_u.meas_update(state)
+            meas_z = np.array([state.x, state.y, state.z, state.vx, state.vy, state.vz])
             print(("%0.3f\t" * len(meas_z)) % tuple(meas_z))
 
             if not pf.is_initialized():
