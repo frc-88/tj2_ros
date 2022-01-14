@@ -96,9 +96,9 @@ class TJ2DebugJoystick:
         self.last_set_mode_time = rospy.Time.now()
 
         self.move_base = actionlib.SimpleActionClient("/move_base", MoveBaseAction)
-        rospy.loginfo("Connecting to move_base...")
-        self.move_base.wait_for_server()
-        rospy.loginfo("move_base connected")
+        # rospy.loginfo("Connecting to move_base...")
+        # self.move_base.wait_for_server()
+        # rospy.loginfo("move_base connected")
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
