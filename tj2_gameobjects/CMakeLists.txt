@@ -31,7 +31,7 @@ include_directories(
 )
 
 # generate_dynamic_reconfigure_options(
-#     cfg/DodobotChassis.cfg
+#     cfg/.cfg
 # )
 
 catkin_package(
