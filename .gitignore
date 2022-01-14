@@ -8,6 +8,7 @@ dataset_builder/limelight_targets/resources
 dataset_builder/limelight_targets/outputs
 dataset_builder/powercells_2021/resources
 dataset_builder/powercells_2021/outputs
+playground/particle_filter/data
 
 .idea/
 .vscode/

@@ -12,7 +12,7 @@ FilterSerial = collections.namedtuple("FilterSerial", "label index")
 class ParticleFilter:
     def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time, friction_acceleration):
         self.serial = serial
-        self.num_states = 6  # x, y, z, vx, vy, vz
+        self.num_states = 3  # x, y, z
         self.particles = np.zeros((num_particles, self.num_states))
         self.num_particles = num_particles
         self.measure_std_error = measure_std_error
@@ -63,9 +63,6 @@ class ParticleFilter:
         x_0 = self.particles[:, 0]
         y_0 = self.particles[:, 1]
         z_0 = self.particles[:, 2]
-        vx_0 = self.particles[:, 3]
-        vy_0 = self.particles[:, 4]
-        vz_0 = self.particles[:, 5]
 
         vx_u = u[0]
         vy_u = u[1]
@@ -82,30 +79,14 @@ class ParticleFilter:
         x_a = x_0 * np.cos(theta_delta) - y_0 * np.sin(theta_delta)
         y_a = x_0 * np.sin(theta_delta) + y_0 * np.cos(theta_delta)
 
-        # x, y velocity update
-        ax_f = self.friction_acceleration * np.copysign(1.0, vx_0)
-        ay_f = self.friction_acceleration * np.copysign(1.0, vy_0)
-        vx_1 = ax_f * dt - vx_u + self.particle_noise(vx_sd_u)
-        vy_1 = ay_f * dt - vy_u + self.particle_noise(vy_sd_u)
-        
         # x, y linear update
-        x_1 = x_a + vx_1 * dt
-        y_1 = y_a + vy_1 * dt
+        x_1 = x_a + vx_u * dt + self.particle_noise(vx_sd_u)
+        y_1 = y_a + vy_u * dt + self.particle_noise(vy_sd_u)
+        z_1 = z_0 + vz_u * dt + self.particle_noise(vz_sd_u)
 
-        # z linear update
-        if is_grounded:
-            vz_1 = -0.5 * self.g * dt * dt - vz_u * dt + self.particle_noise(vz_sd_u)
-            z_1 = z_0 + vz_1 * dt
-        else:
-            vz_1 = -vz_u * dt + self.particle_noise(vz_sd_u)
-            z_1 = z_0 + vz_1 * dt
-        
         self.particles[:, 0] = x_1
         self.particles[:, 1] = y_1
         self.particles[:, 2] = z_1
-        self.particles[:, 3] = vx_1
-        self.particles[:, 4] = vy_1
-        self.particles[:, 5] = vz_1
     
     def particle_noise(self, std_dev):
         return randn(self.num_particles) * std_dev
