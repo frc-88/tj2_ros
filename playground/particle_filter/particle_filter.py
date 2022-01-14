@@ -25,6 +25,7 @@ class ParticleFilter:
         self.g = 9.81  # acceleration due to gravity
 
         self.measure_distribution = scipy.stats.norm(0.0, self.measure_std_error)
+        self.weights = np.array([])
 
         self.initialize_weights()
     
@@ -54,7 +55,7 @@ class ParticleFilter:
         for state_num in range(self.num_states):
             self.particles[:, state_num] = mean[state_num] + randn(self.num_particles) * var[state_num]
 
-    def predict(self, u, dt, is_grounded):
+    def predict(self, u, dt):
         """
         move according to control input u (velocity of robot and velocity of object)
         with noise std
@@ -93,7 +94,7 @@ class ParticleFilter:
 
     def update(self, z):
         """Update particle filter according to measurement z (object position: [x, y, z, vx, vy, vx])"""
-        self.weights.fill(1.0)  # debateable as to whether this is detrimental or not (shouldn't weights be preserved between measurements?)
+        # self.weights.fill(1.0)  # debateable as to whether this is detrimental or not (shouldn't weights be preserved between measurements?)
         distances = np.linalg.norm(self.particles - z, axis=1)
         
         self.weights *= self.measure_distribution.pdf(distances)

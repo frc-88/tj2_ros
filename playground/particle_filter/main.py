@@ -1,7 +1,8 @@
 import time
 import numpy as np
-from jit_particle_filter import JitParticleFilter
-from particle_filter import ParticleFilter, FilterSerial
+from jit_particle_filter import JitParticleFilter as ParticleFilter
+# from particle_filter import ParticleFilter
+from particle_filter import FilterSerial
 from state import State, OBJECT_NAMES
 import state_loader
 from plotter import ParticleFilterPlotter3D, ParticleFilterPlotter2D
@@ -92,20 +93,17 @@ def main():
 
     states = state_loader.read_pkl(path, repickle)
 
-    meas_std_val = 0.05
+    meas_std_val = 0.03
     u_std = [0.007, 0.007, 0.007, 0.007]
     initial_range = [1.0, 1.0, 1.0]
-    ground_plane = 0.1
-
-    is_grounded = True
 
     pf = ParticleFilter(FilterSerial("power_cell", "0"), 50, meas_std_val, u_std, 1.0, -0.1)
 
     x_width = 10.0
     y_width = 10.0
     z_width = 3.0
-    plotter = ParticleFilterPlotter3D(x_width, y_width, z_width)
-    # plotter = ParticleFilterPlotter2D(x_width, y_width)
+    # plotter = ParticleFilterPlotter3D(x_width, y_width, z_width)
+    plotter = ParticleFilterPlotter2D(x_width, y_width)
 
     sim_start_t = states[0].stamp
     real_start_t = time.time()
@@ -129,11 +127,11 @@ def main():
                 continue
             dt = input_u.odom_update(state)
             vector = input_u.get_vector()
-            pf.predict(vector, dt, is_grounded)
+            pf.predict(vector, dt)
             plotter.update_odom(state)
         elif state.type in OBJECT_NAMES:
             input_u.meas_update(state)
-            meas_z = [state.x, state.y, state.z]
+            meas_z = np.array([state.x, state.y, state.z])
             print(("%0.3f\t" * len(meas_z)) % tuple(meas_z))
 
             if not pf.is_initialized():
@@ -144,9 +142,7 @@ def main():
             plotter.update_measure(state.type, state)
         pf.check_resample()
 
-        estimated_state = pf.mean()
-        is_grounded = estimated_state[2] < ground_plane
-        # print(estimated_state[3:6])
+        # estimated_state = pf.mean()
 
         if sim_duration >= real_duration:  # if simulation time has caught up to real time, spend some time drawing
             plotter.clear()
