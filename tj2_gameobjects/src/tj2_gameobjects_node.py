@@ -88,7 +88,7 @@ class Tj2GameobjectsNode:
             pf = self.pfs[label][index]
 
             meas_z = np.array([state.x, state.y, state.z, state.vx, state.vy, state.vz])
-            if not pf.is_initialized(): # or pf.is_stale():
+            if not pf.is_initialized() or pf.is_stale():
                 rospy.loginfo("initializing with %s" % state)
                 pf.create_uniform_particles(meas_z, self.initial_range)
             pf.update(meas_z)
@@ -99,7 +99,7 @@ class Tj2GameobjectsNode:
         state = State.from_odom(msg)
         for label, index in self.iter_serials():
             pf = self.pfs[label][index]
-            if not pf.is_initialized(): # or pf.is_stale():
+            if not pf.is_initialized() or pf.is_stale():
                 continue
             input_u = self.inputs[label][index]
             dt = input_u.odom_update(state)
