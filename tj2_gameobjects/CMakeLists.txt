@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     message_generation
     genmsg
+    dynamic_reconfigure
 )
 
 catkin_python_setup() # added if there is a setup.py. In this case for the node
@@ -30,12 +31,12 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# generate_dynamic_reconfigure_options(
-#     cfg/.cfg
-# )
+generate_dynamic_reconfigure_options(
+    cfg/ParticleFilter.cfg
+)
 
 catkin_package(
-    CATKIN_DEPENDS rospy std_msgs message_runtime
+    CATKIN_DEPENDS rospy std_msgs message_runtime dynamic_reconfigure
 )
 
 # catkin_install_python(PROGRAMS src/tj2_gameobjects_node.py

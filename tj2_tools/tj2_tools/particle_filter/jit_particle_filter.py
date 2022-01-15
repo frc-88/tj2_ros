@@ -62,14 +62,16 @@ class JitParticleFilter(ParticleFilter):
                                                 stale_filter_time)
 
     def predict(self, u, dt):
-        jit_predict(self.particles, self.input_std_error, self.num_particles, u, dt)
+        with self.lock:
+            jit_predict(self.particles, self.input_std_error, self.num_particles, u, dt)
 
     def update(self, z, is_stale=False):
         # self.weights.fill(1.0)
-        distances = jit_update(self.particles, z, self.num_particles)
-        self.weights *= self.measure_distribution.pdf(distances)
-        self.weights = jit_normalize_weights(self.weights)
-        self.last_measurement_time = time.time()
+        with self.lock:
+            distances = jit_update(self.particles, z, self.num_particles)
+            self.weights *= self.measure_distribution.pdf(distances)
+            self.weights = jit_normalize_weights(self.weights)
+            self.update_meas_timer()
 
     def resample(self):
         self.particles, self.weights = jit_resample(self.particles, self.weights, self.num_particles)
