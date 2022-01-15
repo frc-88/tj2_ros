@@ -18,27 +18,29 @@ def main():
     # path = "./data/detections_2022-01-14-12-02-32.json"
     # path = "./data/detections_2022-01-14-12-39-34.json"
     # path = "./data/detections_2022-01-14-13-42-43.json"
-    path = "./data/detections_2022-01-14-14-05-17.json"
-    # path = "./data/detections_2022-01-14-18-22-38.json"
+    # path = "./data/detections_2022-01-14-14-05-17.json"
+    path = "./data/detections_2022-01-14-18-22-38.json"
 
     states = state_loader.read_pkl(path, repickle)
 
-    meas_std_val = 0.03
-    u_std = [0.007, 0.007, 0.007, 0.007]
+    meas_std_val = 1.0
+    u_std = [0.03, 0.03, 0.03, 0.03]
     initial_range = [1.0, 1.0, 1.0, 0.25, 0.25, 0.25]
+    stale_filter_time = 0.1
+    num_particles = 150
 
-    pf = ParticleFilter(FilterSerial("power_cell", "0"), 50, meas_std_val, u_std, 1.0)
+    pf = ParticleFilter(FilterSerial("power_cell", "0"), num_particles, meas_std_val, u_std, stale_filter_time)
 
     x_width = 10.0
     y_width = 10.0
     z_width = 3.0
-    # plotter = ParticleFilterPlotter3D(x_width, y_width, z_width)
-    plotter = ParticleFilterPlotter2D(x_width, y_width)
+    plotter = ParticleFilterPlotter3D(x_width, y_width, z_width)
+    # plotter = ParticleFilterPlotter2D(x_width, y_width)
 
     sim_start_t = states[0].stamp
     real_start_t = time.time()
 
-    input_u = InputVector()
+    input_u = InputVector(stale_filter_time)
 
     for state in states:
         current_time = time.time()
@@ -62,7 +64,7 @@ def main():
         elif state.type in OBJECT_NAMES:
             state = input_u.meas_update(state)
             meas_z = np.array([state.x, state.y, state.z, state.vx, state.vy, state.vz])
-            print(("%0.3f\t" * len(meas_z)) % tuple(meas_z))
+            # print(("%0.3f\t" * len(meas_z)) % tuple(meas_z))
 
             if not pf.is_initialized():
                 print("initializing with %s" % meas_z)

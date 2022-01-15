@@ -8,10 +8,6 @@ import collections
 FilterSerial = collections.namedtuple("FilterSerial", "label index")
 
 
-def particle_noise(num_particles, std_dev):
-    return randn(num_particles) * std_dev
-
-
 def predict(particles, input_std_error, num_particles, u, dt):
     """
     move according to control input u (velocity of robot and velocity of object)
@@ -21,9 +17,9 @@ def predict(particles, input_std_error, num_particles, u, dt):
     x_0 = particles[:, 0]
     y_0 = particles[:, 1]
     z_0 = particles[:, 2]
-    vx_0 = particles[:, 3]
-    vy_0 = particles[:, 4]
-    vz_0 = particles[:, 5]
+    # vx_0 = particles[:, 3]
+    # vy_0 = particles[:, 4]
+    # vz_0 = particles[:, 5]
 
     vx_u = u[0]
     vy_u = u[1]
@@ -36,19 +32,19 @@ def predict(particles, input_std_error, num_particles, u, dt):
     vt_sd_u = input_std_error[3]
     
     # angular predict
-    theta_delta = vt_u * dt + particle_noise(num_particles, vt_sd_u)
+    theta_delta = -vt_u * dt + randn(num_particles) * vt_sd_u
     x_a = x_0 * np.cos(theta_delta) - y_0 * np.sin(theta_delta)
     y_a = x_0 * np.sin(theta_delta) + y_0 * np.cos(theta_delta)
 
     # x, y linear predict
-    x_1 = x_a + vx_u * dt + particle_noise(num_particles, vx_sd_u)
-    y_1 = y_a + vy_u * dt + particle_noise(num_particles, vy_sd_u)
-    z_1 = z_0 + vz_u * dt + particle_noise(num_particles, vz_sd_u)
+    x_1 = x_a + vx_u * dt + randn(num_particles) * vx_sd_u
+    y_1 = y_a + vy_u * dt + randn(num_particles) * vy_sd_u
+    z_1 = z_0 + vz_u * dt + randn(num_particles) * vz_sd_u - 0.5 * 9.81 * dt * dt
 
     # linear velocity predict
-    vx_1 = vx_u + particle_noise(num_particles, vx_sd_u)
-    vy_1 = vy_u + particle_noise(num_particles, vy_sd_u)
-    vz_1 = vz_u + particle_noise(num_particles, vz_sd_u)
+    vx_1 = vx_u + randn(num_particles) * vx_sd_u
+    vy_1 = vy_u + randn(num_particles) * vy_sd_u
+    vz_1 = vz_u + randn(num_particles) * vz_sd_u - 9.81 * dt
 
     particles[:, 0] = x_1
     particles[:, 1] = y_1

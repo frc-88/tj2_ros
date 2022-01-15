@@ -59,7 +59,7 @@ class Tj2GameobjectsNode:
                         self.stale_filter_time
                     )
                 )
-                self.inputs[label].append(InputVector())
+                self.inputs[label].append(InputVector(self.stale_filter_time))
 
         self.detections_sub = rospy.Subscriber("detections", Detection2DArray, self.detections_callback, queue_size=25)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback, queue_size=25)
