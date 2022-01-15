@@ -39,12 +39,12 @@ def predict(particles, input_std_error, num_particles, u, dt):
     # x, y linear predict
     x_1 = x_a + vx_u * dt + randn(num_particles) * vx_sd_u
     y_1 = y_a + vy_u * dt + randn(num_particles) * vy_sd_u
-    z_1 = z_0 + vz_u * dt + randn(num_particles) * vz_sd_u - 0.5 * 9.81 * dt * dt
+    z_1 = z_0 + vz_u * dt + randn(num_particles) * vz_sd_u  #  - 0.5 * 9.81 * dt * dt
 
     # linear velocity predict
     vx_1 = vx_u + randn(num_particles) * vx_sd_u
     vy_1 = vy_u + randn(num_particles) * vy_sd_u
-    vz_1 = vz_u + randn(num_particles) * vz_sd_u - 9.81 * dt
+    vz_1 = vz_u + randn(num_particles) * vz_sd_u  #  - 9.81 * dt
 
     particles[:, 0] = x_1
     particles[:, 1] = y_1
@@ -80,6 +80,7 @@ class ParticleFilter:
         # initialize with uniform weight
         self.weights = np.ones(self.num_particles)
         self.weights /= np.sum(self.weights)
+        self.update_meas_timer()
 
     def create_uniform_particles(self, initial_state, state_range):
         assert len(initial_state) == self.num_states
@@ -113,6 +114,9 @@ class ParticleFilter:
 
         self.weights += 1.e-300  # avoid divide by zero error
         self.weights /= np.sum(self.weights)  # normalize
+        self.update_meas_timer()
+
+    def update_meas_timer(self):
         self.last_measurement_time = time.time()
 
     def is_stale(self):
