@@ -24,7 +24,7 @@ def main():
     states = state_loader.read_pkl(path, repickle)
 
     meas_std_val = 1.0
-    u_std = [0.03, 0.03, 0.03, 0.03]
+    u_std = [0.01, 0.01, 0.01, 0.01]
     initial_range = [1.0, 1.0, 1.0, 0.25, 0.25, 0.25]
     stale_filter_time = 0.1
     num_particles = 150

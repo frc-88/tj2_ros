@@ -4,6 +4,8 @@ import math
 import rospy
 import tf2_ros
 
+from dynamic_reconfigure.server import Server
+
 import numpy as np
 
 from vision_msgs.msg import Detection2DArray
@@ -18,6 +20,8 @@ from tj2_tools.particle_filter import FilterSerial
 from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
 # from tj2_tools.particle_filter import ParticleFilter
 from tj2_tools.particle_filter.state import InputVector, State
+
+from tj2_gameobjects.cfg import ParticleFilterConfig
 
 
 class Tj2GameobjectsNode:
@@ -68,7 +72,61 @@ class Tj2GameobjectsNode:
 
         self.broadcaster = tf2_ros.TransformBroadcaster()
 
+        self.dyn_config = {}
+        self.dyn_server = Server(ParticleFilterConfig, self.dyn_config_callback)
+
         rospy.loginfo("%s init done" % self.node_name)
+
+    def dyn_config_callback(self, config, level):
+        rospy.loginfo("Updating particle filter dynamic config")
+        if len(self.dyn_config) == 0:
+            config["meas_std_val"] = self.meas_std_val
+            config["u_std_vx"] = self.u_std[0]
+            config["u_std_vy"] = self.u_std[1]
+            config["u_std_vz"] = self.u_std[2]
+            config["u_std_vt"] = self.u_std[3]
+            config["initial_range_x"] = self.initial_range[0]
+            config["initial_range_y"] = self.initial_range[1]
+            config["initial_range_z"] = self.initial_range[2]
+            config["initial_range_vx"] = self.initial_range[3]
+            config["initial_range_vy"] = self.initial_range[4]
+            config["initial_range_vz"] = self.initial_range[5]
+            config["num_particles"] = self.num_particles
+            config["stale_filter_time"] = self.stale_filter_time
+            self.dyn_config = config
+            return self.dyn_config
+
+        self.meas_std_val = self.get_default_config("meas_std_val", config, self.meas_std_val)
+        self.u_std = [
+            self.get_default_config("u_std_vx", config, self.u_std[0]),
+            self.get_default_config("u_std_vy", config, self.u_std[1]),
+            self.get_default_config("u_std_vz", config, self.u_std[2]),
+            self.get_default_config("u_std_vt", config, self.u_std[3]),
+        ]
+        self.initial_range = [
+            self.get_default_config("initial_range_x", config, self.initial_range[0]),
+            self.get_default_config("initial_range_y", config, self.initial_range[1]),
+            self.get_default_config("initial_range_z", config, self.initial_range[2]),
+            self.get_default_config("initial_range_vx", config, self.initial_range[3]),
+            self.get_default_config("initial_range_vy", config, self.initial_range[4]),
+            self.get_default_config("initial_range_vz", config, self.initial_range[5]),
+        ]
+        self.num_particles = self.get_default_config("num_particles", config, self.num_particles)
+        self.stale_filter_time = self.get_default_config("stale_filter_time", config, self.stale_filter_time)
+        
+        for label, index in self.iter_serials():
+            pf = self.pfs[label][index]
+            pf.set_parameters(self.num_particles, self.meas_std_val, self.u_std, self.stale_filter_time)
+
+        return self.dyn_config
+    
+    def get_default_config(self, key, new_config, default):
+        if self.dyn_config[key] != new_config[key]:
+            self.dyn_config[key] = new_config[key]
+            rospy.loginfo("Setting %s to %s" % (key, new_config[key]))
+            return new_config[key]
+        else:
+            return default
 
     def to_label(self, obj_id):
         return self.labels[obj_id]
