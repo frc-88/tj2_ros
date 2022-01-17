@@ -33,6 +33,8 @@
             <param name="linear_x_axis" value="$(arg joystick_linear_x_axis)" />
             <param name="linear_y_axis" value="$(arg joystick_linear_y_axis)" />
             <param name="angular_axis" value="$(arg joystick_angular_axis)" />
+
+            <param name="image_directory" value="$(find tj2_debug_joystick)/images" />
         </node>
     </group>
 </launch>
