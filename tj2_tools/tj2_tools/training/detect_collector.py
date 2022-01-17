@@ -14,16 +14,23 @@ class DetectCollector:
         self.load_annotations()
 
     def load_annotations(self):
-        for filename in os.listdir(self.base_dir):
-            if filename.endswith(".xml"):
-                path = os.path.join(self.base_dir, filename)
-                frame = PascalVOCFrame.from_path(path)
-                image_path = os.path.join(self.base_dir, frame.filename)
-                image_metadata = get_image_metadata(image_path)
+        for dirpath, dirnames, filenames in os.walk(self.base_dir):
+            for filename in filenames:
+                if filename.endswith(".xml"):
+                    path = os.path.join(dirpath, filename)
+                    frame = PascalVOCFrame.from_path(path)
+                    if os.path.isfile(frame.path):
+                        image_path = frame.path
+                    else:
+                        image_path = os.path.join(dirpath, frame.filename)
+                        frame.set_path(image_path)
+                    if not os.path.isfile(image_path):
+                        raise FileNotFoundError("Image file corresponding to '%s' annotation could not be found" % path)
+                    image_metadata = get_image_metadata(image_path)
 
-                self.frames.append(frame)
-                self.images.append(None)
-                self.metadata.append(image_metadata)
+                    self.frames.append(frame)
+                    self.images.append(None)
+                    self.metadata.append(image_metadata)
 
     def _load_image(self, index):
         frame = self.frames[index]
