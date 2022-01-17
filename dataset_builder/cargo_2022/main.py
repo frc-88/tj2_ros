@@ -8,6 +8,9 @@ from tj2_tools.training.dataset_builder.classify_dataset_builder import Classify
 
 
 def write_list(path, l):
+    directory = os.path.dirname(path)
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
     with open(path, 'w') as file:
         file.write("\n".join(l))
 
@@ -133,16 +136,18 @@ def load_annotated_video(video_path, annotation_path, out_directory, label_black
 
 
 def main():
+    # load_annotated_video(
+    #     "/home/ben/Downloads/Filming Videos/ds0/video/2021-11-19 09-33-03.mp4",
+    #     "/home/ben/Downloads/Filming Videos/ds0/ann/2021-11-19 09-33-03.mp4.json",
+    #     "./outputs/2021-11-19 09-33-03",
+    #     ["cargo_reflect_blue", "cargo_reflect_red"]
+    # )
     load_annotated_video(
-        "/home/ben/Downloads/Filming Videos/ds0/video/2021-11-19 09-33-03.mp4",
-        "/home/ben/Downloads/Filming Videos/ds0/ann/2021-11-19 09-33-03.mp4.json",
-        "./outputs/2021-11-19 09-33-03",
+        "/home/ben/Downloads/Filming Videos/ds0/video/2021-11-19 09-32-48.mp4",
+        "/home/ben/Downloads/Filming Videos/ds0/ann/2021-11-19 09-32-48.mp4.json",
+        "./outputs/2021-11-19 09-32-48",
         ["cargo_reflect_blue", "cargo_reflect_red"]
     )
-    # load_annotated_video(
-    #     "/home/ben/Downloads/Filming Videos/ds0/video/2021-11-19 09-32-48.mp4",
-    #     "/home/ben/Downloads/Filming Videos/ds0/ann/2021-11-19 09-32-48.mp4.json",
-    # )
 
 
 if __name__ == "__main__":
