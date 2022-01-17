@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import shutil
 from tj2_tools.training.pascal_voc import PascalVOCFrame
-from detect_collector import DetectCollector
+from ..detect_collector import DetectCollector
 from .dataset_builder import DatasetBuilder, BACKGROUND_LABEL
 
 ANNOTATIONS = "Annotations"
@@ -13,7 +13,8 @@ JPEGIMAGES = "JPEGImages"
 class DetectDatasetBuilder(DatasetBuilder):
     def __init__(self, output_dir: Path, image_collector: DetectCollector, test_ratio=0.15, train_ratio=0.85,
                  validation_ratio=0.0, dry_run=True):
-        super(DetectDatasetBuilder, self).__init__(output_dir, test_ratio, train_ratio, validation_ratio, dry_run)
+        super(DetectDatasetBuilder, self).__init__(output_dir, test_ratio, train_ratio, validation_ratio,
+                                                   dry_run=dry_run)
         self.image_collector = image_collector
         self.frames = []
         self.trainval_name = self.train_name + "val"
@@ -94,9 +95,9 @@ class DetectDatasetBuilder(DatasetBuilder):
         label_unique_mapping = self.map_label_to_frames()
         image_indices = self.get_distributed_sets(label_unique_mapping)
 
-        test_count = len(image_indices['test'])
-        train_count = len(image_indices['train'])
-        validation_count = len(image_indices['validation'])
+        test_count = len(image_indices[self.test_name])
+        train_count = len(image_indices[self.train_name])
+        validation_count = len(image_indices[self.validation_name])
         total_count = test_count + train_count + validation_count
         print(
             f"Total {total_count}:\n"
