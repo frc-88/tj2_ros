@@ -6,20 +6,6 @@ import numpy as np
 from tj2_tools.training.pascal_voc import PascalVOCFrame, PascalVOCObject
 
 
-def get_object_mask(bndbox, image):
-    annotated_image = image[bndbox[1]:bndbox[3], bndbox[0]:bndbox[2]]  # crop to annotation ROI
-
-    # hsv_anno_image = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2HSV)
-    # print("Median hue:", np.median(hsv_anno_image[..., 0]))
-
-    annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2GRAY)
-    result, thresholded = cv2.threshold(annotated_image, 127, 255, cv2.THRESH_BINARY)
-    obj_mask = np.zeros(image.shape[0:2], dtype=np.uint8)
-    obj_mask[bndbox[1]:bndbox[3], bndbox[0]:bndbox[2]] = thresholded
-
-    return obj_mask
-
-
 def random_warp(offset, random_width):
     return offset + random.randint(-random_width // 2, random_width // 2)
 
@@ -132,9 +118,10 @@ def warp_bndbox(bndbox, warp_mat):
     return warp_bndbox
 
 
-def randomly_transform_annotation(bndbox, other_bndboxes, image, random_width, lower_ratio, upper_ratio, random_angle,
+def randomly_transform_annotation(bndbox, other_bndboxes, image, object_mask_fn,
+                                  random_width, lower_ratio, upper_ratio, random_angle,
                                   min_percentage, max_percentage):
-    obj_mask = get_object_mask(bndbox, image)
+    obj_mask = object_mask_fn(bndbox, image)
 
     if random_width <= 0:
         return image, obj_mask, bndbox
@@ -303,7 +290,7 @@ def crop_to_background(image, frame, min_box, max_box, num_backgrounds, backgrou
     other_bndboxes = []
     for obj in frame.objects:
         other_bndboxes.append(obj.bndbox)
-    
+
     image_height, image_width = image.shape[:2]
     for count in range(num_backgrounds):
         background_box = None
@@ -322,8 +309,9 @@ def crop_to_background(image, frame, min_box, max_box, num_backgrounds, backgrou
             background_box = bndbox
             break
         if background_box is None:
-            raise RuntimeError("Failed to find a suitable background box for image size (%s, %s)" % (image_width, image_height))
-        
+            raise RuntimeError(
+                "Failed to find a suitable background box for image size (%s, %s)" % (image_width, image_height))
+
         xmin, ymin, xmax, ymax = background_box
         cropped_image = image[ymin: ymax, xmin: xmax]
         if obj.name not in crops:
@@ -332,7 +320,7 @@ def crop_to_background(image, frame, min_box, max_box, num_backgrounds, backgrou
     return crops
 
 
-def apply_objects_to_background(image, background, frame, kwargs):
+def apply_objects_to_background(image, background, frame, object_mask_fn, kwargs):
     warp_mask = np.zeros(image.shape[0:2], dtype=np.uint8)
     warp_image = np.zeros_like(image)
 
@@ -365,7 +353,7 @@ def apply_objects_to_background(image, background, frame, kwargs):
 
     for index, obj in enumerate(objects_flattened):
         warp_obj_image, warp_obj_mask, w_bndbox = randomly_transform_annotation(
-            obj.bndbox, all_bndboxes, image, **kwargs)
+            obj.bndbox, all_bndboxes, image, object_mask_fn, **kwargs)
         all_bndboxes.append(w_bndbox)
         new_object = PascalVOCObject.from_obj(obj)
         new_object.bndbox = w_bndbox
@@ -373,6 +361,7 @@ def apply_objects_to_background(image, background, frame, kwargs):
         # obj_mask = get_object_mask(obj, image)
         # mask = cv2.bitwise_or(mask, obj_mask)
         warp_mask = cv2.bitwise_or(warp_mask, warp_obj_mask)
+        warp_obj_image = cv2.bitwise_and(warp_obj_image, warp_obj_image, mask=warp_obj_mask)
         warp_image = cv2.bitwise_or(warp_image, warp_obj_image)
     frame.objects = new_objects
 
@@ -409,11 +398,19 @@ def random_color_background(shape, excluded_hues):
     return background.astype(np.uint8)
 
 
-def debug_imshow(image, frame):
+def debug_imshow(image, frame, height=540):
     image = draw_bndbox(image, frame)
-    image = resize_proportional(image, 540)
+    image = resize_proportional(image, height)
 
     cv2.imshow("image", image)
     key = cv2.waitKey(-1) & 0xff
     if key == ord('q'):
         quit()
+
+
+def pad_bndbox(obj: PascalVOCObject, x_pad, y_pad, image_width, image_height):
+    obj.bndbox[0] -= x_pad
+    obj.bndbox[1] -= y_pad
+    obj.bndbox[2] += x_pad
+    obj.bndbox[3] += y_pad
+    obj.constrain_bndbox(image_width, image_height)
