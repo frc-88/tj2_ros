@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-import traceback
+import os
+import cv2
 import math
+import traceback
 
 import rospy
 import actionlib
@@ -10,12 +12,16 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 from sensor_msgs.msg import Joy
 
+from cv_bridge import CvBridge, CvBridgeError
+
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseArray
 from geometry_msgs.msg import PoseStamped
 
 from std_msgs.msg import Bool
 from std_msgs.msg import Int32
+
+from sensor_msgs.msg import Image
 
 from move_base_msgs.msg import MoveBaseAction
 
@@ -60,7 +66,9 @@ class TJ2DebugJoystick:
         self.angular_axis = rospy.get_param("~angular_axis", "right/X").split("/")
         self.idle_axis = rospy.get_param("~idle_axis", "brake/L").split("/")
         self.speed_selector_axis = rospy.get_param("~speed_selector_axis", "dpad/vertical").split("/")
-        self.follow_object_axis = rospy.get_param("~follow_object_axis", "brake/L").split("/")
+        self.take_picture_axis = rospy.get_param("~take_picture_axis", "brake/L").split("/")
+        self.follow_object_axis = rospy.get_param("~follow_object_axis", "brake/R").split("/")
+        self.image_directory = rospy.get_param("~image_directory", "./images")
 
         self.linear_x_scale_max = float(rospy.get_param("~linear_x_scale", 1.0))
         self.linear_y_scale_max = float(rospy.get_param("~linear_y_scale", 1.0))
@@ -85,23 +93,25 @@ class TJ2DebugJoystick:
 
         self.is_field_relative = False
         self.limelight_led_mode = False  # False == on, True == off
+        self.take_picture = False
 
         self.joystick = Joystick(self.button_mapping, self.axis_mapping)
 
         self.move_base_goals = PoseArray()
         self.should_send_goals = False
 
-        # services
-        self.set_robot_mode = rospy.ServiceProxy("robot_mode", SetRobotMode)
-        self.last_set_mode_time = rospy.Time.now()
-
         self.move_base = actionlib.SimpleActionClient("/move_base", MoveBaseAction)
         # rospy.loginfo("Connecting to move_base...")
         # self.move_base.wait_for_server()
         # rospy.loginfo("move_base connected")
 
+        # services
+        self.set_robot_mode = rospy.ServiceProxy("robot_mode", SetRobotMode)
+        self.last_set_mode_time = rospy.Time.now()
+
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        self.bridge = CvBridge()
 
         # publishing topics
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
@@ -112,6 +122,7 @@ class TJ2DebugJoystick:
 
         # subscription topics
         self.joy_sub = rospy.Subscriber(self.joystick_topic, Joy, self.joystick_msg_callback, queue_size=5)
+        self.color_image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.image_callback, queue_size=1)
         self.detections_sub = rospy.Subscriber("/tj2/tj2_2020/detections", Detection2DArray, self.detections_callback, queue_size=5)
 
         rospy.Timer(rospy.Duration(0.25), self.send_goals_timer)
@@ -155,6 +166,31 @@ class TJ2DebugJoystick:
             rospy.logwarn_throttle(1.0, "No goals to send!")
             return
         self.move_base_simple_pub.publish(self.move_base_goals)
+
+    def image_callback(self, msg):
+        if not self.take_picture:
+            return
+        self.take_picture = False
+        try:
+            cv2_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        except CvBridgeError as e:
+            rospy.logerr(e)
+            return
+        image_path = self.get_image_path(self.image_directory)
+        rospy.loginfo("Writing to %s" % image_path)
+        cv2.imwrite(image_path, cv2_img)
+
+    def get_image_path(self, directory):
+        if not os.path.isdir(directory):
+            os.makedirs(directory)
+        path = None
+        count = 0
+        while path is None:
+            path = os.path.join(directory, "image-%04d.jpg" % count)
+            if os.path.isfile(path):
+                path = None
+                count += 1
+        return path
 
     def lookup_transform(self, parent_link, child_link, time_window=None, timeout=None):
         """
@@ -231,6 +267,13 @@ class TJ2DebugJoystick:
                 self.set_speed_mode(self.speed_mode + 1)
             elif axis_value < 0:
                 self.set_speed_mode(self.speed_mode - 1)
+        
+        if self.joystick.did_axis_change(self.take_picture_axis):
+            axis_value = self.joystick.get_axis(self.take_picture_axis)
+            if axis_value < 0.0:  # brake trigger is pressed
+                self.take_picture = True
+            else: # brake trigger is released
+                self.take_picture = False
         
         if self.joystick.did_axis_change(self.follow_object_axis):
             axis_value = self.joystick.get_axis(self.follow_object_axis)
