@@ -27,10 +27,9 @@
 #include <vision_msgs/Detection2DArray.h>
 #include <vision_msgs/BoundingBox2D.h>
 
-#include <tj2_limelight/LimelightTarget.h>
-#include <tj2_limelight/LimelightTargetArray.h>
-
 #include <image_geometry/pinhole_camera_model.h>
+
+#include <dynamic_reconfigure/server.h>
 
 #include <jetson-inference/imageNet.h>
 #include <jetson-utils/cudaUtility.h>
@@ -39,6 +38,8 @@
 #include <jetson-utils/imageFormat.h>
 #include <jetson-utils/logging.h>
 
+#include <tj2_gameobjects/GameObjectsPipelineConfig.h>
+
 
 
 using namespace std;
@@ -46,13 +47,11 @@ using namespace sensor_msgs;
 
 #define THROW_EXCEPTION(msg)  throw std::runtime_error(msg)
 
-float magnitude_vec3f(cv::Vec3f vector);
 
-
-class LimelightTargetNode
+class TJ2GameObjects
 {
 public:
-    LimelightTargetNode(ros::NodeHandle* nodehandle);
+    TJ2GameObjects(ros::NodeHandle* nodehandle);
     int run();
 private:
     ros::NodeHandle nh;  // ROS node handle
@@ -110,6 +109,11 @@ private:
     typedef message_filters::Synchronizer<CameraApproxSyncPolicy> CameraSync;
     boost::shared_ptr<CameraSync> camera_sync;
 
+    // Dynamic reconfigure
+    dynamic_reconfigure::Server<tj2_gameobjects::GameObjectsPipelineConfig> dyn_cfg;
+    dynamic_reconfigure::Server<tj2_gameobjects::GameObjectsPipelineConfig>::CallbackType dyn_cfg_wrapped_callback;
+    void dynamic_callback(tj2_gameobjects::GameObjectsPipelineConfig &config, uint32_t level);
+
     // Parameters
     double _text_marker_size;
     string _target_frame;
@@ -127,9 +131,8 @@ private:
     string _output_blob;
     double _threshold;
     
-    bool _enable_target_detections;
-    bool _enable_pipeline_detections;
-
+    geometry_msgs::Quaternion get_target_orientation(cv::Mat depth_cv_image, cv::Rect target);
+    geometry_msgs::Quaternion vector_to_quat(cv::Vec3d vector);
     bool is_bndbox_ok(cv::Size image_size, cv::Rect bndbox);
 
     visualization_msgs::MarkerArray create_markers(string name, int index, vision_msgs::Detection2D det_msg, cv::Point3d dimensions);
@@ -150,6 +153,5 @@ private:
     void load_labels();
 
     // Callbacks
-    void target_callback(const tj2_limelight::LimelightTargetArrayConstPtr& target);
     void camera_callback(const ImageConstPtr& color_image, const ImageConstPtr& depth_image, const CameraInfoConstPtr& depth_info);
 };
