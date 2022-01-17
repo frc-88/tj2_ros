@@ -4,7 +4,12 @@ import time
 import json
 import numpy as np
 from tj2_tools.training.pascal_voc import PascalVOCFrame, PascalVOCObject
-from tj2_tools.training.helpers import 
+from tj2_tools.training.dataset_builder.classify_dataset_builder import ClassifyDatasetBuilder
+
+
+def write_list(path, l):
+    with open(path, 'w') as file:
+        file.write("\n".join(l))
 
 
 def load_annotation(path):
@@ -65,9 +70,16 @@ def write_image(image, path):
     cv2.imwrite(path, image)
 
 
-def load_annotated_video(video_path, annotation_path, out_directory):
+def load_annotated_video(video_path, annotation_path, out_directory, label_blacklist=None):
+    if label_blacklist is None:
+        label_blacklist = []
+
     capture = cv2.VideoCapture(video_path)
     frames, labels = load_annotation(annotation_path)
+    labels = list(filter(lambda x: x not in label_blacklist, labels))
+
+    write_list(os.path.join(out_directory, "labels.txt"), labels)
+
     paused = False
     image_count = 0
     try:
@@ -94,19 +106,26 @@ def load_annotated_video(video_path, annotation_path, out_directory):
             else:
                 frame = frames[image_count]
 
+            name = "image-%04d" % image_count
+            img_path = os.path.join(out_directory, name + ".jpg")
+            write_image(image, img_path)
+            print("Writing '%s'" % img_path)
+
             if frame is None:
                 draw_img = image
             else:
-                name = "image-%04d" % image_count
-                img_path = os.path.join(out_directory, name + ".jpg")
-                write_image(image, img_path)
+                frame.objects = list(filter(lambda x: x.name not in label_blacklist, frame.objects))
+                if len(frame.objects) > 0:
+                    frame.set_path(img_path)
+                    anno_path = os.path.join(out_directory, name + ".xml")
+                    frame.write(anno_path)
+                    print("Writing '%s'" % anno_path)
 
-                frame.set_path(img_path)
-                anno_path = os.path.join(out_directory, name + ".xml")
-                frame.write(anno_path)
+                #     draw_img = draw_bndbox(image, frame)
+                # else:
+                #     draw_img = image
 
-                draw_img = draw_bndbox(image, frame)
-            cv2.imshow("video", draw_img)
+            # cv2.imshow("video", draw_img)
             image_count += 1
     finally:
         capture.release()
@@ -117,7 +136,8 @@ def main():
     load_annotated_video(
         "/home/ben/Downloads/Filming Videos/ds0/video/2021-11-19 09-33-03.mp4",
         "/home/ben/Downloads/Filming Videos/ds0/ann/2021-11-19 09-33-03.mp4.json",
-        "./2021-11-19 09-33-03"
+        "./outputs/2021-11-19 09-33-03",
+        ["cargo_reflect_blue", "cargo_reflect_red"]
     )
     # load_annotated_video(
     #     "/home/ben/Downloads/Filming Videos/ds0/video/2021-11-19 09-32-48.mp4",
