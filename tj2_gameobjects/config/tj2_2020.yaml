@@ -2,10 +2,7 @@ meas_std_val: 1.0
 u_std: [0.03, 0.03, 0.03, 0.1]
 initial_range: [1.0, 1.0, 1.0, 0.25, 0.25, 0.25]
 num_particles: 150
-stale_filter_time: 0.3
-
-max_objects:
-  power_cell: 2
+stale_filter_time: 3.0
 
 labels:
 - BACKGROUND
