@@ -9,15 +9,15 @@ from scipy.spatial.transform import Rotation
 
 
 class FilterState(State):
-    def __init__(self):
-        super(FilterState, self).__init__()
+    def __init__(self, x=0.0, y=0.0, z=0.0, theta=0.0, vx=0.0, vy=0.0, vz=0.0, vt=0.0):
+        super(FilterState, self).__init__(x, y, theta)
         self.type = ""
         self.stamp = 0.0
-        self.z = 0.0
-        self.vx = 0.0
-        self.vy = 0.0
-        self.vz = 0.0
-        self.vt = 0.0
+        self.z = z
+        self.vx = vx
+        self.vy = vy
+        self.vz = vz
+        self.vt = vt
 
     @classmethod
     def from_state(cls, other):
@@ -284,7 +284,7 @@ class InputVector:
         dt = self.odom_timer.dt(odom_state.stamp)
         self.vector = np.array([odom_state.vx, odom_state.vy, odom_state.vz, odom_state.vt])
         # self.odom_state = odom_state
-        # self.vector += self.meas_input
+        self.vector -= self.meas_input
         # if time.time() - self.stale_meas_timer > self.stale_filter_time:
         #     self.meas_input = np.array([0.0, 0.0, 0.0, 0.0])
         return dt

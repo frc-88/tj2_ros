@@ -16,12 +16,19 @@ class ParticleFilterPlotterBase:
         self.meas_states = {}
         self.is_paused = False
 
-        self.ax_vel = None
+        self.ax_x_vel = None
+        self.ax_y_vel = None
+        self.ax_z_vel = None
 
         self.timestamps = []
         self.x_vel_data = []
         self.y_vel_data = []
         self.z_vel_data = []
+
+        self.meas_timestamps = []
+        self.meas_x_vel_data = []
+        self.meas_y_vel_data = []
+        self.meas_z_vel_data = []
 
         self.init()
 
@@ -76,7 +83,7 @@ class ParticleFilterPlotterBase:
             return point
 
     def velocity_base_link_to_odom(self, state, vx, vy, vz):
-        velocity = np.array([-vx, -vy, -vz])
+        velocity = np.array([vx, vy, vz])
         if self.tf_to_odom:
             angle = state.theta
             rot_mat = Rotation.from_euler("z", angle)
@@ -96,16 +103,17 @@ class ParticleFilterPlotterBase:
 
 class ParticleFilterPlotter3D(ParticleFilterPlotterBase):
     def __init__(self, x_window, y_window, z_window, tf_to_odom=True, plot_delay=0.01):
-        super(ParticleFilterPlotter3D, self).__init__(tf_to_odom, plot_delay)
         self.x_window = x_window
         self.y_window = y_window
         self.z_window = z_window
+        super(ParticleFilterPlotter3D, self).__init__(tf_to_odom, plot_delay)
 
     def init(self):
         super(ParticleFilterPlotter3D, self).init()
         self.ax = self.fig.add_subplot(111, projection='3d')
 
     def draw(self, timestamp, pf, label):
+        self.ax.clear()
         try:
             mu, var = pf.estimate()
         except ZeroDivisionError:
@@ -135,14 +143,26 @@ class ParticleFilterPlotter3D(ParticleFilterPlotterBase):
 
 class ParticleFilterPlotter2D(ParticleFilterPlotterBase):
     def __init__(self, x_window, y_window, tf_to_odom=True, plot_delay=0.01):
-        super(ParticleFilterPlotter2D, self).__init__(tf_to_odom, plot_delay)
         self.x_window = x_window
         self.y_window = y_window
+        self.meas_vx_line = None
+        self.meas_vy_line = None
+        self.state_vx_line = None
+        self.state_vy_line = None
+        super(ParticleFilterPlotter2D, self).__init__(tf_to_odom, plot_delay)
 
     def init(self):
         super(ParticleFilterPlotter2D, self).init()
-        self.ax = self.fig.add_subplot(2, 1, 1)
-        self.ax_vel = self.fig.add_subplot(2, 1, 2)
+        self.ax = self.fig.add_subplot(3, 1, 1)
+        self.ax_x_vel = self.fig.add_subplot(3, 1, 2)
+        self.ax_y_vel = self.fig.add_subplot(3, 1, 3)
+        self.meas_vx_line = self.ax_x_vel.plot([], [], label="meas vx")[0]
+        self.state_vx_line = self.ax_x_vel.plot([], [], label="vx")[0]
+
+        self.meas_vy_line = self.ax_y_vel.plot([], [], label="meas vy")[0]
+        self.state_vy_line = self.ax_y_vel.plot([], [], label="vy")[0]
+        self.ax_x_vel.legend(loc=2)
+        self.ax_y_vel.legend(loc=2)
 
     def draw(self, timestamp, pf, label):
         try:
@@ -151,6 +171,8 @@ class ParticleFilterPlotter2D(ParticleFilterPlotterBase):
             return
 
         x, y, z, vx, vy, vz = mu
+        state = FilterState(x, y, z, 0.0, vx, vy, vz, 0.0)
+        state_at_odom = state.relative_to(self.odom_state)
 
         self.ax.clear()
         particles = self.base_link_to_odom(
@@ -158,32 +180,60 @@ class ParticleFilterPlotter2D(ParticleFilterPlotterBase):
             pf.particles[:, 0], pf.particles[:, 1], pf.particles[:, 2]
         )
 
-        tfd_velocities = self.velocity_base_link_to_odom(
-            self.odom_state,
-            vx, vy, vz
-        )
+        if self.tf_to_odom:
+            # state_velocities = self.velocity_base_link_to_odom(
+            #     self.odom_state,
+            #     vx, vy, vz
+            # )
+            state_velocities = [state_at_odom.vx, state_at_odom.vy, state_at_odom.vz]
+        else:
+            state_velocities = [vx, vy, vz]
 
         self.ax.scatter(particles[0], particles[1], marker='.', s=1, color='k', alpha=0.5)
         self.ax.set_xlim(-self.x_window / 2, self.x_window / 2)
         self.ax.set_ylim(-self.y_window / 2, self.y_window / 2)
 
-        odom_mu = self.base_link_to_odom(self.odom_state, x, y, z)
-        self.ax.scatter(odom_mu[0], odom_mu[1], color='g', s=25)
+        # odom_mu = self.base_link_to_odom(self.odom_state, x, y, z)
+        self.ax.scatter(state_at_odom.x, state_at_odom.y, color='g', s=25)
+        self.ax.text(state_at_odom.x, state_at_odom.y, label, color="black")
 
         self.ax.scatter(self.odom_state.x, self.odom_state.y, marker='*', color='b', s=25)
         self.ax.scatter(0.0, 0.0, marker='*', color='k', s=25)
 
         for name, meas_state in self.meas_states.items():
             if self.odom_state.stamp - meas_state.stamp < 1.0:
-                odom_meas = self.base_link_to_odom(self.odom_state, meas_state.x, meas_state.y, meas_state.z)
-                self.ax.scatter(odom_meas[0], odom_meas[1], marker='*', color='r', s=25)
+                odom_meas = meas_state.relative_to(self.odom_state)
+                self.ax.scatter(odom_meas.x, odom_meas.y, marker='*', color='r', s=25)
+                # odom_meas = self.base_link_to_odom(self.odom_state, meas_state.x, meas_state.y, meas_state.z)
+                # self.ax.scatter(odom_meas[0], odom_meas[1], marker='*', color='r', s=25)
+                # meas_velocities = self.velocity_base_link_to_odom(
+                #     self.odom_state,
+                #     meas_state.vx, meas_state.vy, meas_state.vz
+                # )
+                self.meas_timestamps.append(timestamp)
+                self.meas_x_vel_data.append(odom_meas.vx)
+                self.meas_y_vel_data.append(odom_meas.vy)
 
-        self.ax.text(odom_mu[0], odom_mu[1], label, color="black")
+
+        # all_x = np.append(self.x_vel_data, self.meas_x_vel_data)
+        # all_y = np.append(self.y_vel_data, self.meas_y_vel_data)
+        all_x = self.x_vel_data
+        all_y = self.y_vel_data
 
         self.timestamps.append(timestamp)
-        self.x_vel_data.append(tfd_velocities[0])
-        self.y_vel_data.append(tfd_velocities[1])
+        self.x_vel_data.append(state_velocities[0])
+        self.y_vel_data.append(state_velocities[1])
         # self.z_vel_data.append(tfd_velocities[2])
-        self.ax_vel.plot(self.timestamps, self.x_vel_data, label="vx")
-        self.ax_vel.plot(self.timestamps, self.y_vel_data, label="vy")
-        self.ax_vel.legend(loc=2)
+        self.meas_vx_line.set_xdata(self.meas_timestamps)
+        self.meas_vx_line.set_ydata(self.meas_x_vel_data)
+        self.state_vx_line.set_xdata(self.timestamps)
+        self.state_vx_line.set_ydata(self.x_vel_data)
+        self.ax_x_vel.set_xlim(np.min(self.timestamps), np.max(self.timestamps) + 0.5)
+        self.ax_x_vel.set_ylim(np.min(all_x), np.max(all_x))
+
+        self.meas_vy_line.set_xdata(self.meas_timestamps)
+        self.meas_vy_line.set_ydata(self.meas_y_vel_data)
+        self.state_vy_line.set_xdata(self.timestamps)
+        self.state_vy_line.set_ydata(self.y_vel_data)
+        self.ax_y_vel.set_xlim(np.min(self.timestamps), np.max(self.timestamps) + 0.5)
+        self.ax_y_vel.set_ylim(np.min(all_y), np.max(all_y))

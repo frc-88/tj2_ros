@@ -57,15 +57,28 @@ def jit_resample(particles, weights, num_particles):
 
 
 class JitParticleFilter(ParticleFilter):
+    is_warmed_up = False
+
     def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time):
         super(JitParticleFilter, self).__init__(serial, num_particles, measure_std_error, input_std_error,
                                                 stale_filter_time)
+        self.warmup()
+
+    def warmup(self):
+        # first call to numba-fied functions takes some time. Do it before real data shows up
+        if JitParticleFilter.is_warmed_up:
+            return
+        self.update(np.zeros(self.num_states))
+        self.predict(np.zeros(len(self.input_std_error)), 0.1)
+        self.resample()
+        self.reset()
+        JitParticleFilter.is_warmed_up = True
 
     def predict(self, u, dt):
         with self.lock:
             jit_predict(self.particles, self.input_std_error, self.num_particles, u, dt)
 
-    def update(self, z, is_stale=False):
+    def update(self, z):
         # self.weights.fill(1.0)
         with self.lock:
             distances = jit_update(self.particles, z, self.num_particles)
