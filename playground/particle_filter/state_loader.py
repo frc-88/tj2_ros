@@ -1,6 +1,6 @@
 import os
 import pickle
-from tj2_tools.particle_filter.state import State
+from tj2_tools.particle_filter.state import FilterState
 from data_loader import iter_bag, get_key, header_to_stamp, yaw_from_quat
 
 
@@ -23,7 +23,7 @@ def make_pkl(path):
 
     for timestamp, topic, msg in iter_bag(path):
         if topic == "/tj2/cmd_vel":
-            state = State()
+            state = FilterState()
             state.type = "cmd_vel"
             state.stamp = timestamp
             state.vx = get_key(msg, "linear.x")
@@ -32,7 +32,7 @@ def make_pkl(path):
             states.append(state)
 
         elif topic == "/tj2/odom":
-            state = State()
+            state = FilterState()
             state.type = "odom"
             state.stamp = header_to_stamp(get_key(msg, "header.stamp"))
             state.x = get_key(msg, "pose.pose.position.x")
@@ -54,7 +54,7 @@ def make_pkl(path):
                 object_id = get_key(detection, "results.0.id")
                 object_label = OBJECT_NAMES[object_id]
 
-                state = State()
+                state = FilterState()
                 state.type = object_label
                 state.stamp = stamp
                 state.x = get_key(detection, "results.0.pose.pose.position.x")

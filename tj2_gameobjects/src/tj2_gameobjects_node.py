@@ -19,7 +19,7 @@ from geometry_msgs.msg import TransformStamped
 from tj2_tools.particle_filter import FilterSerial
 from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
 # from tj2_tools.particle_filter import ParticleFilter
-from tj2_tools.particle_filter.state import InputVector, State
+from tj2_tools.particle_filter.state import InputVector, FilterState
 
 from tj2_gameobjects.cfg import ParticleFilterConfig
 
@@ -39,32 +39,25 @@ class Tj2GameobjectsNode:
         self.initial_range = rospy.get_param("~initial_range", None)
         self.num_particles = rospy.get_param("~num_particles", 50)
         self.stale_filter_time = rospy.get_param("~stale_filter_time", 1.0)
-        self.max_objects = rospy.get_param("~max_objects", None)
         self.labels = rospy.get_param("~labels", None)
         self.filter_frame = rospy.get_param("~filter_frame", "base_link")
 
         assert self.u_std is not None
         assert self.initial_range is not None
-        assert self.max_objects is not None
         assert self.labels is not None
         
         self.pfs = {}
         self.inputs = {}
-        for label, count in self.max_objects.items():
-            self.pfs[label] = []
-            self.inputs[label] = []
-            for index in range(count):
-                self.pfs[label].append(
-                    ParticleFilter(
-                        FilterSerial(label, index),
+        for label in self.labels:
+            serial = FilterSerial(label, 0)
+            self.pfs[serial] = ParticleFilter(
+                        serial,
                         self.num_particles,
                         self.meas_std_val,
                         self.u_std,
                         self.stale_filter_time
                     )
-                )
-                self.inputs[label].append(InputVector(self.stale_filter_time))
-
+            self.inputs[serial] = InputVector(self.stale_filter_time)
         self.detections_sub = rospy.Subscriber("detections", Detection2DArray, self.detections_callback, queue_size=25)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback, queue_size=25)
 
@@ -114,8 +107,7 @@ class Tj2GameobjectsNode:
         self.num_particles = self.get_default_config("num_particles", config, self.num_particles)
         self.stale_filter_time = self.get_default_config("stale_filter_time", config, self.stale_filter_time)
         
-        for label, index in self.iter_serials():
-            pf = self.pfs[label][index]
+        for serial, pf in self.iter_pfs():
             pf.set_parameters(self.num_particles, self.meas_std_val, self.u_std, self.stale_filter_time)
 
         return self.dyn_config
@@ -133,17 +125,31 @@ class Tj2GameobjectsNode:
         
     def detections_callback(self, msg):
         measurements = {}
-        obj_count = {}
         for detection in msg.detections:
             if detection.header.frame_id != self.filter_frame:
                 rospy.logwarn_throttle(1.0, "Detection frame does not match filter's frame: %s != %s" % (detection.header.frame_id, self.filter_frame))
-            state = State.from_detect(detection)
+            state = FilterState.from_detect(detection)
+
             label = self.to_label(detection.results[0].id)
-            if label not in obj_count:
-                obj_count[label] = 0
-            index = obj_count[label]
-            self.inputs[label][index].meas_update(state)
-            pf = self.pfs[label][index]
+            if label not in measurements:
+                measurements[label] = [state]
+            else:
+                measurements[label].append(state)
+
+        for label, states in measurements:
+            max_dist = 0.0
+            max_index = 0
+            for index, state in enumerate(states):
+                distance = states.distance()
+                if distance > max_dist:
+                    max_dist = distance
+                    max_index = index
+            state = states[max_index]
+            
+            serial = FilterSerial(label, 0)  # one object per label type
+
+            self.inputs[serial].meas_update(state)
+            pf = self.pfs[serial]
 
             meas_z = np.array([state.x, state.y, state.z, state.vx, state.vy, state.vz])
             if not pf.is_initialized() or pf.is_stale():
@@ -151,27 +157,22 @@ class Tj2GameobjectsNode:
                 pf.create_uniform_particles(meas_z, self.initial_range)
             pf.update(meas_z)
 
-            obj_count[label] += 1
-
     def odom_callback(self, msg):
-        state = State.from_odom(msg)
-        for label, index in self.iter_serials():
-            pf = self.pfs[label][index]
+        state = FilterState.from_odom(msg)
+        for serial, pf in self.iter_pfs():
             if not pf.is_initialized() or pf.is_stale():
                 continue
-            input_u = self.inputs[label][index]
+            input_u = self.inputs[serial]
             dt = input_u.odom_update(state)
             vector = input_u.get_vector()
             pf.predict(vector, dt)
 
-    def iter_serials(self):
-        for label in self.pfs.keys():
-            for index in range(len(self.pfs[label])):
-                yield label, index
+    def iter_pfs(self):
+        for serial, pf in self.pfs.items():
+            yield serial, pf
 
     def publish_all_poses(self):
-        for label, index in self.iter_serials():
-            pf = self.pfs[label][index]
+        for serial, pf in self.iter_pfs():
             mean = pf.mean()
 
             msg = TransformStamped()
@@ -191,8 +192,7 @@ class Tj2GameobjectsNode:
         particles_msg.header.frame_id = self.filter_frame
         particles_msg.header.stamp = rospy.Time.now()
 
-        for label, index in self.iter_serials():
-            pf = self.pfs[label][index]
+        for serial, pf in self.iter_pfs():
             for particle in pf.particles:
                 pose_msg = Pose()
                 pose_msg.position.x = particle[0]
@@ -210,8 +210,7 @@ class Tj2GameobjectsNode:
             if rospy.is_shutdown():
                 break
 
-            for label, index in self.iter_serials():
-                pf = self.pfs[label][index]
+            for serial, pf in self.iter_pfs():
                 if not pf.is_initialized() or pf.is_stale():
                     continue
                 pf.check_resample()
