@@ -4,9 +4,12 @@ from numpy.random import randn, random, uniform
 import scipy.stats
 import collections
 from threading import Lock
+from .state import FilterState
 
 
 FilterSerial = collections.namedtuple("FilterSerial", "label index")
+
+G_CONST = 9.81
 
 
 def predict(particles, input_std_error, num_particles, u, dt):
@@ -42,12 +45,12 @@ def predict(particles, input_std_error, num_particles, u, dt):
     # x, y linear predict
     x_1 = x_a + vx_u * dt + randn(num_particles) * vx_sd_u - vx_0 * dt
     y_1 = y_a + vy_u * dt + randn(num_particles) * vy_sd_u - vy_0 * dt
-    z_1 = z_0 + vz_u * dt + randn(num_particles) * vz_sd_u - vz_0 * dt
+    z_1 = z_0 + vz_u * dt + randn(num_particles) * vz_sd_u - vz_0 * dt - G_CONST * dt * dt
 
     # linear velocity predict
     vx_1 = vx_u + randn(num_particles) * vx_sd_u
     vy_1 = vy_u + randn(num_particles) * vy_sd_u
-    vz_1 = vz_u + randn(num_particles) * vz_sd_u
+    vz_1 = vz_u + randn(num_particles) * vz_sd_u - G_CONST * dt
 
     particles[:, 0] = x_1
     particles[:, 1] = y_1
@@ -180,6 +183,10 @@ class ParticleFilter:
         """ returns weighted mean position"""
         with self.lock:
             return np.average(self.particles, weights=self.weights, axis=0)
+
+    def get_state(self) -> FilterState:
+        mu = self.mean()
+        return FilterState(mu[0], mu[1], mu[2], 0.0, mu[3], mu[4], mu[5], 0.0)
 
     def check_resample(self):
         neff = self.neff()
