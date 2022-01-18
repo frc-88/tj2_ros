@@ -46,7 +46,7 @@ class ParticleFilterPlotterBase:
     def update_measure(self, name, state):
         self.meas_states[name] = state
 
-    def draw(self, timestamp, pf, label):
+    def draw(self, timestamp, pf, label, state=None):
         raise NotImplemented
 
     def clear(self):
@@ -112,33 +112,35 @@ class ParticleFilterPlotter3D(ParticleFilterPlotterBase):
         super(ParticleFilterPlotter3D, self).init()
         self.ax = self.fig.add_subplot(111, projection='3d')
 
-    def draw(self, timestamp, pf, label):
-        self.ax.clear()
-        try:
-            mu, var = pf.estimate()
-        except ZeroDivisionError:
-            return
+    def draw(self, timestamp, pf, label, state=None):
+        # try:
+        #     mu, var = pf.estimate()
+        # except ZeroDivisionError:
+        #     return
+        if state is None:
+            state = pf.get_state()
+        state_at_odom = state.relative_to(self.odom_state)
 
         particles = self.base_link_to_odom(self.odom_state, pf.particles[:, 0], pf.particles[:, 1],
                                            pf.particles[:, 2])
+        self.ax.clear()
         self.ax.scatter(particles[0], particles[1], particles[2], marker='.', s=1, color='k', alpha=0.5)
         self.ax.set_xlim(-self.x_window / 2, self.x_window / 2)
         self.ax.set_ylim(-self.y_window / 2, self.y_window / 2)
         self.ax.set_zlim(0.0, self.z_window)
 
-        odom_mu = self.base_link_to_odom(self.odom_state, mu[0], mu[1], mu[2])
-        self.ax.scatter(odom_mu[0], odom_mu[1], odom_mu[2], color='g', s=25)
+        self.ax.scatter(state_at_odom.x, state_at_odom.y, state_at_odom.z, color='g', s=25)
 
         self.ax.scatter(self.odom_state.x, self.odom_state.y, self.odom_state.z, marker='*', color='b', s=25)
 
         for name, meas_state in self.meas_states.items():
             if self.odom_state.stamp - meas_state.stamp < 0.25:
-                odom_meas = self.base_link_to_odom(self.odom_state, meas_state.x, meas_state.y, meas_state.z)
-                self.ax.scatter(odom_meas[0], odom_meas[1], odom_meas[2], marker='*', color='r', s=25)
+                odom_meas = meas_state.relative_to(self.odom_state)
+                self.ax.scatter(odom_meas.x, odom_meas.y, odom_meas.z, marker='*', color='r', s=25)
 
         # self.ax.text(odom_mu[0], odom_mu[1], odom_mu[2], label, transform=self.ax.transAxes, fontsize=14,
         #              verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-        self.ax.text(odom_mu[0], odom_mu[1], odom_mu[2], label, color="black")
+        self.ax.text(state_at_odom.x, state_at_odom.y, state_at_odom.z, label, color="black")
 
 
 class ParticleFilterPlotter2D(ParticleFilterPlotterBase):
@@ -164,14 +166,16 @@ class ParticleFilterPlotter2D(ParticleFilterPlotterBase):
         self.ax_x_vel.legend(loc=2)
         self.ax_y_vel.legend(loc=2)
 
-    def draw(self, timestamp, pf, label):
-        try:
-            mu, var = pf.estimate()
-        except ZeroDivisionError:
-            return
-
-        x, y, z, vx, vy, vz = mu
-        state = FilterState(x, y, z, 0.0, vx, vy, vz, 0.0)
+    def draw(self, timestamp, pf, label, state=None):
+        # try:
+        #     mu, var = pf.estimate()
+        # except ZeroDivisionError:
+        #     return
+        #
+        # x, y, z, vx, vy, vz = mu
+        # state = FilterState(x, y, z, 0.0, vx, vy, vz, 0.0)
+        if state is None:
+            state = pf.get_state()
         state_at_odom = state.relative_to(self.odom_state)
 
         self.ax.clear()
@@ -187,7 +191,7 @@ class ParticleFilterPlotter2D(ParticleFilterPlotterBase):
             # )
             state_velocities = [state_at_odom.vx, state_at_odom.vy, state_at_odom.vz]
         else:
-            state_velocities = [vx, vy, vz]
+            state_velocities = [state.vx, state.vy, state.vz]
 
         self.ax.scatter(particles[0], particles[1], marker='.', s=1, color='k', alpha=0.5)
         self.ax.set_xlim(-self.x_window / 2, self.x_window / 2)

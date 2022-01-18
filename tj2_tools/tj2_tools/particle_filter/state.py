@@ -250,8 +250,8 @@ class VelocityFilter:
 
 
 class DeltaMeasurement:
-    def __init__(self):
-        smooth_k = None
+    def __init__(self, k=None):
+        smooth_k = k
         self.vx_filter = VelocityFilter(smooth_k)
         self.vy_filter = VelocityFilter(smooth_k)
         self.vz_filter = VelocityFilter(smooth_k)

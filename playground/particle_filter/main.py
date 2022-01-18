@@ -4,8 +4,8 @@ sys.path.insert(0, "../../tj2_tools")
 
 import time
 import numpy as np
-from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
-# from tj2_tools.particle_filter import ParticleFilter
+# from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
+from tj2_tools.particle_filter import ParticleFilter
 from tj2_tools.particle_filter import FilterSerial
 from tj2_tools.particle_filter.state import *
 import state_loader
@@ -17,9 +17,9 @@ def main():
     repickle = False
     # path = "./data/detections_2022-01-14-12-02-32.json"  # stationary object with moving robot
     # path = "./data/detections_2022-01-14-12-39-34.json"  # short run drop
-    # path = "./data/detections_2022-01-14-13-42-43.json"  # circling in YZ. Drop at the end
+    path = "./data/detections_2022-01-14-13-42-43.json"  # circling in YZ. Drop at the end
     # path = "./data/detections_2022-01-14-14-05-17.json"  # small motions from robot and target
-    path = "./data/detections_2022-01-14-18-22-38.json"  # rapid rotations in robot theta
+    # path = "./data/detections_2022-01-14-18-22-38.json"  # rapid rotations in robot theta
 
     states = state_loader.read_pkl(path, repickle)
 
@@ -42,6 +42,8 @@ def main():
 
     input_u = InputVector(stale_filter_time)
 
+    pf_delta_velocity = DeltaMeasurement()
+
     for state in states:
         current_time = time.time()
         pause_start_t = current_time
@@ -60,7 +62,6 @@ def main():
             dt = input_u.odom_update(state)
             vector = input_u.get_vector()
             pf.predict(vector, dt)
-            print(state)
             plotter.update_odom(state)
         elif state.type in OBJECT_NAMES:
             state = input_u.meas_update(state)
@@ -75,11 +76,14 @@ def main():
             plotter.update_measure(state.type, state)
         pf.check_resample()
 
-        # estimated_state = pf.mean()
+        # pf_state = pf.get_state()
+        # pf_state.stamp = sim_time
+        # state = pf_delta_velocity.update(pf_state)
+        state = None
 
         if sim_duration >= real_duration:  # if simulation time has caught up to real time, spend some time drawing
             # plotter.clear()
-            plotter.draw(sim_duration, pf, "pf")
+            plotter.draw(sim_duration, pf, "pf", state)
             plotter.pause()
 
     plotter.stop()
