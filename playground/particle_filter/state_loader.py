@@ -38,7 +38,7 @@ def make_pkl(path):
             state.x = get_key(msg, "pose.pose.position.x")
             state.y = get_key(msg, "pose.pose.position.y")
             state.z = get_key(msg, "pose.pose.position.z")
-            state.t = yaw_from_quat(get_key(msg, "pose.pose.orientation"))
+            state.theta = yaw_from_quat(get_key(msg, "pose.pose.orientation"))
 
             state.vx = get_key(msg, "twist.twist.linear.x")
             state.vy = get_key(msg, "twist.twist.linear.y")

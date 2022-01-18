@@ -11,6 +11,8 @@ FilterSerial = collections.namedtuple("FilterSerial", "label index")
 
 def predict(particles, input_std_error, num_particles, u, dt):
     """
+    This is a static function so that it can be fed through numba's "jit" function (see jit_particle_filter.py)
+
     move according to control input u (velocity of robot and velocity of object)
     with noise std
     u[0, 1, 2, 3] = linear_vx, linear_vy, linear_vz, angular_z
@@ -22,9 +24,9 @@ def predict(particles, input_std_error, num_particles, u, dt):
     vy_0 = particles[:, 4]
     vz_0 = particles[:, 5]
 
-    vx_u = u[0]
-    vy_u = u[1]
-    vz_u = u[2]
+    vx_u = -u[0]
+    vy_u = -u[1]
+    vz_u = -u[2]
     vt_u = -u[3]
 
     vx_sd_u = input_std_error[0]
@@ -72,15 +74,19 @@ class ParticleFilter:
         self.initialize_weights()
 
         self.lock = Lock()
-    
+
+    def reset(self):
+        with self.lock:
+            self.particles = np.zeros((self.num_particles, self.num_states))
+            self.initialize_weights()
+
     def set_parameters(self, num_particles, measure_std_error, input_std_error, stale_filter_time):
         with self.lock:
-            self.particles = np.zeros((num_particles, self.num_states))
             self.num_particles = num_particles
             self.measure_std_error = measure_std_error
             self.input_std_error = np.array(input_std_error)
             self.stale_filter_time = stale_filter_time
-            self.initialize_weights()
+        self.reset()
 
     def get_name(self):
         return "%s_%s" % (self.serial.label, self.serial.index)
