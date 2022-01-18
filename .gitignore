@@ -9,6 +9,7 @@ dataset_builder/limelight_targets/outputs
 dataset_builder/powercells_2021/resources
 dataset_builder/powercells_2021/outputs
 dataset_builder/cargo_2022/outputs
+dataset_builder/cargo_2022/resources
 playground/particle_filter/data
 
 .idea/
