@@ -16,20 +16,6 @@ class ParticleFilterPlotterBase:
         self.meas_states = {}
         self.is_paused = False
 
-        self.ax_x_vel = None
-        self.ax_y_vel = None
-        self.ax_z_vel = None
-
-        self.timestamps = []
-        self.x_vel_data = []
-        self.y_vel_data = []
-        self.z_vel_data = []
-
-        self.meas_timestamps = []
-        self.meas_x_vel_data = []
-        self.meas_y_vel_data = []
-        self.meas_z_vel_data = []
-
         self.init()
 
     def init(self):
@@ -151,6 +137,21 @@ class ParticleFilterPlotter2D(ParticleFilterPlotterBase):
         self.meas_vy_line = None
         self.state_vx_line = None
         self.state_vy_line = None
+
+        self.ax_x_vel = None
+        self.ax_y_vel = None
+        self.ax_z_vel = None
+
+        self.timestamps = []
+        self.x_vel_data = []
+        self.y_vel_data = []
+        self.z_vel_data = []
+
+        self.meas_timestamps = []
+        self.meas_x_vel_data = []
+        self.meas_y_vel_data = []
+        self.meas_z_vel_data = []
+
         super(ParticleFilterPlotter2D, self).__init__(tf_to_odom, plot_delay)
 
     def init(self):
@@ -218,7 +219,6 @@ class ParticleFilterPlotter2D(ParticleFilterPlotterBase):
                 self.meas_x_vel_data.append(odom_meas.vx)
                 self.meas_y_vel_data.append(odom_meas.vy)
 
-
         # all_x = np.append(self.x_vel_data, self.meas_x_vel_data)
         # all_y = np.append(self.y_vel_data, self.meas_y_vel_data)
         all_x = self.x_vel_data
@@ -241,3 +241,148 @@ class ParticleFilterPlotter2D(ParticleFilterPlotterBase):
         self.state_vy_line.set_ydata(self.y_vel_data)
         self.ax_y_vel.set_xlim(np.min(self.timestamps), np.max(self.timestamps) + 0.5)
         self.ax_y_vel.set_ylim(np.min(all_y), np.max(all_y))
+
+
+class ParticleFilterPredictionPlotter2D(ParticleFilterPlotterBase):
+    def __init__(self, x_window, y_window, tf_to_odom=True, plot_delay=0.01):
+        self.x_window = x_window
+        self.y_window = y_window
+        self.x_line = None
+        self.y_line = None
+        self.z_line = None
+        self.future_x_line = None
+        self.future_y_line = None
+        self.future_z_line = None
+
+        self.ax_x = None
+        self.ax_y = None
+        self.ax_z = None
+
+        self.future_times = []
+        self.future_x = []
+        self.future_y = []
+        self.future_z = []
+
+        self.state_times = []
+        self.state_x = []
+        self.state_y = []
+        self.state_z = []
+
+        self.max_time = 0.0
+        self.max_x = 0.0
+        self.max_y = 0.0
+        self.max_z = 0.0
+
+        self.min_time = 0.0
+        self.min_x = 0.0
+        self.min_y = 0.0
+        self.min_z = 0.0
+
+        super(ParticleFilterPredictionPlotter2D, self).__init__(tf_to_odom, plot_delay)
+
+    def init(self):
+        super(ParticleFilterPredictionPlotter2D, self).init()
+        self.ax = self.fig.add_subplot(2, 2, 1)
+        self.ax_x = self.fig.add_subplot(2, 2, 2)
+        self.ax_y = self.fig.add_subplot(2, 2, 3)
+        self.ax_z = self.fig.add_subplot(2, 2, 4)
+        self.x_line = self.ax_x.plot([], [], label="x")[0]
+        self.future_x_line = self.ax_x.plot([], [], label="future x")[0]
+
+        self.y_line = self.ax_y.plot([], [], label="y")[0]
+        self.future_y_line = self.ax_y.plot([], [], label="future y")[0]
+
+        self.z_line = self.ax_z.plot([], [], label="z")[0]
+        self.future_z_line = self.ax_z.plot([], [], label="future z")[0]
+
+        self.ax_x.legend(loc=2)
+        self.ax_y.legend(loc=2)
+        self.ax_z.legend(loc=2)
+
+    def update_future_state(self, timestamp, state: FilterState):
+        self.future_times.append(timestamp)
+        self.future_x.append(state.x)
+        self.future_y.append(state.y)
+        self.future_z.append(state.z)
+
+        self.max_time = max(self.max_time, np.max(self.future_times))
+        self.max_x = max(self.max_x, max(self.future_x))
+        self.max_y = max(self.max_y, max(self.future_y))
+        self.max_z = max(self.max_z, max(self.future_z))
+
+        self.min_time = min(self.min_time, np.min(self.future_times))
+        self.min_x = min(self.min_x, min(self.future_x))
+        self.min_y = min(self.min_y, min(self.future_y))
+        self.min_z = min(self.min_z, min(self.future_z))
+
+    def draw(self, timestamp, pf, label, state=None):
+        # try:
+        #     mu, var = pf.estimate()
+        # except ZeroDivisionError:
+        #     return
+        #
+        # x, y, z, vx, vy, vz = mu
+        # state = FilterState(x, y, z, 0.0, vx, vy, vz, 0.0)
+        if state is None:
+            state = pf.get_state()
+        state_at_odom = state.relative_to(self.odom_state)
+
+        self.ax.clear()
+        particles = self.base_link_to_odom(
+            self.odom_state,
+            pf.particles[:, 0], pf.particles[:, 1], pf.particles[:, 2]
+        )
+
+        self.ax.scatter(particles[0], particles[1], marker='.', s=1, color='k', alpha=0.5)
+        self.ax.set_xlim(-self.x_window / 2, self.x_window / 2)
+        self.ax.set_ylim(-self.y_window / 2, self.y_window / 2)
+
+        # odom_mu = self.base_link_to_odom(self.odom_state, x, y, z)
+        self.ax.scatter(state_at_odom.x, state_at_odom.y, color='g', s=25)
+        self.ax.text(state_at_odom.x, state_at_odom.y, label, color="black")
+
+        self.ax.scatter(self.odom_state.x, self.odom_state.y, marker='*', color='b', s=25)
+        self.ax.scatter(0.0, 0.0, marker='*', color='k', s=25)
+
+        for name, meas_state in self.meas_states.items():
+            if self.odom_state.stamp - meas_state.stamp < 1.0:
+                odom_meas = meas_state.relative_to(self.odom_state)
+                self.ax.scatter(odom_meas.x, odom_meas.y, marker='*', color='r', s=25)
+
+
+        self.state_times.append(timestamp)
+        self.state_x.append(state_at_odom.x)
+        self.state_y.append(state_at_odom.y)
+        self.state_z.append(state_at_odom.z)
+
+        self.x_line.set_xdata(self.state_times)
+        self.y_line.set_xdata(self.state_times)
+        self.z_line.set_xdata(self.state_times)
+        self.future_x_line.set_xdata(self.future_times)
+        self.future_y_line.set_xdata(self.future_times)
+        self.future_z_line.set_xdata(self.future_times)
+
+        self.x_line.set_ydata(self.state_x)
+        self.y_line.set_ydata(self.state_y)
+        self.z_line.set_ydata(self.state_z)
+        self.future_x_line.set_ydata(self.future_x)
+        self.future_y_line.set_ydata(self.future_y)
+        self.future_z_line.set_ydata(self.future_z)
+
+        self.max_time = max(self.max_time, max(self.state_times))
+        self.max_x = max(self.max_x, max(self.state_x))
+        self.max_y = max(self.max_y, max(self.state_y))
+        self.max_z = max(self.max_z, max(self.state_z))
+
+        self.min_time = min(self.min_time, min(self.state_times))
+        self.min_x = min(self.min_x, min(self.state_x))
+        self.min_y = min(self.min_y, min(self.state_y))
+        self.min_z = min(self.min_z, min(self.state_z))
+
+        self.ax_x.set_xlim(self.min_time, self.max_time)
+        self.ax_y.set_xlim(self.min_time, self.max_time)
+        self.ax_z.set_xlim(self.min_time, self.max_time)
+
+        self.ax_x.set_ylim(self.min_x, self.max_x)
+        self.ax_y.set_ylim(self.min_y, self.max_y)
+        self.ax_z.set_ylim(self.min_z, self.max_z)
