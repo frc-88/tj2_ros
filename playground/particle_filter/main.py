@@ -10,7 +10,8 @@ from tj2_tools.particle_filter import FilterSerial
 from tj2_tools.particle_filter.state import *
 import state_loader
 from state_loader import OBJECT_NAMES
-from plotter import ParticleFilterPlotter3D, ParticleFilterPlotter2D
+from plotter import ParticleFilterPlotter3D, ParticleFilterPlotter2D, ParticleFilterPredictionPlotter2D
+from predictor import BouncePredictor
 
 
 def main():
@@ -35,7 +36,8 @@ def main():
     y_width = 10.0
     z_width = 3.0
     # plotter = ParticleFilterPlotter3D(x_width, y_width, z_width)
-    plotter = ParticleFilterPlotter2D(x_width, y_width, tf_to_odom=True)
+    # plotter = ParticleFilterPlotter2D(x_width, y_width, tf_to_odom=True)
+    plotter = ParticleFilterPredictionPlotter2D(x_width, y_width)
 
     sim_start_t = states[0].stamp
     real_start_t = time.time()
@@ -43,6 +45,8 @@ def main():
     input_u = InputVector(stale_filter_time)
 
     pf_delta_velocity = DeltaMeasurement()
+    predictor = BouncePredictor()
+    last_odom_state = FilterState()
 
     for state in states:
         current_time = time.time()
@@ -62,7 +66,8 @@ def main():
             dt = input_u.odom_update(state)
             vector = input_u.get_vector()
             pf.predict(vector, dt)
-            plotter.update_odom(state)
+            last_odom_state = state
+            plotter.update_odom(last_odom_state)
         elif state.type in OBJECT_NAMES:
             state = input_u.meas_update(state)
             meas_z = np.array([state.x, state.y, state.z, state.vx, state.vy, state.vz])
@@ -76,8 +81,11 @@ def main():
             plotter.update_measure(state.type, state)
         pf.check_resample()
 
-        # pf_state = pf.get_state()
-        # pf_state.stamp = sim_time
+        pf_state = pf.get_state()
+        pf_state.stamp = sim_time
+        if last_odom_state.stamp > 0.0:
+            future_state = predictor.get_prediction(pf_state.relative_to(last_odom_state), 1.0)
+            plotter.update_future_state(future_state.stamp - sim_start_t, future_state)
         # state = pf_delta_velocity.update(pf_state)
         state = None
 
