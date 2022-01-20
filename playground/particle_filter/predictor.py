@@ -53,13 +53,13 @@ def roll_object(x0, v0, a, t_limit, t_step):
 
 
 class BouncePredictor:
-    def __init__(self):
-        self.rho = 0.75
-        self.tau = 0.05
-        self.g = -9.81
-        self.a_friction = -0.1
-        self.t_step = 0.001
-        self.ground_plane = -0.1
+    def __init__(self, rho, tau, g, a_friction, t_step, ground_plane):
+        self.rho = rho
+        self.tau = tau
+        self.g = g
+        self.a_friction = a_friction
+        self.t_step = t_step
+        self.ground_plane = ground_plane
 
     def get_prediction(self, state: FilterState, t_window):
         x0 = state.x

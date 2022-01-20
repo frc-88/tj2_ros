@@ -349,7 +349,6 @@ class ParticleFilterPredictionPlotter2D(ParticleFilterPlotterBase):
                 odom_meas = meas_state.relative_to(self.odom_state)
                 self.ax.scatter(odom_meas.x, odom_meas.y, marker='*', color='r', s=25)
 
-
         self.state_times.append(timestamp)
         self.state_x.append(state_at_odom.x)
         self.state_y.append(state_at_odom.y)
