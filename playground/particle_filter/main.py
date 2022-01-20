@@ -4,8 +4,8 @@ sys.path.insert(0, "../../tj2_tools")
 
 import time
 import numpy as np
-# from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
-from tj2_tools.particle_filter import ParticleFilter
+from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
+# from tj2_tools.particle_filter import ParticleFilter
 from tj2_tools.particle_filter import FilterSerial
 from tj2_tools.particle_filter.state import *
 import state_loader
@@ -32,6 +32,10 @@ def main():
     stale_filter_time = 0.1
     num_particles = 250
 
+    velocity_from_pf = True
+
+    prediction_window_s = 1.0
+
     pf = ParticleFilter(FilterSerial("power_cell", "0"), num_particles, meas_std_val, u_std, stale_filter_time)
 
     x_width = 10.0
@@ -47,7 +51,14 @@ def main():
     input_u = InputVector(stale_filter_time)
 
     pf_delta_velocity = DeltaMeasurement()
-    predictor = BouncePredictor()
+    predictor = BouncePredictor(
+        rho=0.75,
+        tau=0.05,
+        g=-9.81,
+        a_friction=-0.1,
+        t_step=0.001,
+        ground_plane=-0.1
+    )
     last_odom_state = FilterState()
 
     for state in states:
@@ -85,15 +96,16 @@ def main():
 
         pf_state = pf.get_state()
         pf_state.stamp = sim_time
-        if last_odom_state.stamp > 0.0:
-            future_state = predictor.get_prediction(pf_state.relative_to(last_odom_state), 1.0)
+        if last_odom_state.stamp > 0.0 and type(plotter) == ParticleFilterPredictionPlotter2D:
+            future_state = predictor.get_prediction(pf_state.relative_to(last_odom_state), prediction_window_s)
             plotter.update_future_state(future_state.stamp - sim_start_t, future_state)
-        # state = pf_delta_velocity.update(pf_state)
-        state = None
+        if velocity_from_pf:
+            plot_state = None
+        else:
+            plot_state = pf_delta_velocity.update(pf_state)
 
         if sim_duration >= real_duration:  # if simulation time has caught up to real time, spend some time drawing
-            # plotter.clear()
-            plotter.draw(sim_duration, pf, "pf", state)
+            plotter.draw(sim_duration, pf, "pf", plot_state)
             plotter.pause()
 
     plotter.stop()
