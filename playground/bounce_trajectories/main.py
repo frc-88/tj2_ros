@@ -69,15 +69,15 @@ def roll_object(x0, v0, a, t_limit, t_step):
 def main():
     x0 = 0.0
     z0 = 1.0
-    vx0 = 1.0
+    vx0 = 0.25
     vz0 = 0.0
     rho = 0.75
-    tau = 0.025
+    tau = 0.05
     t_step = 0.0001
     g = -9.81
-    a_friction = -2.0
+    a_friction = -0.1
     v_limit = 0.05
-    t_limit = 10.0
+    t_limit = 5.0
 
     tz_data, z_data = get_bounces(z0, vz0, rho, tau, g, t_limit, v_limit, t_step)
     tx_data, x_data = roll_object(x0, vx0, a_friction, t_limit, t_step)
