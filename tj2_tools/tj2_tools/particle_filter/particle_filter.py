@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from numpy.random import randn, random, uniform
+from numpy.random import randn, random, uniform, normal
 import scipy.stats
 import collections
 from threading import Lock
@@ -12,7 +12,7 @@ FilterSerial = collections.namedtuple("FilterSerial", "label index")
 G_CONST = 9.81
 
 
-def predict(particles, input_std_error, num_particles, u, dt):
+def predict(particles, input_std_error, num_particles, bounds, u, dt):
     """
     This is a static function so that it can be fed through numba's "jit" function (see jit_particle_filter.py)
 
@@ -36,21 +36,29 @@ def predict(particles, input_std_error, num_particles, u, dt):
     vy_sd_u = input_std_error[1]
     vz_sd_u = input_std_error[2]
     vt_sd_u = input_std_error[3]
-    
+
     # angular predict
-    theta_delta = vt_u * dt + randn(num_particles) * vt_sd_u
+    theta_delta = vt_u * dt + normal(0.0, 1.0, num_particles) * vt_sd_u
     x_a = x_0 * np.cos(theta_delta) - y_0 * np.sin(theta_delta)
     y_a = x_0 * np.sin(theta_delta) + y_0 * np.cos(theta_delta)
 
     # x, y linear predict
-    x_1 = x_a + vx_u * dt + randn(num_particles) * vx_sd_u - vx_0 * dt
-    y_1 = y_a + vy_u * dt + randn(num_particles) * vy_sd_u - vy_0 * dt
-    z_1 = z_0 + vz_u * dt + randn(num_particles) * vz_sd_u - vz_0 * dt - G_CONST * dt * dt
+    x_1 = x_a + vx_u * dt + normal(0.0, 1.0, num_particles) * vx_sd_u - vx_0 * dt
+    y_1 = y_a + vy_u * dt + normal(0.0, 1.0, num_particles) * vy_sd_u - vy_0 * dt
+    z_1 = z_0 + vz_u * dt + normal(0.0, 1.0, num_particles) * vz_sd_u - vz_0 * dt
+
+    # apply downward accel if not on the ground
+    lower_z = bounds[2][0]
+    off_ground_indices = z_1 > lower_z
+    z_1[off_ground_indices] -= G_CONST * dt * dt
 
     # linear velocity predict
-    vx_1 = vx_u + randn(num_particles) * vx_sd_u
-    vy_1 = vy_u + randn(num_particles) * vy_sd_u
-    vz_1 = vz_u + randn(num_particles) * vz_sd_u - G_CONST * dt
+    vx_1 = vx_u + normal(0.0, 1.0, num_particles) * vx_sd_u
+    vy_1 = vy_u + normal(0.0, 1.0, num_particles) * vy_sd_u
+    vz_1 = vz_u + normal(0.0, 1.0, num_particles) * vz_sd_u
+
+    # apply downward accel if not on the ground
+    vz_1[off_ground_indices] -= G_CONST * dt
 
     particles[:, 0] = x_1
     particles[:, 1] = y_1
@@ -61,7 +69,7 @@ def predict(particles, input_std_error, num_particles, u, dt):
 
 
 class ParticleFilter:
-    def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time):
+    def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time, bounds):
         self.serial = serial
         self.num_states = 6  # x, y, z, vx, vy, vz
         self.particles = np.zeros((num_particles, self.num_states))
@@ -70,6 +78,7 @@ class ParticleFilter:
         self.input_std_error = np.array(input_std_error)
         self.stale_filter_time = stale_filter_time
         self.last_measurement_time = 0.0
+        self.bounds = np.array(bounds)
 
         self.measure_distribution = scipy.stats.norm(0.0, self.measure_std_error)
         self.weights = np.array([])
@@ -128,8 +137,25 @@ class ParticleFilter:
         u[0, 1, 2, 3] = linear_vx, linear_vy, linear_vz, angular_z
         """
         with self.lock:
-            predict(self.particles, self.input_std_error, self.num_particles, u, dt)
-    
+            predict(self.particles, self.input_std_error, self.num_particles, self.bounds, u, dt)
+        # self.clip()
+
+    def clip(self):
+        with self.lock:
+            for index, (lower, upper) in enumerate(self.bounds):
+                axis_particles = self.particles[:, index]
+                axis_particles[axis_particles < lower] = lower
+                axis_particles[axis_particles > upper] = upper
+        # mu = self.mean()
+        # for index in range(len(mu)):
+        #     lower, upper = self.bounds[index]
+        #     estimate = mu[index]
+        #     with self.lock:
+        #         if estimate < lower:
+        #             self.particles[:, index] += lower - estimate
+        #         elif estimate > upper:
+        #             self.particles[:, index] -= estimate - upper
+
     def update(self, z):
         """Update particle filter according to measurement z (object position: [x, y, z, vx, vy, vx])"""
         # self.weights.fill(1.0)  # debateable as to whether this is detrimental or not (shouldn't weights be preserved between measurements?)

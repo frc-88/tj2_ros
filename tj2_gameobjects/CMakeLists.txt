@@ -26,10 +26,10 @@ catkin_python_setup() # added if there is a setup.py. In this case for the node
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
+# include_directories(
+# # include
+#   ${catkin_INCLUDE_DIRS}
+# )
 
 generate_dynamic_reconfigure_options(
     cfg/ParticleFilter.cfg
