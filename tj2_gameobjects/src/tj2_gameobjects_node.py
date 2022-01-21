@@ -2,7 +2,6 @@
 
 import math
 import rospy
-import tf2_ros
 
 from dynamic_reconfigure.server import Server
 
@@ -12,14 +11,15 @@ from vision_msgs.msg import Detection2DArray
 
 from nav_msgs.msg import Odometry
 
-from geometry_msgs.msg import PoseArray
 from geometry_msgs.msg import Pose
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import PoseArray
+from geometry_msgs.msg import PoseStamped
 
 from tj2_tools.particle_filter import FilterSerial
 from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
 # from tj2_tools.particle_filter import ParticleFilter
 from tj2_tools.particle_filter.state import InputVector, FilterState
+from tj2_tools.particle_filter.predictor import BouncePredictor
 
 from tj2_gameobjects.cfg import ParticleFilterConfig
 
@@ -42,6 +42,7 @@ class Tj2GameobjectsNode:
         self.labels = rospy.get_param("~labels", None)
         self.bounds = rospy.get_param("~bounds", None)
         self.filter_frame = rospy.get_param("~filter_frame", "base_link")
+        self.odom_frame = rospy.get_param("~odom_frame", "odom")
 
         assert self.u_std is not None
         assert self.initial_range is not None
@@ -49,7 +50,10 @@ class Tj2GameobjectsNode:
         assert self.bounds is not None
 
         self.pfs = {}
+        self.predictors = {}
         self.inputs = {}
+        self.pose_publishers = {}
+        self.future_publishers = {}
         for label in self.labels:
             serial = FilterSerial(label, 0)
             self.pfs[serial] = ParticleFilter(
@@ -61,12 +65,20 @@ class Tj2GameobjectsNode:
                         self.bounds
                     )
             self.inputs[serial] = InputVector(self.stale_filter_time)
+            self.predictors[serial] = BouncePredictor(  # TODO: make dynamically configurable
+                rho=0.75,
+                tau=0.05,
+                g=-9.81,
+                a_friction=-0.1,
+                t_step=0.001,
+                ground_plane=self.bounds[2][0]
+            )
+            self.pose_publishers[serial] = rospy.Publisher("estimate_%s_%s" % (serial.label, serial.index), PoseStamped, queue_size=5)
+            self.future_publishers[serial] = rospy.Publisher("future_%s_%s" % (serial.label, serial.index), PoseStamped, queue_size=5)
         self.detections_sub = rospy.Subscriber("detections", Detection2DArray, self.detections_callback, queue_size=25)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback, queue_size=25)
 
         self.particles_pub = rospy.Publisher("pf_particles", PoseArray, queue_size=5)
-
-        self.broadcaster = tf2_ros.TransformBroadcaster()
 
         self.dyn_config = {}
         self.dyn_server = Server(ParticleFilterConfig, self.dyn_config_callback)
@@ -163,7 +175,7 @@ class Tj2GameobjectsNode:
             return default
 
     def to_label(self, obj_id):
-        return self.labels[obj_id]
+        return self.labels[obj_id - 1]  # BACKGROUND = 0, but we ignore it here
         
     def detections_callback(self, msg):
         measurements = {}
@@ -213,19 +225,33 @@ class Tj2GameobjectsNode:
         for serial, pf in self.pfs.items():
             yield serial, pf
 
+    def predict_trajectories(self):
+        for serial, pf in self.iter_pfs():
+            input_u = self.inputs[serial]
+            predictor = self.predictors[serial]
+            pf_state = pf.get_state()
+            static_frame_state = pf_state.relative_to(input_u.odom_state)
+
+            future_state = predictor.get_robot_intersection(input_u.odom_state, static_frame_state)
+            future_pose = future_state.to_ros_pose()
+            msg = PoseStamped()
+            msg.header.stamp = rospy.Time.now()
+            msg.header.frame_id = self.odom_frame
+            msg.pose = future_pose
+            self.future_publishers[serial].publish(msg)
+
     def publish_all_poses(self):
         for serial, pf in self.iter_pfs():
             mean = pf.mean()
 
-            msg = TransformStamped()
+            msg = PoseStamped()
             msg.header.stamp = rospy.Time.now()
             msg.header.frame_id = self.filter_frame
-            msg.child_frame_id = pf.get_name()
-            msg.transform.translation.x = mean[0]
-            msg.transform.translation.y = mean[1]
-            msg.transform.translation.z = mean[2]
-            msg.transform.rotation.w = 1.0
-            self.broadcaster.sendTransform(msg)
+            msg.pose.position.x = mean[0]
+            msg.pose.position.y = mean[1]
+            msg.pose.position.z = mean[2]
+            msg.pose.orientation.w = 1.0
+            self.pose_publishers[serial].publish(msg)
     
     def publish_particles(self):
         if self.particles_pub.get_num_connections() == 0:
@@ -256,6 +282,8 @@ class Tj2GameobjectsNode:
                 if not pf.is_initialized() or pf.is_stale():
                     continue
                 pf.check_resample()
+            
+            self.predict_trajectories()
 
             self.publish_all_poses()
             self.publish_particles()

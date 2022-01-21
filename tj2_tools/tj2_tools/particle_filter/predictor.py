@@ -78,3 +78,8 @@ class BouncePredictor:
         future_state = FilterState(x1, y1, z1, 0.0, vx0, vy0, vz0, 0.0)
         future_state.stamp = state.stamp + t_window
         return future_state
+
+    def get_robot_intersection(self, robot_state: FilterState, obj_state: FilterState):
+        # plot a course to where the object will head
+        # given robot parameters, find where the robot and object intersect
+        return self.get_prediction(obj_state, 1.0)  # TODO: don't use fixed time window

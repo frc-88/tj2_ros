@@ -56,6 +56,14 @@ def jit_resample(particles, weights, num_particles):
     return particles, weights
 
 
+@njit
+def jit_clip(particles, bounds):
+    for index, (lower, upper) in enumerate(bounds):
+        axis_particles = particles[:, index]
+        axis_particles[axis_particles < lower] = lower
+        axis_particles[axis_particles > upper] = upper
+
+
 class JitParticleFilter(ParticleFilter):
     is_warmed_up = False
 
@@ -77,7 +85,7 @@ class JitParticleFilter(ParticleFilter):
     def predict(self, u, dt):
         with self.lock:
             jit_predict(self.particles, self.input_std_error, self.num_particles, self.bounds, u, dt)
-        # self.clip()
+        # jit_clip(self.particles, self.bounds)
 
     def update(self, z):
         # self.weights.fill(1.0)
