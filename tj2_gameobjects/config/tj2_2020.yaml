@@ -5,7 +5,6 @@ num_particles: 250
 stale_filter_time: 1.0
 
 labels:
-- BACKGROUND
 - power_cell
 
 bounds:

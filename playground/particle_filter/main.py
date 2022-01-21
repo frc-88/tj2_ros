@@ -11,7 +11,7 @@ from tj2_tools.particle_filter.state import *
 import state_loader
 from state_loader import OBJECT_NAMES
 from plotter import ParticleFilterPlotter3D, ParticleFilterPlotter2D, ParticleFilterPredictionPlotter2D
-from predictor import BouncePredictor
+from tj2_tools.particle_filter.predictor import BouncePredictor
 
 
 def main():
@@ -19,15 +19,15 @@ def main():
     # path = "./data/detections_2022-01-14-12-02-32.json"  # stationary object with moving robot
     # path = "./data/detections_2022-01-14-12-39-34.json"  # short run drop
     # path = "./data/detections_2022-01-14-13-42-43.json"  # circling in YZ. Drop at the end
-    path = "./data/detections_2022-01-14-14-05-17.json"  # small motions from robot and target
+    # path = "./data/detections_2022-01-14-14-05-17.json"  # small motions from robot and target
     # path = "./data/detections_2022-01-14-18-22-38.json"  # rapid rotations in robot theta
-    # path = "./data/detections_2022-01-16-23-24-58.json"  # roll
+    path = "./data/detections_2022-01-16-23-24-58.json"  # roll
     # path = "./data/detections_2022-01-16-23-24-58.json"  # bounce
 
     states = state_loader.read_pkl(path, repickle)
 
     meas_std_val = 0.05
-    u_std = [0.1, 0.1, 0.1, 0.1]
+    u_std = [0.02, 0.02, 0.1, 0.02]
     initial_range = [1.0, 1.0, 1.0, 0.25, 0.25, 0.25]
     stale_filter_time = 0.1
     num_particles = 250
@@ -64,7 +64,6 @@ def main():
         t_step=0.001,
         ground_plane=-0.1
     )
-    last_odom_state = FilterState()
 
     sim_start_t = states[0].stamp
     real_start_t = time.time()
@@ -87,8 +86,7 @@ def main():
             dt = input_u.odom_update(state)
             vector = input_u.get_vector()
             pf.predict(vector, dt)
-            last_odom_state = state
-            plotter.update_odom(last_odom_state)
+            plotter.update_odom(state)
         elif state.type in OBJECT_NAMES:
             state = input_u.meas_update(state)
             meas_z = np.array([state.x, state.y, state.z, state.vx, state.vy, state.vz])
@@ -104,8 +102,8 @@ def main():
 
         pf_state = pf.get_state()
         pf_state.stamp = sim_time
-        if last_odom_state.stamp > 0.0 and type(plotter) == ParticleFilterPredictionPlotter2D:
-            future_state = predictor.get_prediction(pf_state.relative_to(last_odom_state), prediction_window_s)
+        if input_u.odom_state.stamp > 0.0 and type(plotter) == ParticleFilterPredictionPlotter2D:
+            future_state = predictor.get_prediction(pf_state.relative_to(input_u.odom_state), prediction_window_s)
             plotter.update_future_state(future_state.stamp - sim_start_t, future_state)
         if velocity_from_pf:
             plot_state = None

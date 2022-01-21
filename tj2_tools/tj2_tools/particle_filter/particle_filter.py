@@ -146,15 +146,6 @@ class ParticleFilter:
                 axis_particles = self.particles[:, index]
                 axis_particles[axis_particles < lower] = lower
                 axis_particles[axis_particles > upper] = upper
-        # mu = self.mean()
-        # for index in range(len(mu)):
-        #     lower, upper = self.bounds[index]
-        #     estimate = mu[index]
-        #     with self.lock:
-        #         if estimate < lower:
-        #             self.particles[:, index] += lower - estimate
-        #         elif estimate > upper:
-        #             self.particles[:, index] -= estimate - upper
 
     def update(self, z):
         """Update particle filter according to measurement z (object position: [x, y, z, vx, vy, vx])"""
