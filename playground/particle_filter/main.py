@@ -19,24 +19,32 @@ def main():
     # path = "./data/detections_2022-01-14-12-02-32.json"  # stationary object with moving robot
     # path = "./data/detections_2022-01-14-12-39-34.json"  # short run drop
     # path = "./data/detections_2022-01-14-13-42-43.json"  # circling in YZ. Drop at the end
-    # path = "./data/detections_2022-01-14-14-05-17.json"  # small motions from robot and target
+    path = "./data/detections_2022-01-14-14-05-17.json"  # small motions from robot and target
     # path = "./data/detections_2022-01-14-18-22-38.json"  # rapid rotations in robot theta
     # path = "./data/detections_2022-01-16-23-24-58.json"  # roll
-    path = "./data/detections_2022-01-16-23-24-58.json"  # bounce
+    # path = "./data/detections_2022-01-16-23-24-58.json"  # bounce
 
     states = state_loader.read_pkl(path, repickle)
 
     meas_std_val = 0.05
-    u_std = [0.02, 0.02, 0.02, 0.02]
+    u_std = [0.1, 0.1, 0.1, 0.1]
     initial_range = [1.0, 1.0, 1.0, 0.25, 0.25, 0.25]
     stale_filter_time = 0.1
     num_particles = 250
+    bounds = [
+        [-20.0, 20.0],
+        [-20.0, 20.0],
+        [-0.117, 1.0],
+        [-10.0, 10.0],
+        [-10.0, 10.0],
+        [-10.0, 10.0],
+    ]
 
     velocity_from_pf = True
 
     prediction_window_s = 1.0
 
-    pf = ParticleFilter(FilterSerial("power_cell", "0"), num_particles, meas_std_val, u_std, stale_filter_time)
+    pf = ParticleFilter(FilterSerial("power_cell", "0"), num_particles, meas_std_val, u_std, stale_filter_time, bounds)
 
     x_width = 10.0
     y_width = 10.0
@@ -44,9 +52,6 @@ def main():
     # plotter = ParticleFilterPlotter3D(x_width, y_width, z_width)
     # plotter = ParticleFilterPlotter2D(x_width, y_width, tf_to_odom=True)
     plotter = ParticleFilterPredictionPlotter2D(x_width, y_width)
-
-    sim_start_t = states[0].stamp
-    real_start_t = time.time()
 
     input_u = InputVector(stale_filter_time)
 
@@ -60,6 +65,9 @@ def main():
         ground_plane=-0.1
     )
     last_odom_state = FilterState()
+
+    sim_start_t = states[0].stamp
+    real_start_t = time.time()
 
     for state in states:
         current_time = time.time()

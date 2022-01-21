@@ -59,9 +59,9 @@ def jit_resample(particles, weights, num_particles):
 class JitParticleFilter(ParticleFilter):
     is_warmed_up = False
 
-    def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time):
+    def __init__(self, serial, num_particles, measure_std_error, input_std_error, stale_filter_time, bounds):
         super(JitParticleFilter, self).__init__(serial, num_particles, measure_std_error, input_std_error,
-                                                stale_filter_time)
+                                                stale_filter_time, bounds)
         self.warmup()
 
     def warmup(self):
@@ -76,7 +76,8 @@ class JitParticleFilter(ParticleFilter):
 
     def predict(self, u, dt):
         with self.lock:
-            jit_predict(self.particles, self.input_std_error, self.num_particles, u, dt)
+            jit_predict(self.particles, self.input_std_error, self.num_particles, self.bounds, u, dt)
+        # self.clip()
 
     def update(self, z):
         # self.weights.fill(1.0)

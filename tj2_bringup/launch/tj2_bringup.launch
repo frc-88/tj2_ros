@@ -18,4 +18,5 @@
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
     <include file="$(find tj2_launcher)/launch/tj2_launcher.launch"/>
+    <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/>
 </launch>

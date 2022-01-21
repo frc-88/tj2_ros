@@ -40,12 +40,14 @@ class Tj2GameobjectsNode:
         self.num_particles = rospy.get_param("~num_particles", 50)
         self.stale_filter_time = rospy.get_param("~stale_filter_time", 1.0)
         self.labels = rospy.get_param("~labels", None)
+        self.bounds = rospy.get_param("~bounds", None)
         self.filter_frame = rospy.get_param("~filter_frame", "base_link")
 
         assert self.u_std is not None
         assert self.initial_range is not None
         assert self.labels is not None
-        
+        assert self.bounds is not None
+
         self.pfs = {}
         self.inputs = {}
         for label in self.labels:
@@ -55,7 +57,8 @@ class Tj2GameobjectsNode:
                         self.num_particles,
                         self.meas_std_val,
                         self.u_std,
-                        self.stale_filter_time
+                        self.stale_filter_time,
+                        self.bounds
                     )
             self.inputs[serial] = InputVector(self.stale_filter_time)
         self.detections_sub = rospy.Subscriber("detections", Detection2DArray, self.detections_callback, queue_size=25)
@@ -86,6 +89,18 @@ class Tj2GameobjectsNode:
             config["initial_range_vz"] = self.initial_range[5]
             config["num_particles"] = self.num_particles
             config["stale_filter_time"] = self.stale_filter_time
+            config["lower_bound_x"] = self.bounds[0][0]
+            config["upper_bound_x"] = self.bounds[0][1]
+            config["lower_bound_y"] = self.bounds[1][0]
+            config["upper_bound_y"] = self.bounds[1][1]
+            config["lower_bound_z"] = self.bounds[2][0]
+            config["upper_bound_z"] = self.bounds[2][1]
+            config["lower_bound_vx"] = self.bounds[3][0]
+            config["upper_bound_vx"] = self.bounds[3][1]
+            config["lower_bound_vy"] = self.bounds[4][0]
+            config["upper_bound_vy"] = self.bounds[4][1]
+            config["lower_bound_vz"] = self.bounds[5][0]
+            config["upper_bound_vz"] = self.bounds[5][1]
             self.dyn_config = config
             return self.dyn_config
 
@@ -106,6 +121,33 @@ class Tj2GameobjectsNode:
         ]
         self.num_particles = self.get_default_config("num_particles", config, self.num_particles)
         self.stale_filter_time = self.get_default_config("stale_filter_time", config, self.stale_filter_time)
+
+        self.bounds = [
+            [
+                self.get_default_config("lower_bound_x", config, self.bounds[0][0]),
+                self.get_default_config("upper_bound_x", config, self.bounds[0][1]),
+            ],
+            [
+                self.get_default_config("lower_bound_y", config, self.bounds[1][0]),
+                self.get_default_config("upper_bound_y", config, self.bounds[1][1]),
+            ],
+            [
+                self.get_default_config("lower_bound_z", config, self.bounds[2][0]),
+                self.get_default_config("upper_bound_z", config, self.bounds[2][1]),
+            ],
+            [
+                self.get_default_config("lower_bound_vx", config, self.bounds[3][0]),
+                self.get_default_config("upper_bound_vx", config, self.bounds[3][1]),
+            ],
+            [
+                self.get_default_config("lower_bound_vy", config, self.bounds[4][0]),
+                self.get_default_config("upper_bound_vy", config, self.bounds[4][1]),
+            ],
+            [
+                self.get_default_config("lower_bound_vz", config, self.bounds[5][0]),
+                self.get_default_config("upper_bound_vz", config, self.bounds[5][1]),
+            ],
+        ]
         
         for serial, pf in self.iter_pfs():
             pf.set_parameters(self.num_particles, self.meas_std_val, self.u_std, self.stale_filter_time)
@@ -136,31 +178,31 @@ class Tj2GameobjectsNode:
             else:
                 measurements[label].append(state)
 
-        for label, states in measurements:
+        for label, states in measurements.items():
             max_dist = 0.0
             max_index = 0
             for index, state in enumerate(states):
-                distance = states.distance()
+                distance = state.distance()
                 if distance > max_dist:
                     max_dist = distance
                     max_index = index
             state = states[max_index]
             
             serial = FilterSerial(label, 0)  # one object per label type
-
-            self.inputs[serial].meas_update(state)
             pf = self.pfs[serial]
 
             meas_z = np.array([state.x, state.y, state.z, state.vx, state.vy, state.vz])
-            if not pf.is_initialized() or pf.is_stale():
+            if not pf.is_initialized():  #  or pf.is_stale():
                 rospy.loginfo("initializing with %s" % state)
                 pf.create_uniform_particles(meas_z, self.initial_range)
+            
+            self.inputs[serial].meas_update(state)
             pf.update(meas_z)
 
     def odom_callback(self, msg):
         state = FilterState.from_odom(msg)
         for serial, pf in self.iter_pfs():
-            if not pf.is_initialized() or pf.is_stale():
+            if not pf.is_initialized():  #  or pf.is_stale():
                 continue
             input_u = self.inputs[serial]
             dt = input_u.odom_update(state)
@@ -203,7 +245,7 @@ class Tj2GameobjectsNode:
         self.particles_pub.publish(particles_msg)
 
     def run(self):
-        rate = rospy.Rate(30.0)
+        rate = rospy.Rate(60.0)
 
         while True:
             rate.sleep()

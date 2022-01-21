@@ -26,6 +26,7 @@ class SSHTailer(Tailer):
 
         self.client = None
         self.sftp_client = None
+        self.remote_file_size = None
 
     def run(self):
         self.connect()
@@ -36,7 +37,9 @@ class SSHTailer(Tailer):
         rospy.loginfo("Connecting to %s" % self.host)
         # connect to the host
         self.client = paramiko.SSHClient()
-        self.client.connect(self.host, username=self.username, password='', allow_agent=False, look_for_keys=False, timeout=1.0)
+        self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        # self.client.connect(self.host, username=self.username, password='', allow_agent=False, look_for_keys=False, timeout=1.0)
+        self.client.connect(self.host, username=self.username, password='')
 
         rospy.loginfo("Opening remote file %s" % self.remote_path)
         # open a connection to the remote file via SFTP
