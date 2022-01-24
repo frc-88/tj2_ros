@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 
+import math
+
 import rospy
+import rostopic
+
+import tf2_ros
+import tf_conversions
+import tf2_geometry_msgs
+
 import smach
 import smach_ros
 
@@ -9,158 +17,178 @@ import threading
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Path
+from std_msgs.msg import Bool
 
-from mbf_msgs.msg import ExePathAction
-from mbf_msgs.msg import GetPathAction
-from mbf_msgs.msg import RecoveryAction
+from mbf_msgs.msg import ExePathAction, ExePathGoal
+
+from tj2_tools.particle_filter import FilterSerial
 
 
-class Tj2MoveBase:
+def get_topics(ns: str):
+    if len(ns):
+        return []
+    if ns[0] != "/":
+        ns = "/" + ns
+    topics = []
+    for topic_info in rostopic.get_topic_list():
+        topic = topic_info[0][0]
+        if topic.startswith(ns):
+            topics.append(topic)
+    return topics
+
+
+class FollowObject:
     def __init__(self):
-        self.name = "tj2_move_base"
+        self.name = "follow_object"
         rospy.init_node(
             self.name
         )
-        # Create SMACH state machine
-        self.sm = smach.StateMachine(outcomes=['succeeded', 'aborted', 'preempted'])
+        self.exe_path_action = actionlib.SimpleActionClient("/move_base_flex/exe_path", ExePathAction)
 
-        # Define userdata
-        self.sm.userdata.goal = None
-        self.sm.userdata.path = None
-        self.sm.userdata.error = None
-        self.sm.userdata.clear_costmap_flag = False
-        self.sm.userdata.error_status = None
+        rospy.loginfo("Connecting to exe_path...")
+        self.exe_path_action.wait_for_server()
+        rospy.loginfo("exe_path connected")
+        
+        self.old_object_threshold = rospy.Duration(rospy.get_param("~old_object_threshold_s", 5.0))
+        self.should_follow_timeout = rospy.Duration(rospy.get_param("~should_follow_timeout", 5.0))
 
-        with self.sm:
-            # Monitor topic to get goal from RViz plugin
-            smach.StateMachine.add(
-                'WAIT_FOR_GOAL',
-                smach_ros.MonitorState(
-                    '/move_base_simple/goal',
-                    PoseStamped,
-                    self.goal_cb,
-                    output_keys=['goal']
-                ),
-                transitions={
-                    'invalid': 'GET_PATH',
-                    'valid': 'WAIT_FOR_GOAL',
-                    'preempted': 'preempted'
-                }
-            )
+        self.base_frame = rospy.get_param("~base_frame", "base_link")
+        self.map_frame = rospy.get_param("~map_frame", "map")
 
-            # Get path
-            smach.StateMachine.add(
-                'GET_PATH',
-                smach_ros.SimpleActionState(
-                    '/move_base_flex/get_path',
-                    GetPathAction,
-                    goal_slots=['target_pose'],
-                    result_slots=['path']
-                ),
-                transitions={
-                    'succeeded': 'EXE_PATH',
-                    'aborted': 'STOP_MOTORS',
-                    'preempted': 'preempted'
-                },
-                remapping={
-                    'target_pose': 'goal'
-                }
-            )
+        self.gameobjects_ns = rospy.get_param("~gameobjects_ns", "gameobject")
+        self.future_obj_subs = {}
+        for gameobjects_topic in get_topics(self.gameobjects_ns):
+            subtopic = gameobjects_topic.split("/")[-1]
+            if subtopic.startswith("future_"):
+                subtopic_split = subtopic.split("_")
+                label = subtopic_split[1]
+                index = subtopic_split[2]
+                serial = FilterSerial(label, index)
 
-            # Execute path
-            smach.StateMachine.add(
-                'EXE_PATH',
-                smach_ros.SimpleActionState(
-                    '/move_base_flex/exe_path',
-                    ExePathAction,
-                    goal_slots=['path']
-                ),
-                transitions={
-                    'succeeded': 'STOP_MOTORS',
-                    'aborted': 'RECOVERY',
-                    'preempted': 'preempted'
-                }
-            )
+                subscriber = rospy.Subscriber(gameobjects_topic, PoseStamped, lambda x: self.gameobject_callback(x, serial=serial), queue_size=10)
+                self.future_obj_subs[serial] = subscriber
 
-            # Recovery
-            smach.StateMachine.add(
-                'RECOVERY',
-                smach_ros.SimpleActionState(
-                    'move_base_flex/recovery',
-                    RecoveryAction,
-                    goal_cb=self.recovery_path_goal_cb,
-                    input_keys=["error", "clear_costmap_flag"],
-                    output_keys=["error_status", 'clear_costmap_flag']
-                ),
-                transitions={
-                    'succeeded': 'GET_PATH',
-                    'aborted': 'STOP_MOTORS',
-                    'preempted': 'preempted'
-                }
-            )
+        self.trigger_sub = rospy.Subscriber("follow_trigger", Bool, self.follow_trigger_callback, queue_size=25)
+        self.should_follow = False
+        self.should_follow_timer = rospy.Time.now()
 
-            # Stop motors
-            smach.StateMachine.add(
-                'STOP_MOTORS',
-                StopMotorsState(),
-                transitions={
-                    'finished': 'WAIT_FOR_GOAL',
-                }
-            )
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        
+        self.current_objects = {}
 
-        rospy.loginfo("%s init done" % self.name)
+    def follow_trigger_callback(self, msg):
+        self.should_follow_timeout = rospy.Time.now()
+        if msg.data != self.should_follow:
+            rospy.loginfo(("Disabling" if msg.data else "Enabling") + " follow object")
+        self.should_follow = msg.data
 
-    def goal_cb(self, userdata, msg):
-        # Goal callback for state WAIT_FOR_GOAL
-        userdata.goal = msg
-        rospy.loginfo("Received goal")
-        return False
+    def gameobject_callback(self, msg, serial):
+        self.current_objects[serial] = msg
 
-    def recovery_path_goal_cb(self, userdata, goal):
-        # Goal callback for state RECOVERY
-        if not userdata.clear_costmap_flag:
-            goal.behavior = 'clear_costmap'
-            userdata.clear_costmap_flag = True
+    def exe_path_feedback(self, feedback):
+        pass
+
+    def exe_path_done(self, goal_status, result):
+        print("exe path finished:", result)
+    
+    def get_nearest_object(self):
+        min_distance = None
+        min_serial = None
+        for serial, pose_stamped in self.current_objects.items():
+            duration = rospy.Time.now() - pose_stamped.header.stamp
+            if duration > self.old_object_threshold:
+                continue
+            x1 = pose_stamped.pose.position.x
+            y1 = pose_stamped.pose.position.y
+            z1 = pose_stamped.pose.position.z
+            distance = math.sqrt(x1 * x1 + y1 * y1 + z1 * z1)  # assuming pose is relative to the robot
+            if min_distance is None or distance < min_distance:
+                min_distance = distance
+                min_serial = serial
+        if min_serial is None:
+            return None
         else:
-            goal.behavior = 'straf_recovery'
-            userdata.clear_costmap_flag = False
+            return self.current_objects[serial]
+    
+    def lookup_transform(self, parent_link, child_link, time_window=None, timeout=None):
+        """
+        Call tf_buffer.lookup_transform. Return None if the look up fails
+        """
+        if time_window is None:
+            time_window = rospy.Time(0)
+        else:
+            time_window = rospy.Time.now() - time_window
+
+        if timeout is None:
+            timeout = rospy.Duration(1.0)
+
+        try:
+            return self.tf_buffer.lookup_transform(parent_link, child_link, time_window, timeout)
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            rospy.logwarn("Failed to look up %s to %s. %s" % (parent_link, child_link, e))
+            return None
+    
+    def get_pose_in_map(self, pose_stamped):
+        frame = pose_stamped.header.frame_id
+        map_tf = self.lookup_transform(self.map_frame, frame)
+        if map_tf is None:
+            return None
+        map_pose = tf2_geometry_msgs.do_transform_pose(pose_stamped, map_tf)
+        return map_pose
+
+    def get_robot_pose_in_map(self):
+        transform = self.lookup_transform(self.map_frame, self.base_frame)
+        robot_pose = PoseStamped()
+        robot_pose.header.frame_id = self.map_frame
+        robot_pose.header.stamp = rospy.Time.now()
+        robot_pose.pose.position.x = transform.translation.x
+        robot_pose.pose.position.y = transform.translation.y
+        robot_pose.pose.position.z = transform.translation.z
+        robot_pose.pose.orientation.w = transform.rotation.w
+        robot_pose.pose.orientation.x = transform.rotation.x
+        robot_pose.pose.orientation.y = transform.rotation.y
+        robot_pose.pose.orientation.z = transform.rotation.z
+        return robot_pose
+
+    def get_path(self, pose_stamped):
+        pose_map = self.get_pose_in_map(pose_stamped)
+        if pose_map is None:
+            return None
+        robot_pose = self.get_robot_pose_in_map()
+        if robot_pose is None:
+            return None
+        path = Path()
+        path.header.frame_id = self.map_frame
+        path.header.stamp = rospy.Time.now()
+        path.poses.append(robot_pose)
+        path.poses.append(pose_map)
+        return path
 
     def run(self):
-        # Execute SMACH plan
-        smach_thread = threading.Thread(target=self.sm.execute)
-        smach_thread.start()
+        while not rospy.is_shutdown():
+            rospy.Duration(0.5).sleep()
+            if not self.should_follow:
+                continue
+            
+            goal_pose = self.get_nearest_object()
+            if goal_pose is None:
+                continue
+            path = self.get_path()
+            if path is None:
+                continue
+            goal = ExePathGoal()
+            goal.path = path
+            goal.dist_tolerance = 0.25  # TODO set based on object size
+            goal.angle_tolerance = 0.25  # TODO set based on parameters
 
-        rospy.spin()
+            self.exe_path_action.cancel_goal()
+            self.exe_path_action.send_goal(goal, feedback_cb=self.exe_path_feedback, done_cb=self.exe_path_done)
 
-        # Request the container to preempt
-        self.sm.request_preempt()
-
-        # Block until everything is preempted 
-        smach_thread.join()
-
-
-class StopMotorsState(smach.State):
-    def __init__(self):
-        super(StopMotorsState, self).__init__(
-            outcomes=["finished"],
-        )
-        self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
-    
-    def execute(self, userdata):
-        self.stop_motors()
-        rospy.loginfo("Stopping motors")
-        return "finished"
-
-    def stop_motors(self):
-        twist = Twist()
-        twist.linear.x = 0.0
-        twist.linear.y = 0.0
-        twist.angular.z = 0.0
-        self.cmd_vel_pub.publish(twist)
 
 
 if __name__ == "__main__":
-    node = Tj2MoveBase()
+    node = FollowObject()
     try:
         node.run()
     except rospy.ROSInterruptException:

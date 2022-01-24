@@ -86,7 +86,7 @@ class Tj2MoveBase:
             smach.StateMachine.add(
                 'RECOVERY',
                 smach_ros.SimpleActionState(
-                    'move_base_flex/recovery',
+                    '/move_base_flex/recovery',
                     RecoveryAction,
                     goal_cb=self.recovery_path_goal_cb,
                     input_keys=["error", "clear_costmap_flag"],
