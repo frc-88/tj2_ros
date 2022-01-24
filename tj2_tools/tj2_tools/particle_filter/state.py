@@ -86,25 +86,48 @@ class FilterState(State):
         ros_pose.orientation = self.get_theta_as_quat()
         return ros_pose
 
-    def relative_to(self, other):
+    def relative_to(self, other, rotation_then_translation=True):
         if not isinstance(other, self.__class__):
             raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
         new_self = self.__class__.from_state(other)
 
         rot_mat = Rotation.from_euler("z", other.theta).as_matrix()
-        point = np.array([self.x, self.y, self.z])
-        tf_point = np.dot(rot_mat, point)
-        new_self.x = tf_point[0] + other.x
-        new_self.y = tf_point[1] + other.y
-        new_self.z = tf_point[2] + other.z
+        if rotation_then_translation:
+            point = np.array([self.x, self.y, self.z])
+            tf_point = np.dot(rot_mat, point)
+            new_self.x = tf_point[0] + other.x
+            new_self.y = tf_point[1] + other.y
+            new_self.z = tf_point[2] + other.z
+        else:
+            point = np.array([
+                self.x + other.x,
+                self.y + other.y,
+                self.z + other.z
+            ])
+            tf_point = np.dot(rot_mat, point)
+            new_self.x = tf_point[0]
+            new_self.y = tf_point[1]
+            new_self.z = tf_point[2]
 
-        velocity = np.array([self.vx, self.vy, self.vz])
-        tf_vel = np.dot(rot_mat, velocity)
-        new_self.vx = tf_vel[0] + other.vx
-        new_self.vy = tf_vel[1] + other.vy
-        new_self.vz = tf_vel[2] + other.vz
+        if rotation_then_translation:
+            velocity = np.array([self.vx, self.vy, self.vz])
+            tf_vel = np.dot(rot_mat, velocity)
+            new_self.vx = tf_vel[0] + other.vx
+            new_self.vy = tf_vel[1] + other.vy
+            new_self.vz = tf_vel[2] + other.vz
+        else:
+            velocity = np.array([
+                self.vx + other.vx,
+                self.vy + other.vy,
+                self.vz + other.vz
+            ])
+            tf_vel = np.dot(rot_mat, velocity)
+            new_self.vx = tf_vel[0]
+            new_self.vy = tf_vel[1]
+            new_self.vz = tf_vel[2]
 
         new_self.theta = self.theta + other.theta
+        new_self.vt = self.vt + other.vt
 
         return new_self
 
@@ -117,7 +140,7 @@ class FilterState(State):
 
     def __pos__(self):
         return self
-    
+
     def __neg__(self):
         new_state = self.from_state(self)
         new_state.x = -new_state.x
@@ -141,7 +164,8 @@ class FilterState(State):
         state.theta = self.theta + other.theta
         state.vx = self.vx + other.vx
         state.vy = self.vy + other.vy
-        state.vz = self.vy + other.vz
+        state.vz = self.vz + other.vz
+        state.vt = self.vt + other.vt
         return state
 
     def __sub__(self, other):
@@ -155,7 +179,8 @@ class FilterState(State):
         state.theta = self.theta - other.theta
         state.vx = self.vx - other.vx
         state.vy = self.vy - other.vy
-        state.vz = self.vy - other.vz
+        state.vz = self.vz - other.vz
+        state.vt = self.vt - other.vt
         return state
 
     def __mul__(self, other):
@@ -167,7 +192,8 @@ class FilterState(State):
             state.theta = self.theta * other.theta
             state.vx = self.vx * other.vx
             state.vy = self.vy * other.vy
-            state.vz = self.vy * other.vz
+            state.vz = self.vz * other.vz
+            state.vt = self.vt * other.vt
         elif isinstance(other, int) or isinstance(other, float):
             state.x = self.x * other
             state.y = self.y * other
@@ -176,6 +202,7 @@ class FilterState(State):
             state.vx = self.vx * other
             state.vy = self.vy * other
             state.vz = self.vz * other
+            state.vt = self.vt * other
         else:
             raise ValueError("Can't multiply %s and %s" % (self.__class__, other.__class__))
         return state
@@ -189,7 +216,8 @@ class FilterState(State):
             state.theta = self.theta / other.theta
             state.vx = self.vx / other.vx
             state.vy = self.vy / other.vy
-            state.vz = self.vy / other.vz
+            state.vz = self.vz / other.vz
+            state.vt = self.vt / other.vt
         elif isinstance(other, int) or isinstance(other, float):
             state.x = self.x / other
             state.y = self.y / other
@@ -197,13 +225,14 @@ class FilterState(State):
             state.theta = self.theta / other
             state.vx = self.vx / other
             state.vy = self.vy / other
-            state.vz = self.vy / other
+            state.vz = self.vz / other
+            state.vt = self.vt / other
         else:
             raise ValueError("Can't divide %s and %s" % (self.__class__, other.__class__))
         return state
 
     def __abs__(self):
-        other = self.__class__()
+        other = self.from_state(self)
         other.x = abs(other.x)
         other.y = abs(other.y)
         other.z = abs(other.z)
@@ -211,6 +240,7 @@ class FilterState(State):
         other.vx = abs(other.vx)
         other.vy = abs(other.vy)
         other.vz = abs(other.vz)
+        other.vt = abs(other.vt)
         return other
 
     def __lt__(self, other):
@@ -222,7 +252,8 @@ class FilterState(State):
                     self.theta < other.theta and
                     self.vx < other.vx and
                     self.vy < other.vy and
-                    self.vz < other.vz
+                    self.vz < other.vz and
+                    self.vt < other.vt
             )
         elif isinstance(other, int) or isinstance(other, float):
             return (
@@ -232,9 +263,9 @@ class FilterState(State):
                     self.theta < other and
                     self.vx < other and
                     self.vy < other and
-                    self.vz < other
+                    self.vz < other and
+                    self.vt < other
             )
-
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -245,7 +276,8 @@ class FilterState(State):
                     self.theta == other.theta and
                     self.vx == other.vx and
                     self.vy == other.vy and
-                    self.vz == other.vz
+                    self.vz == other.vz and
+                    self.vt == other.vt
             )
         elif isinstance(other, int) or isinstance(other, float):
             return (
@@ -255,7 +287,8 @@ class FilterState(State):
                     self.theta == other and
                     self.vx == other and
                     self.vy == other and
-                    self.vz == other
+                    self.vz == other and
+                    self.vt == other
             )
 
 

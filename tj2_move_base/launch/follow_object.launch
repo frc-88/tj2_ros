@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2" >
+        <node name="tj2_follow_object" pkg="tj2_move_base" type="follow_object.py" output="screen">
+            <param name="gameobjects_ns" value="/tj2/gameobject"/>
+        </node>
+    </group>
+
+</launch>

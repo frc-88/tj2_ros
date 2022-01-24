@@ -111,7 +111,7 @@ class TJ2DebugJoystick:
         self.limelight_led_pub = rospy.Publisher("/limelight/led_mode", Bool, queue_size=5)
         self.debug_cmd_pub = rospy.Publisher("debug_cmd", Int32, queue_size=5)
         self.move_base_simple_pub = rospy.Publisher("/move_base_simple/waypoints", PoseArray, queue_size=5)
-        self.follow_trigger_pub = rospy.Subscriber("/tj2/follow_trigger", Bool, queue_size=5)
+        self.follow_trigger_pub = rospy.Publisher("/tj2/follow_trigger", Bool, queue_size=5)
 
         # subscription topics
         self.joy_sub = rospy.Subscriber(self.joystick_topic, Joy, self.joystick_msg_callback, queue_size=5)
