@@ -4,6 +4,8 @@ import math
 
 import rospy
 import rostopic
+import rosgraph
+import actionlib
 
 import tf2_ros
 import tf_conversions
@@ -25,16 +27,14 @@ from tj2_tools.particle_filter import FilterSerial
 
 
 def get_topics(ns: str):
-    if len(ns):
-        return []
-    if ns[0] != "/":
+    if len(ns) > 0 and ns[0] != "/":
         ns = "/" + ns
+    master = rosgraph.Master('/rostopic')
     topics = []
-    for topic_info in rostopic.get_topic_list():
-        topic = topic_info[0][0]
-        if topic.startswith(ns):
-            topics.append(topic)
-    return topics
+    pubs, subs = rostopic.get_topic_list(master=master)
+    topics = [x[0] for x in subs]
+    topics.extend([x[0] for x in pubs])
+    return sorted(list(set(topics)))
 
 
 class FollowObject:
@@ -66,6 +66,7 @@ class FollowObject:
                 serial = FilterSerial(label, index)
 
                 subscriber = rospy.Subscriber(gameobjects_topic, PoseStamped, lambda x: self.gameobject_callback(x, serial=serial), queue_size=10)
+                rospy.loginfo("%s -> %s" % (serial, gameobjects_topic))
                 self.future_obj_subs[serial] = subscriber
 
         self.trigger_sub = rospy.Subscriber("follow_trigger", Bool, self.follow_trigger_callback, queue_size=25)
@@ -80,14 +81,14 @@ class FollowObject:
     def follow_trigger_callback(self, msg):
         self.should_follow_timeout = rospy.Time.now()
         if msg.data != self.should_follow:
-            rospy.loginfo(("Disabling" if msg.data else "Enabling") + " follow object")
+            rospy.loginfo(("Enabling" if msg.data else "Disabling") + " follow object")
         self.should_follow = msg.data
 
     def gameobject_callback(self, msg, serial):
         self.current_objects[serial] = msg
 
     def exe_path_feedback(self, feedback):
-        pass
+        print(feedback)
 
     def exe_path_done(self, goal_status, result):
         print("exe path finished:", result)
@@ -142,13 +143,13 @@ class FollowObject:
         robot_pose = PoseStamped()
         robot_pose.header.frame_id = self.map_frame
         robot_pose.header.stamp = rospy.Time.now()
-        robot_pose.pose.position.x = transform.translation.x
-        robot_pose.pose.position.y = transform.translation.y
-        robot_pose.pose.position.z = transform.translation.z
-        robot_pose.pose.orientation.w = transform.rotation.w
-        robot_pose.pose.orientation.x = transform.rotation.x
-        robot_pose.pose.orientation.y = transform.rotation.y
-        robot_pose.pose.orientation.z = transform.rotation.z
+        robot_pose.pose.position.x = transform.transform.translation.x
+        robot_pose.pose.position.y = transform.transform.translation.y
+        robot_pose.pose.position.z = transform.transform.translation.z
+        robot_pose.pose.orientation.w = transform.transform.rotation.w
+        robot_pose.pose.orientation.x = transform.transform.rotation.x
+        robot_pose.pose.orientation.y = transform.transform.rotation.y
+        robot_pose.pose.orientation.z = transform.transform.rotation.z
         return robot_pose
 
     def get_path(self, pose_stamped):
@@ -166,23 +167,27 @@ class FollowObject:
         return path
 
     def run(self):
+        delay = rospy.Duration(0.5)
         while not rospy.is_shutdown():
-            rospy.Duration(0.5).sleep()
+            rospy.sleep(delay)
             if not self.should_follow:
                 continue
             
             goal_pose = self.get_nearest_object()
             if goal_pose is None:
                 continue
-            path = self.get_path()
+            rospy.loginfo("Nearest object pose: %s" % str(goal_pose))
+            path = self.get_path(goal_pose)
             if path is None:
                 continue
+            rospy.loginfo("Path to object: %s" % str(path))
             goal = ExePathGoal()
             goal.path = path
             goal.dist_tolerance = 0.25  # TODO set based on object size
             goal.angle_tolerance = 0.25  # TODO set based on parameters
 
             self.exe_path_action.cancel_goal()
+            rospy.loginfo("Sending new goal")
             self.exe_path_action.send_goal(goal, feedback_cb=self.exe_path_feedback, done_cb=self.exe_path_done)
 
 

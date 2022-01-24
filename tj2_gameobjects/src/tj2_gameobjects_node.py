@@ -232,7 +232,7 @@ class Tj2GameobjectsNode:
             static_frame_state = pf_state.relative_to(input_u.odom_state)
 
             future_state_odom = predictor.get_robot_intersection(input_u.odom_state, static_frame_state)
-            future_state_base_link = input_u.odom_state.relative_to(-future_state_odom)
+            future_state_base_link = future_state_odom.relative_to(-input_u.odom_state, rotation_then_translation=False)
 
             future_pose = future_state_base_link.to_ros_pose()
             msg = PoseStamped()
