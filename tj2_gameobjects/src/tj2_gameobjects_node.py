@@ -42,7 +42,6 @@ class Tj2GameobjectsNode:
         self.labels = rospy.get_param("~labels", None)
         self.bounds = rospy.get_param("~bounds", None)
         self.filter_frame = rospy.get_param("~filter_frame", "base_link")
-        self.odom_frame = rospy.get_param("~odom_frame", "odom")
 
         assert self.u_std is not None
         assert self.initial_range is not None
@@ -73,8 +72,8 @@ class Tj2GameobjectsNode:
                 t_step=0.001,
                 ground_plane=self.bounds[2][0]
             )
-            self.pose_publishers[serial] = rospy.Publisher("estimate_%s_%s" % (serial.label, serial.index), PoseStamped, queue_size=5)
-            self.future_publishers[serial] = rospy.Publisher("future_%s_%s" % (serial.label, serial.index), PoseStamped, queue_size=5)
+            self.pose_publishers[serial] = rospy.Publisher("gameobject/estimate_%s_%s" % (serial.label, serial.index), PoseStamped, queue_size=5)
+            self.future_publishers[serial] = rospy.Publisher("gameobject/future_%s_%s" % (serial.label, serial.index), PoseStamped, queue_size=5)
         self.detections_sub = rospy.Subscriber("detections", Detection2DArray, self.detections_callback, queue_size=25)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback, queue_size=25)
 
@@ -232,11 +231,13 @@ class Tj2GameobjectsNode:
             pf_state = pf.get_state()
             static_frame_state = pf_state.relative_to(input_u.odom_state)
 
-            future_state = predictor.get_robot_intersection(input_u.odom_state, static_frame_state)
-            future_pose = future_state.to_ros_pose()
+            future_state_odom = predictor.get_robot_intersection(input_u.odom_state, static_frame_state)
+            future_state_base_link = input_u.odom_state.relative_to(-future_state_odom)
+
+            future_pose = future_state_base_link.to_ros_pose()
             msg = PoseStamped()
             msg.header.stamp = rospy.Time.now()
-            msg.header.frame_id = self.odom_frame
+            msg.header.frame_id = self.filter_frame
             msg.pose = future_pose
             self.future_publishers[serial].publish(msg)
 

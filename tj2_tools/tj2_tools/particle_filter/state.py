@@ -104,14 +104,31 @@ class FilterState(State):
         new_self.vy = tf_vel[1] + other.vy
         new_self.vz = tf_vel[2] + other.vz
 
-        new_self.theta = other.theta
+        new_self.theta = self.theta + other.theta
 
         return new_self
 
     def __str__(self):
-        return f"<{self.type}>(" \
+        return f"{self.__class__.__name__}<{self.type}>(" \
                f"x={self.x:0.4f}, y={self.y:0.4f}, z={self.z:0.4f}, t={self.theta:0.4f}, " \
                f"vx={self.vx:0.4f}, vy={self.vy:0.4f}, vz={self.vz:0.4f}, vt={self.vt:0.4f}) @ {self.stamp}"
+
+    __repr__ = __str__
+
+    def __pos__(self):
+        return self
+    
+    def __neg__(self):
+        new_state = self.from_state(self)
+        new_state.x = -new_state.x
+        new_state.y = -new_state.y
+        new_state.z = -new_state.z
+        new_state.theta = -new_state.theta
+        new_state.vx = -new_state.vx
+        new_state.vy = -new_state.vy
+        new_state.vz = -new_state.vz
+        new_state.vt = -new_state.vt
+        return new_state
 
     def __add__(self, other):
         if not isinstance(other, self.__class__):
@@ -197,26 +214,49 @@ class FilterState(State):
         return other
 
     def __lt__(self, other):
-        return (
-                self.x < other.x and
-                self.y < other.y and
-                self.z < other.z and
-                self.theta < other.theta and
-                self.vx < other.vx and
-                self.vy < other.vy and
-                self.vz < other.vz
-        )
+        if isinstance(other, self.__class__):
+            return (
+                    self.x < other.x and
+                    self.y < other.y and
+                    self.z < other.z and
+                    self.theta < other.theta and
+                    self.vx < other.vx and
+                    self.vy < other.vy and
+                    self.vz < other.vz
+            )
+        elif isinstance(other, int) or isinstance(other, float):
+            return (
+                    self.x < other and
+                    self.y < other and
+                    self.z < other and
+                    self.theta < other and
+                    self.vx < other and
+                    self.vy < other and
+                    self.vz < other
+            )
+
 
     def __eq__(self, other):
-        return (
-                self.x == other.x and
-                self.y == other.y and
-                self.z == other.z and
-                self.theta == other.theta and
-                self.vx == other.vx and
-                self.vy == other.vy and
-                self.vz == other.vz
-        )
+        if isinstance(other, self.__class__):
+            return (
+                    self.x == other.x and
+                    self.y == other.y and
+                    self.z == other.z and
+                    self.theta == other.theta and
+                    self.vx == other.vx and
+                    self.vy == other.vy and
+                    self.vz == other.vz
+            )
+        elif isinstance(other, int) or isinstance(other, float):
+            return (
+                    self.x == other and
+                    self.y == other and
+                    self.z == other and
+                    self.theta == other and
+                    self.vx == other and
+                    self.vy == other and
+                    self.vz == other
+            )
 
 
 class DeltaTimer:

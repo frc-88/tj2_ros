@@ -97,14 +97,6 @@ class TJ2DebugJoystick:
 
         self.joystick = Joystick(self.button_mapping, self.axis_mapping)
 
-        self.move_base_goals = PoseArray()
-        self.should_send_goals = False
-
-        self.move_base = actionlib.SimpleActionClient("/move_base", MoveBaseAction)
-        # rospy.loginfo("Connecting to move_base...")
-        # self.move_base.wait_for_server()
-        # rospy.loginfo("move_base connected")
-
         # services
         self.set_robot_mode = rospy.ServiceProxy("robot_mode", SetRobotMode)
         self.last_set_mode_time = rospy.Time.now()
@@ -119,53 +111,13 @@ class TJ2DebugJoystick:
         self.limelight_led_pub = rospy.Publisher("/limelight/led_mode", Bool, queue_size=5)
         self.debug_cmd_pub = rospy.Publisher("debug_cmd", Int32, queue_size=5)
         self.move_base_simple_pub = rospy.Publisher("/move_base_simple/waypoints", PoseArray, queue_size=5)
+        self.follow_trigger_pub = rospy.Subscriber("/tj2/follow_trigger", Bool, queue_size=5)
 
         # subscription topics
         self.joy_sub = rospy.Subscriber(self.joystick_topic, Joy, self.joystick_msg_callback, queue_size=5)
         self.color_image_sub = rospy.Subscriber("/camera/color/image_raw", Image, self.image_callback, queue_size=1)
-        self.detections_sub = rospy.Subscriber("/tj2/tj2_2020/detections", Detection2DArray, self.detections_callback, queue_size=5)
-
-        rospy.Timer(rospy.Duration(0.25), self.send_goals_timer)
 
         rospy.loginfo("Debug joystick is ready!")
-
-    def detections_callback(self, msg):
-        self.move_base_goals.poses = []
-        self.move_base_goals.header.frame_id = self.global_frame
-        
-        transform = self.lookup_transform(self.global_frame, msg.detections[0].header.frame_id)
-        if transform is None:
-            return
-        
-        for detection in msg.detections:
-            object_pose_stamped = PoseStamped()
-            object_pose_stamped.header = detection.header
-            object_pose_stamped.pose = detection.results[0].pose.pose
-
-            yaw = euler_from_quaternion([
-                object_pose_stamped.pose.orientation.x,
-                object_pose_stamped.pose.orientation.y,
-                object_pose_stamped.pose.orientation.z,
-                object_pose_stamped.pose.orientation.w,
-            ])[2]
-
-            quat = quaternion_from_euler(0.0, 0.0, yaw)
-            object_pose_stamped.pose.orientation.x = quat[0]
-            object_pose_stamped.pose.orientation.y = quat[1]
-            object_pose_stamped.pose.orientation.z = quat[2]
-            object_pose_stamped.pose.orientation.w = quat[3]
-
-            move_base_goal_stamped = tf2_geometry_msgs.do_transform_pose(object_pose_stamped, transform)
-
-            self.move_base_goals.poses.append(move_base_goal_stamped.pose)
-
-    def send_goals_timer(self, event):
-        if not self.should_send_goals:
-            return
-        if len(self.move_base_goals.poses) == 0:
-            rospy.logwarn_throttle(1.0, "No goals to send!")
-            return
-        self.move_base_simple_pub.publish(self.move_base_goals)
 
     def image_callback(self, msg):
         if not self.take_picture:
@@ -191,25 +143,12 @@ class TJ2DebugJoystick:
                 path = None
                 count += 1
         return path
-
-    def lookup_transform(self, parent_link, child_link, time_window=None, timeout=None):
-        """
-        Call tf_buffer.lookup_transform. Return None if the look up fails
-        """
-        if time_window is None:
-            time_window = rospy.Time(0)
-        else:
-            time_window = rospy.Time.now() - time_window
-
-        if timeout is None:
-            timeout = rospy.Duration(1.0)
-
-        try:
-            return self.tf_buffer.lookup_transform(parent_link, child_link, time_window, timeout)
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            rospy.logwarn("Failed to look up %s to %s. %s" % (parent_link, child_link, e))
-            return None
     
+    def set_follow_trigger(self, state: bool):
+        msg = Bool()
+        msg.data = state
+        self.follow_trigger_pub.publish(msg)
+
     def joystick_msg_callback(self, msg):
         """
         If the joystick disconnects, this callback will stop being called.
@@ -275,18 +214,12 @@ class TJ2DebugJoystick:
             else: # brake trigger is released
                 self.take_picture = False
         
-        if self.joystick.did_axis_change(self.follow_object_axis):
-            axis_value = self.joystick.get_axis(self.follow_object_axis)
-            if axis_value < 0.5:  # brake trigger is pressed
-                # send detection goals to move_base
-                self.should_send_goals = True
-            elif axis_value > -0.5: # brake trigger is released
-                # cancel move_base goal
-                if self.should_send_goals:
-                    self.should_send_goals = False
-                    self.move_base.cancel_all_goals()
-                    rospy.loginfo("Cancelling move_base goal")
-
+        # if self.joystick.did_axis_change(self.follow_object_axis):
+        axis_value = self.joystick.get_axis(self.follow_object_axis)
+        if axis_value < 0.0:  # brake trigger is pressed
+            self.set_follow_trigger(True)
+        else: # brake trigger is released
+            self.set_follow_trigger(False)
 
     def set_mode(self, mode):
         now = rospy.Time.now()

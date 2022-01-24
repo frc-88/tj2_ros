@@ -20,8 +20,8 @@ def main():
     # path = "./data/detections_2022-01-14-12-39-34.json"  # short run drop
     # path = "./data/detections_2022-01-14-13-42-43.json"  # circling in YZ. Drop at the end
     # path = "./data/detections_2022-01-14-14-05-17.json"  # small motions from robot and target
-    # path = "./data/detections_2022-01-14-18-22-38.json"  # rapid rotations in robot theta
-    path = "./data/detections_2022-01-16-23-24-58.json"  # roll
+    path = "./data/detections_2022-01-14-18-22-38.json"  # rapid rotations in robot theta
+    # path = "./data/detections_2022-01-16-23-24-58.json"  # roll
     # path = "./data/detections_2022-01-16-23-24-58.json"  # bounce
 
     states = state_loader.read_pkl(path, repickle)

@@ -16,8 +16,11 @@
         <rosparam file="$(find tj2_move_base)/config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
         <rosparam file="$(find tj2_move_base)/config/costmap_global_params.yaml" command="load" ns="global_costmap"/>
     </node>
-    <node name="tj2_move_base_sm" pkg="tj2_move_base" type="tj2_move_base_node.py" output="screen">
-        <remap from="cmd_vel" to="/tj2/cmd_vel"/>
-    </node>
+    <group ns="tj2" >
+        <node name="tj2_move_base_sm" pkg="tj2_move_base" type="tj2_move_base_node.py" output="screen">
+        </node>
+        <node name="tj2_follow_object" pkg="tj2_move_base" type="follow_object.py" output="screen">
+        </node>
+    </group>
 
 </launch>
