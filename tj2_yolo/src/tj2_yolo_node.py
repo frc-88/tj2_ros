@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import rospy
 
+import cv2
 import numpy as np
 
 import torch
@@ -17,6 +18,7 @@ from vision_msgs.msg import Detection2D
 from vision_msgs.msg import ObjectHypothesisWithPose
 
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -67,6 +69,7 @@ class Tj2Yolo:
         self.bridge = CvBridge()
         self.color_image_sub = rospy.Subscriber("image_raw", Image, self.image_callback, queue_size=1)
         self.overlay_pub = rospy.Publisher("overlay", Image, queue_size=1)
+        self.overlay_compressed_pub = rospy.Publisher("overlay/compressed", CompressedImage, queue_size=1)
 
         rospy.loginfo("%s is ready" % self.name)
 
@@ -79,6 +82,12 @@ class Tj2Yolo:
         detection_arr_msg, overlay_image = self.detect(cv2_img)
         if self.publish_overlay and overlay_image is not None:
             try:
+                compressed_msg = CompressedImage()
+                compressed_msg.header.stamp = rospy.Time.now()
+                compressed_msg.format = "jpeg"
+                compressed_msg.data = np.array(cv2.imencode('.jpg', overlay_image)[1]).tostring()
+                self.overlay_compressed_pub.publish(compressed_msg)
+                
                 overlay_msg = self.bridge.cv2_to_imgmsg(overlay_image, encoding="bgr8")
                 self.overlay_pub.publish(overlay_msg)
             except TypeError as e:
