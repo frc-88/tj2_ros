@@ -19,4 +19,4 @@ rplidar:
 limelight:
   package: "tj2_limelight"
   path: "tj2_limelight.launch"
-  on_start: true
+  on_start: false
