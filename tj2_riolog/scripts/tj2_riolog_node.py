@@ -19,7 +19,7 @@ class Tailer:
 
 
 class SSHTailer(Tailer):
-    def __init__(self, host, remote_path):
+    def __init__(self, host, remote_path, max_initial_lines=300):
         super(SSHTailer, self).__init__(host, remote_path)
         self.username = "lvuser"
         self.line_terminators = "\r\n"
@@ -27,6 +27,7 @@ class SSHTailer(Tailer):
         self.client = None
         self.sftp_client = None
         self.remote_file_size = None
+        self.max_initial_lines = max_initial_lines
 
     def run(self):
         self.connect()
@@ -38,8 +39,8 @@ class SSHTailer(Tailer):
         # connect to the host
         self.client = paramiko.SSHClient()
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        # self.client.connect(self.host, username=self.username, password='', allow_agent=False, look_for_keys=False, timeout=1.0)
-        self.client.connect(self.host, username=self.username, password='')
+        self.client.connect(self.host, username=self.username, password='', allow_agent=False, look_for_keys=False, timeout=1.0)
+        # self.client.connect(self.host, username=self.username, password='')
 
         rospy.loginfo("Opening remote file %s" % self.remote_path)
         # open a connection to the remote file via SFTP
@@ -48,7 +49,8 @@ class SSHTailer(Tailer):
 
     def tail(self):
         remote_file = self.sftp_client.open(self.remote_path, 'r')
-        for line in remote_file.read().splitlines():
+        lines = remote_file.read().splitlines()
+        for line in lines[-min(len(lines), self.max_initial_lines):]:
             yield line.decode()
 
         while not rospy.is_shutdown():
