@@ -26,18 +26,25 @@ class TJ2CameraLauncher:
         self.default_launches_dir = self.package_dir + "/launch"
 
         self.on_start = rospy.get_param("~on_start", False)
+        self.camera_ns = rospy.get_param("~camera_ns", "/camera")
         self.service_ns_name = rospy.get_param("~service_ns_name", "/tj2")
         self.camera_launch_path = rospy.get_param("~camera_launch", self.default_launches_dir + "/tj2_camera.launch")
         self.record_launch_path = rospy.get_param("~record_launch", self.default_launches_dir + "/record_camera.launch")
+        self.set_params_launch_path = rospy.get_param("~set_params_launch", self.default_launches_dir + "/set_parameters.launch")
         self.ring_buffer_length = rospy.get_param("~ring_buffer_length", 25)
-        self.min_rate_threshold = rospy.get_param("~min_rate_threshold", 5.0)
+        self.expected_camera_rate = rospy.get_param(self.camera_ns + "/realsense2_camera/color_fps", 30.0)
+        self.min_rate_offset = rospy.get_param("~rate_band", 5.0)
+        self.min_rate_threshold = max(0.0, self.expected_camera_rate - self.min_rate_offset)
+        self.max_rate_threshold = max(0.0, self.expected_camera_rate + self.min_rate_offset)
 
         self.camera_launcher = LaunchManager(self.camera_launch_path)
         self.record_launcher = LaunchManager(self.record_launch_path)
+        self.set_params_launcher = LaunchManager(self.set_params_launch_path)
 
         self.launchers = [
             self.camera_launcher,
             self.record_launcher,
+            self.set_params_launcher
         ]
 
         self.start_camera_srv = rospy.Service(self.service_ns_name + "/start_camera", Trigger, self.start_camera_callback)
@@ -47,13 +54,12 @@ class TJ2CameraLauncher:
         self.is_camera_running_srv = rospy.Service(self.service_ns_name + "/is_camera_running", Trigger, self.is_camera_running_callback)
 
         self.camera_rate = rostopic.ROSTopicHz(15)
-        self.camera_topic = "/camera/color/image_raw"
+        self.camera_topic = self.camera_ns + "/color/image_raw"
         rospy.Subscriber(self.camera_topic, rospy.AnyMsg, self.camera_rate.callback_hz, callback_args=self.camera_topic, queue_size=1)
 
         rospy.loginfo("%s init complete" % self.node_name)
 
     def get_publish_rate(self):
-        rospy.sleep(1.0)
         result = self.camera_rate.get_hz(self.camera_topic)
         if result is None:
             return 0.0
@@ -61,16 +67,17 @@ class TJ2CameraLauncher:
             return result[0]
 
     def start_camera_callback(self, req):
-        started = self.camera_launcher.start()
+        started = self.start_camera()
         return TriggerResponse(True, "Camera started" if started else "Camera is already running!")
     
     def is_camera_running_callback(self, req):
         if self.camera_launcher.is_running():
+            rospy.sleep(1.0)
             rate = self.get_publish_rate()
-            if rate > self.min_rate_threshold:
+            if self.min_rate_threshold <= rate <= self.max_rate_threshold:
                 return TriggerResponse(True, "Camera is running and publishing at %0.2f Hz" % rate)
             else:
-                return TriggerResponse(False, "Camera is running but not publishing above the threshold: %0.2f" % rate)
+                return TriggerResponse(False, "Camera is running but not publishing within the threshold: %0.2f" % rate)
         else:
             return TriggerResponse(False, "Camera is not started")
 
@@ -93,13 +100,26 @@ class TJ2CameraLauncher:
         stopped = self.record_launcher.stop()
         return TriggerResponse(True, "Recording stopped" if stopped else "Recording is already stopped!")
     
+    def start_camera(self):
+        started = self.camera_launcher.start()
+        rospy.Timer(rospy.Duration(5.0), self.start_set_params, oneshot=True)
+        return started
+
+    def start_set_params(self):
+        rospy.loginfo("Setting camera dynamic reconfigure parameters")
+        self.set_params_launcher.start()
+
     def run(self):
         if self.on_start:
-            started = self.camera_launcher.start()
+            started = self.start_camera()
             if not started:
                 rospy.logerr("Camera failed to start!")
-        rospy.spin()
-        
+        while rospy.is_shutdown():
+            rospy.sleep(0.5)
+            rate = self.get_publish_rate()
+            if not (self.min_rate_threshold <= rate <= self.max_rate_threshold):
+                rospy.logwarn_throttle(2.0, "Camera isn't publishing at the expected rate: %0.1f" % rate)
+
     def stop_all(self):
         for launcher in self.launchers:
             launcher.stop()
