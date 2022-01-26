@@ -75,7 +75,7 @@ class BouncePredictor:
         z1, vz1 = get_bounces(z0, vz0, self.rho, self.tau, self.g, t_window, self.t_step)
         z1 += self.ground_plane
 
-        future_state = FilterState(x1, y1, z1, 0.0, vx0, vy0, vz0, 0.0)
+        future_state = FilterState(x1, y1, z1, state.theta, vx0, vy0, vz0, state.vt)
         future_state.stamp = state.stamp + t_window
         return future_state
 

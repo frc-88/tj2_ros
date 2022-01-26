@@ -104,7 +104,7 @@ def main():
     # odom.theta = math.pi / 2 + 0.2
 
     state_odom = state.relative_to(odom)
-    state_back = state_odom.relative_to(-odom, rotation_then_translation=False)
+    state_back = state_odom.relative_to_reverse(odom)
 
     print("original:", state)
     print("odom:", odom)

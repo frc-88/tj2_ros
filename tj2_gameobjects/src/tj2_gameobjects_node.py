@@ -8,6 +8,7 @@ from dynamic_reconfigure.server import Server
 import numpy as np
 
 from vision_msgs.msg import Detection2DArray
+from vision_msgs.msg import Detection3DArray
 
 from nav_msgs.msg import Odometry
 
@@ -42,6 +43,7 @@ class Tj2GameobjectsNode:
         self.labels = rospy.get_param("~labels", None)
         self.bounds = rospy.get_param("~bounds", None)
         self.filter_frame = rospy.get_param("~filter_frame", "base_link")
+        self.use_3d_detections = rospy.get_param("~use_3d_detections", True)
 
         assert self.u_std is not None
         assert self.initial_range is not None
@@ -74,7 +76,8 @@ class Tj2GameobjectsNode:
             )
             self.pose_publishers[serial] = rospy.Publisher("gameobject/estimate_%s_%s" % (serial.label, serial.index), PoseStamped, queue_size=5)
             self.future_publishers[serial] = rospy.Publisher("gameobject/future_%s_%s" % (serial.label, serial.index), PoseStamped, queue_size=5)
-        self.detections_sub = rospy.Subscriber("detections", Detection2DArray, self.detections_callback, queue_size=25)
+        detection_type = Detection3DArray if self.use_3d_detections else Detection2DArray
+        self.detections_sub = rospy.Subscriber("detections", detection_type, self.detections_callback, queue_size=25)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback, queue_size=25)
 
         self.particles_pub = rospy.Publisher("pf_particles", PoseArray, queue_size=5)
@@ -174,7 +177,12 @@ class Tj2GameobjectsNode:
             return default
 
     def to_label(self, obj_id):
-        return self.labels[obj_id - 1]  # BACKGROUND = 0, but we ignore it here
+        if self.use_3d_detections:
+            class_index = obj_id & 0xffff
+            # class_count = obj_id >> 16
+            return self.labels[class_index]
+        else:
+            return self.labels[obj_id - 1]  # BACKGROUND = 0, but we ignore it here
         
     def detections_callback(self, msg):
         measurements = {}
@@ -203,7 +211,7 @@ class Tj2GameobjectsNode:
             pf = self.pfs[serial]
 
             meas_z = np.array([state.x, state.y, state.z, state.vx, state.vy, state.vz])
-            if not pf.is_initialized():  #  or pf.is_stale():
+            if not pf.is_initialized() or pf.is_stale():
                 rospy.loginfo("initializing with %s" % state)
                 pf.create_uniform_particles(meas_z, self.initial_range)
             
@@ -232,7 +240,7 @@ class Tj2GameobjectsNode:
             static_frame_state = pf_state.relative_to(input_u.odom_state)
 
             future_state_odom = predictor.get_robot_intersection(input_u.odom_state, static_frame_state)
-            future_state_base_link = future_state_odom.relative_to(-input_u.odom_state, rotation_then_translation=False)
+            future_state_base_link = future_state_odom.relative_to_reverse(input_u.odom_state)
 
             future_pose = future_state_base_link.to_ros_pose()
             msg = PoseStamped()

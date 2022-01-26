@@ -4,6 +4,7 @@ import numpy as np
 from geometry_msgs.msg import Pose
 from nav_msgs.msg import Odometry
 from vision_msgs.msg import Detection2D
+from vision_msgs.msg import Detection3D
 from ..robot_state import State
 from scipy.spatial.transform import Rotation
 
@@ -61,7 +62,7 @@ class FilterState(State):
 
     @classmethod
     def from_detect(cls, msg):
-        if not isinstance(msg, Detection2D):
+        if not (isinstance(msg, Detection2D) or isinstance(msg, Detection3D)):
             raise ValueError("%s is not of type %s" % (repr(msg), Detection2D))
         self = cls.from_ros_pose(msg.results[0].pose.pose)
         self.type = msg.results[0].id
@@ -86,48 +87,60 @@ class FilterState(State):
         ros_pose.orientation = self.get_theta_as_quat()
         return ros_pose
 
-    def relative_to(self, other, rotation_then_translation=True):
+    def relative_to(self, other):
         if not isinstance(other, self.__class__):
             raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
         new_self = self.__class__.from_state(other)
 
         rot_mat = Rotation.from_euler("z", other.theta).as_matrix()
-        if rotation_then_translation:
-            point = np.array([self.x, self.y, self.z])
-            tf_point = np.dot(rot_mat, point)
-            new_self.x = tf_point[0] + other.x
-            new_self.y = tf_point[1] + other.y
-            new_self.z = tf_point[2] + other.z
-        else:
-            point = np.array([
-                self.x + other.x,
-                self.y + other.y,
-                self.z + other.z
-            ])
-            tf_point = np.dot(rot_mat, point)
-            new_self.x = tf_point[0]
-            new_self.y = tf_point[1]
-            new_self.z = tf_point[2]
-
-        if rotation_then_translation:
-            velocity = np.array([self.vx, self.vy, self.vz])
-            tf_vel = np.dot(rot_mat, velocity)
-            new_self.vx = tf_vel[0] + other.vx
-            new_self.vy = tf_vel[1] + other.vy
-            new_self.vz = tf_vel[2] + other.vz
-        else:
-            velocity = np.array([
-                self.vx + other.vx,
-                self.vy + other.vy,
-                self.vz + other.vz
-            ])
-            tf_vel = np.dot(rot_mat, velocity)
-            new_self.vx = tf_vel[0]
-            new_self.vy = tf_vel[1]
-            new_self.vz = tf_vel[2]
+        point = np.array([self.x, self.y, self.z])
+        tf_point = np.dot(rot_mat, point)
+        new_self.x = tf_point[0] + other.x
+        new_self.y = tf_point[1] + other.y
+        new_self.z = tf_point[2] + other.z
+        
+        velocity = np.array([self.vx, self.vy, self.vz])
+        tf_vel = np.dot(rot_mat, velocity)
+        new_self.vx = tf_vel[0] + other.vx
+        new_self.vy = tf_vel[1] + other.vy
+        new_self.vz = tf_vel[2] + other.vz
 
         new_self.theta = self.theta + other.theta
         new_self.vt = self.vt + other.vt
+
+        return new_self
+
+    def relative_to_reverse(self, other):
+        if not isinstance(other, self.__class__):
+            raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
+        new_self = self.__class__.from_state(other)
+
+        other_reverse = -other
+
+        rot_mat = Rotation.from_euler("z", other_reverse.theta).as_matrix()
+        
+        point = np.array([
+            self.x + other_reverse.x,
+            self.y + other_reverse.y,
+            self.z + other_reverse.z
+        ])
+        tf_point = np.dot(rot_mat, point)
+        new_self.x = tf_point[0]
+        new_self.y = tf_point[1]
+        new_self.z = tf_point[2]
+
+        velocity = np.array([
+            self.vx + other_reverse.vx,
+            self.vy + other_reverse.vy,
+            self.vz + other_reverse.vz
+        ])
+        tf_vel = np.dot(rot_mat, velocity)
+        new_self.vx = tf_vel[0]
+        new_self.vy = tf_vel[1]
+        new_self.vz = tf_vel[2]
+
+        new_self.theta = self.theta + other_reverse.theta
+        new_self.vt = self.vt + other_reverse.vt
 
         return new_self
 
