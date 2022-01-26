@@ -31,7 +31,7 @@ class TJ2CameraLauncher:
         self.camera_launch_path = rospy.get_param("~camera_launch", self.default_launches_dir + "/tj2_camera.launch")
         self.record_launch_path = rospy.get_param("~record_launch", self.default_launches_dir + "/record_camera.launch")
         self.set_params_launch_path = rospy.get_param("~set_params_launch", self.default_launches_dir + "/set_parameters.launch")
-        self.expected_camera_rate = rospy.get_param(self.camera_ns + "/realsense2_camera/color_fps", 30.0)
+        self.expected_camera_rate = rospy.get_param("~expected_camera_rate", 15.0)
         self.min_rate_offset = rospy.get_param("~rate_band", 5.0)
         self.min_rate_threshold = max(0.0, self.expected_camera_rate - self.min_rate_offset)
         self.max_rate_threshold = max(0.0, self.expected_camera_rate + self.min_rate_offset)

@@ -2,10 +2,13 @@
 <launch>
     <group ns="tj2" >
         <node name="tj2_gameobjects" pkg="tj2_gameobjects" type="tj2_gameobjects_node.py" output="screen">
-            <rosparam file="$(find tj2_gameobjects)/config/tj2_2020.yaml" command="load"/>
-            <remap from="detections" to="tj2_2020/detections"/>
-            <remap from="pf_particles" to="tj2_2020/pf_particles"/>
-            <!-- <remap from="odom" to="/tj2/odom"/> -->
+            <rosparam file="$(find tj2_gameobjects)/config/cargo_2021.yaml" command="load"/>
+            <remap from="detections" to="cargo/detections"/>
+            <remap from="pf_particles" to="cargo/pf_particles"/>
+            <!-- <rosparam file="$(find tj2_gameobjects)/config/powercell_2020.yaml" command="load"/> -->
+            <!-- <remap from="detections" to="tj2_2020/detections"/> -->
+            <!-- <remap from="pf_particles" to="tj2_2020/pf_particles"/> -->
+            <remap from="odom" to="/tj2/odom"/>
         </node>
     </group>
 </launch>

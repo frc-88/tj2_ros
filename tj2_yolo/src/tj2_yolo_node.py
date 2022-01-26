@@ -37,6 +37,7 @@ from visualization_msgs.msg import MarkerArray
 from visualization_msgs.msg import Marker
 
 from std_msgs.msg import ColorRGBA
+from std_msgs.msg import Float64
 
 from message_filters import ApproximateTimeSynchronizer
 from message_filters import Subscriber
@@ -69,6 +70,7 @@ class Tj2Yolo:
         marker_persistance_s = rospy.get_param("~marker_persistance", 0.5)
         self.marker_persistance = rospy.Duration(marker_persistance_s)
         self.bounding_box_border_px = rospy.get_param("~bounding_box_border_px", 10)
+        self.report_loop_times = rospy.get_param("~report_loop_times", True)
 
         self.classes_filter = None
         self.half = False  # flag for whether to use half or full precision floats
@@ -136,7 +138,7 @@ class Tj2Yolo:
         self.compute_detections(msg, None)
     
     def compute_detections(self, color_msg, depth_msg):
-        # t_start = time.time()
+        t_start = time.time()
         color_image = self.get_color_cv_image(color_msg)
         if color_image is None:
             return
@@ -144,38 +146,44 @@ class Tj2Yolo:
             depth_image = self.get_depth_cv_image(depth_msg)
             if depth_image is None:
                 return
+        t_detect_start = time.time()
         detection_2d_arr_msg = self.get_detections_from_color(color_image)
+        t_detect = time.time()
         markers = MarkerArray()
         detection_3d_arr_msg = Detection3DArray()
         detection_3d_arr_msg.header = detection_2d_arr_msg.header
-        # t_detect = time.time()
 
         for detection_2d_msg in detection_2d_arr_msg.detections:
-            # t0 = time.time()
+            t0 = time.time()
             color = self.get_detection_color(color_image, detection_2d_msg)
-            # t1 = time.time()
+            t1 = time.time()
             if depth_msg is not None:
                 z_dist = self.get_depth_from_detection(depth_image, detection_2d_msg)
             else:
                 z_dist = 1.0
-            # t2 = time.time()
+            t2 = time.time()
             detection_3d_msg = self.detection_2d_to_3d(detection_2d_msg, z_dist)
-            # t3 = time.time()
+            t3 = time.time()
             if detection_3d_msg is None:
                 continue
             self.tf_detection_pose_to_robot(detection_3d_msg)
-            # t4 = time.time()
+            t4 = time.time()
             self.add_detection_to_marker_array(markers, detection_3d_msg, color)
-            # t5 = time.time()
-            # print("get_detection_color:", t1 - t0)
-            # print("get_depth_from_detection:", t2 - t1)
-            # print("detection_2d_to_3d:", t3 - t2)
-            # print("tf_detection_pose_to_robot:", t4 - t3)
-            # print("add_detection_to_marker_array:", t5 - t4)
-        
-        # t_end = time.time()
-        # print("detect:", t_detect - t_start)
-        # print("total:", t_end - t_start)
+            t5 = time.time()
+            if self.report_loop_times:
+                label, count = self.get_detection_label(detection_2d_msg)
+                print("%s-%s" % (label, count))
+                print("\tget_detection_color:", t1 - t0)
+                print("\tget_depth_from_detection:", t2 - t1)
+                print("\tdetection_2d_to_3d:", t3 - t2)
+                print("\ttf_detection_pose_to_robot:", t4 - t3)
+                print("\tadd_detection_to_marker_array:", t5 - t4)
+            detection_3d_arr_msg.detections.append(detection_3d_msg)
+
+        t_end = time.time()
+        if self.report_loop_times:
+            print("detect:", t_detect - t_detect_start)
+            print("total:", t_end - t_start)
         self.detections_pub.publish(detection_3d_arr_msg)
         self.markers_pub.publish(markers)
     
@@ -215,6 +223,20 @@ class Tj2Yolo:
         return depth
     
     def get_detection_color(self, color_image, detection_2d_msg):
+        # return self.get_color_with_mask(color_image, detection_2d_msg)
+        return self.get_color_with_center_px(color_image, detection_2d_msg)
+        # return ColorRGBA(1.0, 0.0, 0.0, 1.0)
+    
+    def get_color_with_center_px(self, color_image, detection_2d_msg):
+        center_x = int(detection_2d_msg.bbox.center.x)
+        center_y = int(detection_2d_msg.bbox.center.y)
+        color_raw = color_image[center_y, center_x]
+        b = color_raw[0] / 255.0
+        g = color_raw[1] / 255.0
+        r = color_raw[2] / 255.0
+        return ColorRGBA(r, g, b, 1.0)
+
+    def get_color_with_mask(self, color_image, detection_2d_msg):
         label, count = self.get_detection_label(detection_2d_msg)
         if label not in self.label_colors:
             self.label_colors[label] = [None, rospy.Time.now()]
@@ -228,7 +250,6 @@ class Tj2Yolo:
             self.label_colors[label][0] = color
             self.label_colors[label][1] = rospy.Time.now()
         return color
-        # return ColorRGBA(1.0, 0.0, 0.0, 1.0)
 
     def get_bbox_mean(self, image, detection_2d_msg):
         circle_mask = np.zeros(image.shape[0:2], np.uint8)
@@ -369,6 +390,7 @@ class Tj2Yolo:
         return (x_dist, y_dist, z_dist), (x_size, y_size, z_size)
 
     def detect(self, image):
+        t_start = time.time()
         # Padded resize
         trans_image = letterbox(image, self.image_size, stride=self.stride, auto=True)[0]
 
@@ -381,9 +403,11 @@ class Tj2Yolo:
         torch_image /= 255  # 0 - 255 to 0.0 - 1.0
         if len(torch_image.shape) == 3:
             torch_image = torch_image[None]  # expand for batch dim
+        t0 = time.time()
         
         # Inference
         prediction = self.model(torch_image, augment=self.augment, visualize=False)
+        t1 = time.time()
 
         # NMS
         prediction = non_max_suppression(
@@ -394,6 +418,7 @@ class Tj2Yolo:
             self.agnostic_nms,
             max_det=self.max_detections
         )
+        t2 = time.time()
 
         detection_arr_msg = Detection2DArray()
         overlay_image = None
@@ -406,6 +431,7 @@ class Tj2Yolo:
 
         # Rescale boxes from torch_image size to image size
         detection[:, :4] = scale_coords(torch_image.shape[2:], detection[:, :4], image.shape).round()
+        t3 = time.time()
 
         if self.publish_overlay:
             annotator = Annotator(np.copy(image), line_width=self.overlay_line_thickness, example=str(self.class_names))
@@ -416,6 +442,7 @@ class Tj2Yolo:
             overlay_image = annotator.result()
         else:
             overlay_image = None
+        t4 = time.time()
         
         gain = torch.tensor(image.shape)[[1, 0, 1, 0]]  # normalization gain whwh
         class_count = {}
@@ -440,6 +467,15 @@ class Tj2Yolo:
             detection_msg.results.append(obj_with_pose)
 
             detection_arr_msg.detections.append(detection_msg)
+        t5 = time.time()
+
+        if self.report_loop_times:
+            print("\t\ttensor prep:", t0 - t_start)
+            print("\t\tpredict:", t1 - t0)
+            print("\t\tnms:", t2 - t1)
+            print("\t\tscale:", t3 - t2)
+            print("\t\toverlay:", t4 - t3)
+            print("\t\tmsg:", t5 - t4)
         
         return detection_arr_msg, overlay_image
 

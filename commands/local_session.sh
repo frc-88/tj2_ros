@@ -26,7 +26,7 @@ tmux send -t $SESSION:0.2 "source ~/Diff-Swerve-ROS/scripts/set_client.sh $IP_IN
 tmux send -t $SESSION:0.2 "roslaunch tj2_debug_joystick tj2_debug_joystick.launch device:=$JOYSTICK_PATH topic_name:=joy_remote" ENTER 
 
 tmux send -t $SESSION:0.3 "source ~/Diff-Swerve-ROS/scripts/set_client.sh $IP_INTERFACE $HOST_IP" ENTER 
-tmux send -t $SESSION:0.3 "rviz" ENTER 
+tmux send -t $SESSION:0.3 "rviz -d ~/Diff-Swerve-ROS/tj2_viz/rviz/standard.rviz" ENTER 
 
 tmux a -t $SESSION
 echo "Started local session"
