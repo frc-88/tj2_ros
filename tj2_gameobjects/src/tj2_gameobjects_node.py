@@ -288,7 +288,7 @@ class Tj2GameobjectsNode:
                 break
 
             for serial, pf in self.iter_pfs():
-                if not pf.is_initialized() or pf.is_stale():
+                if not pf.is_initialized():  # or pf.is_stale():
                     continue
                 pf.check_resample()
             
