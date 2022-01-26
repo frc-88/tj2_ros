@@ -31,7 +31,6 @@ class TJ2CameraLauncher:
         self.camera_launch_path = rospy.get_param("~camera_launch", self.default_launches_dir + "/tj2_camera.launch")
         self.record_launch_path = rospy.get_param("~record_launch", self.default_launches_dir + "/record_camera.launch")
         self.set_params_launch_path = rospy.get_param("~set_params_launch", self.default_launches_dir + "/set_parameters.launch")
-        self.ring_buffer_length = rospy.get_param("~ring_buffer_length", 25)
         self.expected_camera_rate = rospy.get_param(self.camera_ns + "/realsense2_camera/color_fps", 30.0)
         self.min_rate_offset = rospy.get_param("~rate_band", 5.0)
         self.min_rate_threshold = max(0.0, self.expected_camera_rate - self.min_rate_offset)
@@ -77,7 +76,7 @@ class TJ2CameraLauncher:
             if self.min_rate_threshold <= rate <= self.max_rate_threshold:
                 return TriggerResponse(True, "Camera is running and publishing at %0.2f Hz" % rate)
             else:
-                return TriggerResponse(False, "Camera is running but not publishing within the threshold: %0.2f" % rate)
+                return TriggerResponse(False, "Camera is running but not publishing within the threshold (%0.1f..%0.1f): %0.2f" % (self.min_rate_threshold, self.max_rate_threshold, rate))
         else:
             return TriggerResponse(False, "Camera is not started")
 
@@ -105,7 +104,7 @@ class TJ2CameraLauncher:
         rospy.Timer(rospy.Duration(5.0), self.start_set_params, oneshot=True)
         return started
 
-    def start_set_params(self):
+    def start_set_params(self, event):
         rospy.loginfo("Setting camera dynamic reconfigure parameters")
         self.set_params_launcher.start()
 
@@ -114,11 +113,13 @@ class TJ2CameraLauncher:
             started = self.start_camera()
             if not started:
                 rospy.logerr("Camera failed to start!")
-        while rospy.is_shutdown():
+        while not rospy.is_shutdown():
             rospy.sleep(0.5)
+            if not self.camera_launcher.is_running():
+                continue
             rate = self.get_publish_rate()
             if not (self.min_rate_threshold <= rate <= self.max_rate_threshold):
-                rospy.logwarn_throttle(2.0, "Camera isn't publishing at the expected rate: %0.1f" % rate)
+                rospy.logwarn_throttle(2.0, "Camera isn't publishing at the expected rate (%0.1f..%0.1f): %0.1f" % (self.min_rate_threshold, self.max_rate_threshold, rate))
 
     def stop_all(self):
         for launcher in self.launchers:
