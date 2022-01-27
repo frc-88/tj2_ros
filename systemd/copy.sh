@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "Running Diff-Swerve-ROS systemd service copy script"
+echo "Running tj2_ros systemd service copy script"
 
 BASE_DIR=$(realpath "$(dirname $0)")
 
@@ -23,4 +23,4 @@ cp ${BASE_DIR}/${SCRIPT_NAME} ${BIN_INSTALL_DIR}
 cp ${BASE_DIR}/${ENV_SCRIPT_NAME} ${BIN_INSTALL_DIR}
 cp ${BASE_DIR}/${LAUNCH_SCRIPT_NAME} ${BIN_INSTALL_DIR}
 
-echo "Diff-Swerve-ROS systemd service copy complete"
+echo "tj2_ros systemd service copy complete"

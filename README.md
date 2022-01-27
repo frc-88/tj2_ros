@@ -1,2 +1,2 @@
-# Diff Swerve ROS
-ROS integration for TJ2's differential swerve chassis
+# TJ2 ROS
+ROS integration for TJ2's various robots

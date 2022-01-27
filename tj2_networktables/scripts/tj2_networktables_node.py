@@ -9,6 +9,8 @@ from networktables import NetworkTables
 from tj2_limelight.msg import LimelightTarget
 from tj2_limelight.msg import LimelightTargetArray
 
+from tj2_tools.transforms import lookup_transform
+
 
 class TJ2NetworkTables:
     def __init__(self):
@@ -24,11 +26,12 @@ class TJ2NetworkTables:
         NetworkTables.initialize(server=self.nt_host)
         self.nt = NetworkTables.getTable("")
 
-        self.remote_linear_units_conversion = rospy.get_param("~remote_linear_units_conversion", 1.0)
-        self.remote_angular_units_conversion = rospy.get_param("~remote_angular_units_conversion", 1.0)
         self.limelight_target_frame_id = rospy.get_param("~limelight_target_frame_id", "limelight")
         self.num_limelight_targets = rospy.get_param("~num_limelight_targets", 3)
         
+        self.base_frame = rospy.get_param("~base_frame", "base_link")
+        self.map_frame = rospy.get_param("~map_frame", "map")
+
         self.match_time_pub = rospy.Publisher("match_time", Float64, queue_size=5)
         self.is_autonomous_pub = rospy.Publisher("is_autonomous", Bool, queue_size=5)
         self.limelight_target_pub = rospy.Publisher("/limelight/targets", LimelightTargetArray, queue_size=5)
@@ -36,7 +39,13 @@ class TJ2NetworkTables:
         self.limelight_cam_mode_sub = rospy.Subscriber("/limelight/cam_mode", Bool, self.limelight_cam_mode_callback, queue_size=5)
         self.limelight_info_sub = rospy.Subscriber("limelight/camera_info", CameraInfo, self.limelight_info_callback, queue_size=5)
 
-        self.driver_station_table_key = "swerveLibrary/ROS/DriverStation"
+        self.ros_base_key = "ROS"
+        self.status_key = self.ros_base_key + "/status"
+        self.nodes_key = self.status_key + "/nodes"
+        self.tunnel_key = self.status_key + "/tunnel"
+        self.recording_key = self.status_key + "/recording"
+        self.topics_key = self.status_key + "/topics"
+        self.driver_station_table_key = self.ros_base_key + "/DriverStation"
         self.limelight_table_key = "limelight"
 
         self.limelight_led_mode_entry = self.nt.getEntry(self.limelight_table_key + "/ledMode")
@@ -48,7 +57,7 @@ class TJ2NetworkTables:
         self.local_start_time = 0.0
         self.prev_timestamp = 0.0
 
-        self.limelight_camera_info = CameraInfo()
+        self.limelight_camera_info = None
         
         self.clock_rate = rospy.Rate(20.0)  # networktable servers update at 10 Hz
 
@@ -66,8 +75,12 @@ class TJ2NetworkTables:
 
     def limelight_info_callback(self, msg):
         self.limelight_camera_info = msg
+        self.limelight_info_sub.unregister()  # only use the first message
+        rospy.loginfo("Camera model loaded")
 
     def publish_limelight_target(self):
+        if self.limelight_camera_info is None:
+            return
         msg = LimelightTargetArray()
         msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = self.limelight_target_frame_id
@@ -100,6 +113,8 @@ class TJ2NetworkTables:
         else:
             self.match_time_pub.publish(-1.0)
 
+    def update_nt_status(self):
+        pass
 
     def limelight_led_mode_callback(self, msg):
         self.set_limelight_led_mode(msg.data)

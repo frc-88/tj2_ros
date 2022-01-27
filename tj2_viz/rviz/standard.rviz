@@ -10,6 +10,10 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /LaserScan1
+        - /Pose1
+        - /Pose2
+        - /Pose3
+        - /Pose4
       Splitter Ratio: 0.5253333449363708
     Tree Height: 761
   - Class: rviz/Selection
@@ -495,7 +499,7 @@ Visualization Manager:
       Head Radius: 0.10000000149011612
       Name: Pose
       Queue Size: 10
-      Shaft Length: 1
+      Shaft Length: 0.10000000149011612
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
       Topic: /tj2/gameobject/estimate_cargo_blue_0
@@ -511,7 +515,7 @@ Visualization Manager:
       Head Radius: 0.10000000149011612
       Name: Pose
       Queue Size: 10
-      Shaft Length: 1
+      Shaft Length: 0.10000000149011612
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
       Topic: /tj2/gameobject/estimate_cargo_red_0
@@ -523,7 +527,7 @@ Visualization Manager:
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
       Color: 255; 25; 0
-      Enabled: true
+      Enabled: false
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
       Name: PoseArray
@@ -533,7 +537,7 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /tj2/cargo/pf_particles
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -544,7 +548,7 @@ Visualization Manager:
       Head Radius: 0.10000000149011612
       Name: Pose
       Queue Size: 10
-      Shaft Length: 1
+      Shaft Length: 0.10000000149011612
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
       Topic: /tj2/gameobject/future_cargo_blue_0
@@ -560,7 +564,7 @@ Visualization Manager:
       Head Radius: 0.10000000149011612
       Name: Pose
       Queue Size: 10
-      Shaft Length: 1
+      Shaft Length: 0.10000000149011612
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
       Topic: /tj2/gameobject/future_cargo_red_0
@@ -594,7 +598,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.4936625957489014
+      Distance: 2.9018495082855225
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -602,17 +606,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.8394805192947388
-        Y: -2.166721820831299
-        Z: 0.13305293023586273
+        X: 2.196518898010254
+        Y: -2.1424834728240967
+        Z: -0.0385671928524971
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3897972106933594
+      Pitch: 0.4097967743873596
       Target Frame: <Fixed Frame>
-      Yaw: 1.3003973960876465
+      Yaw: 2.945411205291748
     Saved: ~
 Window Geometry:
   Camera:

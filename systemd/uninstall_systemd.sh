@@ -4,7 +4,7 @@ if [ "$EUID" -ne 0 ]
     exit
 fi
 
-echo "Running Diff-Swerve-ROS systemd service uninstall script"
+echo "Running tj2_ros systemd service uninstall script"
 
 BASE_DIR=$(realpath "$(dirname $0)")
 
@@ -39,4 +39,4 @@ systemctl stop ${LAUNCH_SERVICE_NAME}
 systemctl disable ${SERVICE_NAME}
 systemctl disable ${LAUNCH_SERVICE_NAME}
 
-echo "Diff-Swerve-ROS systemd service uninstallation complete"
+echo "tj2_ros systemd service uninstallation complete"

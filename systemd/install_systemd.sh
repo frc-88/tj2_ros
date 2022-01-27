@@ -4,7 +4,7 @@ if [ "$EUID" -ne 0 ]
     exit
 fi
 
-echo "Running Diff-Swerve-ROS systemd service install script"
+echo "Running tj2_ros systemd service install script"
 
 BASE_DIR=$(realpath "$(dirname $0)")
 
@@ -48,4 +48,4 @@ systemctl enable ${LAUNCH_SERVICE_NAME}
 systemctl restart ${SERVICE_NAME}
 systemctl restart ${LAUNCH_SERVICE_NAME}
 
-echo "Diff-Swerve-ROS systemd service installation complete"
+echo "tj2_ros systemd service installation complete"

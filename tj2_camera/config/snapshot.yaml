@@ -1,6 +1,6 @@
 default_duration_limit: 150  # Maximum time difference between newest and oldest message, seconds, overrides -d flag
 output-prefix: /media/storage/bags/realsense
-# output-prefix: /home/tj2/Diff-Swerve-ROS/tj2_camera/bags
+# output-prefix: /home/tj2/tj2_ros/tj2_camera/bags
 topics:
 - /camera/aligned_depth_to_color/camera_info
 - /camera/aligned_depth_to_color/image_raw

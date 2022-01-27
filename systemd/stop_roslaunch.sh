@@ -15,11 +15,11 @@ tmux send-keys -t $SESSION C-c
 while true
 do
     tmux has-session -t $SESSION > /dev/null
+    sleep 0.15
 
     if [ $? != 0 ]; then
         echo "roslaunch exited"
         exit
     fi
     tmux send-keys -t $SESSION C-d
-    sleep 1
 done
