@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<launch>
-    <node name="dynamic_reconfigure_load_rgb" pkg="dynamic_reconfigure" type="dynparam" output="screen" args="load /camera/rgb_camera $(find tj2_camera)/config/rgb_camera.yaml" />
-    <node name="dynamic_reconfigure_load_l500" pkg="dynamic_reconfigure" type="dynparam" output="screen" args="load /camera/l500_depth_sensor $(find tj2_camera)/config/l500_depth_sensor.yaml" />
-    <node name="dynamic_reconfigure_load_motion" pkg="dynamic_reconfigure" type="dynparam" output="screen" args="load /camera/motion_module $(find tj2_camera)/config/motion_module.yaml" />
-</launch>
