@@ -10,10 +10,6 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /LaserScan1
-        - /Pose1
-        - /Pose2
-        - /Pose3
-        - /Pose4
       Splitter Ratio: 0.5253333449363708
     Tree Height: 761
   - Class: rviz/Selection
@@ -598,7 +594,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.9494545459747314
+      Distance: 3.4936625957489014
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -606,17 +602,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.2633478045463562
-        Y: -0.9432357549667358
-        Z: 0.9771513342857361
+        X: 1.8394805192947388
+        Y: -2.166721820831299
+        Z: 0.13305293023586273
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3897976279258728
+      Pitch: 0.3897972106933594
       Target Frame: <Fixed Frame>
-      Yaw: 4.11858606338501
+      Yaw: 1.3003973960876465
     Saved: ~
 Window Geometry:
   Camera:

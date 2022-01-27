@@ -1,20 +1,3 @@
-dictitems:
-  enable_motion_correction: true
-  frames_queue_size: 16
-  global_time_enabled: false
-  groups:
-    dictitems:
-      enable_motion_correction: true
-      frames_queue_size: 16
-      global_time_enabled: false
-      groups:
-        state: []
-      id: 0
-      name: Default
-      parameters:
-        state: []
-      parent: 0
-      state: true
-      type: ''
-    state: []
-state: []
+enable_motion_correction: true
+frames_queue_size: 16
+global_time_enabled: false

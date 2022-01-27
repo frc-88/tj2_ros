@@ -7,6 +7,8 @@ from std_srvs.srv import Trigger, TriggerResponse
 
 from sensor_msgs.msg import Image
 
+from dynamic_reconfigure.client import Client as DynamicClient
+
 from tj2_tools.launch_manager import LaunchManager
 
 
@@ -30,20 +32,19 @@ class TJ2CameraLauncher:
         self.service_ns_name = rospy.get_param("~service_ns_name", "/tj2")
         self.camera_launch_path = rospy.get_param("~camera_launch", self.default_launches_dir + "/tj2_camera.launch")
         self.record_launch_path = rospy.get_param("~record_launch", self.default_launches_dir + "/record_camera.launch")
-        self.set_params_launch_path = rospy.get_param("~set_params_launch", self.default_launches_dir + "/set_parameters.launch")
         self.expected_camera_rate = rospy.get_param("~expected_camera_rate", 15.0)
         self.min_rate_offset = rospy.get_param("~rate_band", 5.0)
         self.min_rate_threshold = max(0.0, self.expected_camera_rate - self.min_rate_offset)
         self.max_rate_threshold = max(0.0, self.expected_camera_rate + self.min_rate_offset)
+        self.l500_depth_config = rospy.get_param("~l500_depth_config", None)
+        self.motion_module_config = rospy.get_param("~motion_module_config", None)
+        self.rgb_camera_config = rospy.get_param("~rgb_camera_config", None)
 
         self.camera_launcher = LaunchManager(self.camera_launch_path)
         self.record_launcher = LaunchManager(self.record_launch_path)
-        self.set_params_launcher = LaunchManager(self.set_params_launch_path)
-
         self.launchers = [
             self.camera_launcher,
             self.record_launcher,
-            self.set_params_launcher
         ]
 
         self.start_camera_srv = rospy.Service(self.service_ns_name + "/start_camera", Trigger, self.start_camera_callback)
@@ -56,7 +57,22 @@ class TJ2CameraLauncher:
         self.camera_topic = self.camera_ns + "/color/image_raw"
         rospy.Subscriber(self.camera_topic, rospy.AnyMsg, self.camera_rate.callback_hz, callback_args=self.camera_topic, queue_size=1)
 
+        self.l500_depth_client = None
+        self.motion_module_client = None
+        self.rgb_camera_client = None
+        self.l500_depth_dyn_topic = self.camera_ns + "/l500_depth_sensor"
+        self.motion_module_dyn_topic = self.camera_ns + "/motion_module"
+        self.rgb_camera_dyn_topic = self.camera_ns + "/rgb_camera"
+
         rospy.loginfo("%s init complete" % self.node_name)
+
+    def init_dynamic_clients(self):
+        if self.l500_depth_client is None:
+            self.l500_depth_client = DynamicClient(self.l500_depth_dyn_topic)
+        if self.motion_module_client is None:
+            self.motion_module_client = DynamicClient(self.motion_module_dyn_topic)
+        if self.rgb_camera_client is None:
+            self.rgb_camera_client = DynamicClient(self.rgb_camera_dyn_topic)
 
     def get_publish_rate(self):
         result = self.camera_rate.get_hz(self.camera_topic)
@@ -101,12 +117,29 @@ class TJ2CameraLauncher:
     
     def start_camera(self):
         started = self.camera_launcher.start()
-        rospy.Timer(rospy.Duration(5.0), self.start_set_params, oneshot=True)
+        rospy.Timer(rospy.Duration(1.0), self.set_camera_parameters, oneshot=True)
         return started
 
-    def start_set_params(self, event):
-        rospy.loginfo("Setting camera dynamic reconfigure parameters")
-        self.set_params_launcher.start()
+    def set_camera_parameters(self, event):
+        self.init_dynamic_clients()
+        if self.l500_depth_config is not None:
+            rospy.wait_for_service(self.l500_depth_dyn_topic + "/set_parameters", 30.0)
+            self.l500_depth_client.update_configuration(self.l500_depth_config)
+            rospy.loginfo("Updating l500_depth parameters")
+        else:
+            rospy.loginfo("l500_depth parameters are not set. Skipping dynamic reconfigure")
+        if self.motion_module_config is not None:
+            rospy.wait_for_service(self.motion_module_dyn_topic + "/set_parameters", 30.0)
+            self.motion_module_client.update_configuration(self.motion_module_config)
+            rospy.loginfo("Updating motion_module parameters")
+        else:
+            rospy.loginfo("motion_module parameters are not set. Skipping dynamic reconfigure")
+        if self.rgb_camera_config is not None:
+            rospy.wait_for_service(self.rgb_camera_dyn_topic + "/set_parameters", 30.0)
+            self.rgb_camera_client.update_configuration(self.rgb_camera_config)
+            rospy.loginfo("Updating rgb_camera parameters")
+        else:
+            rospy.loginfo("rgb_camera parameters are not set. Skipping dynamic reconfigure")
 
     def run(self):
         if self.on_start:
