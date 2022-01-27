@@ -2,11 +2,11 @@ meas_std_val: 0.05
 u_std: [0.01, 0.01, 0.01, 0.01]
 initial_range: [1.0, 1.0, 1.0, 0.25, 0.25, 0.25]
 num_particles: 250
-stale_filter_time: 1.0
+stale_filter_time: 3.0
 
 labels:
-- cargo_red
 - cargo_blue
+- cargo_red
 
 bounds:
   - [-20.0, 20.0]

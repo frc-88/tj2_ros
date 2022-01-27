@@ -18,15 +18,15 @@ if [ $? != 0 ]; then
 fi
 
 tmux send -t $SESSION:0.0 "ssh -i $SSH_KEY_PATH tj2@$HOST_IP" ENTER 
-tmux send -t $SESSION:0.0 "~/Diff-Swerve-ROS/scripts/tail-session.sh" ENTER 
+tmux send -t $SESSION:0.0 "~/tj2_ros/scripts/tail-session.sh" ENTER 
 
 tmux send -t $SESSION:0.1 "ssh -i $SSH_KEY_PATH tj2@$HOST_IP" ENTER 
 
-tmux send -t $SESSION:0.2 "source ~/Diff-Swerve-ROS/scripts/set_client.sh $IP_INTERFACE $HOST_IP" ENTER 
+tmux send -t $SESSION:0.2 "source ~/tj2_ros/scripts/set_client.sh $IP_INTERFACE $HOST_IP" ENTER 
 tmux send -t $SESSION:0.2 "roslaunch tj2_debug_joystick tj2_debug_joystick.launch device:=$JOYSTICK_PATH topic_name:=joy_remote" ENTER 
 
-tmux send -t $SESSION:0.3 "source ~/Diff-Swerve-ROS/scripts/set_client.sh $IP_INTERFACE $HOST_IP" ENTER 
-tmux send -t $SESSION:0.3 "rviz -d ~/Diff-Swerve-ROS/tj2_viz/rviz/standard.rviz" ENTER 
+tmux send -t $SESSION:0.3 "source ~/tj2_ros/scripts/set_client.sh $IP_INTERFACE $HOST_IP" ENTER 
+tmux send -t $SESSION:0.3 "rviz -d ~/tj2_ros/tj2_viz/rviz/standard.rviz" ENTER 
 
 tmux a -t $SESSION
 echo "Started local session"

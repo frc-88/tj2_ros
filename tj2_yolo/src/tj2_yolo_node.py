@@ -44,6 +44,8 @@ from message_filters import Subscriber
 
 from cv_bridge import CvBridge, CvBridgeError
 
+from tj2_tools.transforms import lookup_transform
+
 
 class Tj2Yolo:
     def __init__(self):
@@ -294,7 +296,7 @@ class Tj2Yolo:
         return detection_3d_msg
 
     def tf_detection_pose_to_robot(self, detection_3d_msg):
-        transform = self.lookup_transform(self.base_frame, detection_3d_msg.header.frame_id)
+        transform = lookup_transform(self.tf_buffer, self.base_frame, detection_3d_msg.header.frame_id)
         if transform is None:
             rospy.logwarn_throttle(1.0, "Can't transform detection to robot frame. Skipping")
             return
@@ -351,24 +353,6 @@ class Tj2Yolo:
         label = self.class_names[class_index]
         return label, class_count
 
-    def lookup_transform(self, parent_link, child_link, time_window=None, timeout=None):
-        """
-        Call tf_buffer.lookup_transform. Return None if the look up fails
-        """
-        if time_window is None:
-            time_window = rospy.Time(0)
-        else:
-            time_window = rospy.Time.now() - time_window
-
-        if timeout is None:
-            timeout = rospy.Duration(1.0)
-
-        try:
-            return self.tf_buffer.lookup_transform(parent_link, child_link, time_window, timeout)
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            rospy.logwarn("Failed to look up %s to %s. %s" % (parent_link, child_link, e))
-            return None
-    
     def get_detection_3d_box(self, detection_msg, z_dist):
         if self.camera_model is None:
             rospy.logerr_throttle(0.5, "No camera model has been loaded! Is the info topic publish messages?")

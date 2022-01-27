@@ -24,6 +24,7 @@ from std_msgs.msg import Bool
 from mbf_msgs.msg import ExePathAction, ExePathGoal
 
 from tj2_tools.particle_filter import FilterSerial
+from tj2_tools.transforms import lookup_transform
 
 
 def get_topics(ns: str):
@@ -112,34 +113,16 @@ class FollowObject:
         else:
             return self.current_objects[serial]
     
-    def lookup_transform(self, parent_link, child_link, time_window=None, timeout=None):
-        """
-        Call tf_buffer.lookup_transform. Return None if the look up fails
-        """
-        if time_window is None:
-            time_window = rospy.Time(0)
-        else:
-            time_window = rospy.Time.now() - time_window
-
-        if timeout is None:
-            timeout = rospy.Duration(1.0)
-
-        try:
-            return self.tf_buffer.lookup_transform(parent_link, child_link, time_window, timeout)
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            rospy.logwarn("Failed to look up %s to %s. %s" % (parent_link, child_link, e))
-            return None
-    
     def get_pose_in_map(self, pose_stamped):
         frame = pose_stamped.header.frame_id
-        map_tf = self.lookup_transform(self.map_frame, frame)
+        map_tf = lookup_transform(self.tf_buffer, self.map_frame, frame)
         if map_tf is None:
             return None
         map_pose = tf2_geometry_msgs.do_transform_pose(pose_stamped, map_tf)
         return map_pose
 
     def get_robot_pose_in_map(self):
-        transform = self.lookup_transform(self.map_frame, self.base_frame)
+        transform = lookup_transform(self.tf_buffer, self.map_frame, self.base_frame)
         robot_pose = PoseStamped()
         robot_pose.header.frame_id = self.map_frame
         robot_pose.header.stamp = rospy.Time.now()
