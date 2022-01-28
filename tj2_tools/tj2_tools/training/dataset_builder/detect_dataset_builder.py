@@ -18,6 +18,7 @@ class DetectDatasetBuilder(DatasetBuilder):
         self.image_collector = image_collector
         self.frames = []
         self.trainval_name = self.train_name + "val"
+        self.frame_filenames = {}
 
     def reset(self):
         # deletes all image and xml files under annotations and jpeg images respectively
@@ -41,14 +42,29 @@ class DetectDatasetBuilder(DatasetBuilder):
         self.write_labels()
 
     def copy_annotation(self, frame: PascalVOCFrame):
+        if frame.filename not in self.frame_filenames:
+            self.frame_filenames[frame.filename] = 0
+        filename_count = self.frame_filenames[frame.filename]
+        self.frame_filenames[frame.filename] += 1
+
         annotation_dir = self.output_dir / ANNOTATIONS
         images_dir = self.output_dir / JPEGIMAGES
         self.makedir(annotation_dir)
         self.makedir(images_dir)
         new_image_path = images_dir / frame.filename
-        new_frame_path = annotation_dir / os.path.basename(frame.frame_path)
+        if filename_count > 0:
+            name = new_image_path.stem
+            ext = new_image_path.suffix
+            new_image_path = new_image_path.parent / ("%s-%05d%s" % (name, filename_count, ext))
 
-        print("Copying image %s -> %s" % (frame.path, new_image_path))
+        new_frame_path = annotation_dir / os.path.basename(frame.frame_path)
+        if filename_count > 0:
+            name = new_frame_path.stem
+            ext = new_frame_path.suffix
+            new_frame_path = new_frame_path.parent / ("%s-%05d%s" % (name, filename_count, ext))
+
+        print("Copying image %s -> %s%s" % (frame.path, new_image_path,
+                                            (". Adding count: %05d" % filename_count) if filename_count > 0 else ""))
         if not self.dry_run:
             shutil.copy(frame.path, new_image_path)
 
