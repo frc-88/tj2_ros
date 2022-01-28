@@ -7,10 +7,10 @@
 
             <param name="publish_overlay" value="false"/>
             <param name="publish_delayed_image" value="false"/>
-            <param name="report_loop_times" value="true"/>
+            <param name="report_loop_times" value="false"/>
             <param name="marker_persistance" value="0.25"/>
             <param name="use_depth" value="true"/>
-            <param name="sync_method" value="2"/>
+            <param name="sync_method" value="last_depth"/>
 
             <remap from="detections" to="cargo/detections"/>
             <remap from="color/image_raw" to="/camera/color/image_raw"/>
