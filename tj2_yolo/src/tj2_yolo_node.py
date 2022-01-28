@@ -73,7 +73,7 @@ class Tj2Yolo:
         self.marker_persistance = rospy.Duration(marker_persistance_s)
         self.bounding_box_border_px = rospy.get_param("~bounding_box_border_px", 10)
         self.report_loop_times = rospy.get_param("~report_loop_times", True)
-        self.sync_method = rospy.get_param("~sync_method", 0)
+        self.sync_method = rospy.get_param("~sync_method", "approx_sync")
         self.publish_delayed_image = rospy.get_param("~publish_delayed_image", True)
 
         self.yolo = YoloDetector(
@@ -88,25 +88,35 @@ class Tj2Yolo:
         self.marker_colors = {}
         self.timing_report = ""
         self.last_depth_msg = None
+        self.time_sync = None
+        self.color_image_sub = None
+        self.depth_image_sub = None
 
         self.bridge = CvBridge()
 
-        if self.use_depth and self.sync_method <= 1:
-            # check out these forum posts about this solution:
-            # https://answers.ros.org/question/50112/unexpected-delay-in-rospy-subscriber/
-            # https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/?answer=220505?answer=220505#post-id-220505
-            self.color_image_sub = Subscriber("color/image_raw", Image, buff_size=2<<31)
-            self.depth_image_sub = Subscriber("depth/image_raw", Image, buff_size=2<<31)
-            if self.sync_method == 0:
+        if self.use_depth:
+            if self.sync_method == "approx_sync":
+                rospy.loginfo("Synchronizing using approximate sync method")
+                self.color_image_sub = self.make_color_sync_sub()
+                self.depth_image_sub = self.make_depth_sync_sub()
                 self.time_sync = ApproximateTimeSynchronizer([self.color_image_sub, self.depth_image_sub], queue_size=1, slop=0.075)
-            elif self.sync_method == 1:
+                self.time_sync.registerCallback(self.rgbd_callback)
+            elif self.sync_method == "exact_sync":
+                rospy.loginfo("Synchronizing using exact sync method")
+                self.color_image_sub = self.make_color_sync_sub()
+                self.depth_image_sub = self.make_depth_sync_sub()
                 self.time_sync = TimeSynchronizer([self.color_image_sub, self.depth_image_sub], queue_size=1)
-            self.time_sync.registerCallback(self.rgbd_callback)
+                self.time_sync.registerCallback(self.rgbd_callback)
+            elif self.sync_method == "last_depth":
+                rospy.loginfo("Synchronizing using last depth image method")
+                self.color_image_sub = self.make_color_sub()
+                self.depth_image_sub = self.make_depth_sub()
+            else:
+                rospy.loginfo("Not synchronizing depth (Unknown method: %s)" % self.sync_method)
+                self.color_image_sub = self.make_color_sub()
         else:
-            self.color_image_sub = rospy.Subscriber("color/image_raw", Image, self.image_callback, queue_size=1, buff_size=2<<31)
-            if self.sync_method == 2:
-                self.depth_image_sub = rospy.Subscriber("depth/image_raw", Image, self.depth_callback, queue_size=1, buff_size=2<<34)
-            self.time_sync = None
+            self.color_image_sub = self.make_color_sub()
+
         self.color_info_sub = rospy.Subscriber("color/camera_info", CameraInfo, self.info_callback, queue_size=5)
         
         self.overlay_pub = rospy.Publisher("overlay", Image, queue_size=1)
@@ -119,6 +129,21 @@ class Tj2Yolo:
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         
         rospy.loginfo("%s is ready" % self.name)
+    
+    def make_color_sub(self):
+        return rospy.Subscriber("color/image_raw", Image, self.image_callback, queue_size=1, buff_size=2<<31)
+
+    def make_depth_sub(self):
+        return rospy.Subscriber("depth/image_raw", Image, self.depth_callback, queue_size=1, buff_size=2<<34)
+
+    def make_color_sync_sub(self):
+        # check out these forum posts about this solution:
+        # https://answers.ros.org/question/50112/unexpected-delay-in-rospy-subscriber/
+        # https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/?answer=220505?answer=220505#post-id-220505
+        return Subscriber("color/image_raw", Image, buff_size=2<<31)
+
+    def make_depth_sync_sub(self):
+        return Subscriber("depth/image_raw", Image, buff_size=2<<31)
 
     def info_callback(self, msg):
         self.camera_model = PinholeCameraModel()
@@ -130,6 +155,7 @@ class Tj2Yolo:
         self.compute_detections(color_msg, depth_msg)
     
     def depth_callback(self, depth_msg):
+        print("something")
         self.last_depth_msg = depth_msg
 
     def image_callback(self, msg):
