@@ -14,6 +14,7 @@ class DetectCollector:
         self.load_annotations()
 
     def load_annotations(self):
+        _all_filenames = set()
         for dirpath, dirnames, filenames in os.walk(self.base_dir):
             for filename in filenames:
                 if filename.endswith(".xml"):

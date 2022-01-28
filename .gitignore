@@ -11,6 +11,7 @@ dataset_builder/powercells_2021/resources
 dataset_builder/powercells_2021/outputs
 dataset_builder/cargo_2022/outputs
 dataset_builder/cargo_2022/resources
+dataset_builder/cargo_2022/wandb/
 playground/particle_filter/data
 
 .idea/

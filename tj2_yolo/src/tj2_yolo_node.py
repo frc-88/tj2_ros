@@ -14,7 +14,6 @@ from yolov5.utils.torch_utils import select_device
 from yolov5.utils.general import non_max_suppression, scale_coords, xyxy2xywh
 from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.augmentations import letterbox
-from yolov5.utils.general import LOGGER
 
 from vision_msgs.msg import Detection2DArray
 from vision_msgs.msg import Detection2D
@@ -45,6 +44,7 @@ from message_filters import Subscriber
 from cv_bridge import CvBridge, CvBridgeError
 
 from tj2_tools.transforms import lookup_transform
+from tj2_tools.yolo.detector import YoloDetector
 
 
 class Tj2Yolo:
@@ -74,33 +74,12 @@ class Tj2Yolo:
         self.bounding_box_border_px = rospy.get_param("~bounding_box_border_px", 10)
         self.report_loop_times = rospy.get_param("~report_loop_times", True)
 
-        self.classes_filter = None
-        self.half = False  # flag for whether to use half or full precision floats
-        self.augment = False  # augmented inference
-        self.agnostic_nms = False  # class-agnostic NMS
-        self.overlay_line_thickness = 3  # bounding box thickness (pixels)
+        self.yolo = YoloDetector(
+            self.model_device, self.model_path, self.image_width, self.image_height,
+            self.confidence_threshold, self.nms_iou_threshold, self.max_detections,
+            self.report_loop_times, self.publish_overlay
+        )
 
-        self.selected_model_device = select_device(self.model_device)
-        self.model = DetectMultiBackend(self.model_path, device=self.selected_model_device, dnn=False)
-
-        self.stride = self.model.stride
-        self.class_names = self.model.names
-        pt = self.model.pt
-        jit = self.model.jit
-        onnx = self.model.onnx
-        engine = self.model.engine
-
-        # Half
-        self.half &= (pt or jit or onnx or engine) and self.selected_model_device.type != 'cpu'  # FP16 supported on limited backends with CUDA
-        if pt or jit:
-            self.model.model.half() if self.half else self.model.model.float()
-        
-        cudnn.benchmark = True  # set True to speed up constant image size inference
-
-        # Run inference
-        self.image_size = (self.image_width, self.image_height)
-        self.model.warmup(imgsz=(1, 3, *self.image_size), half=self.half)  # warmup
-        
         self.label_colors = {}
         self.camera_model = None
 
@@ -149,6 +128,8 @@ class Tj2Yolo:
             if depth_image is None:
                 return
         t_detect_start = time.time()
+        if self.report_loop_times:
+            print("\n-----")
         detection_2d_arr_msg = self.get_detections_from_color(color_image)
         t_detect = time.time()
         markers = MarkerArray()
@@ -174,12 +155,12 @@ class Tj2Yolo:
             t5 = time.time()
             if self.report_loop_times:
                 label, count = self.get_detection_label(detection_2d_msg)
-                print("%s-%s" % (label, count))
-                print("\tget_detection_color:", t1 - t0)
-                print("\tget_depth_from_detection:", t2 - t1)
-                print("\tdetection_2d_to_3d:", t3 - t2)
-                print("\ttf_detection_pose_to_robot:", t4 - t3)
-                print("\tadd_detection_to_marker_array:", t5 - t4)
+                print("\t%s-%s" % (label, count))
+                print("\t\tget_detection_color:", t1 - t0)
+                print("\t\tget_depth_from_detection:", t2 - t1)
+                print("\t\tdetection_2d_to_3d:", t3 - t2)
+                print("\t\ttf_detection_pose_to_robot:", t4 - t3)
+                print("\t\tadd_detection_to_marker_array:", t5 - t4)
             detection_3d_arr_msg.detections.append(detection_3d_msg)
 
         t_end = time.time()
@@ -346,12 +327,7 @@ class Tj2Yolo:
         return marker
     
     def get_detection_label(self, detection_msg):
-        obj_id = detection_msg.results[0].id
-        class_index = obj_id & 0xffff
-        class_count = obj_id >> 16
-
-        label = self.class_names[class_index]
-        return label, class_count
+        return self.yolo.get_label(detection_msg.results[0].id)
 
     def get_detection_3d_box(self, detection_msg, z_dist):
         if self.camera_model is None:
@@ -374,93 +350,28 @@ class Tj2Yolo:
         return (x_dist, y_dist, z_dist), (x_size, y_size, z_size)
 
     def detect(self, image):
-        t_start = time.time()
-        # Padded resize
-        trans_image = letterbox(image, self.image_size, stride=self.stride, auto=True)[0]
-
-        # Convert
-        trans_image = trans_image.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
-        trans_image = np.ascontiguousarray(trans_image)
-
-        torch_image = torch.from_numpy(trans_image).to(self.selected_model_device)
-        torch_image = torch_image.half() if self.half else torch_image.float()  # uint8 to fp16/32
-        torch_image /= 255  # 0 - 255 to 0.0 - 1.0
-        if len(torch_image.shape) == 3:
-            torch_image = torch_image[None]  # expand for batch dim
-        t0 = time.time()
+        detections, overlay_image = self.yolo.detect(image)
         
-        # Inference
-        prediction = self.model(torch_image, augment=self.augment, visualize=False)
-        t1 = time.time()
-
-        # NMS
-        prediction = non_max_suppression(
-            prediction,
-            self.confidence_threshold,
-            self.nms_iou_threshold,
-            self.classes_filter,
-            self.agnostic_nms,
-            max_det=self.max_detections
-        )
-        t2 = time.time()
-
         detection_arr_msg = Detection2DArray()
-        overlay_image = None
-
-        assert len(prediction) <= 1
-        if len(prediction) == 0:
-            return detection_arr_msg, overlay_image
-
-        detection = prediction[0]
-
-        # Rescale boxes from torch_image size to image size
-        detection[:, :4] = scale_coords(torch_image.shape[2:], detection[:, :4], image.shape).round()
-        t3 = time.time()
-
-        if self.publish_overlay:
-            annotator = Annotator(np.copy(image), line_width=self.overlay_line_thickness, example=str(self.class_names))
-            for *xyxy, confidence, class_index in reversed(detection):
-                class_index = int(class_index)
-                label = f"{self.class_names[class_index]} {confidence:.2f}"
-                annotator.box_label(xyxy, label, color=colors(class_index, True))
-            overlay_image = annotator.result()
-        else:
-            overlay_image = None
-        t4 = time.time()
-        
-        gain = torch.tensor(image.shape)[[1, 0, 1, 0]]  # normalization gain whwh
-        class_count = {}
-        height, width = image.shape[0:2]
-        for *xyxy, confidence, class_index in reversed(detection):
-            if class_index not in class_count:
-                class_count[class_index] = 0
-            else:
-                class_count[class_index] += 1
-            
-            obj_id = (class_count[class_index] << 16) | (int(class_index))
-            xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gain).view(-1).tolist()  # normalized xywh
+        detection_arr_msg.header.stamp = rospy.Time.now()
+        for obj_id, (bndbox, confidence) in detections.items():
             detection_msg = Detection2D()
-            detection_msg.header.stamp = rospy.Time.now()
-            detection_msg.bbox.center.x = xywh[0] * width
-            detection_msg.bbox.center.y = xywh[1] * height
-            detection_msg.bbox.size_x = xywh[2] * width
-            detection_msg.bbox.size_y = xywh[3] * height
+            detection_msg.header.stamp = detection_arr_msg.header.stamp
+            box_width = bndbox[2] - bndbox[0]
+            box_height = bndbox[3] - bndbox[1]
+            detection_msg.bbox.center.x = bndbox[0] + box_width / 2.0
+            detection_msg.bbox.center.y = bndbox[1] + box_height / 2.0
+            detection_msg.bbox.size_x = box_width
+            detection_msg.bbox.size_y = box_height
             obj_with_pose = ObjectHypothesisWithPose()
             obj_with_pose.id = obj_id
             obj_with_pose.score = confidence
             detection_msg.results.append(obj_with_pose)
 
             detection_arr_msg.detections.append(detection_msg)
-        t5 = time.time()
-
-        if self.report_loop_times:
-            print("\t\ttensor prep:", t0 - t_start)
-            print("\t\tpredict:", t1 - t0)
-            print("\t\tnms:", t2 - t1)
-            print("\t\tscale:", t3 - t2)
-            print("\t\toverlay:", t4 - t3)
-            print("\t\tmsg:", t5 - t4)
         
+        if self.report_loop_times:
+            print(self.yolo.timing_report)
         return detection_arr_msg, overlay_image
 
 

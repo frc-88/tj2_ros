@@ -139,13 +139,13 @@ def main():
     load_annotated_video(
         "/home/ben/Downloads/Filming Videos/ds0/video/2021-11-19 09-33-03.mp4",
         "/home/ben/Downloads/Filming Videos/ds0/ann/2021-11-19 09-33-03.mp4.json",
-        "./outputs/frc_supervisely/2021-11-19 09-33-03",
+        "./resources/frc_supervisely/2021-11-19 09-33-03",
         ["cargo_reflect_blue", "cargo_reflect_red"]
     )
     load_annotated_video(
         "/home/ben/Downloads/Filming Videos/ds0/video/2021-11-19 09-32-48.mp4",
         "/home/ben/Downloads/Filming Videos/ds0/ann/2021-11-19 09-32-48.mp4.json",
-        "./outputs/frc_supervisely/2021-11-19 09-32-48",
+        "./resources/frc_supervisely/2021-11-19 09-32-48",
         ["cargo_reflect_blue", "cargo_reflect_red"]
     )
 

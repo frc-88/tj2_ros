@@ -61,18 +61,25 @@ class PascalVOCObject:
 
         self.name = find_xml_prop(element, "name")
         self.pose = find_xml_prop(element, "pose")
-        self.truncated = int(find_xml_prop(element, "truncated"))
-        self.difficult = int(find_xml_prop(element, "difficult"))
+        self.truncated = self.parse_bndbox_prop(find_xml_prop(element, "truncated"))
+        self.difficult = self.parse_bndbox_prop(find_xml_prop(element, "difficult"))
         bndbox = element.find("bndbox")
-        xmin = int(find_xml_prop(bndbox, "xmin"))
-        ymin = int(find_xml_prop(bndbox, "ymin"))
-        xmax = int(find_xml_prop(bndbox, "xmax"))
-        ymax = int(find_xml_prop(bndbox, "ymax"))
+        xmin = self.parse_bndbox_prop(find_xml_prop(bndbox, "xmin"))
+        ymin = self.parse_bndbox_prop(find_xml_prop(bndbox, "ymin"))
+        xmax = self.parse_bndbox_prop(find_xml_prop(bndbox, "xmax"))
+        ymax = self.parse_bndbox_prop(find_xml_prop(bndbox, "ymax"))
         self.bndbox = [xmin, ymin, xmax, ymax]
 
         assert self.bndbox_is_ok()
 
         return self
+
+    @staticmethod
+    def parse_bndbox_prop(x):
+        try:
+            return int(x)
+        except ValueError:
+            return int(float(x))
 
     @classmethod
     def from_open_images(cls, class_name, annotation, width, height):
