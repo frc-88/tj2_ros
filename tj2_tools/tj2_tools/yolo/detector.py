@@ -121,12 +121,12 @@ class YoloDetector:
 
         if self.report_loop_times:
             self.timing_report = ""
-            self.timing_report += "\ttensor prep: %0.3f\n" % (t0 - t_start)
-            self.timing_report += "\tpredict: %0.3f\n" % (t1 - t0)
-            self.timing_report += "\tnms: %0.3f\n" % (t2 - t1)
-            self.timing_report += "\tscale: %0.3f\n" % (t3 - t2)
-            self.timing_report += "\toverlay: %0.3f\n" % (t4 - t3)
-            self.timing_report += "\tmsg: %0.3f\n" % (t5 - t4)
+            self.timing_report += "\ttensor prep: %0.4f\n" % (t0 - t_start)
+            self.timing_report += "\tpredict: %0.4f\n" % (t1 - t0)
+            self.timing_report += "\tnms: %0.4f\n" % (t2 - t1)
+            self.timing_report += "\tscale: %0.4f\n" % (t3 - t2)
+            self.timing_report += "\toverlay: %0.4f\n" % (t4 - t3)
+            self.timing_report += "\tmsg: %0.4f\n" % (t5 - t4)
 
         return detections, overlay_image
 

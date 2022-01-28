@@ -11,23 +11,25 @@ from tj2_tools.training.pascal_voc import PascalVOCFrame
 from tj2_tools.training.pascal_voc import PascalVOCObject
 
 
-def main(video_path, output_dir, frame_skip=50):
-    if not output_dir.is_dir():
-        print("Making directory:", output_dir)
-        os.makedirs(str(output_dir))
+def main(video_path, output_dir, model_path, frame_skip=None, dry_run=True):
+    if not dry_run:
+        if not output_dir.is_dir():
+            print("Making directory:", output_dir)
+            os.makedirs(str(output_dir))
 
     capture = cv2.VideoCapture(str(video_path))
     success, image = capture.read()
     if success:
         height, width = image.shape[0:2]
-        yolo = YoloDetector(0, "/home/ben/tj2_ros/tj2_yolo/models/cargo_2022.pt", width, height,
+        yolo = YoloDetector(0, model_path, width, height,
                             confidence_threshold=0.65, nms_iou_threshold=0.45,
                             publish_overlay=True)
     else:
         raise RuntimeError("Failed to read from video: %s" % video_path)
 
-    with open(output_dir / "labels.txt", 'w') as file:
-        file.write("\n".join(yolo.class_names))
+    if not dry_run:
+        with open(output_dir / "labels.txt", 'w') as file:
+            file.write("\n".join(yolo.class_names))
 
     paused = False
     image_count = 0
@@ -52,8 +54,9 @@ def main(video_path, output_dir, frame_skip=50):
             anno_path = output_dir / ("image-%05d.xml" % image_count)
 
             image_count += 1
-            if image_count % frame_skip != 0:
-                continue
+            if frame_skip is not None:
+                if image_count % frame_skip != 0:
+                    continue
             detections, overlay = yolo.detect(image)
 
             frame = PascalVOCFrame()
@@ -73,8 +76,9 @@ def main(video_path, output_dir, frame_skip=50):
                 frame.objects.append(obj)
             print(anno_path)
             print(image_path)
-            frame.write(str(anno_path))
-            cv2.imwrite(str(image_path), image)
+            if not dry_run:
+                frame.write(str(anno_path))
+                cv2.imwrite(str(image_path), image)
 
             cv2.imshow("video", overlay)
     finally:
@@ -84,6 +88,10 @@ def main(video_path, output_dir, frame_skip=50):
 
 if __name__ == '__main__':
     main(Path("resources/br-build-room-2022-01-26/Image from iOS.mov"),
-         Path("resources/br-build-room-2022-01-26-images"), frame_skip=10)
+         Path("resources/br-build-room-2022-01-26-images"),
+         # "/home/ben/tj2_ros/tj2_yolo/models/cargo_2022.pt",
+         "outputs/cargo_2022_train/exp2/weights/best.pt",
+         # frame_skip=10,
+         dry_run=True)
     # main(Path("resources/br-build-room-2022-01-26/Image from iOS (1).mov"),
     #      Path("resources/br-build-room-2022-01-26-1-images"), frame_skip=10)
