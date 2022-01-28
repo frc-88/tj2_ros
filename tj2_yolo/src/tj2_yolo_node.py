@@ -36,9 +36,9 @@ from visualization_msgs.msg import MarkerArray
 from visualization_msgs.msg import Marker
 
 from std_msgs.msg import ColorRGBA
-from std_msgs.msg import Float64
 
 from message_filters import ApproximateTimeSynchronizer
+from message_filters import TimeSynchronizer
 from message_filters import Subscriber
 
 from cv_bridge import CvBridge, CvBridgeError
@@ -73,6 +73,8 @@ class Tj2Yolo:
         self.marker_persistance = rospy.Duration(marker_persistance_s)
         self.bounding_box_border_px = rospy.get_param("~bounding_box_border_px", 10)
         self.report_loop_times = rospy.get_param("~report_loop_times", True)
+        self.sync_method = rospy.get_param("~sync_method", 0)
+        self.publish_delayed_image = rospy.get_param("~publish_delayed_image", True)
 
         self.yolo = YoloDetector(
             self.model_device, self.model_path, self.image_width, self.image_height,
@@ -82,22 +84,34 @@ class Tj2Yolo:
 
         self.label_colors = {}
         self.camera_model = None
+        self.detection_result = Detection3DArray()
+        self.marker_colors = {}
+        self.timing_report = ""
+        self.last_depth_msg = None
 
         self.bridge = CvBridge()
 
-        if self.use_depth:
-            self.color_image_sub = Subscriber("color/image_raw", Image)
-            self.depth_image_sub = Subscriber("depth/image_raw", Image)
-            self.approx_time_sync = ApproximateTimeSynchronizer([self.color_image_sub, self.depth_image_sub], queue_size=3, slop=0.075)
-            self.approx_time_sync.registerCallback(self.rgbd_callback)
+        if self.use_depth and self.sync_method <= 1:
+            # check out these forum posts about this solution:
+            # https://answers.ros.org/question/50112/unexpected-delay-in-rospy-subscriber/
+            # https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/?answer=220505?answer=220505#post-id-220505
+            self.color_image_sub = Subscriber("color/image_raw", Image, buff_size=2<<31)
+            self.depth_image_sub = Subscriber("depth/image_raw", Image, buff_size=2<<31)
+            if self.sync_method == 0:
+                self.time_sync = ApproximateTimeSynchronizer([self.color_image_sub, self.depth_image_sub], queue_size=1, slop=0.075)
+            elif self.sync_method == 1:
+                self.time_sync = TimeSynchronizer([self.color_image_sub, self.depth_image_sub], queue_size=1)
+            self.time_sync.registerCallback(self.rgbd_callback)
         else:
-            self.color_image_sub = rospy.Subscriber("color/image_raw", Image, self.image_callback, queue_size=1)
-            self.depth_image_sub = None
-            self.approx_time_sync = None
-        self.color_info_sub = rospy.Subscriber("color/camera_info", CameraInfo, self.info_callback, queue_size=1)
+            self.color_image_sub = rospy.Subscriber("color/image_raw", Image, self.image_callback, queue_size=1, buff_size=2<<31)
+            if self.sync_method == 2:
+                self.depth_image_sub = rospy.Subscriber("depth/image_raw", Image, self.depth_callback, queue_size=1, buff_size=2<<34)
+            self.time_sync = None
+        self.color_info_sub = rospy.Subscriber("color/camera_info", CameraInfo, self.info_callback, queue_size=5)
         
         self.overlay_pub = rospy.Publisher("overlay", Image, queue_size=1)
-        self.overlay_compressed_pub = rospy.Publisher("overlay/compressed", CompressedImage, queue_size=1)
+        # self.overlay_compressed_pub = rospy.Publisher("overlay/compressed", CompressedImage, queue_size=1)
+        self.delayed_image_pub = rospy.Publisher("delayed_image", Image, queue_size=1)
         self.detections_pub = rospy.Publisher("detections", Detection3DArray, queue_size=25)
         self.markers_pub = rospy.Publisher("markers", MarkerArray, queue_size=25)
 
@@ -115,8 +129,11 @@ class Tj2Yolo:
     def rgbd_callback(self, color_msg, depth_msg):
         self.compute_detections(color_msg, depth_msg)
     
+    def depth_callback(self, depth_msg):
+        self.last_depth_msg = depth_msg
+
     def image_callback(self, msg):
-        self.compute_detections(msg, None)
+        self.compute_detections(msg, self.last_depth_msg)
     
     def compute_detections(self, color_msg, depth_msg):
         t_start = time.time()
@@ -127,20 +144,24 @@ class Tj2Yolo:
             depth_image = self.get_depth_cv_image(depth_msg)
             if depth_image is None:
                 return
+        else:
+            depth_image = None
         t_detect_start = time.time()
         if self.report_loop_times:
-            print("\n-----")
+            self.timing_report = "------\n"
         detection_2d_arr_msg = self.get_detections_from_color(color_image)
+        if self.report_loop_times:
+            self.timing_report += self.yolo.timing_report
         t_detect = time.time()
-        markers = MarkerArray()
         detection_3d_arr_msg = Detection3DArray()
         detection_3d_arr_msg.header = detection_2d_arr_msg.header
 
         for detection_2d_msg in detection_2d_arr_msg.detections:
             t0 = time.time()
             color = self.get_detection_color(color_image, detection_2d_msg)
+            self.marker_colors[detection_2d_msg.results[0].id] = color
             t1 = time.time()
-            if depth_msg is not None:
+            if depth_image is not None:
                 z_dist = self.get_depth_from_detection(depth_image, detection_2d_msg)
             else:
                 z_dist = 1.0
@@ -151,24 +172,27 @@ class Tj2Yolo:
                 continue
             self.tf_detection_pose_to_robot(detection_3d_msg)
             t4 = time.time()
-            self.add_detection_to_marker_array(markers, detection_3d_msg, color)
-            t5 = time.time()
             if self.report_loop_times:
                 label, count = self.get_detection_label(detection_2d_msg)
-                print("\t%s-%s" % (label, count))
-                print("\t\tget_detection_color:", t1 - t0)
-                print("\t\tget_depth_from_detection:", t2 - t1)
-                print("\t\tdetection_2d_to_3d:", t3 - t2)
-                print("\t\ttf_detection_pose_to_robot:", t4 - t3)
-                print("\t\tadd_detection_to_marker_array:", t5 - t4)
+                self.timing_report += "\t%s-%s\n" % (label, count)
+                self.timing_report += "\t\tget_detection_color: %0.4f\n" % (t1 - t0)
+                self.timing_report += "\t\tget_depth_from_detection: %0.4f\n" % (t2 - t1)
+                self.timing_report += "\t\tdetection_2d_to_3d: %0.4f\n" % (t3 - t2)
+                self.timing_report += "\t\ttf_detection_pose_to_robot: %0.4f\n" % (t4 - t3)
             detection_3d_arr_msg.detections.append(detection_3d_msg)
+        
+        self.detection_result = detection_3d_arr_msg
 
         t_end = time.time()
         if self.report_loop_times:
-            print("detect:", t_detect - t_detect_start)
-            print("total:", t_end - t_start)
+            self.timing_report += "detect: %0.4f\n" % (t_detect - t_detect_start)
+            self.timing_report += "total: %0.4f\n" % (t_end - t_start)
+            self.timing_report += "since image start: %0.4f\n" % (t_start - color_msg.header.stamp.to_sec())
+            self.timing_report += "since image end: %0.4f\n" % (t_end - color_msg.header.stamp.to_sec())
+            rospy.loginfo_throttle(0.5, self.timing_report)
         self.detections_pub.publish(detection_3d_arr_msg)
-        self.markers_pub.publish(markers)
+        if self.publish_delayed_image:
+            self.delayed_image_pub.publish(color_msg)
     
     def get_color_cv_image(self, msg):
         try:
@@ -188,11 +212,11 @@ class Tj2Yolo:
         detection_arr_msg, overlay_image = self.detect(color_image)
         if self.publish_overlay and overlay_image is not None:
             try:
-                compressed_msg = CompressedImage()
-                compressed_msg.header.stamp = rospy.Time.now()
-                compressed_msg.format = "jpeg"
-                compressed_msg.data = np.array(cv2.imencode('.jpg', overlay_image)[1]).tobytes()
-                self.overlay_compressed_pub.publish(compressed_msg)
+                # compressed_msg = CompressedImage()
+                # compressed_msg.header.stamp = rospy.Time.now()
+                # compressed_msg.format = "jpeg"
+                # compressed_msg.data = np.array(cv2.imencode('.jpg', overlay_image)[1]).tobytes()
+                # self.overlay_compressed_pub.publish(compressed_msg)
                 
                 overlay_msg = self.bridge.cv2_to_imgmsg(overlay_image, encoding="bgr8")
                 self.overlay_pub.publish(overlay_msg)
@@ -369,14 +393,21 @@ class Tj2Yolo:
             detection_msg.results.append(obj_with_pose)
 
             detection_arr_msg.detections.append(detection_msg)
-        
-        if self.report_loop_times:
-            print(self.yolo.timing_report)
+
         return detection_arr_msg, overlay_image
 
 
     def run(self):
-        rospy.spin()
+        clock_rate = rospy.Rate(30)
+        while not rospy.is_shutdown():
+            markers = MarkerArray()
+            for detection_3d_msg in self.detection_result.detections:
+                if rospy.Time.now() - detection_3d_msg.header.stamp > self.marker_persistance:
+                    continue
+                color = self.marker_colors[detection_3d_msg.results[0].id]
+                self.add_detection_to_marker_array(markers, detection_3d_msg, color)
+            self.markers_pub.publish(markers)
+            clock_rate.sleep()
 
 
 def main():
