@@ -7,7 +7,7 @@ enable_auto_white_balance: true
 exposure: 166
 frames_queue_size: 16
 gain: 256
-global_time_enabled: false
+global_time_enabled: true
 host_performance: 0
 hue: 0
 power_line_frequency: 1

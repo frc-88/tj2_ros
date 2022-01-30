@@ -5,8 +5,8 @@ num_particles: 250
 stale_filter_time: 3.0
 
 labels:
-- cargo_blue
 - cargo_red
+- cargo_blue
 
 bounds:
   - [-20.0, 20.0]

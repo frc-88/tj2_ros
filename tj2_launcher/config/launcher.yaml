@@ -20,3 +20,7 @@ limelight:
   package: "tj2_limelight"
   path: "tj2_limelight.launch"
   on_start: false
+gameobjects:
+  package: "tj2_bringup"
+  path: "gameobjects.launch"
+  on_start: false
