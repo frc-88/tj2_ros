@@ -2,6 +2,10 @@
 
 #include <memory>
 
+#include <string>
+#include <iostream>
+#include <boost/format.hpp>
+
 #include <torch/script.h>
 #include <torch/torch.h>
 
@@ -36,7 +40,7 @@ public:
      * @param model_path - path of the TorchScript weight file
      * @param device_type - inference with CPU/GPU
      */
-    Detector(const std::string& model_path, const torch::DeviceType& device_type);
+    Detector(const std::string& model_path, const torch::DeviceType& device_type, bool report_loop_times = false);
 
     /***
      * @brief inference module
@@ -49,6 +53,8 @@ public:
     Run(const cv::Mat& img, float conf_threshold, float iou_threshold);
 
     static std::vector<std::string> LoadNames(const std::string& path);
+
+    std::string GetTimingReport() { return timing_report_; }
 
 private:
     /***
@@ -103,4 +109,6 @@ private:
     torch::jit::script::Module module_;
     torch::Device device_;
     bool half_;
+    bool report_loop_times_;
+    std::string timing_report_;
 };

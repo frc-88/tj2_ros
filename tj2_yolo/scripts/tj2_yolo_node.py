@@ -155,7 +155,6 @@ class Tj2Yolo:
         self.compute_detections(color_msg, depth_msg)
     
     def depth_callback(self, depth_msg):
-        print("something")
         self.last_depth_msg = depth_msg
 
     def image_callback(self, msg):

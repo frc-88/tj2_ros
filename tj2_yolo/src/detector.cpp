@@ -1,7 +1,9 @@
 #include "detector.h"
 
 
-Detector::Detector(const std::string& model_path, const torch::DeviceType& device_type) : device_(device_type) {
+Detector::Detector(const std::string& model_path, const torch::DeviceType& device_type, bool report_loop_times) : device_(device_type) {
+    report_loop_times_ = report_loop_times;
+    timing_report_ = "";
     try {
         // Deserialize the ScriptModule from a file using torch::jit::load().
         module_ = torch::jit::load(model_path);
@@ -24,14 +26,11 @@ Detector::Detector(const std::string& model_path, const torch::DeviceType& devic
 
 std::vector<std::vector<Detection>>
 Detector::Run(const cv::Mat& img, float conf_threshold, float iou_threshold) {
-    torch::NoGradGuard no_grad;
-    std::cout << "----------New Frame----------" << std::endl;
+    auto t_start = std::chrono::high_resolution_clock::now();
 
-    // TODO: check_img_size()
+    torch::NoGradGuard no_grad;
 
     /*** Pre-process ***/
-
-    auto start = std::chrono::high_resolution_clock::now();
 
     // keep the original image for visualization purpose
     cv::Mat img_input = img.clone();
@@ -54,36 +53,39 @@ Detector::Run(const cv::Mat& img, float conf_threshold, float iou_threshold) {
     std::vector<torch::jit::IValue> inputs;
     inputs.emplace_back(tensor_img);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    // It should be known that it takes longer time at first time
-    std::cout << "pre-process takes : " << duration.count() << " ms" << std::endl;
+    auto t0 = std::chrono::high_resolution_clock::now();
 
     /*** Inference ***/
-    // TODO: add synchronize point
-    start = std::chrono::high_resolution_clock::now();
-
     // inference
+    // It should be known that it takes longer time at first time
     torch::jit::IValue output = module_.forward(inputs);
 
-    end = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    // It should be known that it takes longer time at first time
-    std::cout << "inference takes : " << duration.count() << " ms" << std::endl;
+    auto t1 = std::chrono::high_resolution_clock::now();
 
     /*** Post-process ***/
 
-    start = std::chrono::high_resolution_clock::now();
     auto detections = output.toTuple()->elements()[0].toTensor();
 
     // result: n * 7
     // batch index(0), top-left x/y (1,2), bottom-right x/y (3,4), score(5), class id(6)
     auto result = PostProcessing(detections, pad_w, pad_h, scale, img.size(), conf_threshold, iou_threshold);
 
-    end = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    // It should be known that it takes longer time at first time
-    std::cout << "post-process takes : " << duration.count() << " ms" << std::endl;
+    auto t_end = std::chrono::high_resolution_clock::now();
+
+    if (report_loop_times_) {
+        auto preprocess = std::chrono::duration_cast<std::chrono::milliseconds>(t0 - t_start);
+        auto inference = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
+        auto postprocess = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t1);
+        auto total = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start);
+        // std::cout << "pre-process takes : " << duration.count() << " ms" << std::endl;
+
+        boost::format fmt = boost::format("\tpre-process: %d ms\n\tinference: %d ms\n\tpost-process: %d ms\n\ttotal: %d ms\n") %
+            preprocess.count() %
+            inference.count() %
+            postprocess.count() %
+            total.count();
+        timing_report_ = fmt.str();
+    }
 
     return result;
 }

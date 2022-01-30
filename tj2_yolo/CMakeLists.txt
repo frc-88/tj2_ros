@@ -8,45 +8,48 @@ project(tj2_yolo)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 
-if(EXISTS "/etc/nv_tegra_release")
-  set(IS_SYSTEM_TEGRA true)
-endif()
-set(IS_SYSTEM_TEGRA true)
-
-if (DEFINED IS_SYSTEM_TEGRA)
-  find_package(catkin REQUIRED COMPONENTS
-      camera_info_manager
-      roscpp
-      std_msgs
-      sensor_msgs
-      roslaunch
-      message_generation
-      message_filters
-      visualization_msgs
-      vision_msgs
-      image_transport
-      image_geometry
-      cv_bridge
-      tf2_ros
-  )
+find_package(catkin REQUIRED COMPONENTS
+    camera_info_manager
+    roscpp
+    std_msgs
+    sensor_msgs
+    roslaunch
+    message_generation
+    message_filters
+    visualization_msgs
+    vision_msgs
+    image_transport
+    image_geometry
+    cv_bridge
+    tf2_ros
+)
 
 
-  ## System dependencies are found with CMake's conventions
-  # find_package(Boost REQUIRED COMPONENTS system)
-  find_package(OpenCV REQUIRED)
+## System dependencies are found with CMake's conventions
+# find_package(Boost REQUIRED COMPONENTS system)
+find_package(OpenCV REQUIRED)
 
-
-  execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}" -c "import torch
-import os
+if (EXISTS /etc/nv_tegra_release)
+  message(STATUS "Detecting jetson device. Using python torch path")
+  execute_process(COMMAND python3 -c "import os
+import torch
 print(os.path.join(os.path.dirname(torch.__file__), \"share/cmake/Torch/\"))"
-    OUTPUT_VARIABLE LIBTORCH_PYTHON_PATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-  message(STATUS ${LIBTORCH_PYTHON_PATH})
-  list(APPEND CMAKE_PREFIX_PATH ${LIBTORCH_PYTHON_PATH})
-  find_package(Torch REQUIRED)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+  OUTPUT_VARIABLE TORCH_CMAKE_DIR
+  )
+  message(STATUS "Found python torch: ${TORCH_CMAKE_DIR}")
+  string(REPLACE ":" ";" CMAKE_PREFIX_PATH "$ENV{CMAKE_PREFIX_PATH}")
+  list(APPEND CMAKE_PREFIX_PATH "${TORCH_CMAKE_DIR}")
+  message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 endif()
+
+find_package(Torch REQUIRED)
+if (Torch_FOUND)
+    message(STATUS "Torch library found!")
+    message(STATUS "    include path: ${TORCH_INCLUDE_DIRS}" \n)
+else ()
+    message(FATAL_ERROR "Could not locate Torch" \n)
+endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -131,26 +134,22 @@ catkin_python_setup()
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-if (DEFINED IS_SYSTEM_TEGRA)
-  catkin_package(
-      INCLUDE_DIRS include
-      LIBRARIES ${PROJECT_NAME}
-      CATKIN_DEPENDS
-          camera_info_manager
-          roscpp
-          std_msgs
-          sensor_msgs
-          visualization_msgs
-          vision_msgs
-          image_transport
-          image_geometry
-          cv_bridge
-          tf2_ros
-      DEPENDS OpenCV
-  )
-else()
-  catkin_package()
-endif()
+catkin_package(
+    INCLUDE_DIRS include
+    LIBRARIES ${PROJECT_NAME}
+    CATKIN_DEPENDS
+        camera_info_manager
+        roscpp
+        std_msgs
+        sensor_msgs
+        visualization_msgs
+        vision_msgs
+        image_transport
+        image_geometry
+        cv_bridge
+        tf2_ros
+    DEPENDS OpenCV
+)
 
 ###########
 ## Build ##
@@ -158,105 +157,103 @@ endif()
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-if (DEFINED IS_SYSTEM_TEGRA)
-  include_directories(
-      include
-      ${catkin_INCLUDE_DIRS}
-      ${OpenCV_INCLUDE_DIRS}
-      ${TORCH_INCLUDE_DIRS}
-  )
-  link_directories(${catkin_LIBRARY_DIRS})
+include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+    ${TORCH_INCLUDE_DIRS}
+)
+link_directories(${catkin_LIBRARY_DIRS})
 
-  ## Declare a C++ library
-  # add_library(${PROJECT_NAME}
-  #   src/${PROJECT_NAME}.cpp
-  # )
+## Declare a C++ library
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}.cpp
+# )
 
-  file(GLOB SOURCE_FILES src/*.cpp)
+file(GLOB SOURCE_FILES src/*.cpp)
 
 
-  ## Declare a C++ executable
-  ## With catkin_make all packages are built within a single CMake context
-  ## The recommended prefix ensures that target names across packages don't collide
-  add_executable(${PROJECT_NAME}
-      include/${PROJECT_NAME}.h
-      ${SOURCE_FILES}
-  )
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+add_executable(${PROJECT_NAME}
+    include/${PROJECT_NAME}.h
+    ${SOURCE_FILES}
+)
 
-  ## Rename C++ executable without prefix
-  ## The above recommended prefix causes long target names, the following renames the
-  ## target back to the shorter version for ease of user use
-  ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-  # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+## Rename C++ executable without prefix
+## The above recommended prefix causes long target names, the following renames the
+## target back to the shorter version for ease of user use
+## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
+# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
-  ## Add cmake target dependencies of the executable
-  ## same as for the library above
-  # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Add cmake target dependencies of the executable
+## same as for the library above
+# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-  ## Specify libraries to link a library or executable target against
-  target_link_libraries(${PROJECT_NAME}
-      ${catkin_LIBRARIES}
-      ${OpenCV_LIBRARIES}
-      ${TORCH_LIBRARIES}
-  )
+## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${TORCH_LIBRARIES}
+)
 
-  ## Add cmake target dependencies of the library
-  ## as an example, code may need to be generated before libraries
-  ## either from message generation or dynamic reconfigure
-  add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Add cmake target dependencies of the library
+## as an example, code may need to be generated before libraries
+## either from message generation or dynamic reconfigure
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-  #############
-  ## Install ##
-  #############
+#############
+## Install ##
+#############
 
-  # all install targets should use catkin DESTINATION variables
-  # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+# all install targets should use catkin DESTINATION variables
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
-  ## Mark executable scripts (Python etc.) for installation
-  ## in contrast to setup.py, you can choose the destination
-  # catkin_install_python(PROGRAMS
-  #   scripts/my_python_script
-  #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  # )
+## Mark executable scripts (Python etc.) for installation
+## in contrast to setup.py, you can choose the destination
+# catkin_install_python(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
-  ## Mark executables for installation
-  ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-  # install(TARGETS ${PROJECT_NAME}_node
-  #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  # )
+## Mark executables for installation
+## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
+# install(TARGETS ${PROJECT_NAME}_node
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
-  ## Mark libraries for installation
-  ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-  install(TARGETS ${PROJECT_NAME}
-      ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-      LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-      RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-  )
+## Mark libraries for installation
+## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
+install(TARGETS ${PROJECT_NAME}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
 
-  ## Mark cpp header files for installation
-  # install(DIRECTORY include/${PROJECT_NAME}/
-  #     launch
-  #     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-  #     USE_SOURCE_PERMISSIONS
-  # )
+## Mark cpp header files for installation
+# install(DIRECTORY include/${PROJECT_NAME}/
+#     launch
+#     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+#     USE_SOURCE_PERMISSIONS
+# )
 
-  ## Mark other files for installation (e.g. launch and bag files, etc.)
-  # install(FILES
-  #   # myfile1
-  #   # myfile2
-  #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-  # )
+## Mark other files for installation (e.g. launch and bag files, etc.)
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
 
-  #############
-  ## Testing ##
-  #############
+#############
+## Testing ##
+#############
 
-  ## Add gtest based cpp test target and link libraries
-  # catkin_add_gtest(${PROJECT_NAME}-test test/test_tj2_yolo.cpp)
-  # if(TARGET ${PROJECT_NAME}-test)
-  #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-  # endif()
+## Add gtest based cpp test target and link libraries
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_tj2_yolo.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
 
-  ## Add folders to be run by python nosetests
-  # catkin_add_nosetests(test)
-endif()
+## Add folders to be run by python nosetests
+# catkin_add_nosetests(test)
