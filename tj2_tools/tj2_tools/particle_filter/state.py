@@ -366,20 +366,17 @@ class InputVector:
         self.meas_state = FilterState()
 
     def odom_update(self, odom_state: FilterState):
-        # relative_state = odom_state.relative_to(odom_state)
-        # relative_state = odom_state
         dt = self.odom_timer.dt(odom_state.stamp)
         self.vector = np.array([odom_state.vx, odom_state.vy, odom_state.vz, odom_state.vt])
         self.odom_state = odom_state
         self.vector -= self.meas_input
-        # if time.time() - self.stale_meas_timer > self.stale_filter_time:
-        #     self.meas_input = np.array([0.0, 0.0, 0.0, 0.0])
+        if time.time() - self.stale_meas_timer > self.stale_filter_time:
+            self.meas_input = np.array([0.0, 0.0, 0.0, 0.0])
         return dt
 
     def meas_update(self, meas_state: FilterState):
         new_state = self.meas.update(meas_state)
         self.meas_state = new_state
-        # new_state = new_state.relative_to(self.odom_state)
         self.meas_input = np.array([new_state.vx, new_state.vy, new_state.vz, new_state.vt])
         self.stale_meas_timer = time.time()
         return new_state
