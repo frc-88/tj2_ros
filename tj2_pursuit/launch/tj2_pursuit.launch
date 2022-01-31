@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2" >
+        <node pkg="tj2_pursuit" type="tj2_pursuit_node.py" respawn="false" name="tj2_pursuit" output="screen">
+            <!-- <remap from="detections" to="cargo/detections"/> -->
+            <remap from="detections" to="powercell/detections"/>
+            <remap from="cmd_vel" to="cmd_vel_follow"/>
+            <param name="detection_timeout" value="0.5"/>
+            <param name="distance_offset" value="-0.8"/>
+            <param name="x_kP" value="2.0"/>
+            <param name="y_kP" value="0.5"/>
+            <param name="theta_kP" value="1.0"/>
+            <param name="max_linear_speed" value="0.7"/>
+            <param name="max_angular_speed" value="2.0"/>
+            <!-- <param name="sentry_angular_velocity" value="0.0"/> -->
+            <param name="sentry_angular_velocity" value="1.5"/>
+        </node>
+    </group>
+</launch>

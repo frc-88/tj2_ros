@@ -14,7 +14,7 @@ tmux send-keys -t $SESSION C-c
 
 while true
 do
-    tmux has-session -t $SESSION > /dev/null
+    tmux has-session -t $SESSION 2>/dev/null
     sleep 0.15
 
     if [ $? != 0 ]; then

@@ -8,20 +8,18 @@ import rosgraph
 import actionlib
 
 import tf2_ros
-import tf_conversions
 import tf2_geometry_msgs
-
-import smach
-import smach_ros
-
-import threading
 
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist
+
 from nav_msgs.msg import Path
+
 from std_msgs.msg import Bool
 
 from mbf_msgs.msg import ExePathAction, ExePathGoal
+
+from actionlib_msgs.msg import GoalStatus
 
 from tj2_tools.particle_filter import FilterSerial
 from tj2_tools.transforms import lookup_transform
@@ -56,11 +54,16 @@ class FollowObject:
         self.base_frame = rospy.get_param("~base_frame", "base_link")
         self.map_frame = rospy.get_param("~map_frame", "map")
 
+        self.x_goal_offset = rospy.get_param("~x_goal_offset", 0.0)
+        self.y_goal_offset = rospy.get_param("~y_goal_offset", 0.0)
+        self.z_goal_offset = rospy.get_param("~z_goal_offset", 0.0)
+
         self.gameobjects_ns = rospy.get_param("~gameobjects_ns", "gameobject")
+        self.gameobject_prefix = rospy.get_param("~gameobject_prefix", "estimate_")
         self.future_obj_subs = {}
         for gameobjects_topic in get_topics(self.gameobjects_ns):
             subtopic = gameobjects_topic.split("/")[-1]
-            if subtopic.startswith("future_"):
+            if subtopic.startswith(self.gameobject_prefix):
                 subtopic_split = subtopic.split("_")
                 label = subtopic_split[1]
                 index = subtopic_split[2]
@@ -74,6 +77,9 @@ class FollowObject:
         self.should_follow = False
         self.should_follow_timer = rospy.Time.now()
 
+        self.path_pub = rospy.Publisher("follow_object_path", Path, queue_size=10)
+        self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
+
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         
@@ -86,13 +92,24 @@ class FollowObject:
         self.should_follow = msg.data
 
     def gameobject_callback(self, msg, serial):
-        self.current_objects[serial] = msg
+        obj_pose = PoseStamped()
+        obj_pose.header = msg.header
+        obj_pose.pose.position.x = msg.pose.position.x + self.x_goal_offset
+        obj_pose.pose.position.y = msg.pose.position.y + self.y_goal_offset
+        obj_pose.pose.position.z = msg.pose.position.z + self.z_goal_offset
+        obj_pose.pose.orientation = msg.pose.orientation
+        self.current_objects[serial] = obj_pose
+
+    def stop_motors(self):
+        rospy.loginfo("Stopping motors")
+        self.cmd_vel_pub.publish(Twist())
 
     def exe_path_feedback(self, feedback):
-        print(feedback)
+        print(feedback.message)
 
     def exe_path_done(self, goal_status, result):
-        print("exe path finished:", result)
+        print("exe path finished:", result.message)
+        self.stop_motors()
     
     def get_nearest_object(self):
         min_distance = None
@@ -112,7 +129,7 @@ class FollowObject:
             return None
         else:
             return self.current_objects[serial]
-    
+
     def get_pose_in_map(self, pose_stamped):
         frame = pose_stamped.header.frame_id
         map_tf = lookup_transform(self.tf_buffer, self.map_frame, frame)
@@ -154,6 +171,10 @@ class FollowObject:
         while not rospy.is_shutdown():
             rospy.sleep(delay)
             if not self.should_follow:
+                action_state = self.exe_path_action.get_state()
+                if action_state == GoalStatus.ACTIVE:
+                    rospy.loginfo("Cancelling exe path")
+                    self.exe_path_action.cancel_all_goals()
                 continue
             
             goal_pose = self.get_nearest_object()
@@ -161,15 +182,16 @@ class FollowObject:
                 continue
             rospy.loginfo("Nearest object pose: %s" % str(goal_pose))
             path = self.get_path(goal_pose)
+            self.path_pub.publish(path)
             if path is None:
                 continue
-            rospy.loginfo("Path to object: %s" % str(path))
+            # rospy.loginfo("Path to object: %s" % str(path))
             goal = ExePathGoal()
             goal.path = path
             goal.dist_tolerance = 0.25  # TODO set based on object size
             goal.angle_tolerance = 0.25  # TODO set based on parameters
 
-            self.exe_path_action.cancel_goal()
+            self.exe_path_action.cancel_all_goals()
             rospy.loginfo("Sending new goal")
             self.exe_path_action.send_goal(goal, feedback_cb=self.exe_path_feedback, done_cb=self.exe_path_done)
 

@@ -18,4 +18,6 @@
             <param name="publish_odom_tf" value="true"/>
         </node>
     </group>
+
+    <include file="$(find tj2_tunnel)/launch/twist_mux.launch"/>
 </launch>

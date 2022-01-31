@@ -3,6 +3,9 @@
     <group ns="tj2" >
         <node name="tj2_follow_object" pkg="tj2_move_base" type="follow_object.py" output="screen">
             <param name="gameobjects_ns" value="/tj2/gameobject"/>
+            <param name="x_goal_offset" value="-0.5"/>
+            <!-- <param name="gameobject_prefix" value="future_"/> -->
+            <param name="gameobject_prefix" value="estimate_"/>
         </node>
     </group>
 

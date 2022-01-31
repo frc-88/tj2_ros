@@ -48,6 +48,8 @@ packages=(
     https://github.com/stereolabs/zed-ros-wrapper
     https://github.com/stereolabs/zed-ros-examples
     https://github.com/alireza-hosseini/ipcamera_driver
+    https://github.com/ros-teleop/twist_mux.git
+    https://github.com/ros-teleop/twist_mux_msgs.git
 )
 
 branches=(
@@ -85,6 +87,8 @@ branches=(
     master  # https://github.com/stereolabs/zed-ros-wrapper
     master  # https://github.com/stereolabs/zed-ros-examples
     master  # https://github.com/alireza-hosseini/ipcamera_driver
+    melodic-devel  # https://github.com/ros-teleop/twist_mux.git
+    melodic-devel  # https://github.com/ros-teleop/twist_mux_msgs.git
 )
 
 len=${#packages[@]}

@@ -10,6 +10,10 @@ move_base:
   on_start: false
   topics:
     /move_base: None
+move_base_flex:
+  package: "tj2_move_base"
+  path: "tj2_move_base_flex.launch"
+  on_start: false
 rplidar:
   package: "tj2_rplidar"
   path: "tj2_rplidar.launch"
@@ -23,7 +27,7 @@ limelight:
 gameobjects:
   package: "tj2_gameobjects"
   path: "tj2_gameobjects.launch"
-  on_start: true
+  on_start: false
 yolo:
   package: "tj2_yolo"
   path: "tj2_yolo.launch"
