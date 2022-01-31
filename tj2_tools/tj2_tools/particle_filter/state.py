@@ -328,7 +328,7 @@ class VelocityFilter:
             self.prev_value = value
         raw_delta = (value - self.prev_value) / dt
         self.prev_value = value
-        if self.k is None:
+        if self.k is None or self.k == 0.0:
             self.speed = raw_delta
         else:
             self.speed = self.k * (raw_delta - self.speed)
@@ -342,6 +342,11 @@ class DeltaMeasurement:
         self.vy_filter = VelocityFilter(smooth_k)
         self.vz_filter = VelocityFilter(smooth_k)
         self.timer = DeltaTimer()
+    
+    def set_smooth_k(self, smooth_k):
+        self.vx_filter.k = smooth_k
+        self.vy_filter.k = smooth_k
+        self.vz_filter.k = smooth_k
 
     def update(self, state: FilterState):
         dt = self.timer.dt(state.stamp)
@@ -355,15 +360,18 @@ class DeltaMeasurement:
 
 
 class InputVector:
-    def __init__(self, stale_filter_time):
+    def __init__(self, stale_filter_time, smooth_k=None):
         self.odom_timer = DeltaTimer()
         self.stale_meas_timer = time.time()
         self.stale_filter_time = stale_filter_time
-        self.meas = DeltaMeasurement()
+        self.meas = DeltaMeasurement(smooth_k)
         self.meas_input = np.array([0.0, 0.0, 0.0, 0.0])
         self.vector = np.array([0.0, 0.0, 0.0, 0.0])
         self.odom_state = FilterState()
         self.meas_state = FilterState()
+    
+    def set_smooth_k(self, smooth_k):
+        self.meas.set_smooth_k(smooth_k)
 
     def odom_update(self, odom_state: FilterState):
         dt = self.odom_timer.dt(odom_state.stamp)

@@ -33,9 +33,12 @@ class TJ2CameraLauncher:
         self.camera_launch_path = rospy.get_param("~camera_launch", self.default_launches_dir + "/tj2_camera.launch")
         self.record_launch_path = rospy.get_param("~record_launch", self.default_launches_dir + "/record_camera.launch")
         self.expected_camera_rate = rospy.get_param("~expected_camera_rate", 15.0)
+        self.expected_depth_rate = rospy.get_param("~expected_depth_rate", 15.0)
         self.min_rate_offset = rospy.get_param("~rate_band", 5.0)
-        self.min_rate_threshold = max(0.0, self.expected_camera_rate - self.min_rate_offset)
-        self.max_rate_threshold = max(0.0, self.expected_camera_rate + self.min_rate_offset)
+        self.color_min_rate_threshold = max(0.0, self.expected_camera_rate - self.min_rate_offset)
+        self.color_max_rate_threshold = max(0.0, self.expected_camera_rate + self.min_rate_offset)
+        self.depth_min_rate_threshold = max(0.0, self.expected_depth_rate - self.min_rate_offset)
+        self.depth_max_rate_threshold = max(0.0, self.expected_depth_rate + self.min_rate_offset)
         self.l500_depth_config = rospy.get_param("~l500_depth_config", None)
         self.motion_module_config = rospy.get_param("~motion_module_config", None)
         self.rgb_camera_config = rospy.get_param("~rgb_camera_config", None)
@@ -57,6 +60,10 @@ class TJ2CameraLauncher:
         self.camera_topic = self.camera_ns + "/color/image_raw"
         rospy.Subscriber(self.camera_topic, rospy.AnyMsg, self.camera_rate.callback_hz, callback_args=self.camera_topic, queue_size=1)
 
+        self.depth_rate = rostopic.ROSTopicHz(15)
+        self.depth_topic = self.camera_ns + "/depth/image_raw"
+        rospy.Subscriber(self.depth_topic, rospy.AnyMsg, self.depth_rate.callback_hz, callback_args=self.depth_topic, queue_size=1)
+
         self.l500_depth_client = None
         self.motion_module_client = None
         self.rgb_camera_client = None
@@ -75,11 +82,11 @@ class TJ2CameraLauncher:
             self.rgb_camera_client = DynamicClient(self.rgb_camera_dyn_topic)
 
     def get_publish_rate(self):
-        result = self.camera_rate.get_hz(self.camera_topic)
-        if result is None:
-            return 0.0
-        else:
-            return result[0]
+        color_result = self.camera_rate.get_hz(self.camera_topic)
+        depth_result = self.depth_rate.get_hz(self.depth_topic)
+        color_rate = 0.0 if color_result is None else color_result[0]
+        depth_rate = 0.0 if depth_result is None else depth_result[0]
+        return color_rate, depth_rate
 
     def start_camera_callback(self, req):
         started = self.start_camera()
@@ -88,11 +95,17 @@ class TJ2CameraLauncher:
     def is_camera_running_callback(self, req):
         if self.camera_launcher.is_running():
             rospy.sleep(1.0)
-            rate = self.get_publish_rate()
-            if self.min_rate_threshold <= rate <= self.max_rate_threshold:
-                return TriggerResponse(True, "Camera is running and publishing at %0.2f Hz" % rate)
+            color_rate, depth_rate = self.get_publish_rate()
+            if (self.color_min_rate_threshold <= color_rate <= self.color_max_rate_threshold and
+                    self.depth_min_rate_threshold <= depth_rate <= self.depth_max_rate_threshold):
+                return TriggerResponse(True, "Color and depth are running and publishing at %0.2f Hz and %0.2f" % (color_rate, depth_rate))
             else:
-                return TriggerResponse(False, "Camera is running but not publishing within the threshold (%0.1f..%0.1f): %0.2f" % (self.min_rate_threshold, self.max_rate_threshold, rate))
+                return TriggerResponse(False,
+                    "Camera is running but not publishing within the threshold. "
+                    "Color (%0.1f..%0.1f): %0.2f. Depth (%0.1f..%0.1f): %0.2f" % (
+                        self.color_min_rate_threshold, self.color_max_rate_threshold, color_rate,
+                        self.depth_min_rate_threshold, self.depth_max_rate_threshold, depth_rate)
+                )
         else:
             return TriggerResponse(False, "Camera is not started")
 
@@ -150,9 +163,15 @@ class TJ2CameraLauncher:
             rospy.sleep(0.5)
             if not self.camera_launcher.is_running():
                 continue
-            rate = self.get_publish_rate()
-            if not (self.min_rate_threshold <= rate <= self.max_rate_threshold):
-                rospy.logwarn_throttle(2.0, "Camera isn't publishing at the expected rate (%0.1f..%0.1f): %0.1f" % (self.min_rate_threshold, self.max_rate_threshold, rate))
+            color_rate, depth_rate = self.get_publish_rate()
+            if not (self.color_min_rate_threshold <= color_rate <= self.color_max_rate_threshold and
+                    self.depth_min_rate_threshold <= depth_rate <= self.depth_max_rate_threshold):
+                rospy.logwarn_throttle(2.0, 
+                    "Camera is running but not publishing within the threshold. "
+                    "Color (%0.1f..%0.1f): %0.2f. Depth (%0.1f..%0.1f): %0.2f" % (
+                        self.color_min_rate_threshold, self.color_max_rate_threshold, color_rate,
+                        self.depth_min_rate_threshold, self.depth_max_rate_threshold, depth_rate)
+                )
 
     def stop_all(self):
         for launcher in self.launchers:

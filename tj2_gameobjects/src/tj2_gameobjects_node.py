@@ -44,6 +44,7 @@ class Tj2GameobjectsNode:
         self.bounds = rospy.get_param("~bounds", None)
         self.filter_frame = rospy.get_param("~filter_frame", "base_link")
         self.use_3d_detections = rospy.get_param("~use_3d_detections", True)
+        self.velocity_smooth_k = rospy.get_param("~velocity_smooth_k", 0.0)
 
         assert self.u_std is not None
         assert self.initial_range is not None
@@ -65,7 +66,7 @@ class Tj2GameobjectsNode:
                         self.stale_filter_time,
                         self.bounds
                     )
-            self.inputs[serial] = InputVector(self.stale_filter_time)
+            self.inputs[serial] = InputVector(self.stale_filter_time, self.velocity_smooth_k)
             self.predictors[serial] = BouncePredictor(  # TODO: make dynamically configurable
                 rho=0.75,
                 tau=0.05,
@@ -115,6 +116,7 @@ class Tj2GameobjectsNode:
             config["upper_bound_vy"] = self.bounds[4][1]
             config["lower_bound_vz"] = self.bounds[5][0]
             config["upper_bound_vz"] = self.bounds[5][1]
+            config["velocity_smooth_k"] = self.velocity_smooth_k
             self.dyn_config = config
             return self.dyn_config
 
@@ -162,9 +164,11 @@ class Tj2GameobjectsNode:
                 self.get_default_config("upper_bound_vz", config, self.bounds[5][1]),
             ],
         ]
+        self.velocity_smooth_k = self.get_default_config("velocity_smooth_k", config, self.velocity_smooth_k)
         
         for serial, pf in self.iter_pfs():
             pf.set_parameters(self.num_particles, self.meas_std_val, self.u_std, self.stale_filter_time)
+            self.inputs[serial].set_smooth_k(self.velocity_smooth_k)
 
         return self.dyn_config
     

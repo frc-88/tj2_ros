@@ -40,6 +40,8 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/TransformStamped.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <tj2_yolo/YoloDetectionConfig.h>
 
 #include "detector.h"
 
@@ -93,6 +95,11 @@ private:
     ros::Publisher _marker_pub;
     image_transport::Publisher _overlay_pub;
     ros::Publisher _overlay_info_pub;
+
+    // Dynamic reconfigure
+    dynamic_reconfigure::Server<tj2_yolo::YoloDetectionConfig> _dyn_cfg;
+    dynamic_reconfigure::Server<tj2_yolo::YoloDetectionConfig>::CallbackType _dyn_cfg_wrapped_callback;
+    void dynamic_callback(tj2_yolo::YoloDetectionConfig &config, uint32_t level);
 
     // ROS TF
     tf2_ros::Buffer tfBuffer;

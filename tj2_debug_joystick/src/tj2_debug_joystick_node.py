@@ -69,6 +69,7 @@ class TJ2DebugJoystick:
         self.take_picture_axis = rospy.get_param("~take_picture_axis", "brake/L").split("/")
         self.follow_object_axis = rospy.get_param("~follow_object_axis", "brake/R").split("/")
         self.image_directory = rospy.get_param("~image_directory", "./images")
+        self.enable_image_capture = rospy.get_param("~enable_image_capture", False)
 
         self.linear_x_scale_max = float(rospy.get_param("~linear_x_scale", 1.0))
         self.linear_y_scale_max = float(rospy.get_param("~linear_y_scale", 1.0))
@@ -120,6 +121,8 @@ class TJ2DebugJoystick:
         rospy.loginfo("Debug joystick is ready!")
 
     def image_callback(self, msg):
+        if not self.enable_image_capture:
+            return
         if not self.take_picture:
             return
         self.take_picture = False
@@ -262,17 +265,6 @@ class TJ2DebugJoystick:
         self.set_field_relative_pub.publish(msg)
 
     def run(self):
-        # did_disable_timer_expire = False
-        # while not rospy.is_shutdown():
-        #     # rospy.loginfo(rospy.Time.now() - self.disable_timer, self.disable_timeout, did_disable_timer_expire)
-        #     if rospy.Time.now() - self.disable_timer > self.disable_timeout:
-        #         if not did_disable_timer_expire:
-        #             rospy.loginfo(self.set_robot_mode(RobotStatus.DISABLED))
-        #             did_disable_timer_expire = True
-        #     else:
-        #         did_disable_timer_expire = False     
-        #     rospy.sleep(0.1)
-
         clock_rate = rospy.Rate(50.0)
         while not rospy.is_shutdown():
             dt = rospy.Time.now() - self.cmd_vel_timer
@@ -281,8 +273,6 @@ class TJ2DebugJoystick:
             if dt < self.send_timeout:
                 self.cmd_vel_pub.publish(self.twist_command)
             clock_rate.sleep()
-
-        # rospy.spin()
 
 
 if __name__ == "__main__":

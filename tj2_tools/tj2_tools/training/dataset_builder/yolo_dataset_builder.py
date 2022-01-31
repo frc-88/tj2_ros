@@ -5,6 +5,7 @@ from tj2_tools.training.pascal_voc import PascalVOCFrame
 from tj2_tools.training.yolo import YoloFrame
 from ..detect_collector import DetectCollector
 from .dataset_builder import DatasetBuilder, BACKGROUND_LABEL
+from ..get_image_size import get_image_size
 
 ANNOTATIONS = "labels"
 JPEGIMAGES = "images"
@@ -44,6 +45,9 @@ class YoloDatasetBuilder(DatasetBuilder):
             self.frame_filenames[frame.filename] = 0
         filename_count = self.frame_filenames[frame.filename]
         self.frame_filenames[frame.filename] += 1
+        width, height = get_image_size(frame.path)
+        frame.width = width
+        frame.height = height
 
         annotation_dir = self.output_dir / ANNOTATIONS
         images_dir = self.output_dir / JPEGIMAGES

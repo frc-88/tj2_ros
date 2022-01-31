@@ -35,6 +35,7 @@
             <param name="angular_axis" value="$(arg joystick_angular_axis)" />
 
             <param name="image_directory" value="$(find tj2_debug_joystick)/images" />
+            <remap from="cmd_vel" to="cmd_vel_teleop"/>
         </node>
     </group>
 </launch>

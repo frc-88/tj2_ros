@@ -9,7 +9,7 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     ros::param::param<std::string>("~classes_path", _classes_path, "coco.names");
     ros::param::param<std::string>("~model_path", _model_path, "best.pt");
     ros::param::param<float>("~confidence_threshold", _conf_threshold, 0.25);
-    ros::param::param<float>("~model_path", _iou_threshold, 0.45);
+    ros::param::param<float>("~nms_iou_threshold", _iou_threshold, 0.45);
 
     ros::param::param<std::string>("~image_width_param", _image_width_param, "/camera/realsense2_camera/color_width");
     ros::param::param<std::string>("~image_height_param", _image_height_param, "/camera/realsense2_camera/color_height");
@@ -67,7 +67,26 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
 
     _overlay_pub = _image_transport.advertise("overlay/image_raw", 2);
     _overlay_info_pub = nh.advertise<sensor_msgs::CameraInfo>("overlay/camera_info", 2);
+
+    _dyn_cfg_wrapped_callback = boost::bind(&TJ2Yolo::dynamic_callback, this, _1, _2);
+    _dyn_cfg.setCallback(_dyn_cfg_wrapped_callback);
+
     ROS_INFO("tj2_yolo is ready");
+}
+
+void TJ2Yolo::dynamic_callback(tj2_yolo::YoloDetectionConfig &config, uint32_t level)
+{
+    _conf_threshold = config.confidence_threshold;
+    _iou_threshold = config.nms_iou_threshold;
+    _publish_overlay = config.publish_overlay;
+    _report_loop_times = config.report_loop_times;
+
+    ROS_INFO("Setting config to:\n\tconfidence_threshold: %0.2f\n\tnms_iou_threshold: %0.2f\n\tpublish_overlay: %d\n\treport_loop_times: %d",
+        _conf_threshold,
+        _iou_threshold,
+        _publish_overlay,
+        _report_loop_times
+    );
 }
 
 void TJ2Yolo::camera_info_callback(const sensor_msgs::CameraInfoConstPtr& camera_info)
