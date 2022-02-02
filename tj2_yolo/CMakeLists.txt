@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.12)
 project(tj2_yolo)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
@@ -29,10 +29,12 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV REQUIRED)
+find_package(Python COMPONENTS Interpreter Development)
 
 if (EXISTS /etc/nv_tegra_release)
   message(STATUS "Detecting jetson device. Using python torch path")
-  execute_process(COMMAND python3 -c "import os
+  message(STATUS "Using python executable: ${PYTHON_EXECUTABLE}")
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import os
 import torch
 print(os.path.join(os.path.dirname(torch.__file__), \"share/cmake/Torch/\"))"
   OUTPUT_VARIABLE TORCH_CMAKE_DIR
