@@ -19,7 +19,7 @@
             <remap from="color/camera_info" to="/camera/color/camera_info"/>
             <remap from="overlay" to="cargo/overlay"/>
 
-            <rosparam param="z_depth_estimations" file="$(find tj2_yolo)/config/depth_estimations.yaml" command="load"/>
+            <rosparam param="z_depth_estimations" file="$(find tj2_yolo)/config/cargo_depth_estimations.yaml" command="load"/>
         </node>
         <node name="overlay_compressed_image" pkg="image_transport" type="republish" output="screen" required="false" args="
             raw

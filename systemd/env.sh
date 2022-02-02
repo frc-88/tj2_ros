@@ -43,6 +43,5 @@ if [[ $TERM = "screen" ]] && [[ $(ps -p $PPID -o comm=) = tmux* ]]; then
     mkdir $LOGDIR 2> /dev/null
     LOGNAME="$LOGPREFIX-$(date '+%Y-%m-%dT%H-%M-%S').log"
     script -f $LOGDIR/${LOGNAME}
-    exit
 fi
 
