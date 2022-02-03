@@ -79,6 +79,16 @@ class FilterState(State):
         dz = self.z - other.z
         return math.sqrt(dx * dx + dy * dy + dz * dz)
 
+    def velocity_magnitude(self, other=None):
+        if other is None:  # if other is None, assume you're getting distance from the origin
+            other = self.__class__()
+        if not isinstance(other, self.__class__):
+            raise ValueError("Can't get distance from %s to %s" % (self.__class__, other.__class__))
+        dvx = self.vx - other.vx
+        dvy = self.vy - other.vy
+        dvz = self.vz - other.vz
+        return math.sqrt(dvx * dvx + dvy * dvy + dvz * dvz)
+
     def to_ros_pose(self):
         ros_pose = Pose()
         ros_pose.position.x = self.x
@@ -342,6 +352,7 @@ class DeltaMeasurement:
         self.vy_filter = VelocityFilter(smooth_k)
         self.vz_filter = VelocityFilter(smooth_k)
         self.timer = DeltaTimer()
+        self.state = FilterState()
     
     def set_smooth_k(self, smooth_k):
         self.vx_filter.k = smooth_k
@@ -351,11 +362,13 @@ class DeltaMeasurement:
     def update(self, state: FilterState):
         dt = self.timer.dt(state.stamp)
         if dt == 0.0:
+            self.state = state
             return state
         new_state = FilterState.from_state(state)
         new_state.vx = self.vx_filter.update(dt, state.x)
         new_state.vy = self.vy_filter.update(dt, state.y)
         new_state.vz = self.vz_filter.update(dt, state.z)
+        self.state = new_state
         return new_state
 
 
