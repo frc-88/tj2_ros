@@ -86,7 +86,7 @@ oscillation_distance: 0.4
 # The rate in Hz at which to run the global planning loop. If the frequency is
 # set to 0.0, the global planner will only run when a new goal is received or
 # the local planner reports that its path is blocked.
-planner_frequency: 0.0  # 1.0
+planner_frequency: 10.0  # 1.0
 
 
 # How many times to allow for planning retries before executing recovery
