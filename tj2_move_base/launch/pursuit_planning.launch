@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="pursuit" >
+        <node pkg="move_base" type="move_base" respawn="false" name="pursuit_move_base" output="screen">
+            <remap from="/pursuit/cmd_vel" to="/tj2/cmd_vel_nav"/>
+            <remap from="/pursuit/odom" to="/tj2/odom"/>
+            <remap from="/pursuit/map" to="/map"/>
+            <rosparam file="$(find tj2_move_base)/config/pursuit_params.yaml" command="load"/>
+
+            <rosparam file="$(find tj2_move_base)/config/dwaplanner_params.yaml" command="load" ns="DWAPlannerROS"/>
+            <rosparam file="$(find tj2_move_base)/config/trajectory_planner_params.yaml" command="load" ns="TrajectoryPlannerROS"/>
+            <rosparam file="$(find tj2_move_base)/config/carrot_planner_params.yaml" command="load" ns="CarrotPlanner"/>
+
+            <rosparam file="$(find tj2_move_base)/config/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+            <rosparam file="$(find tj2_move_base)/config/costmap_local_params.yaml" command="load" ns="local_costmap"/>
+
+            <rosparam file="$(find tj2_move_base)/config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+            <rosparam file="$(find tj2_move_base)/config/costmap_global_params.yaml" command="load" ns="global_costmap"/>
+        </node>
+    </group>
+</launch>

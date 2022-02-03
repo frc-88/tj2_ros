@@ -1,18 +1,8 @@
 # move_base load plugins
-base_global_planner: "global_planner/GlobalPlanner" # alternatives: navfn/NavfnROS, global_planner/GlobalPlanner, carrot_planner/CarrotPlanner, navigation_experimental/goal_passer
-# base_global_planner: "goal_passer/GoalPasser"
+base_global_planner: "carrot_planner/CarrotPlanner" # alternatives: navfn/NavfnROS, global_planner/GlobalPlanner, carrot_planner/CarrotPlanner, navigation_experimental/goal_passer
 base_local_planner: "dwa_local_planner/DWAPlannerROS"
 # base_local_planner: "base_local_planner/TrajectoryPlannerROS"
 # base_local_planner: "teb_local_planner/TebLocalPlannerROS"
-
-# move_base_flex load plugins
-planners:
-  - name: GlobalPlanner
-    type: global_planner/GlobalPlanner
-
-controllers:
-  - name: DWAPlannerROS
-    type: dwa_local_planner/DWAPlannerROS
 
 recovery_behaviors:
   # - name: 'super_conservative_reset1'
@@ -96,7 +86,6 @@ oscillation_distance: 0.4
 # The rate in Hz at which to run the global planning loop. If the frequency is
 # set to 0.0, the global planner will only run when a new goal is received or
 # the local planner reports that its path is blocked.
-# planner_frequency: 2.0  # 1.0
 planner_frequency: 0.0  # 1.0
 
 
@@ -105,4 +94,4 @@ planner_frequency: 0.0  # 1.0
 max_planning_retries: -1
 
 # if false, the controller will continue sending velocities according to the old plan if a new plan is being computed
-plan_then_control: true  # true
+plan_then_control: false  # true
