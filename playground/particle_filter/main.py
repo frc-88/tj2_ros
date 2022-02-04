@@ -24,7 +24,7 @@ def main():
     # path = "./data/detections_2022-01-16-23-24-58.json"  # roll
     # path = "./data/detections_2022-01-16-23-24-58.json"  # bounce
 
-    states = state_loader.read_pkl(path, repickle)
+    states = state_loader.get_states(path, repickle)
 
     meas_std_val = 0.05
     u_std = [0.02, 0.02, 0.1, 0.02]

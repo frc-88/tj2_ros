@@ -7,6 +7,8 @@ sys.path.insert(0, "../../tj2_tools")
 from tj2_tools.particle_filter.state import FilterState
 from tj2_tools.particle_filter.predictor import BouncePredictor, get_time_to_distance
 
+from state_loader import get_states, CLASS_NAMES
+
 predictor = BouncePredictor(
     rho=0.75,
     tau=0.05,
@@ -19,15 +21,11 @@ predictor = BouncePredictor(
     t_limit=10.0
 )
 
-robot_state = FilterState()
-obj_state = FilterState()
-obj_state.vx = 1.0
-obj_state.x = 1.0
+repickle = False
 
-data = []
-t_intersect = get_time_to_distance(obj_state.x, 0.0, predictor.a_robot, predictor.v_max_robot, predictor.t_limit, predictor.t_step, data)
-
-data = np.array(data)
-plt.plot(data[:, 0], data[:, 1])
-plt.plot(t_intersect, obj_state.x, 'x')
-plt.show()
+states = get_states("data/detections_2022-02-03-23-59-49.json", repickle)
+for state in states:
+    if state.type == "odom":
+        print(state)
+    elif state.type in CLASS_NAMES:
+        print(state)
