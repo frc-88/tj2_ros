@@ -1,23 +1,13 @@
-import os
-import pickle
 from tj2_tools.particle_filter.state import FilterState
-from data_loader import iter_bag, get_key, header_to_stamp, yaw_from_quat
-
+from tj2_tools.rosbag_to_file.json_loader import iter_bag, get_key, header_to_stamp, yaw_from_quat, read_pkl
 
 OBJECT_NAMES = [
     "BACKGROUND",
     "power_cell"
 ]
 
-def get_pkl_path(path):
-    pkl_dir = os.path.dirname(path)
-    pkl_name = os.path.splitext(os.path.basename(path))[0]
-    pkl_filename = pkl_name + ".pkl"
-    pkl_path = os.path.join(pkl_dir, pkl_filename)
-    return pkl_path
 
-
-def make_pkl(path):
+def read_states(path):
     states = []
     print("Creating pickle from %s" % path)
 
@@ -47,7 +37,7 @@ def make_pkl(path):
 
             states.append(state)
 
-        elif topic == "/tj2/tj2_2020/detections":
+        elif topic == "/tj2/tj2_2020/detections" or topic == "/tj2/powercell/detections":
             stamp = header_to_stamp(get_key(msg, "header.stamp"))
             detections = get_key(msg, "detections")
             for index, detection in enumerate(detections.values()):
@@ -63,18 +53,8 @@ def make_pkl(path):
 
                 states.append(state)
 
-    pickle_path = get_pkl_path(path)
-    with open(pickle_path, 'wb') as file:
-        pickle.dump(states, file)
-    print("Pickle created: %s" % pickle_path)
-
     return states
 
 
-def read_pkl(path, repickle=False):
-    pkl_path = get_pkl_path(path)
-    if not os.path.isfile(pkl_path) or repickle:
-        return make_pkl(path)
-    else:
-        with open(pkl_path, 'rb') as file:
-            return pickle.load(file)
+def get_states(path, repickle=False):
+    return read_pkl(path, read_states, repickle)
