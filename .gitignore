@@ -13,6 +13,7 @@ dataset_builder/cargo_2022/outputs
 dataset_builder/cargo_2022/resources
 dataset_builder/cargo_2022/wandb/
 playground/particle_filter/data
+playground/bounce_trajectories/data
 
 .idea/
 .vscode/
