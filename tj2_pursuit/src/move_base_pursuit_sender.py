@@ -82,7 +82,7 @@ class MoveBasePursuitSender:
         self.move_base_goal = None
         self.goal_timer = rospy.Timer(rospy.Duration(1.0 / self.send_rate), self.send_goal_callback)
 
-    def send_goal_callback(self):
+    def send_goal_callback(self, timer):
         if self.move_base_goal is None:
             return
         self.move_base_action.send_goal(self.move_base_goal)
@@ -110,7 +110,7 @@ class MoveBasePursuitSender:
                 self.object_timer = rospy.Time.now()
                 
                 # replace arbitrary object orientation with heading between object and robot
-                nearest_pose.pose.orientation = self.get_heading(nearest_pose)
+                nearest_pose.pose.orientation = self.get_heading(nearest_pose.pose)
 
                 # offset object by distance
                 nearest_pose.pose.position.x += self.distance_offset
@@ -202,12 +202,12 @@ class MoveBasePursuitSender:
         future_state = self.predictor.get_robot_intersection(self.get_robot_pose(), self.delta_meas_obj.state)
         future_pose = future_state.to_ros_pose()
         future_pose_stamped = PoseStamped()
-        future_pose_stamped.header = self.map_frame
+        future_pose_stamped.header.frame_id = self.map_frame
         future_pose_stamped.pose = future_pose
         self.follow_object_goal_pub.publish(future_pose_stamped)
 
         pose_array = PoseArray()
-        pose_array.poses.append(future_pose_stamped)
+        pose_array.poses.append(future_pose_stamped.pose)
         pose_array.header = future_pose_stamped.header
         self.move_base_goal = MoveBaseGoal()
         self.move_base_goal.target_poses.header.frame_id = pose_array.header.frame_id
