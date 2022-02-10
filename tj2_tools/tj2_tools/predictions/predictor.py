@@ -81,6 +81,7 @@ def get_time_to_distance(x1, v0, a, vmax, t_limit, t_step, data=None):
 
     return t0
 
+
 class BouncePredictor:
     def __init__(self, rho, tau, g, a_friction, t_step, ground_plane, a_robot, v_max_robot, t_limit):
         self.rho = rho
@@ -123,5 +124,6 @@ class BouncePredictor:
 
         obj_dist = obj_state_2d.distance(robot_state_2d)
 
-        t_window = get_time_to_distance(obj_dist, robot_state_2d.velocity_magnitude(), self.a_robot, self.v_max_robot, self.t_limit, self.t_step)
+        t_window = get_time_to_distance(obj_dist, robot_state_2d.velocity_magnitude(), self.a_robot, self.v_max_robot,
+                                        self.t_limit, self.t_step)
         return self.get_prediction(obj_state, t_window)
