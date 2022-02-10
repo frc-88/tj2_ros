@@ -75,6 +75,8 @@ class TJ2BarPipeline(object):
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+
+        self.dilate_kernel = np.ones((5, 5), np.uint8)
         
         self.debug_image_pub = rospy.Publisher("bar_pipeline_debug/image_raw", Image, queue_size=1)
         self.debug_info_pub = rospy.Publisher("bar_pipeline_debug/camera_info", CameraInfo, queue_size=1)
@@ -141,8 +143,10 @@ class TJ2BarPipeline(object):
         # remove noise from image
         normalized = cv2.medianBlur(normalized, 3)
 
+        normalized = cv2.dilate(normalized, self.dilate_kernel, iterations=1)
+
         # find contours and generate an image from them
-        contours_image, contours = self.contours(normalized)
+        contours_image, contours = self.contours(normalized, debug_image)
 
         # identify lines in the image
         lines, hough_debug_image = self.houghlines(contours_image, debug_image)
@@ -187,7 +191,7 @@ class TJ2BarPipeline(object):
 
             marker.scale.x = 0.025  # line width
             marker.color = ColorRGBA(0.3, 0.3, 1.0, 1.0)
-            marker.lifetime = rospy.Duration(0.05)
+            marker.lifetime = rospy.Duration(0.15)
 
             for point in points:
                 msg_point = Point()
@@ -375,7 +379,7 @@ class TJ2BarPipeline(object):
         # return the actual contours array
         return cnts
 
-    def contours(self, image):
+    def contours(self, image, debug_image):
         # image = cv2.Canny(image, 50, 150, apertureSize=3)
         contours = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contour_image = np.zeros_like(image)
@@ -385,6 +389,8 @@ class TJ2BarPipeline(object):
             if perimeter < self.contour_perimeter_threshold:
                 continue
             cv2.drawContours(contour_image, [contour], -1, (255, 255, 255), 1)
+            cv2.drawContours(debug_image, [contour], -1, (255, 0, 255), 1)
+        
         return contour_image, contours
 
 
