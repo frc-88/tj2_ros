@@ -23,9 +23,22 @@ predictor = BouncePredictor(
 
 repickle = False
 
-states = get_states("data/detections_2022-02-03-23-59-49.json", repickle)
+# states = get_states("data/detections_2022-02-03-23-59-49.json", repickle)
+states = get_states("data/detections_2022-02-04-00-02-36.json", repickle)
+data = []
 for state in states:
     if state.type == "odom":
-        print(state)
+        pass
+        # print(state)
     elif state.type in CLASS_NAMES:
-        print(state)
+        pass
+        data.append(state.stamp)
+        # print(state)
+
+data = 1.0 / np.diff(np.array(data))
+data = data[np.where(data < 100)]
+print(np.min(data), np.max(data))
+print(np.std(data), np.mean(data))
+plt.hist(data, bins=20)
+plt.show()
+# print("Average rage: %s" % (count / accumulator))

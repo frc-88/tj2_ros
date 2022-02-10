@@ -160,13 +160,13 @@ class TJ2CameraLauncher:
             if not started:
                 rospy.logerr("Camera failed to start!")
         while not rospy.is_shutdown():
-            rospy.sleep(0.5)
+            rospy.sleep(1.0)
             if not self.camera_launcher.is_running():
                 continue
             color_rate, depth_rate = self.get_publish_rate()
             if not (self.color_min_rate_threshold <= color_rate <= self.color_max_rate_threshold and
                     self.depth_min_rate_threshold <= depth_rate <= self.depth_max_rate_threshold):
-                rospy.logwarn_throttle(2.0, 
+                rospy.logwarn(2.0, 
                     "Camera is running but not publishing within the threshold. "
                     "Color (%0.1f..%0.1f): %0.2f. Depth (%0.1f..%0.1f): %0.2f" % (
                         self.color_min_rate_threshold, self.color_max_rate_threshold, color_rate,
