@@ -100,12 +100,15 @@ class MoveBasePursuitSender:
             return
         with self.lock:
             nearest_pose = None
+            nearest_dist = None
             for detection in msg.detections:
                 detection_pose = detection.results[0].pose.pose
-                if nearest_pose is None or self.get_distance(detection_pose) < self.get_distance(nearest_pose.pose):
+                detection_dist = self.get_distance(detection_pose)
+                if nearest_dist is None or detection_dist < nearest_dist:
                     nearest_pose = PoseStamped()
                     nearest_pose.pose = detection_pose
                     nearest_pose.header = detection.header
+                    nearest_dist = detection_dist
             if len(msg.detections) > 0:
                 self.object_timer = rospy.Time.now()
                 
@@ -122,6 +125,7 @@ class MoveBasePursuitSender:
                 
                 # compute object's velocity
                 nearest_state = FilterState.from_ros_pose(nearest_pose_map.pose)
+                nearest_state.stamp = nearest_pose_map.header.stamp.to_sec()
                 if self.delta_meas_obj is None:
                     self.delta_meas_obj = DeltaMeasurement()
                 self.delta_meas_obj.update(nearest_state)
@@ -194,6 +198,7 @@ class MoveBasePursuitSender:
         robot_pose.orientation.y = transform.transform.rotation.y
         robot_pose.orientation.z = transform.transform.rotation.z
         robot_state = FilterState.from_ros_pose(robot_pose)
+        robot_state.stamp = rospy.Time.now().to_sec()
         return self.delta_meas_robot.update(robot_state)
 
     def pursue_object(self):
@@ -203,6 +208,7 @@ class MoveBasePursuitSender:
         future_pose = future_state.to_ros_pose()
         future_pose_stamped = PoseStamped()
         future_pose_stamped.header.frame_id = self.map_frame
+        future_pose_stamped.header.stamp = rospy.Time.from_sec(future_state.stamp)
         future_pose_stamped.pose = future_pose
         self.follow_object_goal_pub.publish(future_pose_stamped)
 
@@ -210,7 +216,6 @@ class MoveBasePursuitSender:
         pose_array.poses.append(future_pose_stamped.pose)
         pose_array.header = future_pose_stamped.header
         self.move_base_goal = MoveBaseGoal()
-        self.move_base_goal.target_poses.header.frame_id = pose_array.header.frame_id
         self.move_base_goal.target_poses = pose_array
 
     def run(self):
