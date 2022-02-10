@@ -45,7 +45,7 @@ def read_states(path):
             states.append(state)
 
         elif topic == "/tj2/powercell/detections":
-            stamp = header_to_stamp(get_key(msg, "header.stamp"))
+            stamp = header_to_stamp(get_key(msg, "detections.0.header.stamp"))
             detections = get_key(msg, "detections")
             for index, detection in enumerate(detections.values()):
                 object_id = get_key(detection, "results.0.id")
