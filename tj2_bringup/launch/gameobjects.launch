@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<launch>
-    <include file="$(find tj2_gameobjects)/launch/tj2_gameobjects.launch"/>
-    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
-</launch>

@@ -2,14 +2,18 @@ default_duration_limit: 150  # Maximum time difference between newest and oldest
 topics:
 - /tj2/odom
 
-- /laser/scan
-- /tj2/imu
+- /front_laser/scan
+- /rear_laser/scan
+# TODO: include merged laser scan topic
 
-- /tj2/swerve_modules/0
-- /tj2/swerve_modules/1
-- /tj2/swerve_modules/2
-- /tj2/swerve_modules/3
+- /camera/color/image_raw
+- /camera/depth/image_raw
+# TODO: fill out the rest of the camera topics
 
 - /tj2/ping
 - /tj2/robot_status
 - /tj2/cmd_vel
+
+- /tf
+
+# TODO: game object detection
