@@ -9,25 +9,26 @@
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
     <include file="$(find tj2_description)/launch/tj2_description.launch"/>
-    <include file="$(find tj2_camera)/launch/camera_launcher.launch"/>
-    <include file="$(find tj2_state_machine)/launch/tj2_state_machine.launch"/>
-    <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/>
-    <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
-    <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
     <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
-    <!-- <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/> -->
-    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
 
-    <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
+    <arg name="map_name" default="map-{date}"/>
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
-        <!-- <arg name="mode" value="localize"/> -->
-        <arg name="mode" value="idle"/>
+        <arg name="mode" value="mapping"/>
         <arg name="map_name" value="$(arg map_name)"/>
     </include>
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
     </include>
-    <node name="rosbag_record_robot" pkg="rosbag_snapshot" type="snapshot" args="">
-        <rosparam file="$(find tj2_bringup)/config/bag_snapshot.yaml" command="load" ns=""/>
-    </node>
+
+    <node pkg="rosbag" type="record" name="rosbag_record_mapping"
+       args="record -o /media/storage/bags/mapping            
+            /tj2/odom
+
+            /front_laser/scan
+            /rear_laser/scan
+
+            /tj2/robot_status
+            /tj2/cmd_vel
+            /tj2/ping
+            " />
 </launch>
