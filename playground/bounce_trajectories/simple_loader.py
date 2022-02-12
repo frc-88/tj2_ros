@@ -19,6 +19,7 @@ def read_states(path):
 
     for timestamp, topic, msg in iter_bag(path):
         if topic == "/tj2/cmd_vel":
+            #None
             print(msg)
             # state = FilterState()
             # state.type = "cmd_vel"
@@ -29,6 +30,7 @@ def read_states(path):
             # states.append(state)
 
         elif topic == "/tj2/odom":
+            #None
             print(msg)
             # state = FilterState()
             # state.type = "odom"
@@ -46,21 +48,24 @@ def read_states(path):
             # states.append(state)
 
         elif topic == "/tj2/powercell/detections":
+            None
             print(msg)
-            # stamp = header_to_stamp(get_key(msg, "header.stamp"))
-            # detections = get_key(msg, "detections")
-            # for index, detection in enumerate(detections.values()):
-            #     object_id = get_key(detection, "results.0.id")
-            #     label, count = get_label(object_id)
-            #
-            #     state = FilterState()
-            #     state.type = label
-            #     state.stamp = stamp
-            #     state.x = get_key(detection, "results.0.pose.pose.position.x")
-            #     state.y = get_key(detection, "results.0.pose.pose.position.y")
-            #     state.z = get_key(detection, "results.0.pose.pose.position.z")
-            #
-            #     states.append(state)
+            '''            stamp = header_to_stamp(get_key(msg, "header.stamp"))
+            detections = get_key(msg, "detections")
+            for index, detection in enumerate(detections.values()):
+                object_id = get_key(detection, "results.0.id")
+                label, count = get_label(object_id)
+
+                state = FilterState()
+                state.type = label
+                state.stamp = stamp
+                state.x = get_key(detection, "results.0.pose.pose.position.x")
+                state.y = get_key(detection, "results.0.pose.pose.position.y")
+                state.z = get_key(detection, "results.0.pose.pose.position.z")
+
+                states.append(state)
+            '''
+
 
     return states
 
