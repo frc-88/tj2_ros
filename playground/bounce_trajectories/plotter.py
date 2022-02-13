@@ -168,7 +168,8 @@ class LivePlotter2D(LivePlotterBase):
 
         # odom_mu = self.base_link_to_odom(self.odom_state, x, y, z)
         self.ax.scatter(object_state.x, object_state.y, color='b', s=25)
-        self.ax.scatter(self.future_x[-1], self.future_y[-1], color='orange', s=25)
+        if len(self.future_x) > 0 and len(self.future_y) > 0:
+            self.ax.scatter(self.future_x[-1], self.future_y[-1], color='orange', s=25)
         self.ax.scatter(odom_state.x, odom_state.y, marker='*', color='g', s=25)
         self.ax.scatter(0.0, 0.0, marker='.', color='k', s=25)
 

@@ -39,14 +39,16 @@ def main():
     # detections_2022-02-09-10-58-15.json <-> video-2022-02-09T10-58-17--471241.json
     # detections_2022-02-09-11-00-08.json <-> video-2022-02-09T11-00-11--029853.json
 
+    # path = "data/detections_2022-02-03-23-59-49.json"
+    # path = "data/detections_2022-02-04-00-02-36.json"
     # path = "data/prediction_data_2/detections_2022-02-09-10-43-43.json"  # stationary object, moving robot
-    # path = "data/prediction_data_2/detections_2022-02-09-10-44-36.json"  # stationary robot, object from behind left
+    path = "data/prediction_data_2/detections_2022-02-09-10-44-36.json"  # stationary robot, object from behind left
     # path = "data/prediction_data_2/detections_2022-02-09-10-45-09.json"  # stationary robot, object from behind right
     # path = "data/prediction_data_2/detections_2022-02-09-10-45-41.json"  # stationary robot, object from left
     # path = "data/prediction_data_2/detections_2022-02-09-10-46-11.json"  # stationary robot, object from right
     # path = "data/prediction_data_2/detections_2022-02-09-10-54-38.json"# robot gets confused
     # path = "data/prediction_data_2/detections_2022-02-09-10-55-28.json"  # robot chases down object 1
-    path = "data/prediction_data_2/detections_2022-02-09-10-56-07.json"  # robot chases down object 2
+    # path = "data/prediction_data_2/detections_2022-02-09-10-56-07.json"  # robot chases down object 2
     # path = "data/prediction_data_2/detections_2022-02-09-10-57-39.json"  # robot chases down object 3
     # path = "data/prediction_data_2/detections_2022-02-09-10-58-15.json"  # robot chases down object 4
     # path = "data/prediction_data_2/detections_2022-02-09-11-00-08.json"  # robot chases down object 5
@@ -67,6 +69,10 @@ def main():
                 plotter.pause()
                 current_time = time.time()
             real_start_t += current_time - pause_start_t
+
+            if state.stamp == 0.0:
+                print(state)
+                continue
 
             sim_time = state.stamp
             real_time = current_time
