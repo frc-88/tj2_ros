@@ -69,7 +69,7 @@ void TJ2BarPipeline::rgbd_callback(const ImageConstPtr& color_image, const Image
     depth_cv_image = depth_cv_ptr->image;
     depth_cv_image.convertTo(depth_cv_image_u8, CV_8U);
 
-    GaussianBlur(depth_cv_image_u8, depth_cv_image_u8, Size(9, 9), 0);
+    // GaussianBlur(depth_cv_image_u8, depth_cv_image_u8, Size(9, 9), 0);
 
     Mat dst, cdst, cdstP;
     // Edge detection
