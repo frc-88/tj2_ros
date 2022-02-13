@@ -50,23 +50,24 @@ class GoToWaypointState(State):
         return self.set_ignore_obstacles(userdata, ignore_obstacles)
 
     def execute(self, userdata):
-        rospy.loginfo("Executing waypoint")
+        rospy.loginfo("Going to waypoint")
         self.reset()
 
         self.action_result = "success"
-        self.action_server = userdata.state_machine.waypoints_node.follow_path_server
+        waypoints_node = userdata.state_machine.waypoints_node
+        self.action_server = waypoints_node.follow_path_server
         self.action_goal = userdata.state_machine.action_goal
-        self.move_base = userdata.state_machine.waypoints_node.move_base
+        self.move_base = waypoints_node.move_base
 
-        self.num_waypoints = len(userdata.waypoints_plan)
         self.current_waypoint_index = userdata.waypoint_index_in
 
-        rospy.loginfo("Number of waypoints: %s, Current index: %s" % (self.num_waypoints, self.current_waypoint_index))
+        waypoints = userdata.waypoints_plan[userdata.waypoint_index_in]
 
-        if userdata.waypoint_index_in >= self.num_waypoints:
-            return "finished"
-        
-        waypoints, pose_array = userdata.waypoints_plan[userdata.waypoint_index_in]
+        pose_array = waypoints_node.get_waypoints_as_pose_array(waypoints)
+        if len(pose_array.poses) != len(waypoints):
+            rospy.logwarn("Some waypoints are ignored!")
+        if len(pose_array.poses) == 0:
+            return "success"
 
         first_waypoint = waypoints[0]  # for some parameters, only the first waypoint's values matter
 
@@ -103,7 +104,6 @@ class GoToWaypointState(State):
 
         move_base_result = self.move_base.get_result()
         if bool(move_base_result):
-            userdata.waypoint_index_out = userdata.waypoint_index_in + 1
             return "success"
         else:
             rospy.loginfo("move_base result was not a success")
