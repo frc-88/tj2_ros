@@ -68,7 +68,7 @@ repickle = True
 #msgs = get_states("data/detections_2022-02-03-23-59-49.json", repickle)
 #msgs = get_states("data/detections_2022-02-04-00-02-36.json", repickle)
 #msgs = get_states("C:/FILES/TJ square/prediction-data-2/detections_2022-02-09-10-58-15.json", repickle)
-msgs = get_states("C:/FILES/TJ square/prediction-data-2/detections_2022-02-09-10-57-39.json", repickle)
+msgs = get_states("data/prediction_data_2/detections_2022-02-09-10-57-39.json", repickle)
 
 odom_stamps = []
 detection_stamps = []
