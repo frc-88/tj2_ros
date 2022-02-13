@@ -101,6 +101,7 @@ class FilterState(State):
         if not isinstance(other, self.__class__):
             raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
         new_self = self.__class__.from_state(other)
+        new_self.stamp = self.stamp
 
         rot_mat = Rotation.from_euler("z", other.theta).as_matrix()
         point = np.array([self.x, self.y, self.z])
@@ -124,6 +125,7 @@ class FilterState(State):
         if not isinstance(other, self.__class__):
             raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
         new_self = self.__class__.from_state(other)
+        new_self.stamp = self.stamp
 
         other_reverse = -other
 

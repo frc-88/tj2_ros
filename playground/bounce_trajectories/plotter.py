@@ -131,6 +131,8 @@ class LivePlotter2D(LivePlotterBase):
         self.ax_z.legend(loc=2)
 
     def update_future_state(self, state: FilterState):
+        if state is None:
+            return
         self.future_times.append(state.stamp)
         self.future_x.append(state.x)
         self.future_y.append(state.y)
@@ -165,8 +167,10 @@ class LivePlotter2D(LivePlotterBase):
         self.ax.set_ylim(-self.y_window / 2, self.y_window / 2)
 
         # odom_mu = self.base_link_to_odom(self.odom_state, x, y, z)
-        self.ax.scatter(object_state.x, object_state.y, color='g', s=25)
-        self.ax.scatter(odom_state.x, odom_state.y, marker='*', color='b', s=25)
+        self.ax.scatter(object_state.x, object_state.y, color='b', s=25)
+        if len(self.future_x) > 0 and len(self.future_y) > 0:
+            self.ax.scatter(self.future_x[-1], self.future_y[-1], color='orange', s=25)
+        self.ax.scatter(odom_state.x, odom_state.y, marker='*', color='g', s=25)
         self.ax.scatter(0.0, 0.0, marker='.', color='k', s=25)
 
         self.state_times.append(timestamp)

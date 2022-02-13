@@ -5,8 +5,8 @@ import numpy as np
 
 sys.path.insert(0, "../../tj2_tools")
 
-from tj2_tools.particle_filter.state import FilterState, DeltaMeasurement
-from tj2_tools.predictions.predictor import BouncePredictor, get_time_to_distance
+from tj2_tools.particle_filter.state import FilterState
+from tj2_tools.predictions.predictor import BouncePredictor
 
 from state_loader import get_states, CLASS_NAMES
 from plotter import LivePlotter2D
@@ -14,37 +14,44 @@ from plotter import LivePlotter2D
 
 def main():
     predictor = BouncePredictor(
-        rho=0.75,
-        tau=0.05,
-        g=-9.81,
-        a_friction=-0.1,
-        t_step=0.001,
-        ground_plane=-0.05,
-        a_robot=5.0,
-        v_max_robot=2.0,
-        t_limit=10.0
+        v_max_robot=4.0,
+        past_window_size=4,
+        vx_std_dev_threshold=1.0,
+        vy_std_dev_threshold=1.0
     )
-    delta_meas = DeltaMeasurement()
 
-    x_width = 20.0
-    y_width = 20.0
+    x_width = 40.0
+    y_width = 40.0
     z_width = 3.0
     plotter = LivePlotter2D(x_width, y_width)
 
-    repickle = False
+    repickle = True
 
-    # path = "data/prediction_data_2/detections_2022-02-09-10-43-43.json"
-    # path = "data/prediction_data_2/detections_2022-02-09-10-56-07.json"
-    # path = "data/prediction_data_2/detections_2022-02-09-10-44-36.json"
-    # path = "data/prediction_data_2/detections_2022-02-09-10-45-09.json"
-    # path = "data/prediction_data_2/detections_2022-02-09-10-45-41.json"
-    # path = "data/prediction_data_2/detections_2022-02-09-10-46-11.json"
-    # path = "data/prediction_data_2/detections_2022-02-09-10-54-38.json"
-    path = "data/prediction_data_2/detections_2022-02-09-10-55-28.json"
-    # path = "data/prediction_data_2/detections_2022-02-09-10-56-07.json"
-    # path = "data/prediction_data_2/detections_2022-02-09-10-57-39.json"
-    # path = "data/prediction_data_2/detections_2022-02-09-10-58-15.json"
-    # path = "data/prediction_data_2/detections_2022-02-09-11-00-08.json"
+    # detections_2022-02-09-10-43-43.json <-> video-2022-02-09T10-43-45--876036.json
+    # detections_2022-02-09-10-44-36.json <-> video-2022-02-09T10-44-38--000074.json
+    # detections_2022-02-09-10-45-09.json <-> video-2022-02-09T10-45-11--254047.json
+    # detections_2022-02-09-10-45-41.json <-> video-2022-02-09T10-45-43--102240.json
+    # detections_2022-02-09-10-46-11.json <-> video-2022-02-09T10-46-13--575758.json
+    # detections_2022-02-09-10-54-38.json <-> video-2022-02-09T10-54-41--501451.json
+    # detections_2022-02-09-10-55-28.json <-> video-2022-02-09T10-55-31--215422.json
+    # detections_2022-02-09-10-56-07.json <-> video-2022-02-09T10-56-09--777772.json
+    # detections_2022-02-09-10-57-39.json <-> video-2022-02-09T10-57-41--850998.json
+    # detections_2022-02-09-10-58-15.json <-> video-2022-02-09T10-58-17--471241.json
+    # detections_2022-02-09-11-00-08.json <-> video-2022-02-09T11-00-11--029853.json
+
+    # path = "data/detections_2022-02-03-23-59-49.json"
+    # path = "data/detections_2022-02-04-00-02-36.json"
+    # path = "data/prediction_data_2/detections_2022-02-09-10-43-43.json"  # stationary object, moving robot
+    path = "data/prediction_data_2/detections_2022-02-09-10-44-36.json"  # stationary robot, object from behind left
+    # path = "data/prediction_data_2/detections_2022-02-09-10-45-09.json"  # stationary robot, object from behind right
+    # path = "data/prediction_data_2/detections_2022-02-09-10-45-41.json"  # stationary robot, object from left
+    # path = "data/prediction_data_2/detections_2022-02-09-10-46-11.json"  # stationary robot, object from right
+    # path = "data/prediction_data_2/detections_2022-02-09-10-54-38.json"# robot gets confused
+    # path = "data/prediction_data_2/detections_2022-02-09-10-55-28.json"  # robot chases down object 1
+    # path = "data/prediction_data_2/detections_2022-02-09-10-56-07.json"  # robot chases down object 2
+    # path = "data/prediction_data_2/detections_2022-02-09-10-57-39.json"  # robot chases down object 3
+    # path = "data/prediction_data_2/detections_2022-02-09-10-58-15.json"  # robot chases down object 4
+    # path = "data/prediction_data_2/detections_2022-02-09-11-00-08.json"  # robot chases down object 5
 
     states = get_states(path, repickle)
     odom_state = FilterState()
@@ -63,6 +70,10 @@ def main():
                 current_time = time.time()
             real_start_t += current_time - pause_start_t
 
+            if state.stamp == 0.0:
+                print(state)
+                continue
+
             sim_time = state.stamp
             real_time = current_time
             sim_duration = sim_time - sim_start_t
@@ -70,11 +81,10 @@ def main():
 
             if state.type in CLASS_NAMES:
                 object_state = state.relative_to(odom_state)
-                object_state = delta_meas.update(object_state)
-
-                # predicted_state = predictor.get_prediction(object_state, 1.0)
-                predicted_state = predictor.get_robot_intersection(odom_state, object_state)
-                predicted_state.stamp -= sim_start_t
+                predicted_state = predictor.get_robot_intersection(object_state, odom_state)
+                if predicted_state is not None:
+                    predicted_state.stamp -= sim_start_t
+                    # predicted_state = predicted_state.relative_to(odom_state)
             elif state.type == "odom":
                 odom_state = state
 
