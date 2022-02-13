@@ -3,8 +3,7 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 #include <sensor_msgs/JointState.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <tj2_tunnel/SwerveModule.h>
+#include <std_msgs/Float64.h>
 
 using namespace std;
 
@@ -12,23 +11,17 @@ class TJ2Description {
 private:
     ros::NodeHandle nh;  // ROS node handle
 
-    // Parameters
-    int num_modules;
-    string robot_type;
-
     // Publishers
-    ros::Publisher wheel_joint_pub;
-    vector<ros::Publisher>* twist_pubs;
+    ros::Publisher joint_pub;
 
     // Subscribers
-    vector<ros::Subscriber>* wheel_subs;
+    vector<ros::Subscriber>* raw_joint_subs;
 
     // Messages
-    sensor_msgs::JointState wheel_joints_msg;
-    vector<geometry_msgs::TwistStamped>* twist_msgs;
+    sensor_msgs::JointState joints_msg;
 
     // Module callback
-    void module_callback(const tj2_tunnel::SwerveModuleConstPtr& msg, int module_index);
+    void joint_callback(const std_msgs::Float64ConstPtr& msg, int joint_index);
 
     // Main loop methods
     void loop();

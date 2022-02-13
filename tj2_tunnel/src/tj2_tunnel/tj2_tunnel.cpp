@@ -24,9 +24,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~pose_estimate_theta_std_deg", _pose_estimate_theta_std_deg, 15.0);
     ros::param::param<string>("~pose_estimate_frame_id", _pose_estimate_frame_id, "map");
 
-    ros::param::param<int>("~num_modules", _num_modules, 4);
-
-    _socket_open_attempts = 10;
+    ros::param::param<int>("~socket_open_attempts", _socket_open_attempts, 50);
 
     _cmd_vel_timeout = ros::Duration(_cmd_vel_timeout_param);
 
@@ -108,34 +106,34 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     _imu_msg.linear_acceleration_covariance[4] = 100e-5;
     _imu_msg.linear_acceleration_covariance[8] = 100e-5;
 
-    _module_pubs = new vector<ros::Publisher>();
-    _module_msgs = new vector<tj2_tunnel::SwerveModule*>();
-    for (int index = 0; index < _num_modules; index++)
-    {
-        string module_name = std::to_string(index);
-        _module_msgs->push_back(new tj2_tunnel::SwerveModule());
-
-        _module_pubs->push_back(
-            nh.advertise<tj2_tunnel::SwerveModule>("swerve_modules/" + module_name, 50)
-        );
-    }
+    _raw_joint_pubs = new vector<ros::Publisher>();
+    _raw_joint_msgs = new vector<std_msgs::Float64*>();
+    addJointPub("left_outer_climber_joint");
+    addJointPub("left_inner_climber_joint");
+    addJointPub("right_outer_climber_joint");
+    addJointPub("right_inner_climber_joint");
+    addJointPub("left_outer_climber_hook_joint");
+    addJointPub("left_inner_climber_hook_joint");
+    addJointPub("right_outer_climber_hook_joint");
+    addJointPub("right_inner_climber_hook_joint");
+    addJointPub("intake_joint");
+    addJointPub("turret_joint");
+    addJointPub("camera_joint");
 
     _match_time_pub = nh.advertise<std_msgs::Float64>("match_time", 10);
     _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
+    _team_color_pub = nh.advertise<std_msgs::String>("team_color", 10);
 
     _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 1);
 
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2Tunnel::twistCallback, this);
-    _is_field_relative_sub = nh.subscribe<std_msgs::Bool>("set_field_relative", 10, &TJ2Tunnel::setFieldRelativeCallback, this);
-    _debug_cmd_sub = nh.subscribe<std_msgs::Int32>("debug_cmd", 5, &TJ2Tunnel::debugCommandCallback, this);
-    
+
     _prev_twist_timestamp = ros::Time(0);
     _twist_cmd_vx = 0.0;
     _twist_cmd_vy = 0.0;
     _twist_cmd_vt = 0.0;
-    _is_field_relative = false;
 
     _currentGoalStatus = INVALID;
 
@@ -147,6 +145,12 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     _poll_socket_thread = new boost::thread(&TJ2Tunnel::pollSocketTask, this);
 
     ROS_INFO("tj2_tunnel init complete");
+}
+
+void TJ2Tunnel::addJointPub(string name)
+{
+    _raw_joint_pubs->push_back(nh.advertise<std_msgs::Float64>(name, 50));
+    _raw_joint_msgs->push_back(new std_msgs::Float64);
 }
 
 bool TJ2Tunnel::reOpenSocket()
@@ -310,15 +314,10 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
             result->getDouble()
         );
     }
-    else if (category.compare("module") == 0) {
-        publishModule(
+    else if (category.compare("joint") == 0) {
+        publishJoint(
             result->getRecvTime(),
             result->getInt(),
-            result->getDouble(),
-            result->getDouble(),
-            result->getDouble(),
-            result->getDouble(),
-            result->getDouble(),
             result->getDouble()
         );
     }
@@ -369,7 +368,8 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
     else if (category.compare("match") == 0) {
         publishMatch(
             (bool)result->getInt(),
-            result->getDouble()
+            result->getDouble(),
+            result->getString()
         );
     }
     else if (category.compare("poseest") == 0) {
@@ -441,23 +441,15 @@ void TJ2Tunnel::publishImu(ros::Time recv_time, double yaw, double yaw_rate, dou
     _imu_pub.publish(_imu_msg);
 }
 
-void TJ2Tunnel::publishModule(ros::Time recv_time,
-    int module_index,
-    double azimuth_position, double wheel_velocity,
-    double lo_voltage_command, double lo_radps,
-    double hi_voltage_command, double hi_radps)
+void TJ2Tunnel::publishJoint(ros::Time recv_time, int joint_index, double joint_position)
 {
-    tj2_tunnel::SwerveModule* msg = _module_msgs->at(module_index);
-    msg->module_index = std::to_string(module_index);
-    msg->azimuth_position = azimuth_position;
-    msg->wheel_velocity = wheel_velocity;
-    
-    msg->motor_lo_0.velocity = lo_radps;
-    msg->motor_lo_0.command_voltage = lo_voltage_command;
-    msg->motor_hi_1.velocity = hi_radps;
-    msg->motor_hi_1.command_voltage = hi_voltage_command;
+    if (joint_index < 0 || joint_index >= _raw_joint_msgs->size()) {
+        ROS_WARN("Invalid joint index received: %d. Valid range is 0..%lu", joint_index, _raw_joint_msgs->size());
+    }
+    std_msgs::Float64* msg = _raw_joint_msgs->at(joint_index);
+    msg->data = joint_position;
 
-    _module_pubs->at(module_index).publish(*msg);
+    _raw_joint_pubs->at(joint_index).publish(*msg);
 }
 
 void TJ2Tunnel::publishGoalStatus()
@@ -513,7 +505,7 @@ void TJ2Tunnel::cancelWaypointGoal()
     resetWaypoints();
 }
 
-void TJ2Tunnel::publishMatch(bool is_autonomous, double match_timer)
+void TJ2Tunnel::publishMatch(bool is_autonomous, double match_timer, string team_color)
 {
     std_msgs::Float64 timer_msg;
     timer_msg.data = match_timer;
@@ -521,7 +513,11 @@ void TJ2Tunnel::publishMatch(bool is_autonomous, double match_timer)
 
     std_msgs::Bool is_auto_msg;
     is_auto_msg.data = is_autonomous;
-    _match_time_pub.publish(is_auto_msg);
+    _autonomous_pub.publish(is_auto_msg);
+
+    std_msgs::String team_color_msg;
+    team_color_msg.data = team_color;
+    _team_color_pub.publish(team_color_msg);
 }
 
 void TJ2Tunnel::sendPoseEstimate(double x, double y, double theta)
@@ -565,18 +561,6 @@ void TJ2Tunnel::sendPoseEstimate(double x, double y, double theta)
 
     _pose_estimate_pub.publish(pose_est);
 }
-
-void TJ2Tunnel::debugCommandCallback(const std_msgs::Int32ConstPtr& msg)
-{
-    ROS_INFO("Writing debug command: %d", msg->data);
-    writePacket("debug", "d", msg->data);
-}
-
-
-void TJ2Tunnel::setFieldRelativeCallback(const std_msgs::BoolConstPtr& msg) {
-    _is_field_relative = msg->data;
-}
-
 
 void TJ2Tunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
 {
@@ -624,7 +608,7 @@ void TJ2Tunnel::publishCmdVel()
         return;
     }
 
-    writePacket("cmd", "fffd", _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt, _is_field_relative);
+    writePacket("cmd", "fff", _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt);
 }
 
 

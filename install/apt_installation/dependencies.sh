@@ -23,6 +23,7 @@ amcl
 usb-cam
 image-transport-plugins
 rosbag-snapshot
+twist-mux
 )
 
 package_list=""

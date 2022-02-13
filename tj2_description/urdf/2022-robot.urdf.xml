@@ -1,0 +1,290 @@
+<robot name="2022-robot">
+    <material name="white">
+        <color rgba="1 1 1 1"/>
+    </material>
+
+    <material name="blue">
+        <color rgba="0 0.369 0.722 1"/>
+    </material>
+
+    <material name="red">
+        <color rgba="0.722 0.369 0 1"/>
+    </material>
+
+    <!-- Link definitions -->
+
+    <link name="base_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/chassis.stl"/>
+            </geometry>
+            <material name="blue"/>
+        </visual>
+    </link>
+
+    <link name="turret_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/turret.stl"/>
+            </geometry>
+            <material name="red"/>
+        </visual>
+    </link>
+    <link name="turret_tilt_link">
+    </link>
+
+    <link name="intake_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/intake.stl"/>
+            </geometry>
+            <material name="red"/>
+        </visual>
+    </link>
+    <link name="intake_tilt_link">
+    </link>
+
+    <link name="camera_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/camera.stl"/>
+            </geometry>
+            <material name="red"/>
+        </visual>
+    </link>
+    <link name="camera_tilt_link">
+    </link>
+
+    <!-- Climber links -->
+
+    <link name="left_outer_climber_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/climber.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+    <link name="left_outer_climber_tilt_link">
+    </link>
+
+    <link name="left_inner_climber_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/climber.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+    <link name="left_inner_climber_tilt_link">
+    </link>
+
+    <link name="right_outer_climber_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/climber.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+    <link name="right_outer_climber_tilt_link">
+    </link>
+
+    <link name="right_inner_climber_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/climber.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+    <link name="right_inner_climber_tilt_link">
+    </link>
+
+    <!-- Hook links -->
+
+    <link name="left_outer_hook_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/hook.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+
+    <link name="left_inner_hook_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/hook.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+
+    <link name="right_outer_hook_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/hook.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+
+    <link name="right_inner_hook_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/hook.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+
+    <!-- Joint definitions -->
+
+    <!-- Climber tilt joints -->
+
+    <joint name="base_link_to_left_outer_climber_tilt" type="fixed">
+        <parent link="base_link"/>
+        <child link="left_outer_climber_tilt_link"/>
+        <origin xyz="-0.050560  0.304902  0.333312"/>
+    </joint>
+
+    <joint name="base_link_to_left_inner_climber_tilt" type="fixed">
+        <parent link="base_link"/>
+        <child link="left_inner_climber_tilt_link"/>
+        <origin xyz="-0.050560  0.219177  0.333312"/>
+    </joint>
+    
+    <joint name="base_link_to_right_outer_climber_tilt" type="fixed">
+        <parent link="base_link"/>
+        <child link="right_outer_climber_tilt_link"/>
+        <origin xyz="-0.050560  -0.304902  0.333312"/>
+    </joint>
+
+    <joint name="base_link_to_right_inner_climber_tilt" type="fixed">
+        <parent link="base_link"/>
+        <child link="right_inner_climber_tilt_link"/>
+        <origin xyz="-0.050560  -0.219177  0.333312"/>
+    </joint>
+
+    <!-- Climber joints -->
+    
+    <joint name="left_outer_climber_joint" type="continuous">
+        <parent link="left_outer_climber_tilt_link"/>
+        <child link="left_outer_climber_link"/>
+        <origin xyz="0 0 0"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+    <joint name="left_inner_climber_joint" type="continuous">
+        <parent link="left_inner_climber_tilt_link"/>
+        <child link="left_inner_climber_link"/>
+        <origin xyz="0 0 0"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+    
+    <joint name="right_outer_climber_joint" type="continuous">
+        <parent link="right_outer_climber_tilt_link"/>
+        <child link="right_outer_climber_link"/>
+        <origin xyz="0 0 0"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+    <joint name="right_inner_climber_joint" type="continuous">
+        <parent link="right_inner_climber_tilt_link"/>
+        <child link="right_inner_climber_link"/>
+        <origin xyz="0 0 0"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+    
+    <!-- Hook joints -->
+
+    <joint name="left_outer_climber_hook_joint" type="prismatic">
+        <parent link="left_outer_climber_link"/>
+        <child link="left_outer_hook_link"/>
+        <origin xyz="0.051  0.0  0.716397"/>
+        <axis xyz="0 0 1"/>
+        <limit effort="1000.0" lower="0.0" upper="20.0" velocity="0.5"/>
+    </joint>
+
+    <joint name="left_inner_climber_hook_joint" type="prismatic">
+        <parent link="left_inner_climber_link"/>
+        <child link="left_inner_hook_link"/>
+        <origin xyz="0.051  0.0  0.716397"/>
+        <axis xyz="0 0 1"/>
+        <limit effort="1000.0" lower="0.0" upper="20.0" velocity="0.5"/>
+    </joint>
+    
+    <joint name="right_outer_climber_hook_joint" type="prismatic">
+        <parent link="right_outer_climber_link"/>
+        <child link="right_outer_hook_link"/>
+        <origin xyz="0.051  0.0  0.716397"/>
+        <axis xyz="0 0 1"/>
+        <limit effort="1000.0" lower="0.0" upper="20.0" velocity="0.5"/>
+    </joint>
+
+    <joint name="right_inner_climber_hook_joint" type="prismatic">
+        <parent link="right_inner_climber_link"/>
+        <child link="right_inner_hook_link"/>
+        <origin xyz="0.051  0.0  0.716397"/>
+        <axis xyz="0 0 1"/>
+        <limit effort="1000.0" lower="0.0" upper="20.0" velocity="0.5"/>
+    </joint>
+    
+    <!-- Intake joints -->
+
+    <joint name="base_link_to_intake_tilt" type="fixed">
+        <parent link="base_link"/>
+        <child link="intake_tilt_link"/>
+        <origin xyz="0.292256  0.000000  0.223228"/>
+    </joint>
+
+    <joint name="intake_joint" type="continuous">
+        <parent link="intake_tilt_link"/>
+        <child link="intake_link"/>
+        <origin xyz="0 0 0"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+    <!-- Turret joints -->
+
+    <joint name="base_link_to_turret_tilt" type="fixed">
+        <parent link="base_link"/>
+        <child link="turret_tilt_link"/>
+        <origin xyz="-0.050560  0.000102  0.878834"/>
+    </joint>
+
+    <joint name="turret_joint" type="continuous">
+        <parent link="turret_tilt_link"/>
+        <child link="turret_link"/>
+        <origin xyz="0 0 0"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <!-- Camera tilter joints -->
+
+    <joint name="base_link_to_camera_tilt" type="fixed">
+        <parent link="base_link"/>
+        <child link="camera_tilt_link"/>
+        <origin xyz="0.243522  0.000850  0.878976"/>
+    </joint>
+
+    <joint name="camera_joint" type="continuous">
+        <parent link="camera_tilt_link"/>
+        <child link="camera_link"/>
+        <origin xyz="0 0 0"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+</robot>
