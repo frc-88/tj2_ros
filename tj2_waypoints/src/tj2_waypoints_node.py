@@ -83,13 +83,15 @@ class Tj2Waypoints:
         waypoints_path_param = rospy.get_param("~waypoints_path", "~/.ros/waypoints")
         waypoints_path_param = os.path.expanduser(waypoints_path_param)
         waypoints_path_param += ".yaml"
-        
+        self.object_names_path = rospy.get_param("~object_names_path", "objects.names")
+
         self.map_frame = rospy.get_param("~map", "map")
         self.base_frame = rospy.get_param("~base_link", "base_link")
         self.marker_size = rospy.get_param("~marker_size", 0.25)
         self.marker_color = rospy.get_param("~marker_color", (0.0, 0.0, 1.0, 1.0))
         self.enable_waypoint_navigation = rospy.get_param("~enable_waypoint_navigation", False)
         self.move_base_namespace = rospy.get_param("~move_base_namespace", "/move_base")
+        self.pursuit_namespace = rospy.get_param("~pursuit_namespace", "/pursuit/move_base")
         self.local_obstacle_layer_topic = rospy.get_param("~local_obstacle_layer_topic", "/move_base/local_costmap/obstacle_layer")
         self.global_obstacle_layer_topic = rospy.get_param("~global_obstacle_layer_topic", "/move_base/global_costmap/obstacle_layer")
         self.local_static_layer_topic = rospy.get_param("~local_static_layer_topic", "/move_base/local_costmap/static")
@@ -99,6 +101,8 @@ class Tj2Waypoints:
 
         self.waypoints_path = self.process_path(waypoints_path_param)
         self.waypoint_config = OrderedDict()
+
+        self.object_names = self.read_object_names(self.object_names_path)
 
         self.markers = MarkerArray()
         self.marker_poses = OrderedDict()
@@ -125,10 +129,16 @@ class Tj2Waypoints:
 
         if self.enable_waypoint_navigation:
             self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
+            self.pursuit_move_base = actionlib.SimpleActionClient(self.pursuit_namespace, MoveBaseAction)
 
             rospy.loginfo("Connecting to move_base...")
             self.move_base.wait_for_server()
             rospy.loginfo("move_base connected")
+            
+            rospy.loginfo("Connecting to pursuit move_base...")
+            self.pursuit_move_base.wait_for_server()
+            rospy.loginfo("pursuit move_base connected")
+
             self.local_obstacle_layer_toggle = SimpleDynamicToggle(self.local_obstacle_layer_topic, timeout=5)
             self.global_obstacle_layer_toggle = SimpleDynamicToggle(self.global_obstacle_layer_topic, timeout=5)
             self.local_static_layer_toggle = SimpleDynamicToggle(self.local_static_layer_topic, timeout=5)
@@ -136,6 +146,7 @@ class Tj2Waypoints:
             rospy.loginfo("obstacle layer configs connected")
         else:
             self.move_base = None
+            self.pursuit_move_base = None
             self.local_obstacle_layer_dyn_client = None
             self.global_obstacle_layer_dyn_client = None
 
@@ -168,37 +179,29 @@ class Tj2Waypoints:
         if len(waypoints.waypoints) <= 0:
             return full_plan
 
-        array_header = None
-        sub_plan = dict()
+        sub_plan = []
 
         def reset_sub_plan():
             nonlocal sub_plan
-            sub_plan = dict(
-                waypoints=[],  # list of tj2_waypoints/Waypoints
-                poses=[]  # list of geometry_msgs/Pose
-            )
+            sub_plan = []  # list of tj2_waypoints/Waypoints
 
         def append_to_sub_plan(waypoint):
-            nonlocal array_header, sub_plan
-            pose_stamped = self.get_waypoint_pose(waypoint)
+            nonlocal sub_plan
+            if not self.is_waypoint_valid(waypoint.name):
+                return
 
-            if array_header is None:
-                array_header = pose_stamped.header
-            sub_plan["waypoints"].append(waypoint)
-            sub_plan["poses"].append(pose_stamped.pose)
-        
+            sub_plan.append(waypoint)
+
         def append_to_full_plan():
-            nonlocal array_header, sub_plan
-            assert array_header is not None
-            assert len(sub_plan["waypoints"]) == len(sub_plan["poses"]), "%s != %s" % (len(sub_plan["waypoints"]), len(sub_plan["poses"]))
-            pose_array = geometry_msgs.msg.PoseArray()
-            pose_array.header = array_header
-            pose_array.poses = sub_plan["poses"]
+            nonlocal sub_plan
+            if len(sub_plan) == 0:
+                reset_sub_plan()
+                return
 
             # insert pose array to send to move_base.
             # only first waypoint in continuous sequence matters for other parameters like
             # ignore_orientation and intermediate_tolerance
-            full_plan.append((sub_plan["waypoints"], pose_array))
+            full_plan.append(sub_plan)
             reset_sub_plan()
         
         reset_sub_plan()
@@ -209,18 +212,32 @@ class Tj2Waypoints:
             if not waypoint.is_continuous:
                 append_to_full_plan()
 
-        if len(sub_plan["poses"]) > 0:  # if the last waypoint is continuous, make it discontinuous
+        if len(sub_plan) > 0:  # if the last waypoint is continuous, make it discontinuous
             append_to_full_plan()
         return full_plan
 
     def get_waypoint_pose(self, waypoint: Waypoint):
         name = waypoint.name
-        if not self.check_name(name):
-            rospy.logwarn("Waypoint name '%s' is not registered. Skipping" % name)
+        if self.is_waypoint(name):
+            pose_2d = self.get_waypoint(name)
+            pose = self.waypoint_to_pose(pose_2d)
+            return pose
+        else:
+            rospy.logwarn("Waypoint name '%s' is not registered." % name)
             return None
-        pose_2d = self.get_waypoint(name)
-        pose = self.waypoint_to_pose(pose_2d)
-        return pose
+    
+    def get_waypoints_as_pose_array(self, waypoints: list):
+        pose_array = geometry_msgs.msg.PoseArray()
+        for waypoint in waypoints:
+            pose_stamped = self.get_waypoint_pose(waypoint)
+            if pose_stamped is None:
+                continue
+            pose_array.header = pose_stamped.header
+            pose_array.poses.append(pose_stamped.pose)
+        return pose_array
+
+    def is_waypoint_valid(self, name):
+        return self.is_waypoint(name) or self.is_object(name)
 
     # ---
     # set move_base parameters
@@ -251,7 +268,7 @@ class Tj2Waypoints:
         return GetAllWaypointsResponse(pose_array, names)
 
     def get_waypoint_callback(self, req):
-        if not self.check_name(req.name):
+        if not self.is_waypoint(req.name):
             return False
         
         pose_2d = self.get_waypoint(req.name)
@@ -259,7 +276,7 @@ class Tj2Waypoints:
         return GetWaypointResponse(pose)
     
     def delete_waypoint_callback(self, req):
-        if not self.check_name(req.name):
+        if not self.is_waypoint(req.name):
             return False
 
         success = self.pop_waypoint(req.name)
@@ -348,6 +365,16 @@ class Tj2Waypoints:
         waypoints_path = os.path.join(waypoints_dir, waypoints_name)
         return waypoints_path
     
+    def read_object_names(self, object_names_path):
+        with open(object_names_path) as file:
+            lines = file.read().splitlines()
+        names = []
+        for line in lines:
+            line = line.strip()
+            if line > 0:
+                names.append(line)
+        return names
+
     def save_to_path(self):
         try:
             with open(self.waypoints_path, 'w') as file:
@@ -362,7 +389,7 @@ class Tj2Waypoints:
     # Node methods
     # ---
 
-    def check_name(self, name):
+    def is_waypoint(self, name):
         if name not in self.waypoint_config:
             return False
         if name not in self.marker_poses:
@@ -370,7 +397,9 @@ class Tj2Waypoints:
             pose = self.waypoint_to_pose(self.get_waypoint(name))
             self.add_marker(name, pose)
         return True
-        
+    
+    def is_object(self, name):
+        return name in self.object_names
 
     def save_from_pose(self, name, pose):
         # name: str, name of waypoint

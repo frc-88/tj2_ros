@@ -123,7 +123,6 @@ class MoveBasePursuitSender:
                 nearest_dist = detection_dist
         
         if nearest_pose is not None:
-            # compute object's velocity
             nearest_state = FilterState.from_ros_pose(nearest_pose.pose)
             nearest_state.stamp = nearest_pose.header.stamp.to_sec()
             return nearest_state
