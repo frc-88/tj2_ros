@@ -33,11 +33,10 @@
 #include "std_msgs/Float64.h"
 #include "std_msgs/Int32.h"
 #include "std_msgs/Bool.h"
+#include "std_msgs/String.h"
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 
-#include "tj2_tunnel/SwerveModule.h"
-#include "tj2_tunnel/SwerveMotor.h"
 #include "tj2_tunnel/OdomReset.h"
 
 #include "tj2_waypoints/FollowPathGoal.h"
@@ -81,8 +80,7 @@ private:
     double _min_linear_cmd;
     double _min_angular_z_cmd;
     double _zero_epsilon;
-    double _socket_open_attempts;
-    int _num_modules;
+    int _socket_open_attempts;
     double _pose_estimate_x_std, _pose_estimate_y_std, _pose_estimate_theta_std_deg;
     string _pose_estimate_frame_id;
 
@@ -123,25 +121,22 @@ private:
     // Messages
     nav_msgs::Odometry _odom_msg;
     sensor_msgs::Imu _imu_msg;
-    vector<tj2_tunnel::SwerveModule*>* _module_msgs;
+    vector<std_msgs::Float64*>* _raw_joint_msgs;
 
     ros::Time _prev_twist_timestamp;
     double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
-    bool _is_field_relative;
 
     // Publishers
     tf2_ros::TransformBroadcaster _tf_broadcaster;
     ros::Publisher _odom_pub;
     ros::Publisher _ping_pub;
     ros::Publisher _imu_pub;
-    vector<ros::Publisher>* _module_pubs;
-    ros::Publisher _match_time_pub, _autonomous_pub;
+    vector<ros::Publisher>* _raw_joint_pubs;
+    ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
     ros::Publisher _pose_estimate_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
-    ros::Subscriber _is_field_relative_sub;
-    ros::Subscriber _debug_cmd_sub;
 
     // Service Servers
     ros::ServiceServer _odom_reset_srv;
@@ -157,6 +152,8 @@ private:
     void pingCallback(const ros::TimerEvent& event);
     double getLocalTime();
 
+    void addJointPub(string name);
+
     // Service callbacks
     bool odom_reset_callback(tj2_tunnel::OdomReset::Request &req, tj2_tunnel::OdomReset::Response &resp);
 
@@ -165,22 +162,15 @@ private:
     void publishGoalStatus();
     void publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt);
     void publishImu(ros::Time recv_time, double yaw, double yaw_rate, double accel_x, double accel_y);
-    void publishModule(ros::Time recv_time,
-        int module_index,
-        double azimuth_position, double wheel_velocity,
-        double lo_voltage_command, double lo_radps,
-        double hi_voltage_command, double hi_radps
-    );
+    void publishJoint(ros::Time recv_time, int joint_index, double joint_position);
     void setGoalStatus(GoalStatus status);
     void sendWaypoints();
     void cancelWaypointGoal();
     void resetWaypoints();
-    void publishMatch(bool is_autonomous, double match_timer);
+    void publishMatch(bool is_autonomous, double match_timer, string team_color);
     void sendPoseEstimate(double x, double y, double theta);
 
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
-    void setFieldRelativeCallback(const std_msgs::BoolConstPtr& msg);
-    void debugCommandCallback(const std_msgs::Int32ConstPtr& msg);
 
     void pollSocketTask();
     bool pollSocket();
