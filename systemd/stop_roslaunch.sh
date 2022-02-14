@@ -11,15 +11,4 @@ if [ $? != 0 ]; then
 fi
 
 tmux send-keys -t $SESSION C-c
-
-while true
-do
-    tmux has-session -t $SESSION 2>/dev/null
-    sleep 0.15
-
-    if [ $? != 0 ]; then
-        echo "roslaunch exited"
-        exit
-    fi
-    tmux send-keys -t $SESSION C-d
-done
+tmux send-keys -t $SESSION C-d

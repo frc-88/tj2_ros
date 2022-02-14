@@ -6,20 +6,18 @@ TJ2Description::TJ2Description(ros::NodeHandle* nodehandle):nh(*nodehandle)
     raw_joint_subs = new vector<ros::Subscriber>();
     
     joints_msg.header.frame_id = "base_link";
-    joints_msg.name.push_back("left_outer_climber_joint");
-    joints_msg.name.push_back("left_inner_climber_joint");
-    joints_msg.name.push_back("right_outer_climber_joint");
-    joints_msg.name.push_back("right_inner_climber_joint");
-    joints_msg.name.push_back("left_outer_climber_hook_joint");
-    joints_msg.name.push_back("left_inner_climber_hook_joint");
-    joints_msg.name.push_back("right_outer_climber_hook_joint");
-    joints_msg.name.push_back("right_inner_climber_hook_joint");
-    joints_msg.name.push_back("intake_joint");
-    joints_msg.name.push_back("turret_joint");
-    joints_msg.name.push_back("camera_joint");
 
-    for (int index = 0; index < joints_msg.name.size(); index++)
+    string key;
+    if (!ros::param::search("joint_names", key)) {
+        ROS_ERROR("Failed to find joint_names parameter");
+        std::exit(EXIT_FAILURE);
+    }
+    ROS_DEBUG("Found joint_names: %s", key.c_str());
+    nh.getParam(key, _joint_names);
+
+    for (int index = 0; index < _joint_names.size(); index++)
     {
+        joints_msg.name.push_back(_joint_names.at(index));
         joints_msg.position.push_back(0.0);
 
         raw_joint_subs->push_back(

@@ -15,7 +15,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 1.57"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/chassis.stl"/>
+                <mesh filename="package://tj2_description/meshes/diffyjr/chassis.stl"/>
             </geometry>
             <material name="blue"/>
         </visual>
@@ -34,7 +34,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/wheel.stl"/>
+                <mesh filename="package://tj2_description/meshes/diffyjr/wheel.stl"/>
             </geometry>
             <material name="red"/>
         </visual>
@@ -44,7 +44,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/wheel.stl"/>
+                <mesh filename="package://tj2_description/meshes/diffyjr/wheel.stl"/>
             </geometry>
             <material name="red"/>
         </visual>
@@ -54,7 +54,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/wheel.stl"/>
+                <mesh filename="package://tj2_description/meshes/diffyjr/wheel.stl"/>
             </geometry>
             <material name="red"/>
         </visual>
@@ -64,7 +64,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/wheel.stl"/>
+                <mesh filename="package://tj2_description/meshes/diffyjr/wheel.stl"/>
             </geometry>
             <material name="red"/>
         </visual>

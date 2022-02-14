@@ -16,7 +16,7 @@ def read_class_names(class_names_path):
     names = []
     for line in lines:
         line = line.strip()
-        if line > 0:
+        if len(line) > 0:
             names.append(line)
     return names
 

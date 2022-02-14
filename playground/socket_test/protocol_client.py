@@ -105,6 +105,7 @@ class MyTunnel(TunnelClient):
             "odom": "ffffff",
             "module": "dffffff",
             "imu": "ffff",
+            "joint": "df",
         }
         super(MyTunnel, self).__init__(address, port, categories)
         self.pings = []
@@ -145,6 +146,8 @@ class MyTunnel(TunnelClient):
             rate = 1.0 / np.mean(np.diff(self.odoms))
             data.insert(0, rate)
             # logger.info("Odometry. Rate: %0.4f Hz, x=%0.4f, y=%0.4f, t=%0.4f, vx=%0.4f, vy=%0.4f, vt=%0.4f" % tuple(data))
+        elif category == "joint":
+            logger.info("Joint: %s, %s" % (data[0], data[1]))
 
 
 def main():

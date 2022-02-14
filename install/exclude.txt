@@ -7,6 +7,7 @@ tj2_detectnet/models
 tj2_limelight/models
 .git
 playground/swerve-kinematics/data
+playground/bounce_trajectories/data
 tj2_tools/build/
 tj2_tools/dist/
 tj2_tools/tj2_tools.egg-info/

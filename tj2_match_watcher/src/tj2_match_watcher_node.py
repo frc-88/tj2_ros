@@ -5,7 +5,7 @@ from std_srvs.srv import Trigger
 from std_msgs.msg import Float64
 from std_msgs.msg import Bool
 
-from tj2_state_machine.srv import StartMatch, StartMatchResponse
+from tj2_match_watcher.srv import StartMatch, StartMatchResponse
 
 PREGAME = -1
 AUTONOMOUS = 0
@@ -23,9 +23,9 @@ PERIODS = {
 
 
 
-class TJ2StateMachine(object):
+class Tj2MatchWatcher(object):
     def __init__(self):
-        self.node_name = "tj2_state_machine"
+        self.node_name = "tj2_match_watcher"
         rospy.init_node(
             self.node_name
             # disable_signals=True
@@ -87,9 +87,9 @@ class TJ2StateMachine(object):
     
     def match_time_callback(self, msg):
         match_time = msg.data
-        rospy.loginfo_throttle(2, "Match time: %s" % match_time)
         if self.prev_match_time == match_time:
             return 
+        rospy.loginfo_throttle(1, "Match time: %s" % match_time)
         self.prev_match_time = match_time
         
         if match_time <= 0.0:
@@ -147,7 +147,7 @@ class TJ2StateMachine(object):
 
 
 if __name__ == "__main__":
-    node = TJ2StateMachine()
+    node = Tj2MatchWatcher()
     try:
         node.run()
 

@@ -27,14 +27,14 @@ from actionlib_msgs.msg import GoalStatus
 from tj2_pursuit.msg import PursueObjectAction, PursueObjectGoal, PursueObjectResult
 
 from tj2_tools.particle_filter.state import FilterState
-from tj2_tools.particle_filter.predictor import BouncePredictor
+from tj2_tools.predictions.predictor import BouncePredictor
 from tj2_tools.transforms import lookup_transform
 from tj2_tools.yolo.utils import get_label, read_class_names
 
 
-class MoveBasePursuitSender:
+class Tj2Pursuit:
     def __init__(self):
-        self.name = "move_base_pursuit_sender"
+        self.name = "tj2_pursuit"
         rospy.init_node(
             self.name
         )
@@ -45,11 +45,11 @@ class MoveBasePursuitSender:
         self.map_frame = rospy.get_param("~map_frame", "map")
         self.base_frame = rospy.get_param("~base_frame", "base_link")
 
-        self.object_names_path = rospy.get_param("~object_names_path", "objects.names")
-        self.class_names = read_class_names(self.object_names_path)
+        self.class_names_path = rospy.get_param("~class_names_path", "objects.names")
+        self.class_names = read_class_names(self.class_names_path)
 
-        self.detections_sub = Subscriber("detections", Detection3DArray, self.detections_callback, queue_size=10)
-        self.odom_sub = Subscriber("odom", Odometry, self.odom_callback, queue_size=25)
+        self.detections_sub = Subscriber("detections", Detection3DArray)
+        self.odom_sub = Subscriber("odom", Odometry)
         self.time_sync = ApproximateTimeSynchronizer([self.detections_sub, self.odom_sub], queue_size=50, slop=0.02)
         self.time_sync.registerCallback(self.obj_odom_callback)
 
@@ -75,6 +75,7 @@ class MoveBasePursuitSender:
 
         self.pursue_object_server = actionlib.SimpleActionServer("pursue_object", PursueObjectAction, self.pursue_object_callback, auto_start=False)
         self.pursue_object_server.start()
+        rospy.loginfo("%s is ready" % self.name)
 
     def pursue_object_callback(self, goal):
         rate = rospy.Rate(self.send_rate)
@@ -184,7 +185,7 @@ class MoveBasePursuitSender:
         if self.prev_pose_stamped == future_map_pose_stamped:
             return False
         self.prev_pose_stamped = future_map_pose_stamped
-        
+
         self.follow_object_goal_pub.publish(future_map_pose_stamped)
 
         pose_array = PoseArray()
@@ -199,7 +200,7 @@ class MoveBasePursuitSender:
         rospy.spin()
     
 if __name__ == "__main__":
-    node = MoveBasePursuitSender()
+    node = Tj2Pursuit()
     try:
         node.run()
     except rospy.ROSInterruptException:
