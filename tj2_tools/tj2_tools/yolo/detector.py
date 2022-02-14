@@ -7,6 +7,7 @@ from yolov5.utils.torch_utils import select_device
 from yolov5.utils.general import non_max_suppression, scale_coords, xyxy2xywh
 from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.augmentations import letterbox
+from .utils import get_label, get_obj_id
 
 
 class YoloDetector:
@@ -131,11 +132,7 @@ class YoloDetector:
         return detections, overlay_image
 
     def get_obj_id(self, class_index, class_count):
-        return (class_count << 16) | (int(class_index))
+        return get_obj_id(class_index, class_count)
 
     def get_label(self, obj_id):
-        class_index = obj_id & 0xffff
-        class_count = obj_id >> 16
-
-        label = self.class_names[class_index]
-        return label, class_count
+        return get_label(self.class_names, obj_id)

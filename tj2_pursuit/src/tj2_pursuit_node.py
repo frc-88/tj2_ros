@@ -9,18 +9,11 @@ import actionlib
 import tf2_ros
 import tf2_geometry_msgs
 
-from tf.transformations import quaternion_from_euler
-
-from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import PoseArray
 from geometry_msgs.msg import Twist
-from geometry_msgs.msg import Quaternion
 
 from nav_msgs.msg import Odometry
-
-from std_msgs.msg import Bool
-from std_msgs.msg import Header
 
 from vision_msgs.msg import Detection3DArray
 
@@ -31,10 +24,12 @@ from message_filters import Subscriber
 
 from actionlib_msgs.msg import GoalStatus
 
+from tj2_pursuit.msg import PursueObjectAction, PursueObjectGoal, PursueObjectResult
+
 from tj2_tools.particle_filter.state import FilterState
-from tj2_tools.particle_filter.state import DeltaMeasurement
 from tj2_tools.particle_filter.predictor import BouncePredictor
 from tj2_tools.transforms import lookup_transform
+from tj2_tools.yolo.utils import get_label, read_class_names
 
 
 class MoveBasePursuitSender:
@@ -46,33 +41,31 @@ class MoveBasePursuitSender:
 
         self.distance_offset = rospy.get_param("~distance_offset", 0.0)
         self.distance_threshold = rospy.get_param("~distance_threshold", 0.1)
-        self.detection_timeout = rospy.Duration(rospy.get_param("~detection_timeout", 3.0))
-        self.trigger_timeout = rospy.Duration(rospy.get_param("~trigger_timeout", 0.5))
         self.send_rate = rospy.get_param("~send_rate", 2.5)
         self.map_frame = rospy.get_param("~map_frame", "map")
         self.base_frame = rospy.get_param("~base_frame", "base_link")
+
+        self.object_names_path = rospy.get_param("~object_names_path", "objects.names")
+        self.class_names = read_class_names(self.object_names_path)
 
         self.detections_sub = Subscriber("detections", Detection3DArray, self.detections_callback, queue_size=10)
         self.odom_sub = Subscriber("odom", Odometry, self.odom_callback, queue_size=25)
         self.time_sync = ApproximateTimeSynchronizer([self.detections_sub, self.odom_sub], queue_size=50, slop=0.02)
         self.time_sync.registerCallback(self.obj_odom_callback)
 
-        self.trigger_sub = rospy.Subscriber("follow_trigger", Bool, self.follow_trigger_callback, queue_size=10)
-        self.should_follow = False
-        self.should_follow_timer = rospy.Time.now()
-
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
         self.follow_object_goal_pub = rospy.Publisher("follow_object_goal", PoseStamped, queue_size=10)
 
+        self.tracking_object_name = ""
+        
         self.predictor = BouncePredictor(  # TODO: make dynamically configurable
             v_max_robot=4.0,
             past_window_size=4,
             vx_std_dev_threshold=1.0,
             vy_std_dev_threshold=1.0
         )
-        self.future_pose_stamped = PoseStamped()
-
-        self.object_timer = rospy.Time.now()
+        self.future_pose_stamped = None
+        self.prev_pose_stamped = None
 
         self.lock = threading.Lock()
         self.move_base_action = actionlib.SimpleActionClient("/pursuit/move_base", MoveBaseAction)
@@ -80,25 +73,38 @@ class MoveBasePursuitSender:
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.move_base_goal = None
-        self.goal_timer = rospy.Timer(rospy.Duration(1.0 / self.send_rate), self.send_goal_callback)
+        self.pursue_object_server = actionlib.SimpleActionServer("pursue_object", PursueObjectAction, self.pursue_object_callback, auto_start=False)
+        self.pursue_object_server.start()
 
-    def send_goal_callback(self, timer):
-        if self.move_base_goal is None:
-            return
-        self.move_base_action.send_goal(self.move_base_goal)
+    def pursue_object_callback(self, goal):
+        rate = rospy.Rate(self.send_rate)
+        start_timer = rospy.Time.now()
+        detection_timeout = goal.timeout
+        self.tracking_object_name = goal.object_name
+        self.prev_pose_stamped = None
+        while True:
+            rate.sleep()
+            with self.lock:
+                if rospy.Time.now() - start_timer > detection_timeout:
+                    self.pursue_object_server.set_aborted()
+                    rospy.logwarn("Timed out while searching for '%s'" % self.tracking_object_name)
+                    break
+                if rospy.is_shutdown() or self.pursue_object_server.is_preempt_requested():
+                    self.pursue_object_server.set_preempted()
+                    break
 
-    def follow_trigger_callback(self, msg):
-        self.should_follow_timer = rospy.Time.now()
-        if msg.data != self.should_follow:
-            rospy.loginfo(("Enabling" if msg.data else "Disabling") + " follow object")
-            if not msg.data:
-                self.cancel_goal()
-        self.should_follow = msg.data
+                if self.pursue_object(goal.xy_tolerance):
+                    self.pursue_object_server.set_succeeded()
+                    break
+
+        self.cancel_goal()
 
     def obj_odom_callback(self, detections_msg, odom_msg):
+        if len(self.tracking_object_name) == 0:
+            return
         with self.lock:
-            nearest_obj = self.get_nearest_detection(detections_msg)
+            nearest_obj = self.get_nearest_detection(self.tracking_object_name, detections_msg)
+            self.future_pose_stamped = None
             if nearest_obj is None:
                 return
             odom_state = FilterState.from_odom(odom_msg)
@@ -106,14 +112,16 @@ class MoveBasePursuitSender:
             predicted_state = self.predictor.get_robot_intersection(object_state, odom_state)
             if predicted_state is not None:
                 self.object_timer = rospy.Time.now()
-
                 self.future_pose_stamped.pose = predicted_state.to_ros_pose()
                 self.future_pose_stamped.header = odom_msg.header
 
-    def get_nearest_detection(self, detections_msg):
+    def get_nearest_detection(self, object_name, detections_msg):
         nearest_pose = None
         nearest_dist = None
         for detection in detections_msg.detections:
+            label = get_label(self.class_names, detection.results[0].id)
+            if label != object_name:
+                continue
             detection_pose = detection.results[0].pose.pose
             detection_dist = self.get_distance(detection_pose)
             if nearest_dist is None or detection_dist < nearest_dist:
@@ -143,13 +151,11 @@ class MoveBasePursuitSender:
         return math.sqrt(x * x + y * y)
 
     def cancel_goal(self):
+        self.tracking_object_name = ""
         self.move_base_action.cancel_all_goals()
-        self.move_base_goal = None
+        self.stop_motors()
 
     def stop_motors(self):
-        action_state = self.move_base_action.get_state()
-        if action_state == GoalStatus.ACTIVE:
-            self.cancel_goal()
         self.cmd_vel_pub.publish(Twist())
 
     def get_pose_in_map(self, pose_stamped):
@@ -160,33 +166,38 @@ class MoveBasePursuitSender:
         map_pose = tf2_geometry_msgs.do_transform_pose(pose_stamped, map_tf)
         return map_pose
 
-    def pursue_object(self):
-        self.follow_object_goal_pub.publish(self.future_pose_stamped)
+    def get_robot_pose(self):
+        map_tf = lookup_transform(self.tf_buffer, self.map_frame, self.base_frame)
+        if map_tf is None:
+            return None
+        map_pose = tf2_geometry_msgs.do_transform_pose(PoseStamped(), map_tf)
+        return map_pose
+
+    def pursue_object(self, xy_tolerance):
+        if self.future_pose_stamped is None:
+            return False
+        future_map_pose_stamped = self.get_pose_in_map(self.future_pose_stamped)
+        robot_pose_stamped = self.get_robot_pose()
+        distance = self.get_distance(future_map_pose_stamped.pose, robot_pose_stamped.pose)
+        if distance < xy_tolerance:
+            return True
+        if self.prev_pose_stamped == future_map_pose_stamped:
+            return False
+        self.prev_pose_stamped = future_map_pose_stamped
+        
+        self.follow_object_goal_pub.publish(future_map_pose_stamped)
 
         pose_array = PoseArray()
-        pose_array.poses.append(self.future_pose_stamped.pose)
-        pose_array.header = self.future_pose_stamped.header
-        self.move_base_goal = MoveBaseGoal()
-        self.move_base_goal.target_poses = pose_array
+        pose_array.poses.append(future_map_pose_stamped.pose)
+        pose_array.header = future_map_pose_stamped.header
+        move_base_goal = MoveBaseGoal()
+        move_base_goal.target_poses = pose_array
+        self.move_base_action.send_goal(move_base_goal)
+        return False
 
     def run(self):
-        rate = rospy.Rate(10.0)
-        while not rospy.is_shutdown():
-            rate.sleep()
-            with self.lock:
-                if not self.should_follow:
-                    self.stop_motors()
-                    continue
-                if rospy.Time.now() - self.should_follow_timer > self.trigger_timeout:
-                    rospy.logwarn_throttle(0.5, "Trigger timer expired!")
-                    self.stop_motors()
-                    continue
-
-                if rospy.Time.now() - self.object_timer > self.detection_timeout:
-                    continue
-
-                self.pursue_object()
-
+        rospy.spin()
+    
 if __name__ == "__main__":
     node = MoveBasePursuitSender()
     try:

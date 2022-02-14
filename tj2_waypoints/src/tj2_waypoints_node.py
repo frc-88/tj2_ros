@@ -34,7 +34,11 @@ from tj2_waypoints.srv import SaveTF, SaveTFResponse
 from tj2_waypoints.msg import FollowPathAction, FollowPathGoal, FollowPathResult
 from tj2_waypoints.msg import Waypoint, WaypointArray
 
+from tj2_pursuit.msg import PursueObjectAction
+
 from state_machine import WaypointStateMachine
+
+from tj2_tools.yolo.utils import read_class_names
 
 
 class SimpleDynamicToggle:
@@ -83,7 +87,7 @@ class Tj2Waypoints:
         waypoints_path_param = rospy.get_param("~waypoints_path", "~/.ros/waypoints")
         waypoints_path_param = os.path.expanduser(waypoints_path_param)
         waypoints_path_param += ".yaml"
-        self.object_names_path = rospy.get_param("~object_names_path", "objects.names")
+        self.class_names_path = rospy.get_param("~class_names_path", "objects.names")
 
         self.map_frame = rospy.get_param("~map", "map")
         self.base_frame = rospy.get_param("~base_link", "base_link")
@@ -91,7 +95,7 @@ class Tj2Waypoints:
         self.marker_color = rospy.get_param("~marker_color", (0.0, 0.0, 1.0, 1.0))
         self.enable_waypoint_navigation = rospy.get_param("~enable_waypoint_navigation", False)
         self.move_base_namespace = rospy.get_param("~move_base_namespace", "/move_base")
-        self.pursuit_namespace = rospy.get_param("~pursuit_namespace", "/pursuit/move_base")
+        self.pursuit_namespace = rospy.get_param("~pursuit_namespace", "/tj2/pursue_object")
         self.local_obstacle_layer_topic = rospy.get_param("~local_obstacle_layer_topic", "/move_base/local_costmap/obstacle_layer")
         self.global_obstacle_layer_topic = rospy.get_param("~global_obstacle_layer_topic", "/move_base/global_costmap/obstacle_layer")
         self.local_static_layer_topic = rospy.get_param("~local_static_layer_topic", "/move_base/local_costmap/static")
@@ -102,7 +106,7 @@ class Tj2Waypoints:
         self.waypoints_path = self.process_path(waypoints_path_param)
         self.waypoint_config = OrderedDict()
 
-        self.object_names = self.read_object_names(self.object_names_path)
+        self.class_names = read_class_names(self.class_names_path)
 
         self.markers = MarkerArray()
         self.marker_poses = OrderedDict()
@@ -129,15 +133,16 @@ class Tj2Waypoints:
 
         if self.enable_waypoint_navigation:
             self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
-            self.pursuit_move_base = actionlib.SimpleActionClient(self.pursuit_namespace, MoveBaseAction)
 
             rospy.loginfo("Connecting to move_base...")
             self.move_base.wait_for_server()
             rospy.loginfo("move_base connected")
-            
-            rospy.loginfo("Connecting to pursuit move_base...")
-            self.pursuit_move_base.wait_for_server()
-            rospy.loginfo("pursuit move_base connected")
+
+            self.pursuit_action = actionlib.SimpleActionClient(self.pursuit_namespace, PursueObjectAction)
+
+            rospy.loginfo("Connecting to pursuit...")
+            self.pursuit_action.wait_for_server()
+            rospy.loginfo("pursuit connected")
 
             self.local_obstacle_layer_toggle = SimpleDynamicToggle(self.local_obstacle_layer_topic, timeout=5)
             self.global_obstacle_layer_toggle = SimpleDynamicToggle(self.global_obstacle_layer_topic, timeout=5)
@@ -146,7 +151,6 @@ class Tj2Waypoints:
             rospy.loginfo("obstacle layer configs connected")
         else:
             self.move_base = None
-            self.pursuit_move_base = None
             self.local_obstacle_layer_dyn_client = None
             self.global_obstacle_layer_dyn_client = None
 
@@ -364,16 +368,6 @@ class Tj2Waypoints:
         waypoints_name += ".yaml"
         waypoints_path = os.path.join(waypoints_dir, waypoints_name)
         return waypoints_path
-    
-    def read_object_names(self, object_names_path):
-        with open(object_names_path) as file:
-            lines = file.read().splitlines()
-        names = []
-        for line in lines:
-            line = line.strip()
-            if line > 0:
-                names.append(line)
-        return names
 
     def save_to_path(self):
         try:
@@ -399,7 +393,7 @@ class Tj2Waypoints:
         return True
     
     def is_object(self, name):
-        return name in self.object_names
+        return name in self.class_names
 
     def save_from_pose(self, name, pose):
         # name: str, name of waypoint
