@@ -155,7 +155,7 @@ int TunnelProtocol::parseBuffer(char* buffer, int start_index, int stop_index)
         }
         // do not modify index from this point onward as the for loop increments index
         last_packet_index = index + 1;
-        // ROS_DEBUG("Found a packet: %s", packetToString(buffer, packet_start, index).c_str());
+        // ROS_INFO("Found a packet: %s. %d..%d", packetToString(buffer, packet_start, index).c_str(), packet_start, index);
         PacketResult* result = parsePacket(buffer, packet_start, last_packet_index);
         _result_queue.push_back(result);
     }

@@ -1,34 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <arg name="robot_address" default="10.0.88.2"/>
-    <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
-        <arg name="robot_address" value="$(arg robot_address)"/>
-    </include>
-    <include file="$(find tj2_tunnel)/launch/tj2_tunnel.launch">
-        <arg name="publish_odom_tf" value="true"/>
-        <arg name="robot_address" value="$(arg robot_address)"/>
-    </include>
-    <include file="$(find tj2_description)/launch/tj2_description.launch"/>
-    <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
-
-    <arg name="map_name" default="map-{date}"/>
-    <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
-        <arg name="mode" value="mapping"/>
-        <arg name="map_name" value="$(arg map_name)"/>
-    </include>
-    <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
-        <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
-    </include>
-
-    <node pkg="rosbag" type="record" name="rosbag_record_mapping"
-       args="record -o /media/storage/bags/mapping            
-            /tj2/odom
-
-            /front_laser/scan
-            /rear_laser/scan
-
-            /tj2/robot_status
-            /tj2/cmd_vel
-            /tj2/ping
-            " />
+    <include file="$(find tj2_bringup)/launch/diffyjr_mapping.launch"/>
+    <!-- <include file="$(find tj2_bringup)/launch/2022_robot_mapping.launch"/> -->
 </launch>

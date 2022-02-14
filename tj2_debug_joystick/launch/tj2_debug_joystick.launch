@@ -17,7 +17,7 @@
         <remap from="joy" to="/$(arg topic_name)" />
         <remap from="joy/set_feedback" to="/$(arg topic_name)/set_feedback" />
     </node>
-    <node name="$(anon joy_throttle)" pkg="topic_tools" type="throttle" required="true" args="messages /$(arg topic_name) 30 /$(arg topic_name)_throttled" />
+    <node name="$(anon joy_throttle)" pkg="topic_tools" type="throttle" required="true" args="messages /$(arg topic_name) 20 /$(arg topic_name)_throttled" />
 
     <group ns="tj2" >
         <node name="$(anon tj2_debug_joystick)" pkg="tj2_debug_joystick" type="tj2_debug_joystick_node.py" output="screen" required="false">
@@ -34,7 +34,6 @@
             <param name="linear_y_axis" value="$(arg joystick_linear_y_axis)" />
             <param name="angular_axis" value="$(arg joystick_angular_axis)" />
 
-            <param name="image_directory" value="$(find tj2_debug_joystick)/images" />
             <remap from="cmd_vel" to="cmd_vel_teleop"/>
         </node>
     </group>

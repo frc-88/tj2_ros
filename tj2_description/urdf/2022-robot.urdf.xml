@@ -17,7 +17,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/chassis.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/chassis.stl"/>
             </geometry>
             <material name="blue"/>
         </visual>
@@ -27,7 +27,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/turret.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/turret.stl"/>
             </geometry>
             <material name="red"/>
         </visual>
@@ -39,7 +39,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/intake.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/intake.stl"/>
             </geometry>
             <material name="red"/>
         </visual>
@@ -51,7 +51,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/camera.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/camera.stl"/>
             </geometry>
             <material name="red"/>
         </visual>
@@ -65,7 +65,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/climber.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/climber.stl"/>
             </geometry>
             <material name="white"/>
         </visual>
@@ -77,7 +77,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/climber.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/climber.stl"/>
             </geometry>
             <material name="white"/>
         </visual>
@@ -89,7 +89,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/climber.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/climber.stl"/>
             </geometry>
             <material name="white"/>
         </visual>
@@ -101,7 +101,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/climber.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/climber.stl"/>
             </geometry>
             <material name="white"/>
         </visual>
@@ -115,7 +115,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/hook.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/hook.stl"/>
             </geometry>
             <material name="white"/>
         </visual>
@@ -125,7 +125,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/hook.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/hook.stl"/>
             </geometry>
             <material name="white"/>
         </visual>
@@ -135,7 +135,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/hook.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/hook.stl"/>
             </geometry>
             <material name="white"/>
         </visual>
@@ -145,7 +145,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://tj2_description/meshes/hook.stl"/>
+                <mesh filename="package://tj2_description/meshes/2022_robot/hook.stl"/>
             </geometry>
             <material name="white"/>
         </visual>

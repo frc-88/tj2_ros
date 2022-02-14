@@ -26,6 +26,14 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     ros::param::param<int>("~socket_open_attempts", _socket_open_attempts, 50);
 
+    string key;
+    if (!ros::param::search("joint_names", key)) {
+        ROS_ERROR("Failed to find joint_names parameter");
+        std::exit(EXIT_FAILURE);
+    }
+    ROS_DEBUG("Found joint_names: %s", key.c_str());
+    nh.getParam(key, _joint_names);
+
     _cmd_vel_timeout = ros::Duration(_cmd_vel_timeout_param);
 
     _write_buffer = new char[TunnelProtocol::MAX_PACKET_LEN];
@@ -108,17 +116,10 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     _raw_joint_pubs = new vector<ros::Publisher>();
     _raw_joint_msgs = new vector<std_msgs::Float64*>();
-    addJointPub("left_outer_climber_joint");
-    addJointPub("left_inner_climber_joint");
-    addJointPub("right_outer_climber_joint");
-    addJointPub("right_inner_climber_joint");
-    addJointPub("left_outer_climber_hook_joint");
-    addJointPub("left_inner_climber_hook_joint");
-    addJointPub("right_outer_climber_hook_joint");
-    addJointPub("right_inner_climber_hook_joint");
-    addJointPub("intake_joint");
-    addJointPub("turret_joint");
-    addJointPub("camera_joint");
+    
+    for (int index = 0; index < _joint_names.size(); index++) {
+        addJointPub(_joint_names.at(index));
+    }
 
     _match_time_pub = nh.advertise<std_msgs::Float64>("match_time", 10);
     _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
@@ -149,6 +150,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
 void TJ2Tunnel::addJointPub(string name)
 {
+    ROS_INFO("Subscribing to joint topic: %s", name.c_str());
     _raw_joint_pubs->push_back(nh.advertise<std_msgs::Float64>(name, 50));
     _raw_joint_msgs->push_back(new std_msgs::Float64);
 }
@@ -287,14 +289,15 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
 {
     string category = result->getCategory();
     if (category.compare("odom") == 0) {
+        double x = result->getDouble();
+        double y = result->getDouble();
+        double t = result->getDouble();
+        double vx = result->getDouble();
+        double vy = result->getDouble();
+        double vt = result->getDouble();
         publishOdom(
             result->getRecvTime(),
-            result->getDouble(),
-            result->getDouble(),
-            result->getDouble(),
-            result->getDouble(),
-            result->getDouble(),
-            result->getDouble()
+            x, y, t, vx, vy, vt
         );
     }
     else if (category.compare("ping") == 0) {
@@ -306,19 +309,28 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         _ping_pub.publish(msg);
     }
     else if (category.compare("imu") == 0) {
+        double yaw = result->getDouble();
+        double yaw_rate = result->getDouble();
+        double accel_x = result->getDouble();
+        double accel_y = result->getDouble();
         publishImu(
             result->getRecvTime(),
-            result->getDouble(),
-            result->getDouble(),
-            result->getDouble(),
-            result->getDouble()
+            yaw, yaw_rate, accel_x, accel_y
         );
     }
     else if (category.compare("joint") == 0) {
+        /* For some reason, if publishJoint is called like this:
+            publishJoint(
+                result->getRecvTime(),
+                result->getInt(), result->getDouble()
+            );
+            getDouble gets called before getInt... Separating out into variables fixes this  
+        */
+        int index = result->getInt();
+        double value = result->getDouble();
         publishJoint(
             result->getRecvTime(),
-            result->getInt(),
-            result->getDouble()
+            index, value
         );
     }
     else if (category.compare("goal") == 0) {
@@ -444,7 +456,8 @@ void TJ2Tunnel::publishImu(ros::Time recv_time, double yaw, double yaw_rate, dou
 void TJ2Tunnel::publishJoint(ros::Time recv_time, int joint_index, double joint_position)
 {
     if (joint_index < 0 || joint_index >= _raw_joint_msgs->size()) {
-        ROS_WARN("Invalid joint index received: %d. Valid range is 0..%lu", joint_index, _raw_joint_msgs->size());
+        ROS_WARN("Invalid joint index received: %d. Valid range is 0..%lu. (Joint value was %f. recv time is %f)", joint_index, _raw_joint_msgs->size() - 1, joint_position, recv_time.toSec());
+        return;
     }
     std_msgs::Float64* msg = _raw_joint_msgs->at(joint_index);
     msg->data = joint_position;

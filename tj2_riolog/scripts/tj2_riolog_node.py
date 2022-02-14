@@ -49,9 +49,7 @@ class SSHTailer(Tailer):
 
     def tail(self):
         remote_file = self.sftp_client.open(self.remote_path, 'r')
-        lines = remote_file.read().splitlines()
-        for line in lines[-min(len(lines), self.max_initial_lines):]:
-            yield line.decode()
+        yield remote_file.read().decode()
 
         while not rospy.is_shutdown():
             fstat = self.sftp_client.stat(self.remote_path)

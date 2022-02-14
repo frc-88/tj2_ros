@@ -11,6 +11,8 @@ class TJ2Description {
 private:
     ros::NodeHandle nh;  // ROS node handle
 
+    std::vector<std::string> _joint_names;
+
     // Publishers
     ros::Publisher joint_pub;
 

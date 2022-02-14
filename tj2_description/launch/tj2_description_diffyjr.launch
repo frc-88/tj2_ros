@@ -1,0 +1,26 @@
+<launch>
+    <arg name="model" default="$(find tj2_description)/urdf/diffyjr.urdf.xml"/>
+    <arg name="gui" default="false" />
+
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
+    <param name="use_gui" value="$(arg gui)"/>
+    <rosparam param="source_list" subst_value="True">
+    [
+        "/tj2/joint_states",
+    ]
+    </rosparam>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+    <group ns="tj2" >
+        <node name="tj2_description" pkg="tj2_description" type="tj2_description_node" output="screen">
+            <rosparam param="joint_names" file="$(find tj2_description)/config/joints.yaml" command="load"/>
+        </node>
+    </group>
+
+    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_laser" args="-0.0553 0.116 0.253 0 0 1 0 base_footprint laser 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_camera" args="0.2032 0.0 0.254 0 0 0 1 base_footprint camera_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_imu" args="0.0634 0.0012 0.2039 0 0 0 1 base_footprint imu 33" />
+    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_limelight" args="0.2182 0.0 0.2188  0.0 0.0 0.0 1.0 base_footprint limelight_link 33" />
+</launch>

@@ -7,6 +7,7 @@
 
     <group ns="tj2">
         <node name="tj2_tunnel" pkg="tj2_tunnel" type="tj2_tunnel_node" output="screen" required="true">
+            <rosparam param="joint_names" file="$(find tj2_description)/config/diffyjr_joints.yaml" command="load"/>
             <param name="host" value="$(arg robot_address)"/>
             <param name="remote_angular_units_conversion" value="1.0"/>
             <param name="remote_linear_units_conversion" value="1.0"/>

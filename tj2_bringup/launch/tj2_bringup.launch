@@ -1,34 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <arg name="robot_address" default="10.0.88.2"/>
-    <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
-        <arg name="robot_address" value="$(arg robot_address)"/>
-    </include>
-    <include file="$(find tj2_tunnel)/launch/tj2_tunnel.launch">
-        <arg name="publish_odom_tf" value="true"/>
-        <arg name="robot_address" value="$(arg robot_address)"/>
-    </include>
-    <include file="$(find tj2_description)/launch/tj2_description.launch"/>
-    <include file="$(find tj2_camera)/launch/camera_launcher.launch"/>
-    <include file="$(find tj2_state_machine)/launch/tj2_state_machine.launch"/>
-    <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/>
-    <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
-    <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
-    <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
-    <!-- <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/> -->
-    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
-    <!-- <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/> -->
-
-    <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
-    <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
-        <!-- <arg name="mode" value="localize"/> -->
-        <arg name="mode" value="idle"/>
-        <arg name="map_name" value="$(arg map_name)"/>
-    </include>
-    <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
-        <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
-    </include>
-    <node name="rosbag_record_robot" pkg="rosbag_snapshot" type="snapshot" args="">
-        <rosparam file="$(find tj2_bringup)/config/bag_snapshot.yaml" command="load" ns=""/>
-    </node>
+    <include file="$(find tj2_bringup)/launch/diffyjr_bringup.launch"/>
+    <!-- <include file="$(find tj2_bringup)/launch/2022_robot_bringup.launch"/> -->
 </launch>

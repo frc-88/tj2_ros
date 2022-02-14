@@ -83,6 +83,7 @@ private:
     int _socket_open_attempts;
     double _pose_estimate_x_std, _pose_estimate_y_std, _pose_estimate_theta_std_deg;
     string _pose_estimate_frame_id;
+    std::vector<std::string> _joint_names;
 
     // Members
     const int READ_BUFFER_LEN = 4096;

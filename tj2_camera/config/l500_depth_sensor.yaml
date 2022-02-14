@@ -16,5 +16,5 @@ noise_filtering: 4
 post_processing_sharpening: 1
 pre_processing_sharpening: 0
 receiver_gain: 9
-sensor_mode: 0
+# sensor_mode: 0
 visual_preset: 0
