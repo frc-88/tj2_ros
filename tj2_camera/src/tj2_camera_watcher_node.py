@@ -28,11 +28,11 @@ class TJ2CameraWatcher:
         self.rgb_camera_config = rospy.get_param("~rgb_camera_config", None)
 
         self.camera_rate = rostopic.ROSTopicHz(15)
-        self.camera_topic = self.camera_ns + "/color/image_raw"
+        self.camera_topic = self.camera_ns + "/color/camera_info"
         rospy.Subscriber(self.camera_topic, rospy.AnyMsg, self.camera_rate.callback_hz, callback_args=self.camera_topic, queue_size=1)
 
         self.depth_rate = rostopic.ROSTopicHz(15)
-        self.depth_topic = self.camera_ns + "/depth/image_raw"
+        self.depth_topic = self.camera_ns + "/depth/camera_info"
         rospy.Subscriber(self.depth_topic, rospy.AnyMsg, self.depth_rate.callback_hz, callback_args=self.depth_topic, queue_size=1)
 
         self.l500_depth_client = None

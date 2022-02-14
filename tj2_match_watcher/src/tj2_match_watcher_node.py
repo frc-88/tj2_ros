@@ -5,7 +5,6 @@ from std_srvs.srv import Trigger
 from std_msgs.msg import Float64
 from std_msgs.msg import Bool
 
-from tj2_match_watcher.srv import StartMatch, StartMatchResponse
 
 PREGAME = -1
 AUTONOMOUS = 0
@@ -41,13 +40,7 @@ class Tj2MatchWatcher(object):
         self.period = PREGAME
         self.prev_match_time = 0.0
 
-        self.start_camera_srv = self.make_service_client("/tj2/start_camera", Trigger, wait=True)
-        self.stop_camera_srv = self.make_service_client("/tj2/stop_camera", Trigger, wait=False)
-        self.start_record_srv = self.make_service_client("/tj2/start_record", Trigger, wait=False)
-        self.stop_record_srv = self.make_service_client("/tj2/stop_record", Trigger, wait=False)
         self.trigger_snapshot_srv = self.make_service_client("/trigger_snapshot", Trigger, wait=False)
-
-        # self.start_match_srv = self.make_service("start_match", StartMatch, self.start_match_callback)
 
         self.match_time_sub = rospy.Subscriber("match_time", Float64, self.match_time_callback, queue_size=100)
         self.is_autonomous_sub = rospy.Subscriber("is_autonomous", Bool, self.is_autonomous_callback, queue_size=100)
@@ -66,21 +59,11 @@ class Tj2MatchWatcher(object):
             rospy.loginfo("%s service is ready" % name)
         return srv_obj
     
-    
     def make_service(self, name, srv_type, callback):
         rospy.loginfo("Setting up service %s" % name)
         srv_obj = rospy.Service(name, srv_type, callback)
         rospy.loginfo("%s service is ready" % name)
         return srv_obj
-    
-    def start_match_callback(self, req):
-        rospy.loginfo("Starting camera recording in %s seconds" % req.delay.to_sec())
-        response = self.start_camera()
-        rospy.Timer(req.delay, self.start_record_timer, oneshot=True)
-        if response.success:
-            return StartMatchResponse(response.success, "Recording request sent")
-        else:
-            return StartMatchResponse(response.success, "Recording request sent, but start_camera returned a False reponse: %s" % response.message)
 
     def is_autonomous_callback(self, msg):
         self.is_autonomous = msg.data
@@ -112,36 +95,12 @@ class Tj2MatchWatcher(object):
 
     def period_changed(self, period):
         rospy.loginfo("Game is now in the %s period" % PERIODS.get(period, PREGAME).lower())
-        if period == FINISHED:
-            self.save_snapshot()
-        else:
-            self.start_camera()
-            self.start_record()
-
-    def start_record_timer(self, event):
-        self.start_record()
-    
-    def start_camera(self):
-        rospy.loginfo("Requesting camera start")
-        response = self.start_camera_srv()
-        rospy.loginfo(str(response))
-        return response
-
-    def start_record(self):
-        rospy.loginfo("Requesting record start")
-        response = self.start_record_srv()
-        rospy.loginfo(str(response))
-        return response
-    
-    def save_snapshot(self):
-        rospy.loginfo("Requesting save snapshot")
-        response = self.trigger_snapshot_srv()
-        rospy.loginfo(str(response))
-        return response
+        if period == AUTONOMOUS:
+            pass  # TODO: start bag
+        elif period == FINISHED:
+            pass  # TODO: save bag
 
     def run(self):
-        self.start_camera()
-        self.start_record()
         rospy.spin()
 
 
