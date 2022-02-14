@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="tj2_match_watcher" type="rosbag_controlled_recording.py" name="rosbag_controlled_recording" output="screen" required="true">
+        <param name="rosbag_command" value="rosbag record -o /media/storage/bags/diffyjr            
+            /camera/accel
+
+            /camera/color/camera_info
+            /camera/color/image_raw
+
+            /camera/depth/camera_info
+            /camera/depth/image_rect_raw
+
+            /camera/gyro
+
+            /laser/scan
+
+            /limelight/cam_mode
+            /limelight/color/camera_info
+            /limelight/color/image_raw
+            /limelight/led_mode
+            /limelight/targets
+
+            /move_base
+            /pursuit/move_base
+            /pursuit/pursuit_move_base
+
+            /tj2/base_link_to_wheel_0_joint
+            /tj2/base_link_to_wheel_1_joint
+            /tj2/base_link_to_wheel_2_joint
+            /tj2/base_link_to_wheel_3_joint
+
+            /tj2/cmd_vel
+            /tj2/cmd_vel_follow
+            /tj2/cmd_vel_nav
+            /tj2/cmd_vel_teleop
+
+            /tj2/follow_object_goal
+            /tj2/follow_path
+
+            /tj2/imu
+            /tj2/is_autonomous
+            /tj2/joint_states
+            /tj2/match_time
+            /tj2/odom
+
+            /tj2/ping
+            /tj2/powercell
+            /tj2/pursue_object
+            /tj2/robot_status
+            /tj2/team_color
+            /tj2/waypoint_markers
+            "/>
+        <param name="record_from_startup" value="false"/>
+    </node>
+</launch>
