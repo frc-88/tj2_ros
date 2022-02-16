@@ -1,16 +1,52 @@
 #!/usr/bin/python3
+import os
 import rospy
+import rosnode
 
+from std_msgs.msg import Int32
 from std_msgs.msg import Float64
-from std_msgs.msg import Bool
-from sensor_msgs.msg import CameraInfo
+from std_msgs.msg import String
 
 from networktables import NetworkTables
-from tj2_limelight.msg import LimelightTarget
-from tj2_limelight.msg import LimelightTargetArray
 
-from tj2_tools.transforms import lookup_transform
+from tj2_tools.launch_manager import TopicListener
 
+
+def get_key_recurse(tree, key, index):
+    subfield = key[index]
+    if index + 1 == len(key):
+        return tree[subfield]
+    else:
+        return get_key_recurse(tree[subfield], key, index + 1)
+
+
+def get_key(tree, key, default=None):
+    key = key.split("/")
+    try:
+        return get_key_recurse(tree, key, 0)
+    except KeyError:
+        return default
+
+def flatten_paths_recurse(entries, full_paths, root):
+    for path, entry in entries.items():
+        if type(entry) == dict:
+            flatten_paths_recurse(entry, full_paths, root + "/" + path)
+        elif type(entry) == int or type(entry) == float or type(entry) == str or type(entry) == bool:
+            full_path = root + "/" + path
+            full_paths[full_path] = entry
+        else:
+            raise ValueError("Found invalid value in entries: %s" % entry)
+
+
+def flatten_paths(entries):
+    full_paths = {}
+    flatten_paths_recurse(entries, full_paths, "")
+    return full_paths
+
+def ros_to_nt_path(ros_path):
+    if ros_path.startswith("/"):
+        ros_path = ros_path[1:]
+    return ros_path.replace("/", "--")
 
 class TJ2NetworkTables:
     def __init__(self):
@@ -20,173 +56,154 @@ class TJ2NetworkTables:
             # disable_signals=True
             # log_level=rospy.DEBUG
         )
+        rospy.on_shutdown(self.shutdown_hook)
 
         self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
+        self.watch_topics = rospy.get_param("~watch_topics", None)
+        self.watch_nodes = rospy.get_param("~watch_nodes", None)
         
         NetworkTables.initialize(server=self.nt_host)
         self.nt = NetworkTables.getTable("")
 
-        self.limelight_target_frame_id = rospy.get_param("~limelight_target_frame_id", "limelight")
-        self.num_limelight_targets = rospy.get_param("~num_limelight_targets", 3)
-        
-        self.base_frame = rospy.get_param("~base_frame", "base_link")
-        self.map_frame = rospy.get_param("~map_frame", "map")
+        if self.watch_topics is None:
+            self.watch_topics = []
+        if self.watch_nodes is None:
+            self.watch_nodes = []
 
-        self.match_time_pub = rospy.Publisher("match_time", Float64, queue_size=5)
-        self.is_autonomous_pub = rospy.Publisher("is_autonomous", Bool, queue_size=5)
-        self.limelight_target_pub = rospy.Publisher("/limelight/targets", LimelightTargetArray, queue_size=5)
-        self.limelight_led_mode_sub = rospy.Subscriber("/limelight/led_mode", Bool, self.limelight_led_mode_callback, queue_size=5)
-        self.limelight_cam_mode_sub = rospy.Subscriber("/limelight/cam_mode", Bool, self.limelight_cam_mode_callback, queue_size=5)
-        self.limelight_info_sub = rospy.Subscriber("limelight/camera_info", CameraInfo, self.limelight_info_callback, queue_size=5)
+        self.watch_nodes_mapping = {x: ros_to_nt_path(x) for x in self.watch_nodes}
+        self.watch_nodes_entries = {x: 0.0 for x in self.watch_nodes}
 
-        self.ros_base_key = "ROS"
-        self.status_key = self.ros_base_key + "/status"
-        self.nodes_key = self.status_key + "/nodes"
-        self.tunnel_key = self.status_key + "/tunnel"
-        self.recording_key = self.status_key + "/recording"
-        self.topics_key = self.status_key + "/topics"
-        self.driver_station_table_key = self.ros_base_key + "/DriverStation"
-        self.limelight_table_key = "limelight"
+        self.watch_topic_mapping = {x: ros_to_nt_path(x) for x in self.watch_topics}
+        self.watch_topic_entries = {x: 0.0 for x in self.watch_topics}
 
-        self.limelight_led_mode_entry = self.nt.getEntry(self.limelight_table_key + "/ledMode")
-        self.limelight_cam_mode_entry = self.nt.getEntry(self.limelight_table_key + "/camMode")
+        self.clock_rate = rospy.Rate(10.0)  # networktable servers update at 10 Hz by default
+        self.path_defaults = {
+            "ROS": {
+                "status": {
+                    "all_nodes_ok": False,
+                    "all_topics_ok": False,
+                    "nodes": self.watch_nodes_entries,
+                    "tunnel": {
+                        "rate": 0.0,
+                        "count": 0,
+                        "ping": 0.0
+                    },
+                    "recording": {
+                        "status": "",
+                        "bag_name": ""
+                    },
+                    "topics": self.watch_topic_entries,
+                    "restart": False
+                }
+            }
+        }
+        self.flat_path_defaults = flatten_paths(self.path_defaults)
+        self.entries = {path: self.nt.getEntry(path) for path in self.flat_path_defaults.keys()}
 
-        self.fms_flag_ignored = True
+        self.packet_count_sub = rospy.Subscriber("packet_count", Int32, self.packet_count_callback, queue_size=10)
+        self.packet_rate_sub = rospy.Subscriber("packet_rate", Float64, self.packet_rate_callback, queue_size=10)
+        self.packet_ping_sub = rospy.Subscriber("ping", Float64, self.packet_ping_callback, queue_size=10)
 
-        self.remote_start_time = 0.0
-        self.local_start_time = 0.0
-        self.prev_timestamp = 0.0
+        self.bag_status_sub = rospy.Subscriber("bag_status", String, self.bag_status_callback, queue_size=10)
+        self.bag_name_sub = rospy.Subscriber("bag_name", String, self.bag_name_callback, queue_size=10)
 
-        self.limelight_camera_info = None
-        
-        self.clock_rate = rospy.Rate(20.0)  # networktable servers update at 10 Hz
+        self.topic_listeners = {}
+        for topic in self.watch_topics:
+            self.topic_listeners[topic] = TopicListener(topic, 0.0)
+
+        self.topic_timer = rospy.Timer(rospy.Duration(1.0), self.topic_poll_callback)
+        self.node_timer = rospy.Timer(rospy.Duration(1.0), self.node_poll_callback)
 
         rospy.loginfo("%s init complete" % self.node_name)
 
-    def run(self):
-        self.set_limelight_led_mode(True)  # turn limelight off on start up
-        
-        while not rospy.is_shutdown():
-            if self.remote_start_time == 0.0:
-                self.init_remote_time()
-            self.clock_rate.sleep()
-            self.publish_driver_station()
-            self.publish_limelight_target()
-
-    def limelight_info_callback(self, msg):
-        self.limelight_camera_info = msg
-        self.limelight_info_sub.unregister()  # only use the first message
-        rospy.loginfo("Camera model loaded")
-
-    def publish_limelight_target(self):
-        if self.limelight_camera_info is None:
-            return
-        msg = LimelightTargetArray()
-        msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = self.limelight_target_frame_id
-        has_targets = self.nt.getEntry(self.limelight_table_key + "/tv").getDouble(0.0) == 1.0
-        if has_targets:
-            for index in range(self.num_limelight_targets):
-                target_msg = LimelightTarget()
-                tx = self.nt.getEntry(self.limelight_table_key + "/tx%s" % index).getDouble(0.0)
-                ty = self.nt.getEntry(self.limelight_table_key + "/ty%s" % index).getDouble(0.0)
-                target_msg.thor = int(self.nt.getEntry(self.limelight_table_key + "/thor%s" % index).getDouble(0.0))
-                target_msg.tvert = int(self.nt.getEntry(self.limelight_table_key + "/tvert%s" % index).getDouble(0.0))
-
-                width = self.limelight_camera_info.width
-                height = self.limelight_camera_info.height
-
-                target_msg.tx = int((tx + 1.0) / 2.0 * width)
-                target_msg.ty = int((-ty + 1.0) / 2.0 * height)
-                msg.targets.append(target_msg)
-
-        self.limelight_target_pub.publish(msg)
-
-    def publish_driver_station(self):
-        is_fms_attached = self.nt.getEntry(self.driver_station_table_key + "/isFMSAttached").getBoolean(False)
-        is_autonomous = self.nt.getEntry(self.driver_station_table_key + "/isAutonomous").getBoolean(True)
-
-        if self.fms_flag_ignored or is_fms_attached:
-            match_time = self.nt.getEntry(self.driver_station_table_key + "/getMatchTime").getDouble(-1.0)
-            self.match_time_pub.publish(match_time)
-            self.is_autonomous_pub.publish(is_autonomous)
+    def set_entry(self, path, value):
+        if path in self.entries:
+            return self.entries[path].setValue(value)
         else:
-            self.match_time_pub.publish(-1.0)
+            return self.nt.getEntry(path).setValue(value)
 
-    def update_nt_status(self):
-        pass
+    def get_entry(self, path):
+        default_value = self.flat_path_defaults[path]
+        if type(default_value) == int:
+            return int(self.entries[path].getDouble(default_value))
+        elif type(default_value) == float:
+            return self.entries[path].getDouble(default_value)
+        elif type(default_value) == str:
+            return self.entries[path].getString(default_value)
+        elif type(default_value) == bool:
+            return self.entries[path].getBoolean(default_value)
+        else:
+            raise ValueError("Invalid type for '%s': %s" % (path, default_value))
 
-    def limelight_led_mode_callback(self, msg):
-        self.set_limelight_led_mode(msg.data)
+    def packet_count_callback(self, msg):
+        self.set_entry("/ROS/status/tunnel/count", msg.data)
     
-    def get_limelight_led_mode(self):
-        mode = self.limelight_led_mode_entry.getDouble(1.0)
-        return mode == 1.0
+    def packet_rate_callback(self, msg):
+        self.set_entry("/ROS/status/tunnel/rate", msg.data)
 
-    def set_limelight_led_mode(self, flag):
-        mode = 1.0 if flag else 0.0
-        rospy.loginfo("Setting limelight led mode to %s" % mode)
-        self.limelight_led_mode_entry.setDouble(mode)
+    def packet_ping_callback(self, msg):
+        self.set_entry("/ROS/status/tunnel/ping", msg.data)
 
-
-    def limelight_cam_mode_callback(self, msg):
-        self.set_limelight_cam_mode(msg.data)
-
-    def get_limelight_cam_mode(self):
-        mode = self.limelight_cam_mode_entry.getDouble(1.0)
-        return mode == 1.0
-
-    def set_limelight_cam_mode(self, flag):
-        mode = 1.0 if flag else 0.0
-        rospy.loginfo("Setting limelight cam mode to %s" % mode)
-        self.limelight_cam_mode_entry.setDouble(mode)
-
-
-    def get_remote_time(self):
-        """
-        Gets RoboRIO's timestamp based on the networktables entry in seconds
-        """
-        return self.nt.getEntry("timestamp").getDouble(0.0) * 1E-6
+    def topic_poll_callback(self, timer):
+        all_topics_ok = True
+        if len(self.watch_topics) == 0:
+            all_topics_ok = False
+        for topic in self.watch_topics:
+            rate = self.topic_listeners[topic].get_rate(delay=0.0)
+            self.set_entry("/ROS/status/topics/" + ros_to_nt_path(topic), rate)
+            if rate <= 0.0:
+                all_topics_ok = False
+        self.set_entry("/ROS/status/all_topics_ok", all_topics_ok)
     
-    def get_local_time(self):
-        return rospy.Time.now().to_sec()
+    def node_poll_callback(self, timer):
+        all_nodes = list(rosnode.get_node_names())
+        all_nodes_ok = True
+        for node in self.watch_nodes:
+            if node in all_nodes:
+                all_nodes.remove(node)
+                node_present = True
+            else:
+                all_nodes_ok = False
+                node_present = False
+            self.set_entry("/ROS/status/nodes/" + ros_to_nt_path(node), node_present)
+        
+        for node in all_nodes:
+            self.set_entry("/ROS/status/nodes/" + ros_to_nt_path(node), True)
 
-    def check_time_offsets(self, remote_timestamp):
-        if remote_timestamp < self.prev_timestamp:  # remote has restarted
-            self.remote_start_time = remote_timestamp
-            self.local_start_time = self.get_local_time()
-            rospy.loginfo("Remote clock jumped back. Resetting offset")
-        self.prev_timestamp = remote_timestamp
+        self.set_entry("/ROS/status/all_nodes_ok", all_nodes_ok)
 
-    def get_local_time_as_remote(self):
-        local_timestamp = self.get_local_time()
-        remote_timestamp = self.get_remote_time()
-        self.check_time_offsets(remote_timestamp)
-        remote_time = local_timestamp - self.local_start_time + self.remote_start_time
-        remote_time *= 1E6
-        return remote_time
+    def bag_status_callback(self, msg):
+        self.set_entry("/ROS/recording/status", msg.data)
 
-    def wait_for_time(self):
-        rospy.loginfo("Waiting for remote time")
-        while self.remote_start_time == 0.0:
-            self.init_remote_time()
+    def bag_name_callback(self, msg):
+        self.set_entry("/ROS/recording/bag_name", msg.data)
+
+
+    def run(self):
+        # rospy.spin()
+        rospy.sleep(2.0)  # wait for NT to populate
+        self.set_entry("/ROS/status/restart", False)
+        while not rospy.is_shutdown():
             self.clock_rate.sleep()
-            if rospy.is_shutdown():
-                return
-        rospy.loginfo("Remote time found")
-    
-    def init_remote_time(self):
-        self.remote_start_time = self.get_remote_time()
-        self.local_start_time = self.get_local_time()
-    
-    def get_remote_time_as_local(self):
-        """
-        Gets the RoboRIO's time relative to ROS time epoch
-        """
-        remote_timestamp = self.get_remote_time()
-        self.check_time_offsets(remote_timestamp)
-        return remote_timestamp - self.remote_start_time + self.local_start_time
+            if self.get_entry("/ROS/status/restart"):
+                self.restart_roslaunch()
+        
+    def restart_roslaunch(self):
+        rospy.logwarn("RESTARTING ROSLAUNCH FROM NETWORK TABLES")
+        os.system("sudo systemctl restart roslaunch.service")
+        while not rospy.is_shutdown():
+            pass
 
+    def shutdown_hook(self):
+        all_nodes = list(rosnode.get_node_names())
+        for node in self.watch_nodes:
+            self.set_entry("/ROS/status/nodes/" + ros_to_nt_path(node), False)
+        for node in all_nodes:
+            self.set_entry("/ROS/status/nodes/" + ros_to_nt_path(node), False)
+        self.set_entry("/ROS/status/all_nodes_ok", False)
+        for topic in self.watch_topics:
+            self.set_entry("/ROS/status/topics/" + ros_to_nt_path(topic), 0.0)
+        self.set_entry("/ROS/status/all_topics_ok", False)
 
 if __name__ == "__main__":
     node = TJ2NetworkTables()

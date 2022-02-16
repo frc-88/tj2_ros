@@ -6,10 +6,10 @@ from subprocess import Popen, TimeoutExpired
 
 
 class TopicListener:
-    def __init__(self, topic: str, min_rate: float):
+    def __init__(self, topic: str, min_rate: float, queue_size=15):
         self.topic = topic
         self.min_rate = min_rate
-        self.rate = rostopic.ROSTopicHz(15)
+        self.rate = rostopic.ROSTopicHz(queue_size)
         self.subscriber = rospy.Subscriber(self.topic, rospy.AnyMsg, self.rate.callback_hz, callback_args=self.topic)
     
     def topic_exists(self):
