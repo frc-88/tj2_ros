@@ -101,8 +101,8 @@ class Tj2Pursuit:
         self.cancel_goal()
 
     def obj_odom_callback(self, detections_msg, odom_msg):
-        if len(self.tracking_object_name) == 0:
-            return
+        # if len(self.tracking_object_name) == 0:
+        #     return
         with self.lock:
             nearest_obj = self.get_nearest_detection(self.tracking_object_name, detections_msg)
             self.future_pose_stamped = None
@@ -113,16 +113,21 @@ class Tj2Pursuit:
             predicted_state = self.predictor.get_robot_intersection(object_state, odom_state)
             if predicted_state is not None:
                 self.object_timer = rospy.Time.now()
-                self.future_pose_stamped.pose = predicted_state.to_ros_pose()
-                self.future_pose_stamped.header = odom_msg.header
+                future_pose_stamped = PoseStamped()
+                future_pose_stamped.pose = predicted_state.to_ros_pose()
+                future_pose_stamped.header = odom_msg.header
+                self.follow_object_goal_pub.publish(future_pose_stamped)
+                if len(self.tracking_object_name) != 0:
+                    self.future_pose_stamped = future_pose_stamped
 
     def get_nearest_detection(self, object_name, detections_msg):
         nearest_pose = None
         nearest_dist = None
         for detection in detections_msg.detections:
-            label = get_label(self.class_names, detection.results[0].id)
-            if label != object_name:
-                continue
+            if len(object_name) > 0:
+                label = get_label(self.class_names, detection.results[0].id)
+                if label != object_name:
+                    continue
             detection_pose = detection.results[0].pose.pose
             detection_dist = self.get_distance(detection_pose)
             if nearest_dist is None or detection_dist < nearest_dist:
@@ -176,17 +181,19 @@ class Tj2Pursuit:
 
     def pursue_object(self, xy_tolerance):
         if self.future_pose_stamped is None:
+            rospy.logwarn("No prediction is available to pursue!")
             return False
         future_map_pose_stamped = self.get_pose_in_map(self.future_pose_stamped)
         robot_pose_stamped = self.get_robot_pose()
         distance = self.get_distance(future_map_pose_stamped.pose, robot_pose_stamped.pose)
         if distance < xy_tolerance:
+            rospy.loginfo("Object reached!")
             return True
         if self.prev_pose_stamped == future_map_pose_stamped:
             return False
         self.prev_pose_stamped = future_map_pose_stamped
 
-        self.follow_object_goal_pub.publish(future_map_pose_stamped)
+        rospy.loginfo("Sending goal prediction for %s" % self.tracking_object_name)
 
         pose_array = PoseArray()
         pose_array.poses.append(future_map_pose_stamped.pose)

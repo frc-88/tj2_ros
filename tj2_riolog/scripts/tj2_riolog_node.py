@@ -92,14 +92,14 @@ class RiologTailer(Tailer):
         self.outputs = []
         self.message_queue = queue.Queue(maxsize=100)
 
-        self.poll_timeout = 3.0
+        self.poll_timeout = 0.1
         self.read_block_size = 4096
 
     def run(self):
         self.start()
         while not rospy.is_shutdown():
-            self.update()
-            self.rate.sleep()
+            if not self.update():
+                self.rate.sleep()
 
     def start(self):
         rospy.loginfo("Connecting to %s:%s" % (self.host, self.port))
@@ -144,13 +144,9 @@ class RiologTailer(Tailer):
                 sequence = int.from_bytes(sequence_bytes, "big")
                 length -= 7  # subtract for tag, timestamp, and sequence
 
-                data = b''
-                while len(data) < length:
-                    new_data = stream.recv(length)
-                    if len(new_data) == 0:
-                        break
-                    data += new_data
-                    length -= len(data)
+                data = stream.recv(length)
+                if len(data) == 0:
+                    continue
                 self.segment_callback(tag, timestamp, sequence, data)
 
         for stream in exceptional:
@@ -159,6 +155,10 @@ class RiologTailer(Tailer):
             if stream in self.outputs:
                 self.outputs.remove(stream)
             stream.close()
+        if len(readable) == 0:
+            return False
+        else:
+            return True
 
     def stop(self):
         self.device.close()

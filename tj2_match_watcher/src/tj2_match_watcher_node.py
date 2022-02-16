@@ -121,7 +121,7 @@ class Tj2MatchWatcher(object):
         self.bag_name = response.bag_name
         rospy.loginfo("Starting bag: %s" % self.bag_name)
         self.bag_is_started = True
-        rospy.sleep(5.0)  # record 5 seconds to ensure bag is running before pausing
+        rospy.sleep(1.0)  # record a few seconds to ensure bag is running before pausing
         self.pause_bag_srv()
     
     def stop_bag_callback(self, timer):
