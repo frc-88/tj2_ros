@@ -10,11 +10,12 @@ from smach import State
 
 
 class GoToWaypointState(State):
-    def __init__(self):
+    def __init__(self, state_machine):
+        self.state_machine = state_machine
         super(GoToWaypointState, self).__init__(
             outcomes=["success", "preempted", "failure"],
-            input_keys=["waypoints_plan", "waypoint_index", "state_machine"],
-            output_keys=["waypoints_plan", "waypoint_index", "state_machine"]
+            input_keys=["waypoints_plan", "waypoint_index"],
+            output_keys=["waypoints_plan", "waypoint_index"]
         )
         self.reset()
     
@@ -41,10 +42,10 @@ class GoToWaypointState(State):
         self.costmap_toggle_delay = 0.5
     
     def set_ignore_obstacles(self, userdata, ignore_obstacles):
-        userdata.state_machine.waypoints_node.toggle_obstacles(not ignore_obstacles)
+        self.state_machine.waypoints_node.toggle_obstacles(not ignore_obstacles)
 
     def set_ignore_layers(self, userdata, ignore_walls, ignore_obstacles):
-        did_change = userdata.state_machine.waypoints_node.toggle_walls(not ignore_walls)
+        did_change = self.state_machine.waypoints_node.toggle_walls(not ignore_walls)
         if ignore_walls:
             return self.set_ignore_obstacles(userdata, True) or did_change
         return self.set_ignore_obstacles(userdata, ignore_obstacles)
@@ -54,14 +55,14 @@ class GoToWaypointState(State):
         self.reset()
 
         self.action_result = "success"
-        waypoints_node = userdata.state_machine.waypoints_node
+        waypoints_node = self.state_machine.waypoints_node
         self.action_server = waypoints_node.follow_path_server
-        self.action_goal = userdata.state_machine.action_goal
+        self.action_goal = self.state_machine.action_goal
         self.move_base = waypoints_node.move_base
 
-        self.current_waypoint_index = userdata.waypoint_index_in
+        self.current_waypoint_index = userdata.waypoint_index
 
-        waypoints = userdata.waypoints_plan[userdata.waypoint_index_in]
+        waypoints = userdata.waypoints_plan[userdata.waypoint_index]
 
         pose_array = waypoints_node.get_waypoints_as_pose_array(waypoints)
         if len(pose_array.poses) != len(waypoints):
