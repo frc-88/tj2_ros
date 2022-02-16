@@ -13,6 +13,9 @@ Note that pausing does not modify the recorded time of messages, i.e. the bag's 
 If this node is killed recording is also stopped. If recording was paused, it is momentarily resumed before stopping.
 """
 
+import re
+import os
+import time
 import psutil
 import subprocess
 import shlex
@@ -20,6 +23,9 @@ import signal
 
 import rospy
 from std_srvs.srv import Empty, EmptyResponse
+from std_msgs.msg import String
+
+from tj2_match_watcher.srv import TriggerBag, TriggerBagResponse
 
 
 def signal_process_and_children(pid, signal_to_send, wait=False):
@@ -47,24 +53,53 @@ class RosbagControlledRecorder(object):
     """Record a rosbag with service calls to control start, stop  and pause"""
 
     def __init__(self, rosbag_command_, record_from_startup_=False):
-        self.rosbag_command = shlex.split(rosbag_command_)
+        self.raw_rosbag_command = rosbag_command_
+        self.rosbag_command = shlex.split(self.raw_rosbag_command)
         self.recording_started = False
         self.recording_paused = False
         self.recording_stopped = False
         self.pause_resume_times = []
         self.process_pid = None
+        self.bag_name = ""
+        self.bag_status = "idle"
         if record_from_startup_:
             self.start_recording_srv()
+
+    def get_bag_prefix(self):
+        match = re.search(r"-o ([\S]+)", self.raw_rosbag_command)
+        if match is None:
+            raise ValueError("Failed to find bag directory in rosbag command (add -o to your command): %s" % self.raw_rosbag_command)
+        return match.group(1)
 
     def start_recording_srv(self, service_message=None):
         if self.recording_started:
             rospy.logwarn("Recording has already started - nothing to be done")
         else:
+            creation_time = time.time()
             process = subprocess.Popen(self.rosbag_command)
             self.process_pid = process.pid
+            rospy.loginfo("Started recording rosbag: %s" % self.process_pid)
             self.recording_started = True
-            rospy.loginfo("Started recording rosbag")
-            return EmptyResponse()
+            prefix = self.get_bag_prefix()
+            rospy.loginfo("Bag has prefix: %s" % prefix)
+            bag_dir = os.path.dirname(prefix)
+            bag_name_prefix = os.path.basename(prefix)
+            self.bag_name = ""
+            while len(self.bag_name) == 0:
+                for filename in os.listdir(bag_dir):
+                    if filename.startswith(bag_name_prefix):
+                        path = os.path.join(bag_dir, filename)
+                        modify_time = os.path.getmtime(path)
+                        if modify_time >= creation_time:
+                            self.bag_name = path
+                            break
+                        if time.time() - creation_time > 10.0:
+                            signal_process_and_children(self.process_pid, signal.SIGINT, wait=True)
+                            raise RuntimeError("Bag file was not created!")
+                time.sleep(0.25)
+        rospy.loginfo("rosbag reports bag path is '%s'" % self.bag_name)
+        self.bag_status = "recording"
+        return TriggerBagResponse(True, self.bag_name)
 
     def resume_recording_srv(self, service_message=None):
         if self.recording_started:
@@ -75,6 +110,7 @@ class RosbagControlledRecorder(object):
                 self.pause_resume_times.append(rospy.get_time())
             else:
                 rospy.loginfo("Recording is already resumed")
+            self.bag_status = "recording"
             return EmptyResponse()
         else:
             rospy.logwarn("Recording not yet started - nothing to be done")
@@ -88,6 +124,7 @@ class RosbagControlledRecorder(object):
                 self.pause_resume_times.append(rospy.get_time())
             else:
                 rospy.loginfo("Recording is already paused")
+            self.bag_status = "paused"
             return EmptyResponse()
         else:
             rospy.logwarn("Recording not yet started - nothing to be done")
@@ -104,9 +141,12 @@ class RosbagControlledRecorder(object):
             self.process_pid = None
             self.recording_paused = False
             self.recording_started = False
-            rospy.loginfo("Stopped recording rosbag")
+            rospy.loginfo("Stopped recording rosbag. Path is '%s'" % self.bag_name)
         self.recording_stopped = True
-        return EmptyResponse()
+        response = TriggerBagResponse(True, self.bag_name)
+        self.bag_name = ""
+        self.bag_status = "idle"
+        return response
 
 
 if __name__ == '__main__':
@@ -120,12 +160,28 @@ if __name__ == '__main__':
     recorder = RosbagControlledRecorder(rosbag_command, record_from_startup)
 
     # Services
-    start_service = rospy.Service('~start', Empty, recorder.start_recording_srv)
+    start_service = rospy.Service('~start', TriggerBag, recorder.start_recording_srv)
     resume_service = rospy.Service('~resume', Empty, recorder.resume_recording_srv)
     pause_service = rospy.Service('~pause', Empty, recorder.pause_recording_srv)
-    stop_service = rospy.Service('~stop', Empty, recorder.stop_recording_srv)
+    stop_service = rospy.Service('~stop', TriggerBag, recorder.stop_recording_srv)
+
+
+    bag_status_pub = rospy.Publisher("bag_status", String, queue_size=10)
+    bag_name_pub = rospy.Publisher("bag_name", String, queue_size=10)
 
     # Recording is also stopped on node shutdown. This allows stopping to be done via service call or regular Ctrl-C
     rospy.on_shutdown(recorder.stop_recording_srv)
 
-    rospy.spin()
+    # rospy.spin()
+
+    clock_rate = rospy.Rate(10.0)
+    while not rospy.is_shutdown():
+        clock_rate.sleep()
+
+        bag_name_msg = String()
+        bag_name_msg.data = recorder.bag_name
+        bag_name_pub.publish(bag_name_msg)
+
+        bag_status_msg = String()
+        bag_status_msg.data = recorder.bag_status
+        bag_status_pub.publish(bag_status_msg)

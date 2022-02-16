@@ -44,12 +44,9 @@
             /tj2/odom
 
             /tj2/ping
-            /tj2/powercell
-            /tj2/pursue_object
-            /tj2/robot_status
-            /tj2/team_color
-            /tj2/waypoint_markers
             "/>
         <param name="record_from_startup" value="false"/>
+        <remap from="bag_status" to="/tj2/bag_status"/>
+        <remap from="bag_name" to="/tj2/bag_name"/>
     </node>
 </launch>
