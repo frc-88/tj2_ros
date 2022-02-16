@@ -85,20 +85,38 @@ class RosbagControlledRecorder(object):
             bag_dir = os.path.dirname(prefix)
             bag_name_prefix = os.path.basename(prefix)
             self.bag_name = ""
-            while len(self.bag_name) == 0:
-                for filename in os.listdir(bag_dir):
-                    if filename.startswith(bag_name_prefix):
-                        path = os.path.join(bag_dir, filename)
-                        modify_time = os.path.getmtime(path)
-                        if modify_time >= creation_time:
-                            self.bag_name = path
-                            break
+
+            for attempt in range(10):
+                while len(self.bag_name) == 0:
+                    for filename in os.listdir(bag_dir):
+                        if filename.startswith(bag_name_prefix):
+                            path = os.path.join(bag_dir, filename)
+                            modify_time = os.path.getmtime(path)
+                            if modify_time >= creation_time:
+                                self.bag_name = path
+                                break
                         if time.time() - creation_time > 10.0:
+                            self.bag_name = ""
                             signal_process_and_children(self.process_pid, signal.SIGINT, wait=True)
-                            raise RuntimeError("Bag file was not created!")
-                time.sleep(0.25)
+                            process = subprocess.Popen(self.rosbag_command)
+                            self.process_pid = process.pid
+                            rospy.loginfo("Started recording rosbag: %s" % self.process_pid)
+                            break
+                    time.sleep(0.25)
+                if len(self.bag_name) > 0:
+                    break
+                else:
+                    rospy.logwarn("Failed to create bag file. Trying again. Attempt #%s" % attempt)
+        if len(self.bag_name) == 0:
+            raise RuntimeError("Bag file was not created!")
+        
         rospy.loginfo("rosbag reports bag path is '%s'" % self.bag_name)
         self.bag_status = "recording"
+
+        rospy.sleep(1.0)
+        self.recording_paused = False
+        self.pause_recording_srv()
+
         return TriggerBagResponse(True, self.bag_name)
 
     def resume_recording_srv(self, service_message=None):

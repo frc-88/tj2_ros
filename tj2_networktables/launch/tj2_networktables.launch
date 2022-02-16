@@ -5,7 +5,7 @@
     <!-- <arg name="robot_address" default="localhost"/> -->
 
     <group ns="tj2">
-        <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables_node.py" output="screen" required="true">
+        <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables_node.py" output="screen" required="false">
             <rosparam file="$(find tj2_networktables)/config/diffyjr_watchers.yaml" command="load" ns=""/>
             <!-- <rosparam file="$(find tj2_networktables)/config/2022_robot_watchers.yaml" command="load" ns=""/> -->
             <param name="nt_host" value="$(arg robot_address)"/>
