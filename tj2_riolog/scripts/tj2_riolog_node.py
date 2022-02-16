@@ -1,11 +1,11 @@
 #!/usr/bin/python3
-import os
+import re
 import rospy
 import queue
+import struct
 import select
 import socket
 import paramiko
-import threading
 
 
 class Tailer:
@@ -92,7 +92,7 @@ class RiologTailer(Tailer):
         self.outputs = []
         self.message_queue = queue.Queue(maxsize=100)
 
-        self.poll_timeout = 1.0
+        self.poll_timeout = 3.0
         self.read_block_size = 4096
 
     def run(self):
@@ -106,29 +106,52 @@ class RiologTailer(Tailer):
         self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.device.settimeout(1.0)
         self.device.connect((self.host, self.port))
+        self.inputs.append(self.device)
         self.outputs.append(self.device)
         rospy.loginfo("Connection established")
 
     def update(self):
-        readable, _, exceptional = select.select([], self.outputs, [], self.poll_timeout)
+        readable, writable, exceptional = select.select(self.inputs, self.outputs, [], self.poll_timeout)
         for stream in readable:
             if stream is self.device:
-                rospy.logdebug("Reading from socket")
+                # rospy.loginfo("Reading from socket")
                 # recv_msg = stream.recv(self.read_block_size)
-                # rospy.logdebug("Received: %s" % recv_msg)
+                # rospy.loginfo("Received: %s" % recv_msg)
                 length_bytes = stream.recv(2)
                 if len(length_bytes) == 0:
+                    rospy.logwarn("[Riolog] Failed to get message length")
                     continue
                 length = int.from_bytes(length_bytes, "big")
                 if length == 0:
+                    rospy.logwarn("[Riolog] Message length zero")
                     continue
-                tag = stream.recv(1)
-                length -= 1  # subtract 1 for tag
+                tag_bytes = stream.recv(1)
+                if len(tag_bytes) == 0:
+                    rospy.logwarn("[Riolog] Tag is empty")
+                    continue
+                tag = int.from_bytes(tag_bytes, "big")
+                
+                timestamp_bytes = stream.recv(4)[::-1]
+                if len(timestamp_bytes) == 0:
+                    rospy.logwarn("[Riolog] Timestamp didn't parse")
+                    continue
+                timestamp = struct.unpack('f', timestamp_bytes)[0]
+
+                sequence_bytes = stream.recv(2)
+                if len(sequence_bytes) == 0:
+                    rospy.logwarn("[Riolog] Timestamp didn't parse")
+                    continue
+                sequence = int.from_bytes(sequence_bytes, "big")
+                length -= 7  # subtract for tag, timestamp, and sequence
+
                 data = b''
                 while len(data) < length:
-                    data += stream.recv(length)
+                    new_data = stream.recv(length)
+                    if len(new_data) == 0:
+                        break
+                    data += new_data
                     length -= len(data)
-                self.segment_callback(tag, data)
+                self.segment_callback(tag, timestamp, sequence, data)
 
         for stream in exceptional:
             rospy.loginfo("Closing connection due to an exception")
@@ -140,18 +163,21 @@ class RiologTailer(Tailer):
     def stop(self):
         self.device.close()
 
-    def segment_callback(self, tag, data):
+    def segment_callback(self, tag, timestamp, sequence, data):
         if tag == 11:
             status = "ERROR"
         elif tag == 12:
             status = "INFO"
         else:
-            status = "??"
+            status = str(tag)
         
+        base_message = "[Riolog][%s @ %0.2f. #%s] " % (status, timestamp, sequence)
         try:
-            rospy.loginfo("[Riolog][%s] %s" % (status, data.decode()))
+            data = data.decode()
+            data = re.sub("\s+", " ", data)
+            rospy.loginfo(base_message + data)
         except UnicodeDecodeError:
-            rospy.loginfo("[Riolog][%s] %s" % (status, repr(data)))
+            rospy.loginfo(base_message + repr(data))
 
 
 class TJ2RioLog:

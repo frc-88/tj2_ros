@@ -51,6 +51,8 @@ class Tj2MatchWatcher(object):
         self.match_time_sub = rospy.Subscriber("match_time", Float64, self.match_time_callback, queue_size=10)
         self.is_autonomous_sub = rospy.Subscriber("is_autonomous", Bool, self.is_autonomous_callback, queue_size=10)
 
+        self.stop_bag_timer = None
+
     def make_service_client(self, name, srv_type, timeout=None, wait=True):
         """
         Create a ros service client. Optionally wait with or without a timeout for the server to connect
@@ -82,7 +84,10 @@ class Tj2MatchWatcher(object):
         self.prev_match_time = match_time
         
         if match_time <= 0.0:
-            period = PREGAME
+            if self.period == ENDGAME:
+                period = FINISHED
+            else:
+                period = PREGAME
         else:
             if self.is_autonomous:
                 period = AUTONOMOUS
@@ -119,9 +124,14 @@ class Tj2MatchWatcher(object):
         rospy.sleep(5.0)  # record 5 seconds to ensure bag is running before pausing
         self.pause_bag_srv()
     
-    def stop_bag(self):
+    def stop_bag_callback(self, timer):
+        rospy.loginfo("Bag %s is stopping" % self.bag_name)
         self.stop_bag_srv()
         self.bag_is_started = False
+
+    def stop_bag(self):
+        rospy.loginfo("Stopping bag: %s" % self.bag_name)
+        self.stop_bag_timer = rospy.Timer(rospy.Duration(5.0), self.stop_bag_callback, oneshot=True)
 
     def run(self):
         self.start_bag()

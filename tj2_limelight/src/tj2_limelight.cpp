@@ -36,9 +36,9 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
         _tvert_entries.push_back(nt::GetEntry(_nt, "/limelight/tvert" + std::to_string(index)));
     }
 
-    _limelight_target_pub = nh.advertise<tj2_limelight::LimelightTargetArray>("limelight/targets", 5);
-    _limelight_led_mode_sub = nh.subscribe<std_msgs::Bool>("limelight/led_mode", 5, &TJ2Limelight::led_mode_callback, this);
-    _limelight_cam_mode_sub = nh.subscribe<std_msgs::Bool>("limelight/cam_mode", 5, &TJ2Limelight::cam_mode_callback, this);
+    _limelight_target_pub = nh.advertise<tj2_limelight::LimelightTargetArray>("targets", 5);
+    _limelight_led_mode_sub = nh.subscribe<std_msgs::Bool>("led_mode", 5, &TJ2Limelight::led_mode_callback, this);
+    _limelight_cam_mode_sub = nh.subscribe<std_msgs::Bool>("cam_mode", 5, &TJ2Limelight::cam_mode_callback, this);
 
     _camera_info_manager.setCameraName("limelight");
 
