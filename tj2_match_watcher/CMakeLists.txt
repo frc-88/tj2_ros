@@ -17,7 +17,7 @@ catkin_python_setup() # added if there is a setup.py. In this case for the node
 ## Generate services in the 'srv' folder
 add_service_files(
     FILES
-    StartMatch.srv
+    TriggerBag.srv
 )
 
 # add_action_files(
