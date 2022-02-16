@@ -11,4 +11,4 @@ if [ $? != 0 ]; then
 fi
 
 tmux send-keys -t $SESSION C-c
-tmux send-keys -t $SESSION C-d
+# tmux send-keys -t $SESSION C-d

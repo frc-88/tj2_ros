@@ -153,7 +153,11 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
             _detector->GetTimingReport().c_str()
         );
     }
+    vision_msgs::Detection3DArray detection_3d_arr_msg;
+    detection_3d_arr_msg.header = color_image->header;
+
     if (result.empty()) {
+        _detection_pub.publish(detection_3d_arr_msg);
         return;
     }
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -176,11 +180,8 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
 
     vision_msgs::Detection2DArray detection_2d_arr_msg = detections_to_msg(result);
     detection_2d_arr_msg.header = color_image->header;
-
-    vision_msgs::Detection3DArray detection_3d_arr_msg;
+;
     visualization_msgs::MarkerArray marker_array;
-
-    detection_3d_arr_msg.header = detection_2d_arr_msg.header;
 
     for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++) {
         vision_msgs::Detection2D detection_2d_msg = detection_2d_arr_msg.detections[index];

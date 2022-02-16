@@ -119,6 +119,10 @@ private:
 
     actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction> *_waypoints_action_client;
 
+    int _packet_count;
+    int _status_prev_count;
+    ros::Time _status_prev_time;
+
     // Messages
     nav_msgs::Odometry _odom_msg;
     sensor_msgs::Imu _imu_msg;
@@ -135,6 +139,8 @@ private:
     vector<ros::Publisher>* _raw_joint_pubs;
     ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
     ros::Publisher _pose_estimate_pub;
+    ros::Publisher _packet_count_pub;
+    ros::Publisher _packet_rate_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
@@ -164,6 +170,7 @@ private:
     void publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt);
     void publishImu(ros::Time recv_time, double yaw, double yaw_rate, double accel_x, double accel_y);
     void publishJoint(ros::Time recv_time, int joint_index, double joint_position);
+    void publishStatusMessages(float ping);
     void setGoalStatus(GoalStatus status);
     void sendWaypoints();
     void cancelWaypointGoal();

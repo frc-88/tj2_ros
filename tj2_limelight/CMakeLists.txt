@@ -8,6 +8,8 @@ project(tj2_limelight)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 
+find_package(wpilib REQUIRED)
+
 find_package(catkin REQUIRED COMPONENTS
     camera_info_manager
     roscpp
@@ -183,6 +185,7 @@ add_executable(limelight_target_node
 target_link_libraries(${PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
+    ntcore wpiutil
 )
 
 target_link_libraries(limelight_target_node

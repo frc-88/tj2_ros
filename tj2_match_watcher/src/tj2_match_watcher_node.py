@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 import rospy
 
-from std_srvs.srv import Trigger
+from std_srvs.srv import Empty
 from std_msgs.msg import Float64
 from std_msgs.msg import Bool
 
+from tj2_match_watcher.srv import TriggerBag
 
 PREGAME = -1
 AUTONOMOUS = 0
@@ -40,10 +41,15 @@ class Tj2MatchWatcher(object):
         self.period = PREGAME
         self.prev_match_time = 0.0
 
-        self.trigger_snapshot_srv = self.make_service_client("/trigger_snapshot", Trigger, wait=False)
+        self.start_bag_srv = self.make_service_client("/rosbag_controlled_recording/start", TriggerBag, wait=True)
+        self.resume_bag_srv = self.make_service_client("/rosbag_controlled_recording/resume", Empty, wait=True)
+        self.pause_bag_srv = self.make_service_client("/rosbag_controlled_recording/pause", Empty, wait=True)
+        self.stop_bag_srv = self.make_service_client("/rosbag_controlled_recording/stop", TriggerBag, wait=True)
+        self.bag_is_started = False
+        self.bag_name = ""
 
-        self.match_time_sub = rospy.Subscriber("match_time", Float64, self.match_time_callback, queue_size=100)
-        self.is_autonomous_sub = rospy.Subscriber("is_autonomous", Bool, self.is_autonomous_callback, queue_size=100)
+        self.match_time_sub = rospy.Subscriber("match_time", Float64, self.match_time_callback, queue_size=10)
+        self.is_autonomous_sub = rospy.Subscriber("is_autonomous", Bool, self.is_autonomous_callback, queue_size=10)
 
     def make_service_client(self, name, srv_type, timeout=None, wait=True):
         """
@@ -96,13 +102,30 @@ class Tj2MatchWatcher(object):
     def period_changed(self, period):
         rospy.loginfo("Game is now in the %s period" % PERIODS.get(period, PREGAME).lower())
         if period == AUTONOMOUS:
-            pass  # TODO: start bag
+            self.start_bag()
+            self.resume_bag_srv()
         elif period == FINISHED:
-            pass  # TODO: save bag
+            self.stop_bag()
+
+    def start_bag(self):
+        if self.bag_is_started:
+            return
+        response = self.start_bag_srv()
+        if not response.success:
+            raise RuntimeError("Failed to create bag!")
+        self.bag_name = response.bag_name
+        rospy.loginfo("Starting bag: %s" % self.bag_name)
+        self.bag_is_started = True
+        rospy.sleep(5.0)  # record 5 seconds to ensure bag is running before pausing
+        self.pause_bag_srv()
+    
+    def stop_bag(self):
+        self.stop_bag_srv()
+        self.bag_is_started = False
 
     def run(self):
+        self.start_bag()
         rospy.spin()
-
 
 
 if __name__ == "__main__":

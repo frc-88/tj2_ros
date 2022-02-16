@@ -127,6 +127,9 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 1);
 
+    _packet_count_pub = nh.advertise<std_msgs::Int32>("packet_count", 10);
+    _packet_rate_pub = nh.advertise<std_msgs::Float64>("packet_rate", 10);
+
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2Tunnel::twistCallback, this);
@@ -138,6 +141,9 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
 
     _currentGoalStatus = INVALID;
 
+    _status_prev_time = ros::Time::now();
+    _status_prev_count = 0;
+    _packet_count = 0;
 
     _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2Tunnel::odom_reset_callback, this);
 
@@ -287,6 +293,7 @@ bool TJ2Tunnel::didSocketTimeout()
 
 void TJ2Tunnel::packetCallback(PacketResult* result)
 {
+    _packet_count++;
     string category = result->getCategory();
     if (category.compare("odom") == 0) {
         double x = result->getDouble();
@@ -301,12 +308,10 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         );
     }
     else if (category.compare("ping") == 0) {
-        std_msgs::Float64 msg;
         double ping_time = result->getDouble();
         double dt = getLocalTime() - ping_time;
         ROS_DEBUG("Publishing ping time: %f. (Return time: %f)", dt, ping_time);
-        msg.data = dt;
-        _ping_pub.publish(msg);
+        publishStatusMessages(dt);
     }
     else if (category.compare("imu") == 0) {
         double yaw = result->getDouble();
@@ -395,6 +400,29 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
 
 double TJ2Tunnel::getLocalTime() {
     return ros::Time::now().toSec();
+}
+
+void TJ2Tunnel::publishStatusMessages(float ping)
+{
+    std_msgs::Float64 ping_msg;
+    ping_msg.data = ping;
+    _ping_pub.publish(ping_msg);
+
+    int num_messages = _packet_count - _status_prev_count;
+    ros::Duration status_interval = ros::Time::now() - _status_prev_time;
+    double rate = (double)num_messages / status_interval.toSec();
+
+    std_msgs::Int32 count_msg;
+    count_msg.data = _packet_count;
+    _packet_count_pub.publish(count_msg);
+
+    std_msgs::Float64 rate_msg;
+    rate_msg.data = rate;
+    _packet_rate_pub.publish(rate_msg);
+
+    _status_prev_count = _packet_count;
+    _status_prev_time = ros::Time::now();
+    
 }
 
 void TJ2Tunnel::publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt)
