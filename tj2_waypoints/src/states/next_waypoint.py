@@ -9,17 +9,18 @@ class NextWaypointState(State):
     def __init__(self):
         super(NextWaypointState, self).__init__(
             outcomes=["success", "finished", "failure", "preempted"],
-            input_keys=["waypoint_index_in"],
+            input_keys=["waypoint_index_in", "waypoints_plan"],
             output_keys=["waypoint_index_out"]
         )
 
     def execute(self, userdata):
-        userdata.waypoint_index_out = userdata.waypoint_index_in + 1
+        waypoint_index_out = userdata.waypoint_index_in + 1
+        userdata.waypoint_index_out = waypoint_index_out
 
         num_waypoints = len(userdata.waypoints_plan)
 
-        if userdata.waypoint_index_out >= num_waypoints:
+        if waypoint_index_out >= num_waypoints:
             return "finished"
         else:
-            rospy.loginfo("Selecting next waypoint %s -> %s" % (userdata.waypoint_index_in, userdata.waypoint_index_out))
+            rospy.loginfo("Selecting next waypoint %s -> %s" % (userdata.waypoint_index_in, waypoint_index_out))
             return "success"

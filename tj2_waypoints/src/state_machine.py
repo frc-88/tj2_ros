@@ -17,7 +17,7 @@ class WaypointStateMachine(object):
 
         with self.sm:
             StateMachine.add(
-                "CHECK_WAYPOINT", CheckWaypointState(),
+                "CHECK_WAYPOINT", CheckWaypointState(self),
                 transitions={
                     "waypoint": "GOTO_WAYPOINT",
                     "object": "PURSUE_OBJECT",
@@ -28,11 +28,10 @@ class WaypointStateMachine(object):
                 remapping={
                     "waypoints_plan": "sm_waypoints_plan",
                     "waypoint_index": "sm_waypoint_index",
-                    "state_machine": "sm_state_machine",
                 }
             )
             StateMachine.add(
-                "GOTO_WAYPOINT", GoToWaypointState(),
+                "GOTO_WAYPOINT", GoToWaypointState(self),
                 transitions={
                     "success": "NEXT_WAYPOINT",
                     "failure": "failure",
@@ -41,11 +40,10 @@ class WaypointStateMachine(object):
                 remapping={
                     "waypoints_plan": "sm_waypoints_plan",
                     "waypoint_index": "sm_waypoint_index",
-                    "state_machine": "sm_state_machine",
                 }
             )
             StateMachine.add(
-                "PURSUE_OBJECT", PursueObjectState(),
+                "PURSUE_OBJECT", PursueObjectState(self),
                 transitions={
                     "success": "NEXT_WAYPOINT",
                     "failure": "failure",
@@ -54,7 +52,6 @@ class WaypointStateMachine(object):
                 remapping={
                     "waypoints_plan": "sm_waypoints_plan",
                     "waypoint_index": "sm_waypoint_index",
-                    "state_machine": "sm_state_machine",
                 }
             )
             StateMachine.add(
@@ -67,6 +64,7 @@ class WaypointStateMachine(object):
                 },
                 remapping={
                     "waypoint_index_in": "sm_waypoint_index",
+                    "waypoints_plan": "sm_waypoints_plan",
                     "waypoint_index_out": "sm_waypoint_index",
                 }
             )
@@ -86,7 +84,6 @@ class WaypointStateMachine(object):
 
         self.sm.userdata.sm_waypoint_index = 0
         self.sm.userdata.sm_waypoints_plan = waypoints_plan
-        self.sm.userdata.sm_state_machine = self
         self.outcome = self.sm.execute()
         if self.outcome == "success":
             self.waypoints_node.follow_path_server.set_succeeded()
