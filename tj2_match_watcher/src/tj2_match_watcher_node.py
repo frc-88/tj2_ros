@@ -41,10 +41,10 @@ class Tj2MatchWatcher(object):
         self.period = PREGAME
         self.prev_match_time = 0.0
 
-        self.start_bag_srv = self.make_service_client("/rosbag_controlled_recording/start", TriggerBag, wait=True)
-        self.resume_bag_srv = self.make_service_client("/rosbag_controlled_recording/resume", Empty, wait=True)
-        self.pause_bag_srv = self.make_service_client("/rosbag_controlled_recording/pause", Empty, wait=True)
-        self.stop_bag_srv = self.make_service_client("/rosbag_controlled_recording/stop", TriggerBag, wait=True)
+        self.start_bag_srv = self.make_service_client("/rosbag_controlled_recording/start", TriggerBag, wait=True, timeout=30.0)
+        self.resume_bag_srv = self.make_service_client("/rosbag_controlled_recording/resume", Empty, wait=True, timeout=30.0)
+        self.pause_bag_srv = self.make_service_client("/rosbag_controlled_recording/pause", Empty, wait=True, timeout=30.0)
+        self.stop_bag_srv = self.make_service_client("/rosbag_controlled_recording/stop", TriggerBag, wait=True, timeout=30.0)
         self.bag_is_started = False
         self.bag_name = ""
 
@@ -121,8 +121,6 @@ class Tj2MatchWatcher(object):
         self.bag_name = response.bag_name
         rospy.loginfo("Starting bag: %s" % self.bag_name)
         self.bag_is_started = True
-        rospy.sleep(1.0)  # record a few seconds to ensure bag is running before pausing
-        self.pause_bag_srv()
     
     def stop_bag_callback(self, timer):
         rospy.loginfo("Bag %s is stopping" % self.bag_name)

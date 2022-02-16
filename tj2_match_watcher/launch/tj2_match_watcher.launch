@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <group ns="tj2">
-        <node pkg="tj2_match_watcher" type="tj2_match_watcher_node.py" name="tj2_match_watcher" output="screen" required="true"/>
+        <node pkg="tj2_match_watcher" type="tj2_match_watcher_node.py" name="tj2_match_watcher" output="screen" required="false"/>
     </group>
     <!-- <include file="$(find tj2_match_watcher)/launch/controlled_rosbag_2022_robot.launch"/> -->
-    <include file="$(find tj2_match_watcher)/launch/controlled_rosbag_diffyjr.launch"/>
+    <!-- <include file="$(find tj2_match_watcher)/launch/controlled_rosbag_2022_robot_light.launch"/> -->
+    <!-- <include file="$(find tj2_match_watcher)/launch/controlled_rosbag_diffyjr.launch"/> -->
+    <include file="$(find tj2_match_watcher)/launch/controlled_rosbag_diffyjr_light.launch"/>
 </launch>

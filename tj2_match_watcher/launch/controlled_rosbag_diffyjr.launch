@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <node pkg="tj2_match_watcher" type="rosbag_controlled_recording.py" name="rosbag_controlled_recording" output="screen" required="true">
+    <node pkg="tj2_match_watcher" type="rosbag_controlled_recording.py" name="rosbag_controlled_recording" output="screen" required="false">
         <param name="rosbag_command" value="rosbag record -o /media/storage/bags/diffyjr            
             /camera/accel
             /camera/accel/imu_info
@@ -13,7 +13,6 @@
             /camera/depth/camera_info
             /camera/depth/image_rect_raw
             /camera/depth/metadata
-            /camera/depth_registered/points
             /camera/extrinsics/depth_to_color
             /camera/gyro
             /camera/gyro/imu_info

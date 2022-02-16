@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <node pkg="tj2_match_watcher" type="rosbag_controlled_recording.py" name="rosbag_controlled_recording" output="screen" required="false">
-        <param name="rosbag_command" value="rosbag record -o /media/storage/bags/2022_robot            
+        <param name="rosbag_command" value="rosbag record -o /media/storage/bags/diffyjr
             /camera/accel
             /camera/accel/imu_info
             /camera/accel/metadata
             /camera/accel/sample
             /camera/camera_post_processing_manager/bond
             /camera/color/camera_info
-            /camera/color/image_raw
             /camera/color/metadata
             /camera/depth/camera_info
-            /camera/depth/image_rect_raw
             /camera/depth/metadata
             /camera/extrinsics/depth_to_color
             /camera/gyro
@@ -181,5 +179,7 @@
             /tj2/waypoint_markers
 "/>
         <param name="record_from_startup" value="false"/>
+        <remap from="bag_status" to="/tj2/bag_status"/>
+        <remap from="bag_name" to="/tj2/bag_name"/>
     </node>
 </launch>

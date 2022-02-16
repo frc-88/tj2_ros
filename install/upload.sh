@@ -17,6 +17,6 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}
+rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY} -p 5810"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}
 
 ${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_ROSLAUNCH}
