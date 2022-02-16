@@ -9,21 +9,24 @@ class PursueObjectState(State):
     """
     Runs the pursuit planner searching for detections with the supplied waypoint name
     """
-    def __init__(self):
+    def __init__(self, state_machine):
+        self.state_machine = state_machine
         super(PursueObjectState, self).__init__(
             outcomes=["success", "preempted", "failure"],
-            input_keys=["waypoints_plan", "waypoint_index", "state_machine"],
-            output_keys=["waypoints_plan", "waypoint_index", "state_machine"]
+            input_keys=["waypoints_plan", "waypoint_index"],
+            output_keys=["waypoints_plan", "waypoint_index"]
         )
         self.search_timeout = rospy.Duration(15.0)
         self.goal_tolerance = 0.1
         self.pursuit_action = None
+        self.action_server = None
         self.is_pursuit_done = False
 
     def execute(self, userdata):
         rospy.loginfo("Going to object")
-        self.pursuit_action = userdata.state_machine.waypoints_node.pursuit_action
+        self.pursuit_action = self.state_machine.waypoints_node.pursuit_action
         self.is_pursuit_done = False
+        self.action_server = self.state_machine.waypoints_node.follow_path_server
 
         waypoints = userdata.waypoints_plan[userdata.waypoint_index]
         first_waypoint = waypoints[0]  # objects don't have a continuous mode for now. Only use the first waypoint
