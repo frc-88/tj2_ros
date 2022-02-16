@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import os
 import rospy
 import rosnode
 
@@ -91,7 +92,8 @@ class TJ2NetworkTables:
                         "status": "",
                         "bag_name": ""
                     },
-                    "topics": self.watch_topic_entries
+                    "topics": self.watch_topic_entries,
+                    "restart": False
                 }
             }
         }
@@ -109,8 +111,8 @@ class TJ2NetworkTables:
         for topic in self.watch_topics:
             self.topic_listeners[topic] = TopicListener(topic, 0.0)
 
-        self.topic_timer = rospy.Timer(rospy.Duration(3.0), self.topic_poll_callback)
-        self.node_timer = rospy.Timer(rospy.Duration(3.0), self.node_poll_callback)
+        self.topic_timer = rospy.Timer(rospy.Duration(1.0), self.topic_poll_callback)
+        self.node_timer = rospy.Timer(rospy.Duration(1.0), self.node_poll_callback)
 
         rospy.loginfo("%s init complete" % self.node_name)
 
@@ -128,6 +130,8 @@ class TJ2NetworkTables:
             return self.entries[path].getDouble(default_value)
         elif type(default_value) == str:
             return self.entries[path].getString(default_value)
+        elif type(default_value) == bool:
+            return self.entries[path].getBoolean(default_value)
         else:
             raise ValueError("Invalid type for '%s': %s" % (path, default_value))
 
@@ -178,10 +182,17 @@ class TJ2NetworkTables:
     def run(self):
         # rospy.spin()
         rospy.sleep(2.0)  # wait for NT to populate
+        self.set_entry("/ROS/status/restart", False)
         while not rospy.is_shutdown():
             self.clock_rate.sleep()
-            self.topic_poll_callback(None)
-            self.node_poll_callback(None)
+            if self.get_entry("/ROS/status/restart"):
+                self.restart_roslaunch()
+        
+    def restart_roslaunch(self):
+        rospy.logwarn("RESTARTING ROSLAUNCH FROM NETWORK TABLES")
+        os.system("sudo systemctl restart roslaunch.service")
+        while not rospy.is_shutdown():
+            pass
 
     def shutdown_hook(self):
         all_nodes = list(rosnode.get_node_names())
