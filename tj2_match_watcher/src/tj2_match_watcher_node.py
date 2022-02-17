@@ -12,10 +12,12 @@ AUTONOMOUS = 0
 TELEOP = 1
 ENDGAME = 2
 FINISHED = 3
+TIMEOUT = 4
 
 PERIODS = {
     PREGAME: "PREGAME",
     AUTONOMOUS: "AUTONOMOUS",
+    TIMEOUT: "TIMEOUT",
     TELEOP: "TELEOP",
     ENDGAME: "ENDGAME",
     FINISHED: "FINISHED",
@@ -34,9 +36,10 @@ class Tj2MatchWatcher(object):
         rospy.loginfo("%s init complete" % self.node_name)
 
         self.autonomous_period_s = 15.0
+        self.timeout_period_s = 1.5
         self.teleop_period_s = 135.0
         self.end_game_period_s = 30.0
-        self.full_match_s = self.autonomous_period_s + self.teleop_period_s + self.end_game_period_s
+        self.full_match_s = self.autonomous_period_s + self.teleop_period_s + self.end_game_period_s + self.timeout_period_s
 
         self.match_definitely_over_duration = rospy.Duration(self.full_match_s + 60.0)
 
@@ -90,7 +93,11 @@ class Tj2MatchWatcher(object):
 
         if match_time <= 0.0:
             if self.game_start_time > rospy.Time(0):
-                period = FINISHED
+                auto_time = self.game_start_time + rospy.Duration(self.autonomous_period_s + self.timeout_period_s)
+                if rospy.Time.now() > auto_time:
+                    period = FINISHED
+                else:
+                    period = TIMEOUT
             else:
                 period = PREGAME
         else:
