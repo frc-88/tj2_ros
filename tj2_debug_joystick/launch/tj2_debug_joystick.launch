@@ -10,14 +10,14 @@
     <arg name="button_map_name"   default="button_mapping_1.yaml" />
     <arg name="axis_map_name"   default="axis_mapping_2.yaml" />
 
-    <node name="$(anon joystick)" pkg="joy" type="joy_node" output="screen" required="true">
+    <node name="$(anon joystick)" pkg="joy" type="joy_node" output="screen" required="false">
         <param name="dev" value="$(arg device)" type="str"/>
         <param name="deadzone" value="0.0" />
         <param name="autorepeat_rate" value="30.0" />
         <remap from="joy" to="/$(arg topic_name)" />
         <remap from="joy/set_feedback" to="/$(arg topic_name)/set_feedback" />
     </node>
-    <node name="$(anon joy_throttle)" pkg="topic_tools" type="throttle" required="true" args="messages /$(arg topic_name) 20 /$(arg topic_name)_throttled" />
+    <node name="$(anon joy_throttle)" pkg="topic_tools" type="throttle" required="false" args="messages /$(arg topic_name) 20 /$(arg topic_name)_throttled" />
 
     <group ns="tj2" >
         <node name="$(anon tj2_debug_joystick)" pkg="tj2_debug_joystick" type="tj2_debug_joystick_node.py" output="screen" required="false">

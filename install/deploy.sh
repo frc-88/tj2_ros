@@ -24,7 +24,7 @@ DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
 
 ${BASE_DIR}/upload.sh ${DESTINATION_NAME} ${REMOTE_KEY} n
 
-SSH_COMMAND="ssh -i ${REMOTE_KEY} tj2@${DESTINATION_NAME}"
+SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
 
 # build tj2_tools
 ${SSH_COMMAND} "cd ${DEST_FULL_PATH}/tj2_tools && python3 setup.py -q install --user"

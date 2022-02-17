@@ -1,6 +1,5 @@
-numpy
-PyYAML
 pydub
 pyaudio
 scipy
 pynetworktables
+pynmcli

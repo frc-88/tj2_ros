@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <group ns="tj2">
-        <node name="tj2_bar_pipeline" pkg="tj2_bar_pipeline" type="tj2_bar_pipeline_node" output="screen" required="true">
+        <node name="tj2_bar_pipeline" pkg="tj2_bar_pipeline" type="tj2_bar_pipeline_node" output="screen" required="false">
             <param name="color_topic" value="/camera/color/image_raw"/>
             <param name="depth_topic" value="/camera/aligned_depth_to_color/image_raw"/>
             <param name="color_info_topic" value="/camera/color/camera_info"/>

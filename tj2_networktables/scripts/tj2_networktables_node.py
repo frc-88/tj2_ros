@@ -9,6 +9,8 @@ from std_msgs.msg import String
 
 from networktables import NetworkTables
 
+import pynmcli
+
 from tj2_tools.launch_manager import TopicListener
 
 
@@ -93,7 +95,9 @@ class TJ2NetworkTables:
                         "bag_name": ""
                     },
                     "topics": self.watch_topic_entries,
-                    "restart": False
+                    "restart": False,
+                    "enable_wifi": True,
+                    "wifi_status": True,
                 }
             }
         }
@@ -178,16 +182,53 @@ class TJ2NetworkTables:
     def bag_name_callback(self, msg):
         self.set_entry("/ROS/recording/bag_name", msg.data)
 
+    def is_wifi_enabled(self):
+        results = pynmcli.get_data(self.get_wifi().execute())
+        return len(results) != 0
+
+    def disable_wifi(self):
+        rospy.loginfo("Disabling wifi")
+        rospy.loginfo(self.get_radio("off", root=True).execute())
+
+    def enable_wifi(self):
+        rospy.loginfo("Enabling wifi")
+        rospy.loginfo(self.get_radio("on", root=True).execute())
+
+    def get_wifi(self, *args, root=False):
+        device = pynmcli.NetworkManager.Device()
+        if root:
+            device.command = "sudo " + device.command
+        return device.wifi(*args)
+
+    def get_radio(self, *args, root=False):
+        device = pynmcli.NetworkManager.Radio()
+        if root:
+            device.command = "sudo " + device.command
+        return device.wifi(*args)
 
     def run(self):
         # rospy.spin()
         rospy.sleep(2.0)  # wait for NT to populate
         self.set_entry("/ROS/status/restart", False)
+
+        prev_wifi_enable = self.is_wifi_enabled()
+        self.set_entry("/ROS/status/enable_wifi", prev_wifi_enable)
+
         while not rospy.is_shutdown():
             self.clock_rate.sleep()
+            
             if self.get_entry("/ROS/status/restart"):
                 self.restart_roslaunch()
-        
+            
+            self.set_entry("/ROS/status/wifi_status", self.is_wifi_enabled())
+            enable_wifi = self.get_entry("/ROS/status/enable_wifi")
+            if enable_wifi != prev_wifi_enable:
+                if enable_wifi:
+                    self.enable_wifi()
+                else:
+                    self.disable_wifi()
+                prev_wifi_enable = enable_wifi
+
     def restart_roslaunch(self):
         rospy.logwarn("RESTARTING ROSLAUNCH FROM NETWORK TABLES")
         os.system("sudo systemctl restart roslaunch.service")
