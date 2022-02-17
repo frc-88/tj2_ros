@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="tj2_match_watcher" type="rosbag_pub_test.py" name="rosbag_pub_test" output="screen" required="false"/>
+    <node pkg="tj2_match_watcher" type="rosbag_controlled_recording.py" name="rosbag_controlled_recording" output="screen" required="false">
+        <param name="rosbag_command" value="rosbag record -o $(find tj2_match_watcher)/test
+            /counter
+            "/>
+    </node>
+</launch>
