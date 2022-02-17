@@ -106,14 +106,14 @@ class RiologTailer(Tailer):
     
     def connect(self):
         exception = None
-        for _ in range(5):
+        for _ in range(50):
             rospy.loginfo("Connecting to %s:%s" % (self.host, self.port))
             self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.device.settimeout(1.0)
             try:
                 self.device.connect((self.host, self.port))
             except BaseException as e:
-                rospy.logerr("Failed to connect to RoboRIO: %s" % str(e))
+                rospy.logwarn("Failed to connect to RoboRIO via socket: %s" % str(e))
                 rospy.sleep(1.0)
                 exception = e
                 continue

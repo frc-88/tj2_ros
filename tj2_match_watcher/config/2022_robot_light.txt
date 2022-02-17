@@ -27,11 +27,9 @@
 /front_laser/laser_filter/range_filter/parameter_descriptions
 /front_laser/laser_filter/range_filter/parameter_updates
 /front_laser/scan
-/front_laser/scan_filtered
 /rear_laser/laser_filter/range_filter/parameter_descriptions
 /rear_laser/laser_filter/range_filter/parameter_updates
 /rear_laser/scan
-/rear_laser/scan_filtered
 /limelight/cam_mode
 /limelight/color/camera_info
 /limelight/color/image_raw
