@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <node pkg="tj2_match_watcher" type="rosbag_controlled_recording.py" name="rosbag_controlled_recording" output="screen" required="false">
-        <param name="rosbag_command" value="rosbag record -o /media/storage/bags/diffyjr -b 1024 __name:=rosbag_controlled"/>
+        <param name="rosbag_command" value="rosbag record -o /media/storage/bags/diffyjr -b 256 __name:=rosbag_controlled"/>
         <param name="topics_path" value="$(find tj2_match_watcher)/config/diffyjr.txt"/>
         <!-- <param name="topics_path" value="$(find tj2_match_watcher)/config/diffyjr_light.txt"/> -->
         <param name="record_from_startup" value="true"/>
