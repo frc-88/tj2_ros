@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <launch>
+    <arg name="serial_port" default="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>
+
     <group ns="laser">
         <node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="log">
-            <param name="serial_port"         type="string" value="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>  
+            <param name="serial_port"         type="string" value="$(arg serial_port)"/>  
             <param name="serial_baudrate"     type="int"    value="115200"/><!--A1/A2 -->
             <!-- <param name="serial_baudrate"     type="int"    value="256000"/> --><!--A3 -->
             <param name="frame_id"            type="string" value="laser"/>
@@ -20,6 +22,4 @@
             <!-- Stability: max_distance: 12.0 m, Point number: 4.0K -->
         </node>
     </group>
-    
-    <include file="$(find tj2_rplidar)/launch/laser_filter.launch"/>
 </launch>
