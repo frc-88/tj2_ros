@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="ira_laser_tools" name="laserscan_multi_merger" type="laserscan_multi_merger" output="screen">
+        <param name="destination_frame" value="/base_link"/>
+        <param name="cloud_destination_topic" value="/laser/cloud"/>
+        <param name="scan_destination_topic" value="/laser/scan"/>
+        <param name="laserscan_topics" value ="/front_laser/scan_filtered /rear_laser/scan_filtered" /> 
+    </node>
+    <node name="$(anon laser_param_setter)" pkg="dynamic_reconfigure" type="dynparam"
+        args="set /laserscan_multi_merger &quot;{
+            'angle_min': -3.14159,
+            'angle_max': 3.14159,
+            'angle_increment': 0.008726,
+            'scan_time': 0.1,
+            'range_min': 0.15,
+            'range_max': 12
+        }&quot;"/>
+</launch>

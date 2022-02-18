@@ -50,6 +50,7 @@ packages=(
     https://github.com/alireza-hosseini/ipcamera_driver
     https://github.com/ros-teleop/twist_mux.git
     https://github.com/ros-teleop/twist_mux_msgs.git
+    https://github.com/iralabdisco/ira_laser_tools.git
 )
 
 branches=(
@@ -89,6 +90,7 @@ branches=(
     master  # https://github.com/alireza-hosseini/ipcamera_driver
     melodic-devel  # https://github.com/ros-teleop/twist_mux.git
     melodic-devel  # https://github.com/ros-teleop/twist_mux_msgs.git
+    ros1-master  # https://github.com/iralabdisco/ira_laser_tools.git
 )
 
 len=${#packages[@]}
