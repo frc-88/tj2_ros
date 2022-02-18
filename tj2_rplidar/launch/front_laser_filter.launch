@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <group ns="laser">
+    <group ns="front_laser">
         <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="front_laser_filter">
             <rosparam command="load" file="$(find tj2_rplidar)/config/front_laser_filter.yaml" />
         </node>
