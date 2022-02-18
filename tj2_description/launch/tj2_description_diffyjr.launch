@@ -15,7 +15,7 @@
 
     <group ns="tj2" >
         <node name="tj2_description" pkg="tj2_description" type="tj2_description_node" output="screen">
-            <rosparam param="joint_names" file="$(find tj2_description)/config/joints.yaml" command="load"/>
+            <rosparam param="joint_names" file="$(find tj2_description)/config/diffyjr_joints.yaml" command="load"/>
         </node>
     </group>
 
