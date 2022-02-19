@@ -2,8 +2,8 @@
     <arg name="waypoints_path" default="$(find tj2_waypoints)/waypoints/$(env ROS_MAP_NAME)"/>
     <group ns="tj2" >
         <node name="tj2_waypoints" pkg="tj2_waypoints" type="tj2_waypoints_node.py" output="screen" required="false">
-            <!-- <param name="class_names_path" value="$(find tj2_yolo)/models/cargo_2022.names"/> -->
-            <param name="class_names_path" value="$(find tj2_yolo)/models/powercell_2021.names"/>
+            <param name="class_names_path" value="$(find tj2_yolo)/models/cargo_2022.names"/>
+            <!-- <param name="class_names_path" value="$(find tj2_yolo)/models/powercell_2021.names"/> -->
             <param name="waypoints_path" value="$(arg waypoints_path)"/>
             <param name="enable_waypoint_navigation" value="true"/>
             <param name="local_obstacle_layer_topic" value=""/>
