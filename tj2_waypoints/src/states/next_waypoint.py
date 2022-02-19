@@ -22,5 +22,5 @@ class NextWaypointState(State):
         if waypoint_index_out >= num_waypoints:
             return "finished"
         else:
-            rospy.loginfo("Selecting next waypoint %s -> %s" % (userdata.waypoint_index_in, waypoint_index_out))
+            rospy.loginfo("Selecting next waypoint: %s" % (waypoint_index_out))
             return "success"
