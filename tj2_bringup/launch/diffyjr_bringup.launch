@@ -18,17 +18,17 @@
     <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
     <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/>
     <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
-    <!-- <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/> -->
-    <!-- <include file="$(find tj2_driver_station)/launch/tj2_driver_station.launch"/> -->
-    <!-- <include file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/> -->
+    <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/>
+    <include file="$(find tj2_driver_station)/launch/tj2_driver_station.launch"/>
+    <include file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/>
 
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
-        <!-- <arg name="mode" value="localize"/> -->
-        <arg name="mode" value="idle"/>
+        <arg name="mode" value="localize"/>
+        <!-- <arg name="mode" value="idle"/> -->
         <arg name="map_name" value="$(arg map_name)"/>
     </include>
-    <!-- <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
+    <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
-    </include> -->
+    </include>
 </launch>

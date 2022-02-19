@@ -33,6 +33,7 @@ class PursueObjectState(State):
         
         goal = PursueObjectGoal()
         goal.object_name = first_waypoint.name
+        rospy.loginfo("Pursuit object name: %s" % goal.object_name)
         goal.timeout = self.search_timeout
         goal.xy_tolerance = self.goal_tolerance
         self.pursuit_action.send_goal(goal, done_cb=self.pursuit_done)

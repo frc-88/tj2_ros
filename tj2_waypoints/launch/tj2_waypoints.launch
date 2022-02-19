@@ -1,5 +1,5 @@
 <launch>
-    <arg name="waypoints_path" default="waypoints"/>
+    <arg name="waypoints_path" default="$(find tj2_waypoints)/waypoints/$(env ROS_MAP_NAME)"/>
     <group ns="tj2" >
         <node name="tj2_waypoints" pkg="tj2_waypoints" type="tj2_waypoints_node.py" output="screen" required="false">
             <!-- <param name="class_names_path" value="$(find tj2_yolo)/models/cargo_2022.names"/> -->
