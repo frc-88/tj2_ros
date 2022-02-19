@@ -125,7 +125,7 @@ class Tj2Pursuit:
         nearest_dist = None
         for detection in detections_msg.detections:
             if len(object_name) > 0:
-                label = get_label(self.class_names, detection.results[0].id)
+                label, index = get_label(self.class_names, detection.results[0].id)
                 if label != object_name:
                     continue
             detection_pose = detection.results[0].pose.pose
