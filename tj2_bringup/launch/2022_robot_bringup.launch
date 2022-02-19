@@ -18,7 +18,7 @@
     
     <group ns="front_laser">
         <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch">
-            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.1:1.0-port0"/>
+            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.3:1.0-port0"/>
             <arg name="lidar_node_name" value="front_rplidar"/>
             <arg name="laser_frame_id" value="front_laser_link"/>
         </include>
@@ -27,7 +27,7 @@
     
     <group ns="rear_laser">
         <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch">
-            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.3:1.0-port0"/>
+            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.1:1.0-port0"/>
             <arg name="lidar_node_name" value="rear_rplidar"/>
             <arg name="laser_frame_id" value="rear_laser_link"/>
         </include>
