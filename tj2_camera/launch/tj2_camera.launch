@@ -20,7 +20,14 @@
             <remap from="rgb/camera_info"             to="color/camera_info" />
             <remap from="depth_registered/image_rect" to="aligned_depth_to_color/image_raw" />
         </node>
-    
+
+        <node pkg="nodelet" type="nodelet" name="downsample_rgb"
+                args="load image_proc/crop_decimate $(arg post_processing_manager_name)">
+            <param name="decimation_x" value="2"/>
+            <param name="decimation_y" value="2"/>
+            <remap from="camera" to="color"/>
+            <remap from="camera_out" to="color_decimate"/>
+        </node>
     </group>
 
 
