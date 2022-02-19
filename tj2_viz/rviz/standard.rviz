@@ -8,6 +8,8 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /RealSense1
+        - /LaserScan2
+        - /LaserScan3
       Splitter Ratio: 0.3356282413005829
     Tree Height: 617
   - Class: rviz/Selection
@@ -524,7 +526,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.10000000149011612
+      Size (m): 0.05000000074505806
       Style: Flat Squares
       Topic: /front_laser/scan
       Unreliable: false
@@ -541,7 +543,7 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz/LaserScan
       Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -552,7 +554,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.10000000149011612
+      Size (m): 0.05000000074505806
       Style: Flat Squares
       Topic: /rear_laser/scan
       Unreliable: false
@@ -615,7 +617,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 7.282726287841797
+      Distance: 15.905325889587402
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -623,17 +625,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.6989790201187134
-        Y: 0.4859541058540344
-        Z: 0.4920501112937927
+        X: 0.0826450064778328
+        Y: 0.23280738294124603
+        Z: -0.2584080994129181
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3547975718975067
+      Pitch: 1.509796380996704
       Target Frame: <Fixed Frame>
-      Yaw: 4.1317620277404785
+      Yaw: 3.4317657947540283
     Saved: ~
 Window Geometry:
   Displays:
