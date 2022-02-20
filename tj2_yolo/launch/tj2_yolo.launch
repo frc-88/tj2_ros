@@ -28,17 +28,17 @@
 
             
         </node>
-        <node name="overlay_compressed_image" pkg="image_transport" type="republish" output="screen" required="false" args="
+        <!-- <node name="overlay_compressed_image" pkg="image_transport" type="republish" output="screen" required="false" args="
             raw
             in:=overlay
             compressed
             out:=overlay
-        "/>
-        <node name="delayed_compressed_image" pkg="image_transport" type="republish" output="screen" required="false" args="
+        "/> -->
+        <!-- <node name="delayed_compressed_image" pkg="image_transport" type="republish" output="screen" required="false" args="
             raw
             in:=delayed_image
             compressed
             out:=delayed_image
-        "/>
+        "/> -->
     </group>
 </launch>

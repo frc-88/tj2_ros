@@ -87,7 +87,7 @@ class Tj2MatchWatcher(object):
         self.is_autonomous = False
         clock = rospy.Rate(30)
         while not rospy.is_shutdown():
-            rospy.loginfo_throttle(0.25, "is_autonomous: %s, match_time: %s" % (self.is_autonomous, self.match_time))
+            # rospy.loginfo_throttle(0.25, "is_autonomous: %s, match_time: %s" % (self.is_autonomous, self.match_time))
             if self.is_autonomous and (0.0 < self.match_time < 14.0):
                 if self.game_start_time <= rospy.Time(0):
                     self.game_start_time = rospy.Time.now()

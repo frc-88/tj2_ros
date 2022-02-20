@@ -6,13 +6,9 @@
         <param name="scan_destination_topic" value="/laser/scan"/>
         <param name="laserscan_topics" value ="/front_laser/scan_filtered /rear_laser/scan_filtered" /> 
     </node>
-    <node name="$(anon laser_param_setter)" pkg="dynamic_reconfigure" type="dynparam"
-        args="set /laserscan_multi_merger &quot;{
-            'angle_min': -3.14159,
-            'angle_max': 3.14159,
-            'angle_increment': 0.008726,
-            'scan_time': 0.1,
-            'range_min': 0.15,
-            'range_max': 12
-        }&quot;"/>
+    <node pkg="tj2_rplidar" type="tj2_lidar_watcher_node.py" name="tj2_lidar_watcher" output="screen">
+        <param name="expected_front_rate" value="10" />
+        <param name="expected_rear_rate" value="10" />
+        <rosparam param="combiner_config" file="$(find tj2_rplidar)/config/combiner.yaml" command="load"/>
+    </node>
 </launch>

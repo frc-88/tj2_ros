@@ -158,8 +158,8 @@
 /tj2/packet_count
 /tj2/packet_rate
 /tj2/ping
-/tj2/powercell/detections
-/tj2/powercell/markers
+/tj2/cargo/detections
+/tj2/cargo/markers
 /tj2/pursue_object/cancel
 /tj2/pursue_object/feedback
 /tj2/pursue_object/goal
