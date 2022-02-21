@@ -19,7 +19,7 @@
         </node>
     </group>
 
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_front_laser" args="-0.306757 -0.000102 0.259478   -1 0 0 0 base_link front_laser_link 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_rear_laser" args="0.123430 0.289422 0.342376   -0.0000  0.0000  0.9063  -0.4226 base_link rear_laser_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_front_laser" args="-0.306757 -0.000102 0.259478   -1 0 0 0 base_link rear_laser_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_rear_laser" args="0.123430 0.289422 0.342376   -0.0000  0.0000  0.9063  -0.4226 base_link front_laser_link 20" />
     <node pkg="tf" type="static_transform_publisher" name="turret_to_limelight" args="0.201 -0.001630 0.298295   0.4026  -0.0000  0.9154  0.0000 turret_link limelight_link 20" />
 </launch>

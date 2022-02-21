@@ -6,7 +6,7 @@
     <group ns="tj2">
         <node name="tj2_riolog" pkg="tj2_riolog" type="tj2_riolog_node.py" output="screen" required="false">
             <param name="host" value="$(arg robot_address)"/>
-            <param name="use_ssh" value="false"/>
+            <param name="use_ssh" value="true"/>
         </node>
     </group>
 </launch>
