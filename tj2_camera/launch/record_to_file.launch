@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <node name="record_realsense_to_file" pkg="tj2_camera" type="record_to_video_file.py" output="screen">
-        <param name="video_path" value="/media/storage/bags/video-%Y-%m-%dT%H-%M-%S--%f.mp4"/>
+        <param name="video_path" value="./video-%Y-%m-%dT%H-%M-%S--%f.mp4"/>
+        <param name="video_fps" value="60"/>
         <remap from="camera_info" to="/camera/color/camera_info"/>
         <remap from="image" to="/camera/color/image_raw"/>
     </node>

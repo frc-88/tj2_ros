@@ -1,8 +1,8 @@
 # move_base load plugins
 base_global_planner: "carrot_planner/CarrotPlanner" # alternatives: navfn/NavfnROS, global_planner/GlobalPlanner, carrot_planner/CarrotPlanner, navigation_experimental/goal_passer
-base_local_planner: "dwa_local_planner/DWAPlannerROS"
+# base_local_planner: "dwa_local_planner/DWAPlannerROS"
 # base_local_planner: "base_local_planner/TrajectoryPlannerROS"
-# base_local_planner: "teb_local_planner/TebLocalPlannerROS"
+base_local_planner: "teb_local_planner/TebLocalPlannerROS"
 
 recovery_behaviors:
   # - name: 'super_conservative_reset1'

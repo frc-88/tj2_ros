@@ -6,7 +6,7 @@
             <remap from="detections" to="cargo/detections"/>
             <remap from="markers" to="cargo/markers"/>
             <rosparam param="yolo_z_depth_estimations" file="$(find tj2_yolo)/config/cargo_depth_estimations.yaml" command="load"/>
-            <remap from="overlay" to="cargo/overlay"/>
+            <!-- <remap from="overlay" to="cargo/overlay"/> -->
 
             <!-- <param name="model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/> -->
             <!-- <param name="classes_path" value="$(find tj2_yolo)/models/powercell_2021.names"/> -->
