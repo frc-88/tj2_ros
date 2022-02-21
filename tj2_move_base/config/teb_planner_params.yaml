@@ -7,10 +7,10 @@
 ## Robot Configuration Parameters ##
 
 # Maximum translational acceleration of the robot in meters/sec^2
-acc_lim_x: 2.0 # 0.5
+acc_lim_x: 2.0 # 4.0
 
 # Maximum angular acceleration of the robot in radians/sec^2
-acc_lim_theta: 12.0 # 0.5
+acc_lim_theta: 3.0 # 12.0
 
 # Maximum translational velocity of the robot in meters/sec
 max_vel_x: 2.0 # max speed 4.87 m/s
@@ -18,11 +18,11 @@ max_vel_x: 2.0 # max speed 4.87 m/s
 # Maximum absolute translational velocity of the robot while driving
 # backwards in meters/sec. See optimization parameter
 # weight_kinematics_forward_drive
-max_vel_x_backwards: 2.0 # 0.2
+max_vel_x_backwards: 2.0 # 4.87
 
 # Maximum angular velocity of the robot in radians/secThe following
 # parameters are relevant only for carlike robots:
-max_vel_theta: 61.4  # 61.4
+max_vel_theta: 6.0  # 61.4
 
 ## The following parameters are relevant only for holonomic robots:
 

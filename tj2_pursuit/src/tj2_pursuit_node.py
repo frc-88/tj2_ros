@@ -60,7 +60,7 @@ class Tj2Pursuit:
         
         self.predictor = BouncePredictor(  # TODO: make dynamically configurable
             v_max_robot=4.0,
-            past_window_size=4,
+            past_window_size=16,
             vx_std_dev_threshold=1.0,
             vy_std_dev_threshold=1.0
         )
