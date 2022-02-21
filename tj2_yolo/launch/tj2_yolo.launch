@@ -21,6 +21,8 @@
             <param name="publish_overlay" value="true"/>
             <param name="report_loop_times" value="false"/>
             <param name="marker_persistance" value="0.25"/>
+            <param name="circle_mask_border_offset_px" value="0"/>
+            <param name="circle_mask_border_divisor" value="2"/>
 
             <remap from="color/image_raw" to="/camera/color/image_raw"/>
             <remap from="depth/image_raw" to="/camera/aligned_depth_to_color/image_raw"/>

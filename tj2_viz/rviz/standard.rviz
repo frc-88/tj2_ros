@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
       Splitter Ratio: 0.3356282413005829
@@ -83,7 +84,7 @@ Visualization Manager:
         camera_infra_optical_frame:
           Value: false
         camera_link:
-          Value: false
+          Value: true
         camera_tilt_link:
           Value: false
         front_laser_link:
@@ -715,7 +716,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_link
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -739,7 +740,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.269134521484375
+      Distance: 1.3061541318893433
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -747,17 +748,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 2.6819262504577637
-        Y: -0.48067644238471985
-        Z: 0.036607347428798676
+        X: -2.599656105041504
+        Y: -1.501719355583191
+        Z: 0.9277790784835815
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5553984642028809
+      Pitch: 0.685398280620575
       Target Frame: <Fixed Frame>
-      Yaw: 1.685430884361267
+      Yaw: 2.3503994941711426
     Saved: ~
 Window Geometry:
   Displays:
