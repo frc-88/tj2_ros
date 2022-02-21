@@ -7,6 +7,8 @@ Panels:
         - /Global Options1
         - /TF1/Frames1
         - /TF1/Tree1
+        - /Pursuit Local Plan1
+        - /Global Plan1
       Splitter Ratio: 0.3356282413005829
     Tree Height: 396
   - Class: rviz/Selection
@@ -309,8 +311,8 @@ Visualization Manager:
       Axis: Z
       Channel Name: intensity
       Class: rviz/LaserScan
-      Color: 255; 255; 255
-      Color Transformer: ""
+      Color: 239; 41; 41
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -333,7 +335,8 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        {}
+        pospoint1: true
+        textpoint1: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -703,7 +706,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.378551006317139
+      Distance: 5.6382575035095215
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -711,17 +714,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 2.296264886856079
-        Y: -0.32619041204452515
-        Z: 0.9125126004219055
+        X: 1.801529884338379
+        Y: 0.23256650567054749
+        Z: 0.5701045989990234
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3147960901260376
+      Pitch: 0.639796793460846
       Target Frame: <Fixed Frame>
-      Yaw: 3.278574228286743
+      Yaw: 0.6835713386535645
     Saved: ~
 Window Geometry:
   Displays:

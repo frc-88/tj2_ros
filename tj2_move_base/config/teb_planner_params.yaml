@@ -7,13 +7,13 @@
 ## Robot Configuration Parameters ##
 
 # Maximum translational acceleration of the robot in meters/sec^2
-acc_lim_x: 10.0 # 0.5
+acc_lim_x: 2.0 # 0.5
 
 # Maximum angular acceleration of the robot in radians/sec^2
-acc_lim_theta: 1.0 # 0.5
+acc_lim_theta: 12.0 # 0.5
 
 # Maximum translational velocity of the robot in meters/sec
-max_vel_x: 2.0 # max speed 4.48 m/s
+max_vel_x: 2.0 # max speed 4.87 m/s
 
 # Maximum absolute translational velocity of the robot while driving
 # backwards in meters/sec. See optimization parameter
@@ -22,7 +22,7 @@ max_vel_x_backwards: 2.0 # 0.2
 
 # Maximum angular velocity of the robot in radians/secThe following
 # parameters are relevant only for carlike robots:
-max_vel_theta: 31.4
+max_vel_theta: 61.4  # 61.4
 
 ## The following parameters are relevant only for holonomic robots:
 
@@ -49,10 +49,10 @@ cmd_angle_instead_rotvel: false # false
 
 # Maximum strafing velocity of the robot (should be zero for non-
 # holonomic robots!)
-max_vel_y: 2.0 # 0.0
+max_vel_y: 0.0  # 0.0
 
 # Maximum strafing acceleration of the robot
-acc_lim_y: 10.0 # 0.5
+acc_lim_y: 0.0  # 0.5
 
 
 ## The following parameters are relevant for the footprint model used for
@@ -101,7 +101,7 @@ footprint_model/rear_radius: 0.2 # 0.2
 # This parameter is only relevant for type "polygon". It contains the
 # list of polygon vertices (2d coordinates each). The polygon is always
 # closed: do not repeat the first vertex at the end.
-footprint_model/vertices: [[-0.313, -0.313], [-0.313, 0.313], [0.313, 0.313], [0.313, -0.313]]
+footprint_model/vertices: [[-0.437, -0.437], [-0.437, 0.437], [0.437, 0.437], [0.437, -0.437]]
 
 # If true, updates the footprint before checking trajectory feasibility
 is_footprint_dynamic: false # false
@@ -110,10 +110,10 @@ is_footprint_dynamic: false # false
 ## Goal Tolerance Parameters ##
 
 # Allowed final euclidean distance to the goal position in meters
-xy_goal_tolerance: 0.1 # 0.2
+xy_goal_tolerance: 0.15 # 0.2
 
 # Allowed final orientation error in radians
-yaw_goal_tolerance: 0.05 # 0.2
+yaw_goal_tolerance: 0.25 # 0.2
 
 # Remove the goal velocity constraint such that the robot can arrive at
 # the goal with maximum speed
