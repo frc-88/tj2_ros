@@ -7,28 +7,28 @@
 ## Robot Configuration Parameters ##
 
 # The x acceleration limit of the robot in meters/sec^2
-acc_lim_x: 0.1  # 10.0
+acc_lim_x: 3.0  # 10.0
 
 # The y acceleration limit of the robot in meters/sec^2
 acc_lim_y: 0.0  # 10.0
 
 # The rotational acceleration limit of the robot in radians/sec^2
-acc_lim_theta: 0.1  # 40.0
+acc_lim_theta: 3.0  # 40.0
 
 # The rotational acceleration limit of the robot in meters/sec^2
-acc_lim_trans: 0.1  # 40.0
+acc_lim_trans: 3.0  # 40.0
 
 # The absolute value of the maximum translational velocity for the robot in m/s
-max_vel_trans: 2.0  # max speed 4.48 m/s
+max_vel_trans: 6.0  # max speed 4.48 m/s
 
 # The absolute value of the minimum translational velocity for the robot in m/s
 min_vel_trans: 0.05  # 0.05
 
 # The maximum x velocity for the robot in m/s.
-max_vel_x: 2.0  # 4.48
+max_vel_x: 6.0  # 4.48
 
 # The minimum x velocity for the robot in m/s, negative for backwards motion.
-min_vel_x: -2.0  # -0.15
+min_vel_x: -6.0  # -0.15
 
 # The maximum y velocity for the robot in m/s
 max_vel_y: 0.0
@@ -40,7 +40,7 @@ min_vel_y: 0.0
 max_vel_theta: 6.0  # 61.4
 
 # The absolute value of the minimum rotational velocity for the robot in rad/s
-min_vel_theta: 1.0  # 1.0
+min_vel_theta: 0.05  # 1.0
 
 # Below what maximum velocity we consider the robot to be stopped in translation
 trans_stopped_vel: 0.05
@@ -68,7 +68,7 @@ twirling_scale: 0.0  # 0.0
 ## Forward Simulation Parameters ##
 
 # The amount of time to forward-simulate trajectories in seconds
-sim_time: 0.5  # 1.7
+sim_time: 1.0  # 1.7
 
 # The step size, in meters, to take between points on a given trajectory
 sim_granularity: 0.025  # 0.025

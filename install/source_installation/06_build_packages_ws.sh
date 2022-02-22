@@ -51,6 +51,7 @@ packages=(
     https://github.com/ros-teleop/twist_mux.git
     https://github.com/ros-teleop/twist_mux_msgs.git
     https://github.com/iralabdisco/ira_laser_tools.git
+    https://github.com/ros-perception/pointcloud_to_laserscan.git
 )
 
 branches=(
@@ -91,6 +92,7 @@ branches=(
     melodic-devel  # https://github.com/ros-teleop/twist_mux.git
     melodic-devel  # https://github.com/ros-teleop/twist_mux_msgs.git
     ros1-master  # https://github.com/iralabdisco/ira_laser_tools.git
+    lunar-devel  # https://github.com/ros-perception/pointcloud_to_laserscan.git
 )
 
 len=${#packages[@]}

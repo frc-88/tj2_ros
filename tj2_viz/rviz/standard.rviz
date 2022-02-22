@@ -5,9 +5,10 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
+        - /LaserScan2
+        - /Marker1
       Splitter Ratio: 0.3356282413005829
     Tree Height: 396
   - Class: rviz/Selection
@@ -334,7 +335,12 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        {}
+        posend: true
+        pospoint1: true
+        posstart: true
+        textend: true
+        textpoint1: true
+        textstart: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -376,6 +382,7 @@ Visualization Manager:
         Local Costmap: true
         Local Plan: true
         Map: true
+        Marker: true
         Move Base Goal: true
         Move Base Waypoints: true
         PoseArray: true
@@ -446,7 +453,9 @@ Visualization Manager:
       Marker Topic: /tj2/cargo/markers
       Name: Cargo Markers
       Namespaces:
+        sphere_cargo_blue: true
         sphere_cargo_red: true
+        text_sphere_cargo_blue: true
         text_sphere_cargo_red: true
       Queue Size: 100
       Value: true
@@ -573,7 +582,7 @@ Visualization Manager:
       Value: true
     - Alpha: 0.699999988079071
       Class: rviz/Map
-      Color Scheme: map
+      Color Scheme: costmap
       Draw Behind: true
       Enabled: true
       Name: Global Costmap
@@ -583,7 +592,7 @@ Visualization Manager:
       Value: true
     - Alpha: 0.699999988079071
       Class: rviz/Map
-      Color Scheme: map
+      Color Scheme: costmap
       Draw Behind: true
       Enabled: true
       Name: Local Costmap
@@ -634,7 +643,7 @@ Visualization Manager:
       Color: 138; 226; 52
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -649,7 +658,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -662,7 +671,7 @@ Visualization Manager:
       Color: 52; 101; 164
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -677,7 +686,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Arrow Length: 0.30000001192092896
       Axes Length: 0.30000001192092896
@@ -712,6 +721,42 @@ Visualization Manager:
       Topic: /pursuit/pursuit_move_base/TebLocalPlannerROS/teb_poses
       Unreliable: false
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /standalone_converter/costmap_polygon_markers
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/LaserScan
+      Color: 114; 159; 207
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: LaserScan
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.10000000149011612
+      Style: Flat Squares
+      Topic: /camera/scan
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -740,7 +785,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.3061541318893433
+      Distance: 25.69373893737793
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -748,17 +793,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -2.599656105041504
-        Y: -1.501719355583191
-        Z: 0.9277790784835815
+        X: -4.573284149169922
+        Y: 1.3730648756027222
+        Z: 3.3504691123962402
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.685398280620575
+      Pitch: 1.0347976684570312
       Target Frame: <Fixed Frame>
-      Yaw: 2.3503994941711426
+      Yaw: 1.485412836074829
     Saved: ~
 Window Geometry:
   Displays:

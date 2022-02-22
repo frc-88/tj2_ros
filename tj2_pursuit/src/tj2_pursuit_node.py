@@ -93,6 +93,8 @@ class Tj2Pursuit:
                 if rospy.is_shutdown() or self.pursue_object_server.is_preempt_requested():
                     self.pursue_object_server.set_preempted()
                     break
+                if rospy.Time.now() - self.object_timer > rospy.Duration(4.0):
+                    self.future_pose_stamped = None
 
                 if self.pursue_object(goal.xy_tolerance):
                     self.pursue_object_server.set_succeeded()
