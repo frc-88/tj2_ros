@@ -14,23 +14,8 @@
     <!-- <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/> -->
     <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
 
-    <group ns="front_laser">
-        <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch">
-            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.2:1.0-port0"/>
-            <arg name="lidar_node_name" value="front_rplidar"/>
-            <arg name="laser_frame_id" value="front_laser_link"/>
-        </include>
-        <include file="$(find tj2_rplidar)/launch/front_laser_filter.launch"/>
-    </group>
-    
-    <group ns="rear_laser">
-        <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch">
-            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.1:1.0-port0"/>
-            <arg name="lidar_node_name" value="rear_rplidar"/>
-            <arg name="laser_frame_id" value="rear_laser_link"/>
-        </include>
-        <include file="$(find tj2_rplidar)/launch/rear_laser_filter.launch"/>
-    </group>
+    <include file="$(find tj2_rplidar)/launch/left_laser.launch">
+    <include file="$(find tj2_rplidar)/launch/right_laser.launch">
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
 
     <!-- <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/> -->

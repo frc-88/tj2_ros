@@ -12,6 +12,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<bool>("~publish_odom_tf", _publish_odom_tf, true);
     ros::param::param<string>("~base_frame", _base_frame, "base_link");
     ros::param::param<string>("~odom_frame", _odom_frame, "odom");
+    ros::param::param<string>("~map_frame", _map_frame, "map");
     ros::param::param<string>("~imu_frame", _imu_frame, "imu");
 
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
@@ -522,6 +523,22 @@ void TJ2Tunnel::publishGoalStatus()
     writePacket("gstatus", "d", _currentGoalStatus);
 }
 
+void TJ2Tunnel::publishRobotGlobalPose()
+{
+    tf::StampedTransform transform;
+    try {
+        _tf_listener.lookupTransform(_base_frame, _map_frame, ros::Time(0), transform);
+    }
+    catch (tf::TransformException ex) {
+        return;
+    }
+
+    double x = transform.getOrigin().x();
+    double y = transform.getOrigin().y();
+    double theta = tf::getYaw(transform.getRotation()); 
+    writePacket("global", "fff", x, y, theta);
+}
+
 void TJ2Tunnel::setGoalStatus(GoalStatus status)
 {
     _currentGoalStatus = status;
@@ -782,6 +799,7 @@ bool TJ2Tunnel::loop()
 {
     publishCmdVel();
     publishGoalStatus();
+    publishRobotGlobalPose();
     return true;
 }
 
