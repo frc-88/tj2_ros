@@ -8,13 +8,6 @@
             <rosparam param="yolo_z_depth_estimations" file="$(find tj2_yolo)/config/cargo_depth_estimations.yaml" command="load"/>
             <!-- <remap from="overlay" to="cargo/overlay"/> -->
 
-            <!-- <param name="model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/> -->
-            <!-- <param name="classes_path" value="$(find tj2_yolo)/models/powercell_2021.names"/> -->
-            <!-- <remap from="detections" to="powercell/detections"/> -->
-            <!-- <remap from="markers" to="powercell/markers"/> -->
-            <!-- <rosparam param="yolo_z_depth_estimations" file="$(find tj2_yolo)/config/powercell_depth_estimations.yaml" command="load"/> -->
-            <!-- <remap from="overlay" to="powercell/overlay"/> -->
-
             <param name="confidence_threshold" value="0.2"/>
             <param name="nms_iou_threshold" value="0.2"/>
 
@@ -26,9 +19,7 @@
 
             <remap from="color/image_raw" to="/camera/color/image_raw"/>
             <remap from="depth/image_raw" to="/camera/aligned_depth_to_color/image_raw"/>
-            <remap from="color/camera_info" to="/camera/color/camera_info"/>
-
-            
+            <remap from="color/camera_info" to="/camera/color/camera_info"/>            
         </node>
         <!-- <node name="overlay_compressed_image" pkg="image_transport" type="republish" output="screen" required="false" args="
             raw

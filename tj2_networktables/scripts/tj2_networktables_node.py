@@ -9,7 +9,7 @@ from std_msgs.msg import String
 
 from networktables import NetworkTables
 
-# import pynmcli
+import pynmcli
 
 from tj2_tools.launch_manager import TopicListener
 
@@ -183,17 +183,17 @@ class TJ2NetworkTables:
         self.set_entry("/ROS/recording/bag_name", msg.data)
 
     def is_wifi_enabled(self):
-        # results = pynmcli.get_data(self.get_wifi().execute())
-        # return len(results) != 0
+        results = pynmcli.get_data(self.get_wifi().execute())
+        return len(results) != 0
         return False
 
     def disable_wifi(self):
         rospy.loginfo("Disabling wifi")
-        # rospy.loginfo(self.get_radio("off", root=True).execute())
+        rospy.loginfo(self.get_radio("off", root=True).execute())
 
     def enable_wifi(self):
         rospy.loginfo("Enabling wifi")
-        # rospy.loginfo(self.get_radio("on", root=True).execute())
+        rospy.loginfo(self.get_radio("on", root=True).execute())
 
     def get_wifi(self, *args, root=False):
         device = pynmcli.NetworkManager.Device()
