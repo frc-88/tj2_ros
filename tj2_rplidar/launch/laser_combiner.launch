@@ -4,11 +4,11 @@
         <param name="destination_frame" value="base_link"/>
         <param name="cloud_destination_topic" value="/laser/cloud"/>
         <param name="scan_destination_topic" value="/laser/scan"/>
-        <param name="laserscan_topics" value ="/front_laser/scan_filtered /rear_laser/scan_filtered" /> 
+        <param name="laserscan_topics" value ="/left_laser/scan_filtered /right_laser/scan_filtered" /> 
     </node>
     <node pkg="tj2_rplidar" type="tj2_lidar_watcher_node.py" name="tj2_lidar_watcher" output="screen">
-        <param name="expected_front_rate" value="10" />
-        <param name="expected_rear_rate" value="10" />
+        <param name="expected_left_rate" value="10" />
+        <param name="expected_right_rate" value="10" />
         <rosparam param="combiner_config" file="$(find tj2_rplidar)/config/combiner.yaml" command="load"/>
     </node>
 </launch>

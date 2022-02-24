@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   genmsg
   dynamic_reconfigure
+  tf
   tf2
   tf2_ros
   tf2_geometry_msgs
@@ -111,7 +112,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS rospy std_msgs sensor_msgs message_runtime dynamic_reconfigure tf2 nav_msgs 
+  CATKIN_DEPENDS rospy std_msgs sensor_msgs message_runtime dynamic_reconfigure tf tf2 nav_msgs 
 #  DEPENDS system_lib
 )
 

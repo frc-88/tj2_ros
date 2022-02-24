@@ -122,6 +122,7 @@ class Tj2Waypoints:
             self.state_machine = None
 
         self.marker_pub = rospy.Publisher("waypoint_markers", MarkerArray, queue_size=25)
+        self.waypoints_pub = rospy.Publisher("waypoints", WaypointArray, queue_size=25)
 
         self.reload_waypoints_srv = self.create_service("reload_waypoints", Trigger, self.reload_waypoints_callback)
         self.get_all_waypoints_srv = self.create_service("get_all_waypoints", GetAllWaypoints, self.get_all_waypoints_callback)
@@ -537,8 +538,6 @@ class Tj2Waypoints:
 
         position_marker.points.append(p1)
         position_marker.points.append(p2)
-
-
     
     def make_marker(self, name, pose):
         # name: str, marker name
@@ -569,6 +568,17 @@ class Tj2Waypoints:
         if len(self.markers.markers) != 0:
             self.marker_pub.publish(self.markers)
 
+    def publish_waypoints(self):
+        waypoint_array = WaypointArray()
+        for name, waypoint in self.waypoint_config.items():
+            pose = self.waypoint_to_pose(waypoint)
+            waypoint_msg = Waypoint()
+            waypoint_msg.pose = pose
+            waypoint_msg.name = name
+            waypoint_array.waypoints.append(waypoint_msg)
+
+        self.waypoints_pub.publish(waypoint_array)
+
     # ---
     # Run
     # ---
@@ -577,6 +587,7 @@ class Tj2Waypoints:
         rate = rospy.Rate(3.0)
         while not rospy.is_shutdown():
             self.publish_markers()
+            self.publish_waypoints()
             rate.sleep()
 
 
