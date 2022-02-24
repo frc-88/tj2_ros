@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   message_generation
   genmsg
-  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -88,9 +87,9 @@ catkin_python_setup()
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-generate_dynamic_reconfigure_options(
-  cfg/SwerveConstants.cfg
-)
+# generate_dynamic_reconfigure_options(
+#   cfg/
+# )
 
 ###################################
 ## catkin specific configuration ##
