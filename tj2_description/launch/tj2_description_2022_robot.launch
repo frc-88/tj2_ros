@@ -1,9 +1,7 @@
 <launch>
     <arg name="model" default="$(find tj2_description)/urdf/2022-robot.urdf.xml"/>
-    <arg name="gui" default="false" />
-
+    
     <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
-    <param name="use_gui" value="$(arg gui)"/>
     <rosparam param="source_list" subst_value="True">
     [
         "/tj2/joint_states",

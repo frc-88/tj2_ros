@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
         - /LaserScan2
@@ -69,7 +70,7 @@ Visualization Manager:
         front_laser_link:
           Value: false
         intake_link:
-          Value: false
+          Value: true
         intake_tilt_link:
           Value: false
         left_inner_climber_link:
@@ -733,7 +734,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.3557051420211792
+      Distance: 2.140007495880127
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -741,17 +742,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.3429504930973053
-        Y: 1.5794618129730225
-        Z: 1.1050329208374023
+        X: 0.1586732268333435
+        Y: -0.017495501786470413
+        Z: 0.6152560114860535
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.1547984629869461
+      Pitch: 0.4147983193397522
       Target Frame: <Fixed Frame>
-      Yaw: 1.0204132795333862
+      Yaw: 0.8654162883758545
     Saved: ~
 Window Geometry:
   Displays:
