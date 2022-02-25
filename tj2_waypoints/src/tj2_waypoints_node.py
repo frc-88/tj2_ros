@@ -223,14 +223,19 @@ class Tj2Waypoints:
 
     def get_waypoint_pose(self, waypoint: Waypoint):
         name = waypoint.name
-        if self.is_waypoint(name):
+        if len(name) == 0:
+            pose_stamped = geometry_msgs.msg.PoseStamped()
+            pose_stamped.header.frame_id = self.map_frame
+            pose_stamped.pose = waypoint.pose
+            return pose_stamped
+        elif self.is_waypoint(name):
             pose_2d = self.get_waypoint(name)
             pose = self.waypoint_to_pose(pose_2d)
             return pose
         else:
             rospy.logwarn("Waypoint name '%s' is not registered." % name)
             return None
-    
+
     def get_waypoints_as_pose_array(self, waypoints: list):
         pose_array = geometry_msgs.msg.PoseArray()
         for waypoint in waypoints:

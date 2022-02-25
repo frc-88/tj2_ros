@@ -31,6 +31,7 @@ class GoToWaypointState(State):
         self.intermediate_tolerance = 0.0
         self.ignore_orientation = False
         self.ignore_obstacles = False
+        self.interrutable_by = ""
 
         self.intermediate_settle_time = rospy.Duration(0.25)  # TODO: change to launch param or goal param
         self.within_range_time = None
@@ -72,10 +73,15 @@ class GoToWaypointState(State):
 
         first_waypoint = waypoints[0]  # for some parameters, only the first waypoint's values matter
 
+        self.is_move_base_done = False
+        self.distance_to_goal = None
+        self.within_range_time = None
+
         self.intermediate_tolerance = first_waypoint.intermediate_tolerance
         self.ignore_orientation = first_waypoint.ignore_orientation
         self.ignore_obstacles = first_waypoint.ignore_obstacles
         self.ignore_walls = first_waypoint.ignore_walls
+        self.interrutable_by = first_waypoint.interrutable_by
 
         if self.set_ignore_layers(userdata, self.ignore_walls, self.ignore_obstacles):
             time.sleep(self.costmap_toggle_delay)
@@ -98,7 +104,11 @@ class GoToWaypointState(State):
         rospy.loginfo("Going to position (%s, %s)" % (self.goal_pose_stamped.pose.position.x, self.goal_pose_stamped.pose.position.y))
 
         self.move_base.send_goal(goal, feedback_cb=self.move_base_feedback, done_cb=self.move_base_done)
-        self.wait_for_move_base()
+        wait_result = self.wait_for_move_base()
+        if wait_result == "object":
+            rospy.loginfo("Found %s closer than waypoint goal. Pursuing that instead" % self.interrutable_by)
+            waypoints[0].name = self.interrutable_by  # set the current waypoint to the object name instead for PursueObjectState
+            return "object"
 
         if self.action_result != "success":
             return self.action_result
@@ -135,6 +145,11 @@ class GoToWaypointState(State):
             #       cancel goal
             if self.distance_to_goal is None:
                 continue
+                
+            nearest_obj_dist = self.get_nearest_object_distance(self.interrutable_by)
+            if nearest_obj_dist is not None:
+                if nearest_obj_dist < self.distance_to_goal:
+                    return "object"
 
             if self.distance_to_goal <= self.intermediate_tolerance:
                 if self.within_range_time is None:
@@ -153,9 +168,15 @@ class GoToWaypointState(State):
                 self.within_range_time = None
             
             rate.sleep()
+        return "success"
         
     def move_base_feedback(self, feedback):
         self.distance_to_goal = self.get_xy_dist(feedback.base_position, self.goal_pose_stamped)
+    
+    def get_nearest_object_distance(self, object_name):
+        if len(object_name) == 0:
+            return None
+        return 10000.0  # TODO: fill with detection results
 
     def close_enough_to_goal(self):
         rospy.loginfo("Robot is close enough to goal: %s. Moving on" % self.distance_to_goal)
