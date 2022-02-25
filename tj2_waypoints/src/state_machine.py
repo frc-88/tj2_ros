@@ -33,6 +33,7 @@ class WaypointStateMachine(object):
             StateMachine.add(
                 "GOTO_WAYPOINT", GoToWaypointState(self),
                 transitions={
+                    "object": "PURSUE_OBJECT",
                     "success": "NEXT_WAYPOINT",
                     "failure": "failure",
                     "preempted": "preempted"

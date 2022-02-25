@@ -339,28 +339,52 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
             index, value
         );
     }
-    else if (category.compare("goal") == 0) {
-        string waypoint_name = result->getString();
+    else if (category.compare("goal") == 0 || category.compare("gpose") == 0) {
+        string waypoint_name = "";
+        geometry_msgs::Pose pose;
+        if (category.compare("goal") == 0) {
+            waypoint_name = result->getString();
+        }
+        else if (category.compare("gpose") == 0) {
+            double x = result->getDouble();
+            double y = result->getDouble();
+            double theta = result->getDouble();
+
+            tf2::Quaternion quat;
+            quat.setRPY(0, 0, theta);
+
+            geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
+
+            pose.position.x = x;
+            pose.position.y = y;
+            pose.orientation = msg_quat;
+        }
         bool is_continuous = result->getInt();
         bool ignore_orientation = result->getInt();
         double intermediate_tolerance = result->getDouble();
         bool ignore_obstacles = result->getInt();
         bool ignore_walls = result->getInt();
+        string interruptable_by = result->getString();
         
         tj2_waypoints::Waypoint waypoint;
         waypoint.name = waypoint_name;
+        waypoint.pose = pose;
         waypoint.is_continuous = is_continuous;
         waypoint.ignore_orientation = ignore_orientation;
         waypoint.intermediate_tolerance = intermediate_tolerance;
         waypoint.ignore_obstacles = ignore_obstacles;
         waypoint.ignore_walls = ignore_walls;
+        waypoint.interruptable_by = interruptable_by;
         _waypoints.waypoints.insert(_waypoints.waypoints.end(), waypoint);
-        ROS_INFO("Received a waypoint: %s. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d",
+        ROS_INFO("Received a waypoint: %s. pose: x=%0.4f, y=%0.4f. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d, interruptable_by: %s",
             waypoint_name.c_str(),
+            pose.position.x,
+            pose.position.y,
             is_continuous,
             ignore_orientation,
             ignore_obstacles,
-            ignore_walls
+            ignore_walls,
+            interruptable_by.c_str()
         );
     }
     else if (category.compare("exec") == 0) {
