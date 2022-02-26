@@ -40,7 +40,7 @@ def message_to_csv(row, msg, flatten=False):
     """
     for key, value in utils.iter_msg(msg):
         msg_str = str(value)
-        if msg_str.find(",") is not -1:
+        if msg_str.find(",") != -1:
             if flatten:
                 msg_str = msg_str.strip("(")
                 msg_str = msg_str.strip(")")
