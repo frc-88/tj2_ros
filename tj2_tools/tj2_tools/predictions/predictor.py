@@ -68,48 +68,45 @@ class BouncePredictor:
         return vx, vy
 
     def get_robot_intersection(self, obj_state: FilterState, odom_state: FilterState):
-        predicted_state = FilterState.from_state(obj_state)
-        predicted_state.theta = obj_state.heading(odom_state)
-        return predicted_state
         # plot a course to where the object will head
         # given robot parameters, find where the robot and object intersect
 
-        # self.update_buffers(obj_state, odom_state)
+        self.update_buffers(obj_state, odom_state)
 
-        # if len(self.obj_buffer) < self.past_window_size:
-        #     return None
-        # if len(self.odom_buffer) < self.past_window_size:
-        #     return None
+        if len(self.obj_buffer) < self.past_window_size:
+            return obj_state
+        if len(self.odom_buffer) < self.past_window_size:
+            return obj_state
 
-        # vxs, vys = [], []
-        # for next_state, prev_state in iter_pairs(self.obj_buffer, reverse=True):
-        #     delta_state = next_state - prev_state
-        #     dt = next_state.stamp - prev_state.stamp
-        #     if dt <= 0.0:
-        #         continue
-        #     obj_vx = delta_state.x / dt
-        #     obj_vy = delta_state.y / dt
-        #     vxs.append(obj_vx)
-        #     vys.append(obj_vy)
+        vxs, vys = [], []
+        for next_state, prev_state in iter_pairs(self.obj_buffer, reverse=True):
+            delta_state = next_state - prev_state
+            dt = next_state.stamp - prev_state.stamp
+            if dt <= 0.0:
+                continue
+            obj_vx = delta_state.x / dt
+            obj_vy = delta_state.y / dt
+            vxs.append(obj_vx)
+            vys.append(obj_vy)
 
-        # if np.std(vxs) > self.vx_std_dev_threshold:
-        #     return None
-        # if np.std(vys) > self.vy_std_dev_threshold:
-        #     return None
+        if np.std(vxs) > self.vx_std_dev_threshold:
+            return obj_state
+        if np.std(vys) > self.vy_std_dev_threshold:
+            return obj_state
 
-        # proj_vx, proj_vy = self.get_object_velocity(self.obj_buffer)
+        proj_vx, proj_vy = self.get_object_velocity(self.obj_buffer)
         
-        # obj_dist = obj_state.distance()
-        # future_time_window = obj_dist / self.v_max_robot
+        obj_dist = obj_state.distance()
+        future_time_window = obj_dist / self.v_max_robot
 
-        # future_obj_state = FilterState.from_state(self.obj_buffer[-1])
-        # future_obj_state.stamp += future_time_window
-        # future_obj_state.x += proj_vx * future_time_window
-        # future_obj_state.y += proj_vy * future_time_window
-        # future_obj_state.z = 0.0
-        # future_obj_state.theta = future_obj_state.heading()
-        # future_obj_state.vx = proj_vx
-        # future_obj_state.vy = proj_vy
-        # future_obj_state.vz = 0.0
+        future_obj_state = FilterState.from_state(self.obj_buffer[-1])
+        future_obj_state.stamp += future_time_window
+        future_obj_state.x += proj_vx * future_time_window
+        future_obj_state.y += proj_vy * future_time_window
+        future_obj_state.z = 0.0
+        future_obj_state.theta = future_obj_state.heading()
+        future_obj_state.vx = proj_vx
+        future_obj_state.vy = proj_vy
+        future_obj_state.vz = 0.0
 
-        # return future_obj_state
+        return future_obj_state
