@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="simple_image_pipeline" type="simple_image_pipeline_node.py" name="simple_image_pipeline" output="screen" required="false"/>
+</launch>
