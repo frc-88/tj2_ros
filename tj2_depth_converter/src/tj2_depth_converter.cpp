@@ -57,7 +57,7 @@ void TJ2DepthConverter::depthCallback(const sensor_msgs::ImageConstPtr& depth_im
 
     cv::Mat depth_cv_image, depth_cv_image_u8;
     depth_cv_image = depth_cv_ptr->image;
-    cv::resize(depth_cv_image, depth_cv_image, cv::Size(_depth_info.width * _rescale, _depth_info.height * _rescale), cv::INTER_LINEAR);
+    cv::resize(depth_cv_image, depth_cv_image, cv::Size(_depth_info.width, _depth_info.height), cv::INTER_LINEAR);
     depth_cv_image.convertTo(depth_cv_image_u8, CV_8U, 1.0/256.0);
     cv::threshold(depth_cv_image_u8, depth_cv_image_u8, 1, 255, cv::THRESH_BINARY);
     cv::Mat labels, stats, centroid;
