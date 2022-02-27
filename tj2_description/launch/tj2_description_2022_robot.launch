@@ -17,8 +17,12 @@
         </node>
     </group>
 
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_left_laser" args="-0.290143 0.294453 0.227728   -1 0 0 0 base_link left_laser_link 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_right_laser" args="-0.290143 -0.294453 0.227728   -1 0 0 0 base_link right_laser_link 20" />
+    <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_left_laser" args="-0.290143 0.294453 0.227728   -1 0 0 0 base_link left_laser_link 20" /> -->
+    <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_right_laser" args="-0.290143 -0.294453 0.227728   -1 0 0 0 base_link right_laser_link 20" /> -->
+
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_left_laser" args="-0.306757 -0.000102 0.259478   -1 0 0 0 base_link left_laser_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_right_laser" args="0.123430 0.289422 0.342376   -0.0000  0.0000  0.9063  -0.4226 base_link right_laser_link 20" />
+
     <node pkg="tf" type="static_transform_publisher" name="turret_to_limelight" args="0.227 0.0 0.233   0.3625  -0.0000  0.9320  0.0000 turret_link limelight_link 20" />
     <node pkg="tf" type="static_transform_publisher" name="tilt_to_camera" args="0.010 0 0   0 0 0 1 camera_tilt_link camera_link 20" />
 </launch>

@@ -7,12 +7,6 @@
             /tj2/odom
 
             /laser/scan
-            /tj2/imu
-
-            /tj2/swerve_modules/0
-            /tj2/swerve_modules/1
-            /tj2/swerve_modules/2
-            /tj2/swerve_modules/3
 
             /tj2/ping
             /tj2/robot_status

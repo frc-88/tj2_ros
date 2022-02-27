@@ -15,19 +15,28 @@
         </node> -->
 
         <node pkg="nodelet" type="nodelet" name="points_xyzrgb_sw_registered"
-                args="load depth_image_proc/point_cloud_xyzrgb $(arg post_processing_manager_name)" respawn="false">
-            <remap from="rgb/image_rect_color"        to="color/image_raw" />
-            <remap from="rgb/camera_info"             to="color/camera_info" />
-            <remap from="depth_registered/image_rect" to="aligned_depth_to_color/image_raw" />
+                args="load depth_image_proc/point_cloud_xyz $(arg post_processing_manager_name)" respawn="false">
+            <remap from="image_rect" to="depth_filtered/image_raw" />
+            <remap from="camera_info" to="depth_filtered/camera_info" />
+            <remap from="points" to="depth_filtered/points" />
         </node>
 
-        <node pkg="nodelet" type="nodelet" name="downsample_rgb"
+        <node pkg="tj2_depth_converter" type="tj2_depth_converter" name="tj2_depth_converter" output="screen" respawn="false">
+            <param name="erosion_size" value="3" />
+            <param name="throttle_frame_rate" value="10.0" />
+            <param name="connected_components_size_threshold" value="500.0" />
+            <remap from="depth/image_raw" to="depth/image_rect_raw" />
+            <remap from="depth_filtered" to="depth_filtered/image_raw" />
+            <remap from="camera_info" to="depth_filtered/camera_info" />
+        </node>
+
+        <!-- <node pkg="nodelet" type="nodelet" name="downsample_rgb"
                 args="load image_proc/crop_decimate $(arg post_processing_manager_name)">
             <param name="decimation_x" value="2"/>
             <param name="decimation_y" value="2"/>
             <remap from="camera" to="color"/>
             <remap from="camera_out" to="color_decimate"/>
-        </node>
+        </node> -->
     </group>
 
 
