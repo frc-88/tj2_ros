@@ -14,8 +14,8 @@
     <!-- <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/> -->
     <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
 
-    <include file="$(find tj2_rplidar)/launch/left_laser.launch">
-    <include file="$(find tj2_rplidar)/launch/right_laser.launch">
+    <include file="$(find tj2_rplidar)/launch/left_laser.launch"/>
+    <include file="$(find tj2_rplidar)/launch/right_laser.launch"/>
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
 
     <!-- <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/> -->

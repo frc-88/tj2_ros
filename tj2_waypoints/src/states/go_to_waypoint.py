@@ -13,7 +13,7 @@ class GoToWaypointState(State):
     def __init__(self, state_machine):
         self.state_machine = state_machine
         super(GoToWaypointState, self).__init__(
-            outcomes=["success", "preempted", "failure"],
+            outcomes=["success", "preempted", "failure", "object"],
             input_keys=["waypoints_plan", "waypoint_index"],
             output_keys=["waypoints_plan", "waypoint_index"]
         )

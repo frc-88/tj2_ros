@@ -578,7 +578,7 @@ class Tj2Waypoints:
         for name, waypoint in self.waypoint_config.items():
             pose = self.waypoint_to_pose(waypoint)
             waypoint_msg = Waypoint()
-            waypoint_msg.pose = pose
+            waypoint_msg.pose = pose.pose
             waypoint_msg.name = name
             waypoint_array.waypoints.append(waypoint_msg)
 

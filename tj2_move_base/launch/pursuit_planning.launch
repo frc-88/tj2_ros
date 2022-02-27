@@ -2,7 +2,7 @@
 <launch>
     <group ns="pursuit" >
         <node pkg="move_base" type="move_base" respawn="false" name="pursuit_move_base" output="screen">
-            <remap from="/pursuit/cmd_vel" to="/tj2/cmd_vel_nav"/>
+            <remap from="/pursuit/cmd_vel" to="/tj2/cmd_vel_follow"/>
             <remap from="/pursuit/odom" to="/tj2/odom"/>
             <remap from="/pursuit/map" to="/map"/>
             <rosparam file="$(find tj2_move_base)/config/pursuit/move_base_global_params.yaml" command="load"/>
