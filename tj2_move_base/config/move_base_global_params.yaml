@@ -10,9 +10,13 @@ planners:
   - name: GlobalPlanner
     type: global_planner/GlobalPlanner
 
+# controllers:
+#   - name: DWAPlannerROS
+#     type: dwa_local_planner/DWAPlannerROS
 controllers:
-  - name: DWAPlannerROS
-    type: dwa_local_planner/DWAPlannerROS
+  - name: TebLocalPlannerROS
+    type: teb_local_planner/TebLocalPlannerROS
+
 
 recovery_behaviors:
   # - name: 'super_conservative_reset1'

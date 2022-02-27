@@ -26,6 +26,10 @@ ${BASE_DIR}/upload.sh ${DESTINATION_NAME} ${REMOTE_KEY} n
 
 SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
 
+# stop roslaunch
+echo "Stopping roslaunch"
+${SSH_COMMAND} -t "sudo systemctl stop roslaunch.service"
+
 # build tj2_tools
 ${SSH_COMMAND} "cd ${DEST_FULL_PATH}/tj2_tools && python3 setup.py -q install --user"
 

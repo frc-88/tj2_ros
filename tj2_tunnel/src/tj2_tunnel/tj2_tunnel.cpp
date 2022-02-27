@@ -9,6 +9,8 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~remote_linear_units_conversion", _remote_linear_units_conversion, 0.3048);
     ros::param::param<double>("~remote_angular_units_conversion", _remote_angular_units_conversion, M_PI / 180.0);
 
+    ros::param::param<double>("~tunnel_rate", _tunnel_rate, 30.0);
+
     ros::param::param<bool>("~publish_odom_tf", _publish_odom_tf, true);
     ros::param::param<string>("~base_frame", _base_frame, "base_link");
     ros::param::param<string>("~odom_frame", _odom_frame, "odom");
@@ -829,7 +831,7 @@ bool TJ2Tunnel::loop()
 
 int TJ2Tunnel::run()
 {
-    ros::Rate clock_rate(100);  // Hz
+    ros::Rate clock_rate(_tunnel_rate);  // Hz
 
     int exit_code = 0;
     while (ros::ok())

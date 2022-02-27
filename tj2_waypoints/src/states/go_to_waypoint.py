@@ -31,7 +31,7 @@ class GoToWaypointState(State):
         self.intermediate_tolerance = 0.0
         self.ignore_orientation = False
         self.ignore_obstacles = False
-        self.interrutable_by = ""
+        self.interruptable_by = ""
 
         self.intermediate_settle_time = rospy.Duration(0.25)  # TODO: change to launch param or goal param
         self.within_range_time = None
@@ -81,7 +81,7 @@ class GoToWaypointState(State):
         self.ignore_orientation = first_waypoint.ignore_orientation
         self.ignore_obstacles = first_waypoint.ignore_obstacles
         self.ignore_walls = first_waypoint.ignore_walls
-        self.interrutable_by = first_waypoint.interrutable_by
+        self.interruptable_by = first_waypoint.interruptable_by
 
         if self.set_ignore_layers(userdata, self.ignore_walls, self.ignore_obstacles):
             time.sleep(self.costmap_toggle_delay)
@@ -106,8 +106,8 @@ class GoToWaypointState(State):
         self.move_base.send_goal(goal, feedback_cb=self.move_base_feedback, done_cb=self.move_base_done)
         wait_result = self.wait_for_move_base()
         if wait_result == "object":
-            rospy.loginfo("Found %s closer than waypoint goal. Pursuing that instead" % self.interrutable_by)
-            waypoints[0].name = self.interrutable_by  # set the current waypoint to the object name instead for PursueObjectState
+            rospy.loginfo("Found %s closer than waypoint goal. Pursuing that instead" % self.interruptable_by)
+            waypoints[0].name = self.interruptable_by  # set the current waypoint to the object name instead for PursueObjectState
             return "object"
 
         if self.action_result != "success":
@@ -146,7 +146,7 @@ class GoToWaypointState(State):
             if self.distance_to_goal is None:
                 continue
                 
-            nearest_obj_dist = self.get_nearest_object_distance(self.interrutable_by)
+            nearest_obj_dist = self.get_nearest_object_distance(self.interruptable_by)
             if nearest_obj_dist is not None:
                 if nearest_obj_dist < self.distance_to_goal:
                     return "object"

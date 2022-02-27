@@ -7,28 +7,28 @@
 ## Robot Configuration Parameters ##
 
 # Maximum translational acceleration of the robot in meters/sec^2
-acc_lim_x: 0.5 # 4.0
+acc_lim_x: 0.75 # 4.0
 
 # Maximum angular acceleration of the robot in radians/sec^2
-acc_lim_theta: 0.5 # 12.0
+acc_lim_theta: 3.0 # 12.0
 
 # Maximum translational velocity of the robot in meters/sec
-max_vel_x: 2.0 # max speed 4.87 m/s
+max_vel_x: 6.0 # max speed 4.87 m/s
 
 # Maximum absolute translational velocity of the robot while driving
 # backwards in meters/sec. See optimization parameter
 # weight_kinematics_forward_drive
-max_vel_x_backwards: 1.0 # 4.87
+max_vel_x_backwards: 6.0 # 4.87
 
 # Maximum angular velocity of the robot in radians/secThe following
 # parameters are relevant only for carlike robots:
-max_vel_theta: 2.0  # 61.4
+max_vel_theta: 6.0  # 61.4
 
 ## The following parameters are relevant only for holonomic robots:
 
 # Minimum turning radius of a carlike robot (set to zero for a diff-
 # drive robot).
-min_turning_radius: 0.0 # 0.0
+min_turning_radius: 0.25 # 0.0
 
 # The distance between the rear axle and the front axle. The value might
 # be negative for back-wheeled robots (only required if cmd_angle_instead_rotvel is set to true).
@@ -129,7 +129,7 @@ teb_autosize: True
 # fixed to dt_ref since the temporal resolution is part of the
 # optimization, but the trajectory will be resized between iterations if
 # dt_ref +-dt_hysteresis is violated.
-dt_ref: 0.3 # 0.3
+dt_ref: 1.0 # 0.3
 
 # Hysteresis for automatic resizing depending on the current temporal
 # resolution, usually approx. 10% of dt_ref is recommended
@@ -147,14 +147,14 @@ global_plan_overwrite_orientation: true # true
 # separation between each two consecutive via-points along the global plan,
 # if negative: disabled). Refer to parameter weight_viapoint for adjusting
 # the intensity. New in version 0.4
-global_plan_viapoint_sep: 0.05 # -0.1 (disabled)
+global_plan_viapoint_sep: 0.2 # -0.1 (disabled)
 
 # Specify the maximum length (cumulative Euclidean distances) of the
 # subset of the global plan taken into account for optimization. The
 # actual length is than determined by the logical conjunction of the
 # local costmap size and this maximum bound. Set to zero or negative in
 # order to deactivate this limitation.
-max_global_plan_lookahead_dist: 1.0 # 3.0
+max_global_plan_lookahead_dist: 0.75 # 3.0
 
 # Reinitialize the trajectory if a previous goal is updated with a
 # separation of more than the specified value in meters (skip hot-
@@ -178,7 +178,7 @@ shrink_horizon_backup: true # true
 # If true, underlying trajectories might be initialized with backwards
 # motions in case the goal is behind the start within the local costmap
 # (this is only recommended if the robot is equipped with rear sensors).
-allow_init_with_backwards_motion: false # false
+allow_init_with_backwards_motion: true # false
 
 # If true, the planner uses the exact arc length in velocity,
 # acceleration and turning rate computations (-> increased cpu time),
@@ -191,7 +191,7 @@ exact_arc_length: false # false
 shrink_horizon_min_duration: 10.0 # 10.0
 
 # Minimum desired separation from obstacles in meters
-min_obstacle_dist: 0.05 # 0.5
+min_obstacle_dist: 0.1 # 0.5
 
 # Specify if obstacles of the local costmap should be taken into
 # account. Each cell that is marked as obstacle is considered as a
