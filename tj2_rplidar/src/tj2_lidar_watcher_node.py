@@ -25,12 +25,12 @@ class TJ2LidarWatcher:
         self.combiner_config = rospy.get_param("~combiner_config", None)
 
         self.left_rate = rostopic.ROSTopicHz(15)
-        self.left_topic = "/left_laser/scan"
-        rospy.Subscriber(self.left_topic, rospy.AnyMsg, self.left_rate.callback_hz, callback_args=self.left_topic, queue_size=10)
+        self.left_topic = "/left_laser/scan_filtered"
+        rospy.Subscriber(self.left_topic, rospy.AnyMsg, self.left_rate.callback_hz, callback_args=self.left_topic, queue_size=5)
 
         self.right_rate = rostopic.ROSTopicHz(15)
-        self.right_topic = "/right_laser/scan"
-        rospy.Subscriber(self.right_topic, rospy.AnyMsg, self.right_rate.callback_hz, callback_args=self.right_topic, queue_size=10)
+        self.right_topic = "/right_laser/scan_filtered"
+        rospy.Subscriber(self.right_topic, rospy.AnyMsg, self.right_rate.callback_hz, callback_args=self.right_topic, queue_size=5)
 
         self.combiner_client = None
         self.combiner_dyn_topic = "/laserscan_multi_merger"

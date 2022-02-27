@@ -26,6 +26,7 @@ private:
     double _connected_components_size_threshold;
     int _erosion_size;
     double _throttle_frame_rate;
+    double _rescale;
 
     // Members
     image_transport::ImageTransport _image_transport;
