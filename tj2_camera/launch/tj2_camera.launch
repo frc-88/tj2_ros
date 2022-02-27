@@ -22,21 +22,22 @@
         </node>
 
         <node pkg="tj2_depth_converter" type="tj2_depth_converter" name="tj2_depth_converter" output="screen" respawn="false">
+            <param name="rescale" value="0.5" />
             <param name="erosion_size" value="3" />
             <param name="throttle_frame_rate" value="10.0" />
-            <param name="connected_components_size_threshold" value="500.0" />
+            <param name="connected_components_size_threshold" value="250.0" />
             <remap from="depth/image_raw" to="depth/image_rect_raw" />
             <remap from="depth_filtered" to="depth_filtered/image_raw" />
             <remap from="camera_info" to="depth_filtered/camera_info" />
         </node>
 
-        <!-- <node pkg="nodelet" type="nodelet" name="downsample_rgb"
+        <node pkg="nodelet" type="nodelet" name="downsample_rgb"
                 args="load image_proc/crop_decimate $(arg post_processing_manager_name)">
             <param name="decimation_x" value="2"/>
             <param name="decimation_y" value="2"/>
             <remap from="camera" to="color"/>
             <remap from="camera_out" to="color_decimate"/>
-        </node> -->
+        </node>
     </group>
 
 

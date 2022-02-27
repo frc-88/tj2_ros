@@ -7,6 +7,7 @@ TJ2DepthConverter::TJ2DepthConverter(ros::NodeHandle* nodehandle) :
     ros::param::param<int>("~erosion_size", _erosion_size, 3);
     ros::param::param<double>("~throttle_frame_rate", _throttle_frame_rate, 10.0);
     ros::param::param<double>("~connected_components_size_threshold", _connected_components_size_threshold, 500.0);
+    ros::param::param<double>("~rescale", _rescale, 1.0);
 
     _erode_element = cv::getStructuringElement(
         cv::MORPH_ELLIPSE,
@@ -26,6 +27,13 @@ void TJ2DepthConverter::infoCallback(const sensor_msgs::CameraInfoConstPtr& dept
 {
     _depth_info = *depth_info;
     _depth_info_set = true;
+
+    _depth_info.K[0] *= _rescale;
+    _depth_info.K[2] *= _rescale;
+    _depth_info.K[4] *= _rescale;
+    _depth_info.K[5] *= _rescale;
+    _depth_info.width *= _rescale;
+    _depth_info.height *= _rescale;
 }
 
 void TJ2DepthConverter::depthCallback(const sensor_msgs::ImageConstPtr& depth_image)
@@ -49,6 +57,7 @@ void TJ2DepthConverter::depthCallback(const sensor_msgs::ImageConstPtr& depth_im
 
     cv::Mat depth_cv_image, depth_cv_image_u8;
     depth_cv_image = depth_cv_ptr->image;
+    cv::resize(depth_cv_image, depth_cv_image, cv::Size(_depth_info.width * _rescale, _depth_info.height * _rescale), cv::INTER_LINEAR);
     depth_cv_image.convertTo(depth_cv_image_u8, CV_8U, 1.0/256.0);
     cv::threshold(depth_cv_image_u8, depth_cv_image_u8, 1, 255, cv::THRESH_BINARY);
     cv::Mat labels, stats, centroid;

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<launch>
-    <group ns="camera">
-        <node pkg="tj2_depth_converter" type="tj2_depth_converter" name="tj2_depth_converter" output="screen" respawn="false">
-            <param name="erosion_size" value="3" />
-            <param name="connected_components_size_threshold" value="500.0" />
-        </node>
-    </group>
-</launch>
