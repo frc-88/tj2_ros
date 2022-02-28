@@ -11,14 +11,14 @@
     <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
     <include file="$(find tj2_camera)/launch/tj2_camera.launch"/>
     <include file="$(find tj2_camera)/launch/camera_watcher.launch"/>
-    <!-- <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/> -->
+    <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/>
     <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
 
     <include file="$(find tj2_rplidar)/launch/left_laser.launch"/>
     <include file="$(find tj2_rplidar)/launch/right_laser.launch"/>
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
 
-    <!-- <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/> -->
+    <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/>
     <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
     <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/>
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
