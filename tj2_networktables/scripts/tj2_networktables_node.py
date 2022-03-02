@@ -81,7 +81,7 @@ class TJ2NetworkTables:
         self.watch_topic_mapping = {x: ros_to_nt_path(x) for x in self.watch_topics}
         self.watch_topic_entries = {x: 0.0 for x in self.watch_topics}
 
-        self.clock_rate = rospy.Rate(10.0)  # networktable servers update at 10 Hz by default
+        self.clock_rate = rospy.Rate(2.0)  # networktable servers update at 10 Hz by default
         self.path_defaults = {
             "ROS": {
                 "status": {
@@ -123,8 +123,8 @@ class TJ2NetworkTables:
         for topic in self.watch_topics:
             self.topic_listeners[topic] = TopicListener(topic, 0.0)
 
-        self.topic_timer = rospy.Timer(rospy.Duration(1.0), self.topic_poll_callback)
-        self.node_timer = rospy.Timer(rospy.Duration(1.0), self.node_poll_callback)
+        # self.topic_timer = rospy.Timer(rospy.Duration(2.0), self.topic_poll_callback)
+        self.node_timer = rospy.Timer(rospy.Duration(2.0), self.node_poll_callback)
 
         rospy.loginfo("%s init complete" % self.node_name)
 
