@@ -11,8 +11,8 @@
     <include file="$(find tj2_description)/launch/tj2_description_diffyjr.launch"/>
     <include file="$(find tj2_camera)/launch/tj2_camera.launch"/>
     <include file="$(find tj2_camera)/launch/camera_watcher.launch"/>
-    <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/>
-    <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/>
+    <!-- <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/> -->
+    <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
     <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
     <include file="$(find tj2_rplidar)/launch/diffyjr_laser.launch"/>

@@ -3,6 +3,7 @@
     <group ns="laser">
         <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch">
             <arg name="serial_port" value="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>
+            <!-- <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.2:1.0-port0"/> -->
             <arg name="lidar_node_name" value="diffyjr_rplidar"/>
             <arg name="laser_frame_id" value="laser"/>
         </include>

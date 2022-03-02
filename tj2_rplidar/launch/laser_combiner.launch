@@ -2,9 +2,9 @@
 <launch>
     <node pkg="ira_laser_tools" name="laserscan_multi_merger" type="laserscan_multi_merger" output="screen">
         <param name="destination_frame" value="base_link"/>
-        <param name="cloud_destination_topic" value="/laser/cloud"/>
-        <param name="scan_destination_topic" value="/laser/scan"/>
-        <param name="laserscan_topics" value ="/left_laser/scan_filtered /right_laser/scan_filtered" /> 
+        <param name="cloud_destination_topic" value="/combined_laser/cloud"/>
+        <param name="scan_destination_topic" value="/combined_laser/scan"/>
+        <param name="laserscan_topics" value ="/laser/scan_filtered /test_laser/scan_filtered" /> 
     </node>
     <node pkg="tj2_rplidar" type="tj2_lidar_watcher_node.py" name="tj2_lidar_watcher" output="screen">
         <param name="expected_left_rate" value="12.0" />
