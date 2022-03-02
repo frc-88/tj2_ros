@@ -10,6 +10,7 @@ Panels:
         - /TF1/Tree1
         - /RealSense1
         - /RealSense Depth1
+        - /Follow Object Goal1
         - /DepthCloud1
         - /DepthCloud1/Auto Size1
       Splitter Ratio: 0.6061684489250183
@@ -604,7 +605,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.483805179595947
+      Distance: 5.774684906005859
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -612,17 +613,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.943984866142273
-        Y: -0.1622990071773529
-        Z: 0.39934438467025757
+        X: 2.147801399230957
+        Y: -0.32054847478866577
+        Z: 0.13896241784095764
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.34479737281799316
+      Pitch: 1.1497970819473267
       Target Frame: <Fixed Frame>
-      Yaw: 0.7567126750946045
+      Yaw: 1.286712408065796
     Saved: ~
 Window Geometry:
   Displays:
