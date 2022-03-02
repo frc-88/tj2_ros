@@ -57,7 +57,9 @@ class OdomListener(object):
         if t_accel > self.t_max:
             self.t_max = t_accel
 
-        rospy.loginfo_throttle(1.0, "X: %0.5f\tY: %0.5f\tT: %0.5f" % (self.x_max, self.y_max, self.t_max))
+        rospy.loginfo_throttle(1.0, "accel X: %0.5f\tY: %0.5f\tT: %0.5f" % (self.x_max, self.y_max, self.t_max))
+        rospy.loginfo_throttle(1.0, "vel   X: %0.5f\tY: %0.5f\tT: %0.5f" % (np.max(np.abs(self.x_data)), np.max(np.abs(self.y_data)), np.max(np.abs(self.t_data))))
+        rospy.loginfo_throttle(1.0, "delay: %0.4f" % (rospy.Time.now() - msg.header.stamp).to_sec())
     
     def trim_list(self, data, length):
         while len(data) > length:

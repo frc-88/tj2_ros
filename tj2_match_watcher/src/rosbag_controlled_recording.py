@@ -72,6 +72,18 @@ class RosbagControlledRecorder(object):
 
         topics = load_topics(self.topics_path)
 
+        self.topics = topics
+        self.raw_rosbag_command = self.rosbag_command_param + " " + " ".join(topics)
+        self.rosbag_command = shlex.split(self.raw_rosbag_command)
+        self.rosbag_node_name = self.get_record_node_name()
+        self.recording_started = False
+        self.recording_paused = False
+        self.recording_stopped = False
+        self.pause_resume_times = []
+        self.process_pid = None
+        self.bag_name = ""
+        self.bag_status = "idle"
+
         # Services
         self.start_service = rospy.Service('~start', TriggerBag, self.start_recording_srv)
         self.resume_service = rospy.Service('~resume', Empty, self.resume_recording_srv)
@@ -86,17 +98,7 @@ class RosbagControlledRecorder(object):
         # Recording is also stopped on node shutdown. This allows stopping to be done via service call or regular Ctrl-C
         rospy.on_shutdown(self.stop_recording_srv)
 
-        self.topics = topics
-        self.raw_rosbag_command = self.rosbag_command_param + " " + " ".join(topics)
-        self.rosbag_command = shlex.split(self.raw_rosbag_command)
-        self.rosbag_node_name = self.get_record_node_name()
-        self.recording_started = False
-        self.recording_paused = False
-        self.recording_stopped = False
-        self.pause_resume_times = []
-        self.process_pid = None
-        self.bag_name = ""
-        self.bag_status = "idle"
+
         if self.record_from_startup:
             self.start_recording_srv()
 

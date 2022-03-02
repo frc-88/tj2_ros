@@ -74,9 +74,9 @@ class BouncePredictor:
         self.update_buffers(obj_state, odom_state)
 
         if len(self.obj_buffer) < self.past_window_size:
-            return None
+            return obj_state
         if len(self.odom_buffer) < self.past_window_size:
-            return None
+            return obj_state
 
         vxs, vys = [], []
         for next_state, prev_state in iter_pairs(self.obj_buffer, reverse=True):
@@ -90,9 +90,9 @@ class BouncePredictor:
             vys.append(obj_vy)
 
         if np.std(vxs) > self.vx_std_dev_threshold:
-            return None
+            return obj_state
         if np.std(vys) > self.vy_std_dev_threshold:
-            return None
+            return obj_state
 
         proj_vx, proj_vy = self.get_object_velocity(self.obj_buffer)
         

@@ -63,6 +63,8 @@ private:
     std::string _image_height_param;
     int _image_width;
     int _image_height;
+    int _circle_mask_border_offset_px;
+    double _circle_mask_border_divisor;
     bool _publish_overlay;
     bool _report_loop_times;
     std::string _target_frame;

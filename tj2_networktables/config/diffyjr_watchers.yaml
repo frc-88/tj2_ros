@@ -2,7 +2,6 @@ watch_topics:
   - /camera/color/camera_info
   - /camera/depth/camera_info
   - /laser/scan
-  - /laser/scan_filtered
   - /limelight/color/camera_info
   - /tj2/is_autonomous
   - /tj2/match_time

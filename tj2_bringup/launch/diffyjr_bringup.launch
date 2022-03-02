@@ -15,7 +15,8 @@
     <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/>
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
     <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
-    <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
+    <include file="$(find tj2_rplidar)/launch/diffyjr_laser.launch"/>
+
     <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/>
     <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
     <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/>

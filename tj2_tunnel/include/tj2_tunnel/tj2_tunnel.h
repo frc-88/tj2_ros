@@ -19,6 +19,7 @@
 
 #include "ros/ros.h"
 #include "ros/console.h"
+#include "tf/transform_listener.h"
 
 #include "actionlib/client/simple_action_client.h"
 #include "actionlib/client/terminal_state.h"
@@ -74,6 +75,7 @@ private:
     bool _publish_odom_tf;
     string _base_frame;
     string _odom_frame;
+    string _map_frame;
     string _imu_frame;
     double _cmd_vel_timeout_param;
     ros::Duration _cmd_vel_timeout;
@@ -84,6 +86,7 @@ private:
     double _pose_estimate_x_std, _pose_estimate_y_std, _pose_estimate_theta_std_deg;
     string _pose_estimate_frame_id;
     std::vector<std::string> _joint_names;
+    double _tunnel_rate;  // Hz
 
     // Members
     const int READ_BUFFER_LEN = 4096;
@@ -144,6 +147,7 @@ private:
 
     // Subscribers
     ros::Subscriber _twist_sub;
+    tf::TransformListener _tf_listener;
 
     // Service Servers
     ros::ServiceServer _odom_reset_srv;
@@ -167,6 +171,8 @@ private:
     // void publishPing();
     void publishCmdVel();
     void publishGoalStatus();
+    void publishRobotGlobalPose();
+
     void publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt);
     void publishImu(ros::Time recv_time, double yaw, double yaw_rate, double accel_x, double accel_y);
     void publishJoint(ros::Time recv_time, int joint_index, double joint_position);
