@@ -122,6 +122,7 @@ class Tj2Waypoints:
             self.state_machine = None
 
         self.marker_pub = rospy.Publisher("waypoint_markers", MarkerArray, queue_size=25)
+        self.waypoints_pub = rospy.Publisher("waypoints", WaypointArray, queue_size=25)
 
         self.reload_waypoints_srv = self.create_service("reload_waypoints", Trigger, self.reload_waypoints_callback)
         self.get_all_waypoints_srv = self.create_service("get_all_waypoints", GetAllWaypoints, self.get_all_waypoints_callback)
@@ -222,14 +223,19 @@ class Tj2Waypoints:
 
     def get_waypoint_pose(self, waypoint: Waypoint):
         name = waypoint.name
-        if self.is_waypoint(name):
+        if len(name) == 0:
+            pose_stamped = geometry_msgs.msg.PoseStamped()
+            pose_stamped.header.frame_id = self.map_frame
+            pose_stamped.pose = waypoint.pose
+            return pose_stamped
+        elif self.is_waypoint(name):
             pose_2d = self.get_waypoint(name)
             pose = self.waypoint_to_pose(pose_2d)
             return pose
         else:
             rospy.logwarn("Waypoint name '%s' is not registered." % name)
             return None
-    
+
     def get_waypoints_as_pose_array(self, waypoints: list):
         pose_array = geometry_msgs.msg.PoseArray()
         for waypoint in waypoints:
@@ -537,8 +543,6 @@ class Tj2Waypoints:
 
         position_marker.points.append(p1)
         position_marker.points.append(p2)
-
-
     
     def make_marker(self, name, pose):
         # name: str, marker name
@@ -569,6 +573,17 @@ class Tj2Waypoints:
         if len(self.markers.markers) != 0:
             self.marker_pub.publish(self.markers)
 
+    def publish_waypoints(self):
+        waypoint_array = WaypointArray()
+        for name, waypoint in self.waypoint_config.items():
+            pose = self.waypoint_to_pose(waypoint)
+            waypoint_msg = Waypoint()
+            waypoint_msg.pose = pose.pose
+            waypoint_msg.name = name
+            waypoint_array.waypoints.append(waypoint_msg)
+
+        self.waypoints_pub.publish(waypoint_array)
+
     # ---
     # Run
     # ---
@@ -577,6 +592,7 @@ class Tj2Waypoints:
         rate = rospy.Rate(3.0)
         while not rospy.is_shutdown():
             self.publish_markers()
+            self.publish_waypoints()
             rate.sleep()
 
 

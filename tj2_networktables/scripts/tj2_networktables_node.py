@@ -11,7 +11,10 @@ from networktables import NetworkTables
 
 import pynmcli
 
+from tj2_waypoints.msg import WaypointArray
+
 from tj2_tools.launch_manager import TopicListener
+from tj2_tools.robot_state import State
 
 
 def get_key_recurse(tree, key, index):
@@ -96,8 +99,11 @@ class TJ2NetworkTables:
                     },
                     "topics": self.watch_topic_entries,
                     "restart": False,
-                    "enable_wifi": True,
-                    "wifi_status": True,
+                    "wifi": {
+                        "enable": True,
+                        "status": True,
+                    },
+                    "waypoints": {}
                 }
             }
         }
@@ -111,6 +117,8 @@ class TJ2NetworkTables:
         self.bag_status_sub = rospy.Subscriber("bag_status", String, self.bag_status_callback, queue_size=10)
         self.bag_name_sub = rospy.Subscriber("bag_name", String, self.bag_name_callback, queue_size=10)
 
+        self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback, queue_size=10)
+
         self.topic_listeners = {}
         for topic in self.watch_topics:
             self.topic_listeners[topic] = TopicListener(topic, 0.0)
@@ -121,10 +129,9 @@ class TJ2NetworkTables:
         rospy.loginfo("%s init complete" % self.node_name)
 
     def set_entry(self, path, value):
-        if path in self.entries:
-            return self.entries[path].setValue(value)
-        else:
-            return self.nt.getEntry(path).setValue(value)
+        if path not in self.entries:
+            self.entries[path] = self.nt.getEntry(path)
+        return self.entries[path].setValue(value)
 
     def get_entry(self, path):
         default_value = self.flat_path_defaults[path]
@@ -177,14 +184,26 @@ class TJ2NetworkTables:
         self.set_entry("/ROS/status/all_nodes_ok", all_nodes_ok)
 
     def bag_status_callback(self, msg):
-        self.set_entry("/ROS/recording/status", msg.data)
+        self.set_entry("/ROS/status/recording/status", msg.data)
 
     def bag_name_callback(self, msg):
-        self.set_entry("/ROS/recording/bag_name", msg.data)
+        self.set_entry("/ROS/status/recording/bag_name", msg.data)
+
+    def waypoints_callback(self, msg):
+        for waypoint in msg.waypoints:
+            name = waypoint.name
+            pose = waypoint.pose
+
+            pose_2d = State.from_ros_pose(pose)
+
+            self.set_entry("/ROS/status/waypoints/%s/x" % name, pose_2d.x)
+            self.set_entry("/ROS/status/waypoints/%s/y" % name, pose_2d.y)
+            self.set_entry("/ROS/status/waypoints/%s/theta" % name, pose_2d.theta)
 
     def is_wifi_enabled(self):
         results = pynmcli.get_data(self.get_wifi().execute())
         return len(results) != 0
+        return False
 
     def disable_wifi(self):
         rospy.loginfo("Disabling wifi")
@@ -212,7 +231,7 @@ class TJ2NetworkTables:
         self.set_entry("/ROS/status/restart", False)
 
         prev_wifi_enable = self.is_wifi_enabled()
-        self.set_entry("/ROS/status/enable_wifi", prev_wifi_enable)
+        self.set_entry("/ROS/status/wifi/enable", prev_wifi_enable)
 
         while not rospy.is_shutdown():
             self.clock_rate.sleep()
@@ -220,8 +239,8 @@ class TJ2NetworkTables:
             if self.get_entry("/ROS/status/restart"):
                 self.restart_roslaunch()
             
-            self.set_entry("/ROS/status/wifi_status", self.is_wifi_enabled())
-            enable_wifi = self.get_entry("/ROS/status/enable_wifi")
+            self.set_entry("/ROS/status/wifi/status", self.is_wifi_enabled())
+            enable_wifi = self.get_entry("/ROS/status/wifi/enable")
             if enable_wifi != prev_wifi_enable:
                 if enable_wifi:
                     self.enable_wifi()

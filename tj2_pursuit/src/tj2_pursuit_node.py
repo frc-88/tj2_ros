@@ -66,6 +66,7 @@ class Tj2Pursuit:
         )
         self.future_pose_stamped = None
         self.prev_pose_stamped = None
+        self.object_timer = rospy.Time(0)
 
         self.lock = threading.Lock()
         self.move_base_action = actionlib.SimpleActionClient("/pursuit/move_base", MoveBaseAction)
@@ -93,6 +94,8 @@ class Tj2Pursuit:
                 if rospy.is_shutdown() or self.pursue_object_server.is_preempt_requested():
                     self.pursue_object_server.set_preempted()
                     break
+                if rospy.Time.now() - self.object_timer > rospy.Duration(4.0):
+                    self.future_pose_stamped = None
 
                 if self.pursue_object(goal.xy_tolerance):
                     self.pursue_object_server.set_succeeded()
@@ -110,7 +113,9 @@ class Tj2Pursuit:
                 return
             odom_state = FilterState.from_odom(odom_msg)
             object_state = nearest_obj.relative_to(odom_state)
-            predicted_state = self.predictor.get_robot_intersection(object_state, odom_state)
+            # predicted_state = self.predictor.get_robot_intersection(object_state, odom_state)
+            predicted_state = object_state
+            predicted_state.theta = object_state.heading(odom_state)
             if predicted_state is not None:
                 self.object_timer = rospy.Time.now()
                 future_pose_stamped = PoseStamped()

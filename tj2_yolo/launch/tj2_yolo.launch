@@ -1,18 +1,11 @@
 <launch>
     <group ns="tj2" >
         <node name="tj2_yolo" pkg="tj2_yolo" type="tj2_yolo" output="screen" required="false">
-            <param name="model_path" value="$(find tj2_yolo)/models/cargo_2022-01-28.torchscript"/>
-            <param name="classes_path" value="$(find tj2_yolo)/models/cargo_2022.names"/>
-            <remap from="detections" to="cargo/detections"/>
-            <remap from="markers" to="cargo/markers"/>
-            <rosparam param="yolo_z_depth_estimations" file="$(find tj2_yolo)/config/cargo_depth_estimations.yaml" command="load"/>
-            <remap from="overlay" to="cargo/overlay"/>
-
-            <!-- <param name="model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/> -->
-            <!-- <param name="classes_path" value="$(find tj2_yolo)/models/powercell_2021.names"/> -->
-            <!-- <remap from="detections" to="powercell/detections"/> -->
-            <!-- <remap from="markers" to="powercell/markers"/> -->
-            <!-- <rosparam param="yolo_z_depth_estimations" file="$(find tj2_yolo)/config/powercell_depth_estimations.yaml" command="load"/> -->
+            <param name="model_path" value="$(find tj2_yolo)/models/powercell_2022-01-30.torchscript"/>
+            <param name="classes_path" value="$(find tj2_yolo)/models/powercell_2021.names"/>
+            <remap from="detections" to="powercell/detections"/>
+            <remap from="markers" to="powercell/markers"/>
+            <rosparam param="yolo_z_depth_estimations" file="$(find tj2_yolo)/config/powercell_depth_estimations.yaml" command="load"/>
             <!-- <remap from="overlay" to="powercell/overlay"/> -->
 
             <param name="confidence_threshold" value="0.2"/>
@@ -21,24 +14,12 @@
             <param name="publish_overlay" value="true"/>
             <param name="report_loop_times" value="false"/>
             <param name="marker_persistance" value="0.25"/>
+            <param name="circle_mask_border_offset_px" value="0"/>
+            <param name="circle_mask_border_divisor" value="2"/>
 
             <remap from="color/image_raw" to="/camera/color/image_raw"/>
             <remap from="depth/image_raw" to="/camera/aligned_depth_to_color/image_raw"/>
-            <remap from="color/camera_info" to="/camera/color/camera_info"/>
-
-            
+            <remap from="color/camera_info" to="/camera/color/camera_info"/>            
         </node>
-        <node name="overlay_compressed_image" pkg="image_transport" type="republish" output="screen" required="false" args="
-            raw
-            in:=overlay
-            compressed
-            out:=overlay
-        "/>
-        <node name="delayed_compressed_image" pkg="image_transport" type="republish" output="screen" required="false" args="
-            raw
-            in:=delayed_image
-            compressed
-            out:=delayed_image
-        "/>
     </group>
 </launch>

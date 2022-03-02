@@ -16,6 +16,9 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     ros::param::param<int>(_image_width_param, _image_width, 960);
     ros::param::param<int>(_image_height_param, _image_height, 540);
 
+    ros::param::param<int>("~circle_mask_border_offset_px", _circle_mask_border_offset_px, 0);
+    ros::param::param<double>("~circle_mask_border_divisor", _circle_mask_border_divisor, 1.0);
+
     ros::param::param<bool>("~publish_overlay", _publish_overlay, true);
     ros::param::param<bool>("~report_loop_times", _report_loop_times, true);
     ros::param::param<std::string>("~target_frame", _target_frame, "base_link");
@@ -235,9 +238,18 @@ double TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::De
     cv::Mat circle_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
     int center_x = (int)(detection_2d_msg.bbox.center.x);
     int center_y = (int)(detection_2d_msg.bbox.center.y);
-    int radius = (int)(std::min(detection_2d_msg.bbox.size_x, detection_2d_msg.bbox.size_y) / 2.0);
+    double radius = (std::min(detection_2d_msg.bbox.size_x, detection_2d_msg.bbox.size_y) / 2.0);
 
-    cv::circle(circle_mask, cv::Size(center_x, center_y), radius, cv::Scalar(255, 255, 255), cv::FILLED);
+    radius -= (double)_circle_mask_border_offset_px;
+    if (_circle_mask_border_divisor > 0.0) {
+        radius /= _circle_mask_border_divisor;    
+    }
+    if (radius < 1.0) {
+        radius = 1.0;
+    }
+    int mask_radius = (int)radius;
+
+    cv::circle(circle_mask, cv::Size(center_x, center_y), mask_radius, cv::Scalar(255, 255, 255), cv::FILLED);
 
     cv::Mat nonzero_mask = (depth_cv_image > 0.0);
     nonzero_mask.convertTo(nonzero_mask, CV_8U);

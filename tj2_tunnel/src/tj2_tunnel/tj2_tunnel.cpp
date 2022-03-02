@@ -9,9 +9,12 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~remote_linear_units_conversion", _remote_linear_units_conversion, 0.3048);
     ros::param::param<double>("~remote_angular_units_conversion", _remote_angular_units_conversion, M_PI / 180.0);
 
+    ros::param::param<double>("~tunnel_rate", _tunnel_rate, 30.0);
+
     ros::param::param<bool>("~publish_odom_tf", _publish_odom_tf, true);
     ros::param::param<string>("~base_frame", _base_frame, "base_link");
     ros::param::param<string>("~odom_frame", _odom_frame, "odom");
+    ros::param::param<string>("~map_frame", _map_frame, "map");
     ros::param::param<string>("~imu_frame", _imu_frame, "imu");
 
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
@@ -338,28 +341,52 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
             index, value
         );
     }
-    else if (category.compare("goal") == 0) {
-        string waypoint_name = result->getString();
+    else if (category.compare("goal") == 0 || category.compare("gpose") == 0) {
+        string waypoint_name = "";
+        geometry_msgs::Pose pose;
+        if (category.compare("goal") == 0) {
+            waypoint_name = result->getString();
+        }
+        else if (category.compare("gpose") == 0) {
+            double x = result->getDouble();
+            double y = result->getDouble();
+            double theta = result->getDouble();
+
+            tf2::Quaternion quat;
+            quat.setRPY(0, 0, theta);
+
+            geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
+
+            pose.position.x = x;
+            pose.position.y = y;
+            pose.orientation = msg_quat;
+        }
         bool is_continuous = result->getInt();
         bool ignore_orientation = result->getInt();
         double intermediate_tolerance = result->getDouble();
         bool ignore_obstacles = result->getInt();
         bool ignore_walls = result->getInt();
+        string interruptable_by = result->getString();
         
         tj2_waypoints::Waypoint waypoint;
         waypoint.name = waypoint_name;
+        waypoint.pose = pose;
         waypoint.is_continuous = is_continuous;
         waypoint.ignore_orientation = ignore_orientation;
         waypoint.intermediate_tolerance = intermediate_tolerance;
         waypoint.ignore_obstacles = ignore_obstacles;
         waypoint.ignore_walls = ignore_walls;
+        waypoint.interruptable_by = interruptable_by;
         _waypoints.waypoints.insert(_waypoints.waypoints.end(), waypoint);
-        ROS_INFO("Received a waypoint: %s. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d",
+        ROS_INFO("Received a waypoint: %s. pose: x=%0.4f, y=%0.4f. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d, interruptable_by: %s",
             waypoint_name.c_str(),
+            pose.position.x,
+            pose.position.y,
             is_continuous,
             ignore_orientation,
             ignore_obstacles,
-            ignore_walls
+            ignore_walls,
+            interruptable_by.c_str()
         );
     }
     else if (category.compare("exec") == 0) {
@@ -520,6 +547,22 @@ void TJ2Tunnel::publishGoalStatus()
         _currentGoalStatus = currentPollStatus;
     }
     writePacket("gstatus", "d", _currentGoalStatus);
+}
+
+void TJ2Tunnel::publishRobotGlobalPose()
+{
+    tf::StampedTransform transform;
+    try {
+        _tf_listener.lookupTransform(_base_frame, _map_frame, ros::Time(0), transform);
+    }
+    catch (tf::TransformException ex) {
+        return;
+    }
+
+    double x = transform.getOrigin().x();
+    double y = transform.getOrigin().y();
+    double theta = tf::getYaw(transform.getRotation()); 
+    writePacket("global", "fff", x, y, theta);
 }
 
 void TJ2Tunnel::setGoalStatus(GoalStatus status)
@@ -782,12 +825,13 @@ bool TJ2Tunnel::loop()
 {
     publishCmdVel();
     publishGoalStatus();
+    publishRobotGlobalPose();
     return true;
 }
 
 int TJ2Tunnel::run()
 {
-    ros::Rate clock_rate(100);  // Hz
+    ros::Rate clock_rate(_tunnel_rate);  // Hz
 
     int exit_code = 0;
     while (ros::ok())
