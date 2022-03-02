@@ -32,6 +32,16 @@ void TJ2DepthConverter::infoCallback(const sensor_msgs::CameraInfoConstPtr& dept
     _depth_info.K[2] *= _rescale;
     _depth_info.K[4] *= _rescale;
     _depth_info.K[5] *= _rescale;
+
+    _depth_info.P[0] *= _rescale;
+    _depth_info.P[2] *= _rescale;
+    _depth_info.P[3] *= _rescale;
+    _depth_info.P[5] *= _rescale;
+    _depth_info.P[6] *= _rescale;
+
+    _depth_info.roi.x_offset = static_cast<int>(_depth_info.roi.x_offset * _rescale);
+    _depth_info.roi.y_offset = static_cast<int>(_depth_info.roi.y_offset * _rescale);
+
     _depth_info.width *= _rescale;
     _depth_info.height *= _rescale;
 }
@@ -57,8 +67,8 @@ void TJ2DepthConverter::depthCallback(const sensor_msgs::ImageConstPtr& depth_im
 
     cv::Mat depth_cv_image, depth_cv_image_u8;
     depth_cv_image = depth_cv_ptr->image;
-    cv::resize(depth_cv_image, depth_cv_image, cv::Size(_depth_info.width, _depth_info.height), cv::INTER_LINEAR);
     depth_cv_image.convertTo(depth_cv_image_u8, CV_8U, 1.0/256.0);
+    // cv::resize(depth_cv_image, depth_cv_image, cv::Size(_depth_info.width, _depth_info.height), cv::INTER_LINEAR);
     cv::threshold(depth_cv_image_u8, depth_cv_image_u8, 1, 255, cv::THRESH_BINARY);
     cv::Mat labels, stats, centroid;
     int ret = cv::connectedComponentsWithStats(depth_cv_image_u8, labels, stats, centroid);
@@ -82,10 +92,11 @@ void TJ2DepthConverter::depthCallback(const sensor_msgs::ImageConstPtr& depth_im
 
     cv::erode(depth_cv_image, depth_cv_image, _erode_element);
     cv::dilate(depth_cv_image, depth_cv_image, _erode_element);
+    cv::resize(depth_cv_image, depth_cv_image, cv::Size(_depth_info.width, _depth_info.height), cv::INTER_NEAREST);
 
     sensor_msgs::ImagePtr msg;
     try {
-        msg = cv_bridge::CvImage(depth_image->header, sensor_msgs::image_encodings::MONO16, depth_cv_image).toImageMsg();
+        msg = cv_bridge::CvImage(_depth_info.header, sensor_msgs::image_encodings::MONO16, depth_cv_image).toImageMsg();
     }
     catch (cv_bridge::Exception& e)
     {
