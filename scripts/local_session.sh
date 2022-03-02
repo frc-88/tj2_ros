@@ -17,10 +17,10 @@ if [ $? != 0 ]; then
     tmux select-layout -t $SESSION:0 tiled
 fi
 
-tmux send -t $SESSION:0.0 "ssh -i $SSH_KEY_PATH tj2@$HOST_IP" ENTER 
+tmux send -t $SESSION:0.0 "ssh -i $SSH_KEY_PATH tj2@$HOST_IP -p 5810" ENTER 
 tmux send -t $SESSION:0.0 "~/tj2_ros/scripts/tail-session.sh" ENTER 
 
-tmux send -t $SESSION:0.1 "ssh -i $SSH_KEY_PATH tj2@$HOST_IP" ENTER 
+tmux send -t $SESSION:0.1 "ssh -i $SSH_KEY_PATH tj2@$HOST_IP -p 5810" ENTER 
 
 tmux send -t $SESSION:0.2 "source ~/tj2_ros/scripts/set_client.sh $IP_INTERFACE $HOST_IP" ENTER 
 tmux send -t $SESSION:0.2 "roslaunch tj2_debug_joystick tj2_debug_joystick.launch device:=$JOYSTICK_PATH topic_name:=joy_remote" ENTER 
