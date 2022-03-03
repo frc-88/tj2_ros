@@ -290,7 +290,7 @@
     <joint name="base_link_to_camera_tilt" type="fixed">
         <parent link="base_link"/>
         <child link="camera_tilt_base_link"/>
-        <origin xyz="0.253608  0.000000  0.836519"/>
+        <origin xyz="0.253608  0.000000  0.736519"/>
     </joint>
 
     <joint name="camera_joint" type="continuous">
