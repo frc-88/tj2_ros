@@ -16,8 +16,9 @@ def quaternion_from_euler(roll, pitch, yaw):
     roll = math.radians(roll)
     pitch = math.radians(pitch)
     yaw = math.radians(yaw)
-    return tf_conversions.transformations.quaternion_from_euler(roll, pitch, yaw)
+    quat = tf_conversions.transformations.quaternion_from_euler(roll, pitch, yaw)
     print("%0.4f  %0.4f  %0.4f  %0.4f" % tuple(quat))
+    return quat
 
 
 class QuaternionListener:

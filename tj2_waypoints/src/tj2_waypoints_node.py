@@ -13,7 +13,11 @@ import tf_conversions
 import tf2_geometry_msgs
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
-import geometry_msgs
+from geometry_msgs.msg import Twist
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseArray
+from geometry_msgs.msg import Point
+from geometry_msgs.msg import Vector3
 
 from std_msgs.msg import ColorRGBA
 
@@ -23,6 +27,8 @@ from visualization_msgs.msg import MarkerArray
 from visualization_msgs.msg import Marker
 
 from move_base_msgs.msg import MoveBaseAction
+
+from vision_msgs.msg import Detection3DArray
 
 from tj2_waypoints.srv import GetAllWaypoints, GetAllWaypointsResponse
 from tj2_waypoints.srv import GetWaypoint, GetWaypointResponse
@@ -38,7 +44,8 @@ from tj2_pursuit.msg import PursueObjectAction
 
 from state_machine import WaypointStateMachine
 
-from tj2_tools.yolo.utils import read_class_names
+from tj2_tools.yolo.utils import get_label, read_class_names
+
 
 
 class SimpleDynamicToggle:
@@ -108,6 +115,8 @@ class Tj2Waypoints:
 
         self.class_names = read_class_names(self.class_names_path)
 
+        self.nearest_objects = {}  # keys: object class names. values: [nearest PoseStamped, nearest distance (meters)]
+
         self.markers = MarkerArray()
         self.marker_poses = OrderedDict()
 
@@ -123,6 +132,9 @@ class Tj2Waypoints:
 
         self.marker_pub = rospy.Publisher("waypoint_markers", MarkerArray, queue_size=25)
         self.waypoints_pub = rospy.Publisher("waypoints", WaypointArray, queue_size=25)
+
+        # self.detections_sub = rospy.Subscriber("detections", Detection3DArray, self.detection_callback)
+        # self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
 
         self.reload_waypoints_srv = self.create_service("reload_waypoints", Trigger, self.reload_waypoints_callback)
         self.get_all_waypoints_srv = self.create_service("get_all_waypoints", GetAllWaypoints, self.get_all_waypoints_callback)
@@ -178,6 +190,46 @@ class Tj2Waypoints:
         self.state_machine.execute(waypoint_plan, self)
         rospy.loginfo("Waypoint plan complete")
 
+    # ---
+    # Detection callback
+    # ---
+
+    def detection_callback(self, msg):
+        self.nearest_objects = self.get_nearest_detections(msg)
+
+    def get_nearest_detections(self, detections_msg):
+        nearest_objs = {}
+        for detection in detections_msg.detections:
+            label, index = get_label(self.class_names, detection.results[0].id)
+            detection_pose = detection.results[0].pose.pose
+            detection_dist = self.get_distance(detection_pose)
+            if label not in nearest_objs:
+                nearest_objs[label] = [None, None]
+            if nearest_objs[label][1] is None or detection_dist < nearest_objs[label][1]:
+                nearest_pose = PoseStamped()
+                nearest_pose.pose = detection_pose
+                nearest_pose.header = detection.header
+                nearest_objs[label][0] = nearest_pose
+                nearest_objs[label][1] = detection_dist
+        return nearest_objs
+
+    def get_distance(self, pose1, pose2=None):
+        if pose2 is None:
+            x = pose1.position.x
+            y = pose1.position.y
+        else:
+            x1 = pose1.position.x
+            y1 = pose1.position.y
+            x2 = pose2.position.x
+            y2 = pose2.position.y
+            x = x2 - x1
+            y = y2 - y1
+        return math.sqrt(x * x + y * y)
+
+    # ---
+    # Waypoint getters
+    # ---
+
     def get_waypoint_plan(self, waypoints: WaypointArray):
         full_plan = []
 
@@ -224,7 +276,7 @@ class Tj2Waypoints:
     def get_waypoint_pose(self, waypoint: Waypoint):
         name = waypoint.name
         if len(name) == 0:
-            pose_stamped = geometry_msgs.msg.PoseStamped()
+            pose_stamped = PoseStamped()
             pose_stamped.header.frame_id = self.map_frame
             pose_stamped.pose = waypoint.pose
             return pose_stamped
@@ -237,7 +289,7 @@ class Tj2Waypoints:
             return None
 
     def get_waypoints_as_pose_array(self, waypoints: list):
-        pose_array = geometry_msgs.msg.PoseArray()
+        pose_array = PoseArray()
         for waypoint in waypoints:
             pose_stamped = self.get_waypoint_pose(waypoint)
             if pose_stamped is None:
@@ -403,7 +455,7 @@ class Tj2Waypoints:
 
     def save_from_pose(self, name, pose):
         # name: str, name of waypoint
-        # pose: geometry_msgs.msg.PoseStamped
+        # pose: PoseStamped
         # returns: bool, whether the file was successfully written to
         self.waypoint_config[name] = self.pose_to_waypoint(pose)
         self.add_marker(name, pose)
@@ -423,7 +475,7 @@ class Tj2Waypoints:
             rospy.logwarn("Failed to look up %s to %s. %s" % (self.map_frame, frame, e))
             return False
         
-        pose = geometry_msgs.msg.PoseStamped()
+        pose = PoseStamped()
         pose.header.frame_id = self.map_frame
         pose.pose.position = current_tf.transform.translation
         pose.pose.orientation = current_tf.transform.rotation
@@ -459,7 +511,7 @@ class Tj2Waypoints:
     # ---
 
     def pose_to_waypoint(self, pose):
-        # pose: geometry_msgs.msg.PoseStamped
+        # pose: PoseStamped
         # returns: list, [x, y, theta]
         yaw = euler_from_quaternion([
             pose.pose.orientation.x,
@@ -471,9 +523,9 @@ class Tj2Waypoints:
 
     def waypoint_to_pose(self, waypoint):
         # waypoint: list, [x, y, theta]
-        # returns: geometry_msgs.msg.PoseStamped
+        # returns: PoseStamped
         quat = quaternion_from_euler(0.0, 0.0, waypoint[2])
-        pose = geometry_msgs.msg.PoseStamped()
+        pose = PoseStamped()
         pose.header.frame_id = self.map_frame
         pose.pose.position.x = waypoint[0]
         pose.pose.position.y = waypoint[1]
@@ -485,8 +537,8 @@ class Tj2Waypoints:
 
     def waypoints_to_pose_array(self, waypoints):
         # waypoint: list, [[x, y, theta], ...]
-        # returns: geometry_msgs.msg.PoseArray
-        pose_array = geometry_msgs.msg.PoseArray()
+        # returns: PoseArray
+        pose_array = PoseArray()
         pose_array.header.frame_id = self.map_frame
         for waypoint in waypoints:
             pose = self.waypoint_to_pose(waypoint)
@@ -536,8 +588,8 @@ class Tj2Waypoints:
         position_marker.scale.y = self.marker_size / 2.5
         position_marker.scale.z = self.marker_size / 2.0
         
-        p1 = geometry_msgs.msg.Point()
-        p2 = geometry_msgs.msg.Point()
+        p1 = Point()
+        p2 = Point()
         
         p2.x = self.marker_size
 
@@ -546,7 +598,7 @@ class Tj2Waypoints:
     
     def make_marker(self, name, pose):
         # name: str, marker name
-        # pose: geometry_msgs.msg.PoseStamped
+        # pose: PoseStamped
         marker = Marker()
         marker.action = Marker.ADD
         marker.pose = pose.pose
@@ -555,7 +607,7 @@ class Tj2Waypoints:
         marker.ns = name
         marker.id = 0  # all waypoint names should be unique
 
-        scale_vector = geometry_msgs.msg.Vector3()
+        scale_vector = Vector3()
         scale_vector.x = self.marker_size
         scale_vector.y = self.marker_size
         scale_vector.z = self.marker_size
