@@ -2,7 +2,7 @@
 <launch>
     <group ns="left_laser">
         <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch">
-            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.2:1.0-port0"/>
+            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.4:1.0-port0"/>
             <arg name="lidar_node_name" value="left_rplidar"/>
             <arg name="laser_frame_id" value="left_laser_link"/>
         </include>
