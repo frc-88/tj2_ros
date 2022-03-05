@@ -13,6 +13,8 @@ from tj2_tools.joystick import Joystick
 from tj2_driver_station.srv import SetRobotMode
 from tj2_driver_station.msg import RobotStatus
 
+from networktables import NetworkTables
+
 
 class TJ2DebugJoystick:
     SEND_AUTO_PLAN = 1
@@ -40,13 +42,14 @@ class TJ2DebugJoystick:
         assert self.send_timeout.to_sec() > self.cmd_vel_timeout.to_sec()
 
         # parameters from launch file
+        self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
+
         self.linear_x_axis = rospy.get_param("~linear_x_axis", "left/X").split("/")
         self.linear_y_axis = rospy.get_param("~linear_y_axis", "left/Y").split("/")
         self.angular_axis = rospy.get_param("~angular_axis", "right/X").split("/")
         self.idle_axis = rospy.get_param("~idle_axis", "brake/L").split("/")
         self.speed_selector_axis = rospy.get_param("~speed_selector_axis", "dpad/vertical").split("/")
-        self.take_picture_axis = rospy.get_param("~take_picture_axis", "brake/L").split("/")
-        self.follow_object_axis = rospy.get_param("~follow_object_axis", "brake/R").split("/")
+        self.toggle_nt_axis = rospy.get_param("~toggle_nt_axis", "brake/R").split("/")
 
         self.linear_x_scale_max = float(rospy.get_param("~linear_x_scale", 1.0))
         self.linear_y_scale_max = float(rospy.get_param("~linear_y_scale", 1.0))
@@ -72,6 +75,10 @@ class TJ2DebugJoystick:
         self.is_field_relative = False
         self.limelight_led_mode = False  # False == on, True == off
         self.take_picture = False
+        self.command_with_topic = True
+
+        NetworkTables.initialize(server=self.nt_host)
+        self.nt = NetworkTables.getTable("")
 
         self.joystick = Joystick(self.button_mapping, self.axis_mapping)
 
@@ -134,6 +141,16 @@ class TJ2DebugJoystick:
                 self.set_speed_mode(self.speed_mode + 1)
             elif axis_value < 0:
                 self.set_speed_mode(self.speed_mode - 1)
+        
+        if (self.joystick.did_axis_change(self.toggle_nt_axis)):
+            axis_value = self.joystick.get_axis(self.toggle_nt_axis)
+            if axis_value < 0.0:
+                self.command_with_topic = True
+            else:
+                self.command_with_topic = False
+        
+        if not self.command_with_topic:
+            self.publish_nt()
 
     def set_mode(self, mode):
         now = rospy.Time.now()
@@ -174,6 +191,16 @@ class TJ2DebugJoystick:
         self.is_field_relative = is_field_relative
         rospy.loginfo("Setting field relative to %s" % is_field_relative)
         self.set_field_relative_pub.publish(msg)
+    
+    def publish_nt(self, msg):
+        self.nt.getEntry("joystick/button/A").setValue(self.joystick.is_button_down("main", "A"))
+        self.nt.getEntry("joystick/button/B").setValue(self.joystick.is_button_down("main", "B"))
+        self.nt.getEntry("joystick/button/X").setValue(self.joystick.is_button_down("main", "X"))
+        self.nt.getEntry("joystick/button/Y").setValue(self.joystick.is_button_down("main", "Y"))
+
+        self.nt.getEntry("joystick/axis/x").setValue(self.twist_command.linear.x)
+        self.nt.getEntry("joystick/axis/y").setValue(self.twist_command.linear.y)
+        self.nt.getEntry("joystick/axis/t").setValue(self.twist_command.angular.z)
 
     def run(self):
         clock_rate = rospy.Rate(20.0)
@@ -181,7 +208,7 @@ class TJ2DebugJoystick:
             dt = rospy.Time.now() - self.cmd_vel_timer
             if dt > self.cmd_vel_timeout:
                 self.set_twist_zero()
-            if dt < self.send_timeout:
+            if dt < self.send_timeout and self.command_with_topic:
                 self.cmd_vel_pub.publish(self.twist_command)
             clock_rate.sleep()
 
