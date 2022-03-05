@@ -498,6 +498,10 @@ void TJ2Tunnel::publishOdom(ros::Time recv_time, double x, double y, double t, d
 
 void TJ2Tunnel::publishImu(ros::Time recv_time, double yaw, double yaw_rate, double accel_x, double accel_y)
 {
+    if (!(std::isfinite(yaw) && std::isfinite(yaw_rate) && std::isfinite(accel_x) && std::isfinite(accel_y))) {
+        ROS_WARN_THROTTLE(1.0, "A value for the IMU is nan or inf");
+    }
+
     _imu_msg.header.stamp = recv_time;
 
     yaw *= M_PI / 180.0;
@@ -516,6 +520,10 @@ void TJ2Tunnel::publishJoint(ros::Time recv_time, int joint_index, double joint_
 {
     if (joint_index < 0 || joint_index >= _raw_joint_msgs->size()) {
         ROS_WARN("Invalid joint index received: %d. Valid range is 0..%lu. (Joint value was %f. recv time is %f)", joint_index, _raw_joint_msgs->size() - 1, joint_position, recv_time.toSec());
+        return;
+    }
+    if (!std::isfinite(joint_position)) {
+        ROS_WARN_THROTTLE(1.0, "Joint position for index %d is nan or inf", joint_index);
         return;
     }
     std_msgs::Float64* msg = _raw_joint_msgs->at(joint_index);
