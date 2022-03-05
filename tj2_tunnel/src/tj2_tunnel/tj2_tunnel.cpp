@@ -454,6 +454,10 @@ void TJ2Tunnel::publishStatusMessages(float ping)
 
 void TJ2Tunnel::publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt)
 {
+    if (!(std::isfinite(x) && std::isfinite(y) && std::isfinite(t) && std::isfinite(vx) && std::isfinite(vy) && std::isfinite(vt))) {
+        ROS_WARN_THROTTLE(1.0, "Odometry values are nan or inf");
+        return;
+    }
     x *= _remote_linear_units_conversion;
     y *= _remote_linear_units_conversion;
     t *= _remote_angular_units_conversion;
