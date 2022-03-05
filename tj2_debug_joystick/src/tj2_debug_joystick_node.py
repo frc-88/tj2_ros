@@ -114,12 +114,12 @@ class TJ2DebugJoystick:
             self.set_mode(RobotStatus.AUTONOMOUS)
         elif any(self.joystick.check_list(self.joystick.did_button_down, ("triggers", "L1"), ("triggers", "R1"))):
             self.set_mode(RobotStatus.DISABLED)
-        elif self.joystick.did_button_down(("main", "B")):
-            self.set_field_relative(not self.is_field_relative)
-        elif self.joystick.did_button_down(("main", "A")):
-            self.limelight_led_mode = not self.limelight_led_mode
-            rospy.loginfo("Setting limelight led mode to %s" % self.limelight_led_mode)
-            self.limelight_led_pub.publish(self.limelight_led_mode)
+        # elif self.joystick.did_button_down(("main", "B")):
+        #     self.set_field_relative(not self.is_field_relative)
+        # elif self.joystick.did_button_down(("main", "A")):
+        #     self.limelight_led_mode = not self.limelight_led_mode
+        #     rospy.loginfo("Setting limelight led mode to %s" % self.limelight_led_mode)
+        #     self.limelight_led_pub.publish(self.limelight_led_mode)
 
         if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis)):
             self.disable_timer = rospy.Time.now()
@@ -144,13 +144,12 @@ class TJ2DebugJoystick:
         
         if (self.joystick.did_axis_change(self.toggle_nt_axis)):
             axis_value = self.joystick.get_axis(self.toggle_nt_axis)
-            if axis_value < 0.0:
+            if axis_value > 0.0:
                 self.command_with_topic = True
             else:
                 self.command_with_topic = False
         
-        if not self.command_with_topic:
-            self.publish_nt()
+        self.publish_nt()
 
     def set_mode(self, mode):
         now = rospy.Time.now()
@@ -192,15 +191,16 @@ class TJ2DebugJoystick:
         rospy.loginfo("Setting field relative to %s" % is_field_relative)
         self.set_field_relative_pub.publish(msg)
     
-    def publish_nt(self, msg):
-        self.nt.getEntry("joystick/button/A").setValue(self.joystick.is_button_down("main", "A"))
-        self.nt.getEntry("joystick/button/B").setValue(self.joystick.is_button_down("main", "B"))
-        self.nt.getEntry("joystick/button/X").setValue(self.joystick.is_button_down("main", "X"))
-        self.nt.getEntry("joystick/button/Y").setValue(self.joystick.is_button_down("main", "Y"))
+    def publish_nt(self):
+        self.nt.getEntry("joystick/button/A").setValue(self.joystick.is_button_down(("main", "A")))
+        self.nt.getEntry("joystick/button/B").setValue(self.joystick.is_button_down(("main", "B")))
+        self.nt.getEntry("joystick/button/X").setValue(self.joystick.is_button_down(("main", "X")))
+        self.nt.getEntry("joystick/button/Y").setValue(self.joystick.is_button_down(("main", "Y")))
 
-        self.nt.getEntry("joystick/axis/x").setValue(self.twist_command.linear.x)
-        self.nt.getEntry("joystick/axis/y").setValue(self.twist_command.linear.y)
-        self.nt.getEntry("joystick/axis/t").setValue(self.twist_command.angular.z)
+        if not self.command_with_topic:
+            self.nt.getEntry("joystick/axis/x").setValue(self.twist_command.linear.x)
+            self.nt.getEntry("joystick/axis/y").setValue(self.twist_command.linear.y)
+            self.nt.getEntry("joystick/axis/theta").setValue(self.twist_command.angular.z)
 
     def run(self):
         clock_rate = rospy.Rate(20.0)
