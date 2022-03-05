@@ -26,6 +26,7 @@ class RecordToVideoFile:
         rospy.on_shutdown(self.shutdown_hook)
         self.video_path = rospy.get_param("~video_path", "./video.mp4")
         self.video_fps = rospy.get_param("~video_fps", 30)
+        self.rotate = rospy.get_param("~rotate", 0)
         self.bridge = CvBridge()
         self.info_sub = rospy.Subscriber("camera_info", CameraInfo, self.info_callback, queue_size=10)
         self.image_sub = rospy.Subscriber("image", Image, self.image_callback, queue_size=10)
@@ -73,6 +74,12 @@ class RecordToVideoFile:
             self.video_writer = self.init_video_writer(image.shape)
 
         self.add_object(self.get_timestamp(msg.header.stamp), "frame", {"seq": msg.header.seq})
+        if self.rotate == 1:
+            image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+        elif self.rotate == 2:
+            image = cv2.rotate(image, cv2.ROTATE_180)
+        elif self.rotate == 3:
+            image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
         self.video_writer.write(image)
 
     def objs_generator(self):
