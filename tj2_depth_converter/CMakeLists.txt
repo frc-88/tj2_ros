@@ -113,6 +113,15 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
+<<<<<<< HEAD
+=======
+<<<<<<<< HEAD:tj2_tunnel/CMakeLists.txt
+  INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS rospy std_msgs sensor_msgs message_runtime dynamic_reconfigure tf tf2 nav_msgs 
+#  DEPENDS system_lib
+========
+>>>>>>> diffyjr
     INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
@@ -127,6 +136,10 @@ catkin_package(
         cv_bridge
         tf2_ros
     DEPENDS OpenCV
+<<<<<<< HEAD
+=======
+>>>>>>>> diffyjr:tj2_depth_converter/CMakeLists.txt
+>>>>>>> diffyjr
 )
 
 ###########
