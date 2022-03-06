@@ -75,7 +75,7 @@ class TJ2DebugJoystick:
         self.is_field_relative = False
         self.limelight_led_mode = False  # False == on, True == off
         self.take_picture = False
-        self.command_with_topic = True
+        self.command_with_topic = False
 
         NetworkTables.initialize(server=self.nt_host)
         self.nt = NetworkTables.getTable("")
@@ -143,7 +143,7 @@ class TJ2DebugJoystick:
                 self.set_speed_mode(self.speed_mode - 1)
         
         axis_value = self.joystick.get_axis(self.toggle_nt_axis)
-        if axis_value > 0.0:  # trigger released
+        if axis_value >= 0.0:  # trigger released
             self.command_with_topic = False
         else:  # trigger pressed
             self.command_with_topic = True

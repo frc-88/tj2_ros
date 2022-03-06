@@ -163,21 +163,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _pose_est_update_entry = nt::GetEntry(_nt, _base_key + "pose_est/update");
     nt::AddEntryListener(_pose_est_update_entry, boost::bind(&TJ2NetworkTables::pose_estimate_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
-    _waypoint_is_continuous_entry = nt::GetEntry(_nt, _base_key + "goal/is_continuous");
-    _waypoint_ignore_orientation_entry = nt::GetEntry(_nt, _base_key + "goal/ignore_orientation");
-    _waypoint_intermediate_tolerance_entry = nt::GetEntry(_nt, _base_key + "goal/intermediate_tolerance");
-    _waypoint_ignore_obstacles_entry = nt::GetEntry(_nt, _base_key + "goal/ignore_obstacles");
-    _waypoint_ignore_walls_entry = nt::GetEntry(_nt, _base_key + "goal/ignore_walls");
-    _waypoint_interruptable_by_entry = nt::GetEntry(_nt, _base_key + "goal/interruptable_by");
-    _waypoint_goal_x_entry = nt::GetEntry(_nt, _base_key + "goal/x");
-    _waypoint_goal_y_entry = nt::GetEntry(_nt, _base_key + "goal/y");
-    _waypoint_goal_t_entry = nt::GetEntry(_nt, _base_key + "goal/t");
-    _waypoint_goal_name_entry = nt::GetEntry(_nt, _base_key + "goal/name");
-    _waypoint_goal_pose_update_entry = nt::GetEntry(_nt, _base_key + "goal/pose_update");
-    _waypoint_goal_name_update_entry = nt::GetEntry(_nt, _base_key + "goal/name_update");
-    nt::AddEntryListener(_waypoint_goal_pose_update_entry, boost::bind(&TJ2NetworkTables::waypoint_pose_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
-    nt::AddEntryListener(_waypoint_goal_name_update_entry, boost::bind(&TJ2NetworkTables::waypoint_name_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
-
     _exec_waypoint_plan_entry = nt::GetEntry(_nt, _base_key + "plan/exec");
     _exec_waypoint_plan_update_entry = nt::GetEntry(_nt, _base_key + "plan/exec_update");
     _reset_waypoint_plan_entry = nt::GetEntry(_nt, _base_key + "plan/reset");
@@ -492,12 +477,14 @@ void TJ2NetworkTables::pose_estimate_callback(const nt::EntryNotification& event
     _pose_estimate_pub.publish(pose_est);
 }
 
-void TJ2NetworkTables::waypoint_pose_callback(const nt::EntryNotification& event)
+void TJ2NetworkTables::create_waypoint(size_t index)
 {
-    tj2_waypoints::Waypoint waypoint = make_waypoint_from_nt();
+    tj2_waypoints::Waypoint waypoint = make_waypoint_from_nt(index);
     double x = get_double(_waypoint_goal_x_entry, NAN);
     double y = get_double(_waypoint_goal_y_entry, NAN);
     double theta = get_double(_waypoint_goal_t_entry, NAN);
+    string waypoint_name = get_string(_waypoint_goal_name_entry, "");
+    waypoint.name = waypoint_name;
 
     tf2::Quaternion quat;
     quat.setRPY(0, 0, theta);
@@ -511,18 +498,15 @@ void TJ2NetworkTables::waypoint_pose_callback(const nt::EntryNotification& event
     add_waypoint(waypoint);
 }
 
-void TJ2NetworkTables::waypoint_name_callback(const nt::EntryNotification& event)
-{
-    tj2_waypoints::Waypoint waypoint = make_waypoint_from_nt();
-    string waypoint_name = get_string(_waypoint_goal_name_entry, "");
-    waypoint.name = waypoint_name;
-    add_waypoint(waypoint);
-}
-
 void TJ2NetworkTables::exec_waypoint_plan_callback(const nt::EntryNotification& event)
 {
     ROS_INFO("Received execute plan command");
+    
     size_t num_waypoints = (size_t)get_double(_exec_waypoint_plan_entry, 0.0);
+    for (size_t index = 0; index < num_waypoints; index++) {
+        create_waypoint(index);
+    }
+
     if (num_waypoints != _waypoints.waypoints.size()) {
         ROS_ERROR("The reported number of waypoints in the plan does match the number received! %ld != %ld Canceling plan", num_waypoints, _waypoints.waypoints.size());
         set_goal_status(GoalStatus::FAILED);
@@ -610,8 +594,20 @@ void TJ2NetworkTables::add_waypoint(tj2_waypoints::Waypoint waypoint)
     );
 }
 
-tj2_waypoints::Waypoint TJ2NetworkTables::make_waypoint_from_nt()
+tj2_waypoints::Waypoint TJ2NetworkTables::make_waypoint_from_nt(size_t index)
 {
+    string str_index = std::to_string(index);
+    _waypoint_is_continuous_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/is_continuous");
+    _waypoint_ignore_orientation_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/ignore_orientation");
+    _waypoint_intermediate_tolerance_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/intermediate_tolerance");
+    _waypoint_ignore_obstacles_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/ignore_obstacles");
+    _waypoint_ignore_walls_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/ignore_walls");
+    _waypoint_interruptable_by_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/interruptable_by");
+    _waypoint_goal_x_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/x");
+    _waypoint_goal_y_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/y");
+    _waypoint_goal_t_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/t");
+    _waypoint_goal_name_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/name");
+
     tj2_waypoints::Waypoint waypoint;
     waypoint.is_continuous = get_boolean(_waypoint_is_continuous_entry, false);
     waypoint.ignore_orientation = get_boolean(_waypoint_ignore_orientation_entry, false);
