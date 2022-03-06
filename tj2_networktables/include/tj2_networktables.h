@@ -171,8 +171,6 @@ private:
     NT_Entry _waypoint_goal_y_entry;
     NT_Entry _waypoint_goal_t_entry;
     NT_Entry _waypoint_goal_name_entry;
-    NT_Entry _waypoint_goal_pose_update_entry;
-    NT_Entry _waypoint_goal_name_update_entry;
 
     // waypoint plan entries
     NT_Entry _exec_waypoint_plan_entry;
@@ -238,8 +236,8 @@ private:
     void joint_callback(size_t joint_index, const nt::EntryNotification& event);
     void match_callback(const nt::EntryNotification& event);
     void pose_estimate_callback(const nt::EntryNotification& event);
-    void waypoint_pose_callback(const nt::EntryNotification& event);
-    void waypoint_name_callback(const nt::EntryNotification& event);
+
+    void create_waypoint(size_t index);
     void exec_waypoint_plan_callback(const nt::EntryNotification& event);
     void reset_waypoint_plan_callback(const nt::EntryNotification& event);
     void cancel_waypoint_plan_callback(const nt::EntryNotification& event);
@@ -262,7 +260,7 @@ private:
     void send_waypoints();
     void cancel_waypoint_goal();
     void reset_waypoints();
-    tj2_waypoints::Waypoint make_waypoint_from_nt();
+    tj2_waypoints::Waypoint make_waypoint_from_nt(size_t index);
     void add_waypoint(tj2_waypoints::Waypoint waypoint);
 
     // Main loop methods
