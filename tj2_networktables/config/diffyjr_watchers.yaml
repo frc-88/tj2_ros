@@ -31,7 +31,6 @@ watch_nodes:
   - /tj2/tj2_networktables
   - /tj2/tj2_pursuit
   - /tj2/tj2_riolog
-  - /tj2/tj2_tunnel
   - /tj2/tj2_waypoints
   - /tj2/tj2_yolo
   - /tj2_camera_watcher

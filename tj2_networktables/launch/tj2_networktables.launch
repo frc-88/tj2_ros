@@ -19,5 +19,5 @@
         </node>
     </group>
 
-    <include file="$(find tj2_tunnel)/launch/twist_mux.launch"/>
+    <include file="$(find tj2_networktables)/launch/twist_mux.launch"/>
 </launch>
