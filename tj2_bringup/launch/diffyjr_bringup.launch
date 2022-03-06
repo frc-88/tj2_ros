@@ -2,25 +2,18 @@
 <launch>
     <arg name="robot_address" default="10.0.88.2"/>
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
-        <arg name="robot_address" value="$(arg robot_address)"/>
-    </include>
-    <include file="$(find tj2_tunnel)/launch/tj2_tunnel.launch">
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
     <include file="$(find tj2_description)/launch/tj2_description_diffyjr.launch"/>
     <include file="$(find tj2_camera)/launch/tj2_camera.launch"/>
     <include file="$(find tj2_camera)/launch/camera_watcher.launch"/>
-    <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/>
-    <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/>
+    <!-- <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/> -->
+    <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
     <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
-    
-    <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch">
-        <arg name="serial_port" value="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>
-    </include>
-    <include file="$(find tj2_rplidar)/launch/laser_filter.launch"/>
-    
+    <include file="$(find tj2_rplidar)/launch/diffyjr_laser.launch"/>
+
     <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/>
     <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
     <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/>
