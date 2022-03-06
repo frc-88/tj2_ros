@@ -5,16 +5,13 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
-        - /RealSense1
-        - /RealSense Depth1
+        - /LaserScan1
         - /Follow Object Goal1
-        - /DepthCloud1
         - /DepthCloud1/Auto Size1
       Splitter Ratio: 0.6061684489250183
-    Tree Height: 898
+    Tree Height: 1496
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -64,54 +61,56 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_footprint:
-          Value: false
         base_link:
           Value: true
-        camera_accel_frame:
-          Value: false
-        camera_accel_optical_frame:
-          Value: false
-        camera_aligned_depth_to_color_frame:
-          Value: false
-        camera_color_frame:
-          Value: false
-        camera_color_optical_frame:
-          Value: false
-        camera_depth_frame:
-          Value: false
-        camera_depth_optical_frame:
-          Value: false
-        camera_gyro_frame:
-          Value: false
-        camera_gyro_optical_frame:
-          Value: false
-        camera_infra_frame:
-          Value: false
-        camera_infra_optical_frame:
-          Value: false
         camera_link:
           Value: false
-        imu:
-          Value: false
-        laser:
-          Value: false
+        camera_tilt_base_link:
+          Value: true
+        camera_tilt_link:
+          Value: true
+        intake_link:
+          Value: true
+        intake_tilt_link:
+          Value: true
+        left_inner_climber_link:
+          Value: true
+        left_inner_climber_tilt_link:
+          Value: true
+        left_inner_hook_link:
+          Value: true
+        left_laser_link:
+          Value: true
+        left_outer_climber_link:
+          Value: true
+        left_outer_climber_tilt_link:
+          Value: true
+        left_outer_hook_link:
+          Value: true
         limelight_link:
-          Value: false
-        limelight_optical_link:
           Value: false
         map:
           Value: true
         odom:
           Value: true
-        swerve_wheel_0:
-          Value: false
-        swerve_wheel_1:
-          Value: false
-        swerve_wheel_2:
-          Value: false
-        swerve_wheel_3:
-          Value: false
+        right_inner_climber_link:
+          Value: true
+        right_inner_climber_tilt_link:
+          Value: true
+        right_inner_hook_link:
+          Value: true
+        right_laser_link:
+          Value: true
+        right_outer_climber_link:
+          Value: true
+        right_outer_climber_tilt_link:
+          Value: true
+        right_outer_hook_link:
+          Value: true
+        turret_link:
+          Value: true
+        turret_tilt_link:
+          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -122,40 +121,37 @@ Visualization Manager:
         map:
           odom:
             base_link:
-              base_footprint:
-                camera_link:
-                  camera_accel_frame:
-                    camera_accel_optical_frame:
-                      {}
-                  camera_aligned_depth_to_color_frame:
-                    camera_color_optical_frame:
-                      {}
-                  camera_color_frame:
+              camera_tilt_base_link:
+                camera_tilt_link:
+                  camera_link:
                     {}
-                  camera_depth_frame:
-                    camera_depth_optical_frame:
-                      {}
-                  camera_gyro_frame:
-                    camera_gyro_optical_frame:
-                      {}
-                  camera_infra_frame:
-                    camera_infra_optical_frame:
-                      {}
-                imu:
+              intake_tilt_link:
+                intake_link:
                   {}
-                laser:
-                  {}
-                limelight_link:
-                  limelight_optical_link:
+              left_inner_climber_tilt_link:
+                left_inner_climber_link:
+                  left_inner_hook_link:
                     {}
-                swerve_wheel_0:
-                  {}
-                swerve_wheel_1:
-                  {}
-                swerve_wheel_2:
-                  {}
-                swerve_wheel_3:
-                  {}
+              left_laser_link:
+                {}
+              left_outer_climber_tilt_link:
+                left_outer_climber_link:
+                  left_outer_hook_link:
+                    {}
+              right_inner_climber_tilt_link:
+                right_inner_climber_link:
+                  right_inner_hook_link:
+                    {}
+              right_laser_link:
+                {}
+              right_outer_climber_tilt_link:
+                right_outer_climber_link:
+                  right_outer_hook_link:
+                    {}
+              turret_tilt_link:
+                turret_link:
+                  limelight_link:
+                    {}
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988079071
@@ -168,35 +164,94 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        swerve_wheel_0:
+        camera_tilt_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_tilt_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        swerve_wheel_1:
+        intake_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        swerve_wheel_2:
+        intake_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_inner_climber_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        swerve_wheel_3:
+        left_inner_climber_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_inner_hook_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
+        left_outer_climber_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_outer_climber_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_outer_hook_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_inner_climber_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_inner_climber_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_inner_hook_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_outer_climber_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_outer_climber_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_outer_hook_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turret_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turret_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -236,7 +291,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.10000000149011612
       Style: Flat Squares
-      Topic: /laser/scan_filtered
+      Topic: /laser/scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -246,14 +301,7 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        posend: true
-        pospoint1: true
-        pospoint2: true
-        posstart: true
-        textend: true
-        textpoint1: true
-        textpoint2: true
-        textstart: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -274,7 +322,7 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Camera
-      Enabled: true
+      Enabled: false
       Image Rendering: background and overlay
       Image Topic: /camera/color_decimate/image_raw
       Name: RealSense
@@ -282,7 +330,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: compressed
       Unreliable: false
-      Value: true
+      Value: false
       Visibility:
         AMCL Pose: true
         Bar Markers: true
@@ -373,8 +421,7 @@ Visualization Manager:
       Marker Topic: /tj2/powercell/markers
       Name: Power Cell Markers
       Namespaces:
-        sphere_power_cell: true
-        text_sphere_power_cell: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -605,7 +652,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.774684906005859
+      Distance: 25.543977737426758
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -613,17 +660,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 2.147801399230957
-        Y: -0.32054847478866577
-        Z: 0.13896241784095764
+        X: 5.046109676361084
+        Y: 5.321508884429932
+        Z: -0.7828856110572815
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1497970819473267
+      Pitch: 1.424796462059021
       Target Frame: <Fixed Frame>
-      Yaw: 1.286712408065796
+      Yaw: 1.601712703704834
     Saved: ~
 Window Geometry:
   Displays:
@@ -631,7 +678,7 @@ Window Geometry:
   Height: 2032
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000034d000006d8fc0200000013fb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000072000004820000018a00fffffffb00000012005200650061006c00530065006e0073006501000005000000024a0000002a00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000000000000000fb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000000000010000019e000006d8fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc00000072000006d80000013e00fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000019e00fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e7000000068fc0100000002fb0000000800540069006d0065010000000000000e700000058600fffffffb0000000800540069006d006501000000000000045000000000000000000000096d000006d800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000034d000006d8fc0200000014fb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000072000006d80000018a00fffffffb00000012005200650061006c00530065006e0073006500000005000000024a0000002a00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000000000000000fb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000000000010000019e000006d8fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc00000072000006d80000013e00fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000019e00fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e7000000068fc0100000002fb0000000800540069006d0065010000000000000e700000058600fffffffb0000000800540069006d006501000000000000045000000000000000000000096d000006d800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   RealSense:
     collapsed: false
   Selection:
