@@ -132,9 +132,12 @@ class Tj2Waypoints:
 
         self.marker_pub = rospy.Publisher("waypoint_markers", MarkerArray, queue_size=25)
         self.waypoints_pub = rospy.Publisher("waypoints", WaypointArray, queue_size=25)
+<<<<<<< HEAD
 
         # self.detections_sub = rospy.Subscriber("detections", Detection3DArray, self.detection_callback)
         # self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
+=======
+>>>>>>> diffyjr
 
         self.reload_waypoints_srv = self.create_service("reload_waypoints", Trigger, self.reload_waypoints_callback)
         self.get_all_waypoints_srv = self.create_service("get_all_waypoints", GetAllWaypoints, self.get_all_waypoints_callback)
@@ -276,7 +279,11 @@ class Tj2Waypoints:
     def get_waypoint_pose(self, waypoint: Waypoint):
         name = waypoint.name
         if len(name) == 0:
+<<<<<<< HEAD
             pose_stamped = PoseStamped()
+=======
+            pose_stamped = geometry_msgs.msg.PoseStamped()
+>>>>>>> diffyjr
             pose_stamped.header.frame_id = self.map_frame
             pose_stamped.pose = waypoint.pose
             return pose_stamped

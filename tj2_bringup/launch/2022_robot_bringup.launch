@@ -2,9 +2,6 @@
 <launch>
     <arg name="robot_address" default="10.0.88.2"/>
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
-        <arg name="robot_address" value="$(arg robot_address)"/>
-    </include>
-    <include file="$(find tj2_tunnel)/launch/tj2_tunnel.launch">
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
