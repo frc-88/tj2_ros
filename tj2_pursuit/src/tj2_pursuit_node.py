@@ -32,6 +32,42 @@ from tj2_tools.transforms import lookup_transform
 from tj2_tools.yolo.utils import get_label, read_class_names
 
 
+class SearchRoutine:
+    def __init__(self, cmd_vel_pub, direction_change_interval, angular_velocity):
+        self.direction_change_timer = rospy.Time.now()
+        self.direction_change_interval = rospy.Duration(direction_change_interval)
+        self.angular_velocity = angular_velocity
+        self.cmd_vel_pub = cmd_vel_pub
+        self.should_search = False
+        self.ang_vel_direction = True
+    
+    def set_ang_vel(self, angular_velocity):
+        twist = Twist()
+        twist.angular.z = angular_velocity
+        self.cmd_vel_pub.publish(twist)
+
+    def update(self, should_search):
+        if should_search != self.should_search:
+            if should_search:
+                self.direction_change_timer = rospy.Time.now()
+                self.ang_vel_direction = True
+            else:
+                self.set_ang_vel(0.0)
+        self.should_search = should_search
+        if not self.should_search:
+            return
+        
+        if self.ang_vel_direction:
+            self.set_ang_vel(self.angular_velocity)
+        else:
+            self.set_ang_vel(-self.angular_velocity)
+        
+        delta_time = rospy.Time.now() - self.direction_change_timer
+        if delta_time > self.direction_change_interval:
+            self.direction_change_timer = rospy.Time.now()
+            self.ang_vel_direction = not self.ang_vel_direction
+
+
 class Tj2Pursuit:
     def __init__(self):
         self.name = "tj2_pursuit"
@@ -41,6 +77,9 @@ class Tj2Pursuit:
 
         self.distance_offset = rospy.get_param("~distance_offset", 0.0)
         self.distance_threshold = rospy.get_param("~distance_threshold", 0.1)
+        self.no_object_timeout_s = rospy.get_param("~no_object_timeout", 3.0)
+        self.direction_change_interval = rospy.get_param("~direction_change_interval", 2.0)
+        self.angular_velocity = rospy.get_param("~angular_velocity", 2.0)
         self.send_rate = rospy.get_param("~send_rate", 2.5)
         self.map_frame = rospy.get_param("~map_frame", "map")
         self.base_frame = rospy.get_param("~base_frame", "base_link")
@@ -48,13 +87,17 @@ class Tj2Pursuit:
         self.class_names_path = rospy.get_param("~class_names_path", "objects.names")
         self.class_names = read_class_names(self.class_names_path)
 
+        self.no_object_timeout = rospy.Duration(self.no_object_timeout_s)
+        self.should_search = False
+
+        self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
+        self.follow_object_goal_pub = rospy.Publisher("follow_object_goal", PoseStamped, queue_size=10)
+        self.search_routine = SearchRoutine(self.cmd_vel_pub, self.direction_change_interval, self.angular_velocity)
+
         self.detections_sub = Subscriber("detections", Detection3DArray)
         self.odom_sub = Subscriber("odom", Odometry)
         self.time_sync = ApproximateTimeSynchronizer([self.detections_sub, self.odom_sub], queue_size=50, slop=0.02)
         self.time_sync.registerCallback(self.obj_odom_callback)
-
-        self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
-        self.follow_object_goal_pub = rospy.Publisher("follow_object_goal", PoseStamped, queue_size=10)
 
         self.tracking_object_name = ""
         
@@ -76,6 +119,9 @@ class Tj2Pursuit:
 
         self.pursue_object_server = actionlib.SimpleActionServer("pursue_object", PursueObjectAction, self.pursue_object_callback, auto_start=False)
         self.pursue_object_server.start()
+
+        self.search_timer = rospy.Timer(rospy.Duration(0.1), self.search_callback)
+
         rospy.loginfo("%s is ready" % self.name)
 
     def pursue_object_callback(self, goal):
@@ -94,13 +140,17 @@ class Tj2Pursuit:
                 if rospy.is_shutdown() or self.pursue_object_server.is_preempt_requested():
                     self.pursue_object_server.set_preempted()
                     break
-                if rospy.Time.now() - self.object_timer > rospy.Duration(4.0):
+                if rospy.Time.now() - self.object_timer > self.no_object_timeout:
                     self.future_pose_stamped = None
+                    self.should_search = True
+                else:
+                    self.should_search = False
 
                 if self.pursue_object(goal.xy_tolerance):
                     self.pursue_object_server.set_succeeded()
                     break
 
+        self.should_search = False
         self.cancel_goal()
 
     def obj_odom_callback(self, detections_msg, odom_msg):
@@ -147,6 +197,10 @@ class Tj2Pursuit:
             return nearest_state
         else:
             return None
+    
+    def search_callback(self, timer):
+        if not rospy.is_shutdown():
+            self.search_routine.update(self.should_search)
 
     def get_distance(self, pose1, pose2=None):
         if pose2 is None:
