@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="bag_name" default="some.bag"/>
+    <node name="match_bag" pkg="rosbag" type="play" output="screen" args="$(find tj2_match_watcher)/bags/$(arg bag_name) --clock --pause"/>
+    <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
+    
+    <arg name="map_name" default="rapid-react-2022-02-19T07-55-53--407688-edited"/>
+    <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
+        <arg name="mode" value="localize"/>
+        <arg name="map_name" value="$(arg map_name)"/>
+    </include>
+    <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
+        <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
+    </include>
+</launch>

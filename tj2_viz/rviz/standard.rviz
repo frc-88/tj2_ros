@@ -5,12 +5,16 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Grid1
+        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
+        - /RealSense1
+        - /RealSense Depth1
+        - /Follow Object Goal1
+        - /DepthCloud1
         - /DepthCloud1/Auto Size1
       Splitter Ratio: 0.6061684489250183
-    Tree Height: 617
+    Tree Height: 898
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -29,7 +33,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -52,7 +56,7 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 50
+      Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/TF
@@ -60,11 +64,8 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-<<<<<<< HEAD
-=======
         base_footprint:
           Value: false
->>>>>>> diffyjr
         base_link:
           Value: true
         camera_accel_frame:
@@ -77,14 +78,6 @@ Visualization Manager:
           Value: false
         camera_color_optical_frame:
           Value: false
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-        camera_color_optical_frame_rotated:
-          Value: false
-=======
->>>>>>> diffyjr
->>>>>>> e02ea32c28777cd6448efc4e67b5ba4b4bafc3c2
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
@@ -98,35 +91,6 @@ Visualization Manager:
         camera_infra_optical_frame:
           Value: false
         camera_link:
-<<<<<<< HEAD
-          Value: true
-        camera_tilt_base_link:
-          Value: true
-        camera_tilt_link:
-          Value: true
-        intake_link:
-          Value: true
-        intake_tilt_link:
-          Value: true
-        left_inner_climber_link:
-          Value: true
-        left_inner_climber_tilt_link:
-          Value: true
-        left_inner_hook_link:
-          Value: true
-        left_laser_link:
-          Value: true
-        left_outer_climber_link:
-          Value: true
-        left_outer_climber_tilt_link:
-          Value: true
-        left_outer_hook_link:
-          Value: true
-        limelight_link:
-          Value: true
-<<<<<<< HEAD
-=======
-=======
           Value: false
         imu:
           Value: false
@@ -136,32 +100,10 @@ Visualization Manager:
           Value: false
         limelight_optical_link:
           Value: false
->>>>>>> diffyjr
         map:
           Value: true
->>>>>>> e02ea32c28777cd6448efc4e67b5ba4b4bafc3c2
         odom:
           Value: true
-<<<<<<< HEAD
-        right_inner_climber_link:
-          Value: true
-        right_inner_climber_tilt_link:
-          Value: true
-        right_inner_hook_link:
-          Value: true
-        right_laser_link:
-          Value: true
-        right_outer_climber_link:
-          Value: true
-        right_outer_climber_tilt_link:
-          Value: true
-        right_outer_hook_link:
-          Value: true
-        turret_link:
-          Value: true
-        turret_tilt_link:
-          Value: true
-=======
         swerve_wheel_0:
           Value: false
         swerve_wheel_1:
@@ -170,7 +112,6 @@ Visualization Manager:
           Value: false
         swerve_wheel_3:
           Value: false
->>>>>>> diffyjr
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -178,84 +119,9 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-<<<<<<< HEAD
-        odom:
-          base_link:
-            camera_tilt_base_link:
-              camera_tilt_link:
-                camera_link:
-                  camera_accel_frame:
-                    camera_accel_optical_frame:
-=======
         map:
           odom:
             base_link:
-<<<<<<< HEAD
-              camera_tilt_base_link:
-                camera_tilt_link:
-                  camera_link:
-                    camera_accel_frame:
-                      camera_accel_optical_frame:
-                        {}
-                    camera_aligned_depth_to_color_frame:
-                      camera_color_optical_frame:
-                        camera_color_optical_frame_rotated:
-                          {}
-                    camera_color_frame:
->>>>>>> e02ea32c28777cd6448efc4e67b5ba4b4bafc3c2
-                      {}
-                  camera_aligned_depth_to_color_frame:
-                    camera_color_optical_frame:
-                      {}
-                  camera_color_frame:
-                    {}
-                  camera_depth_frame:
-                    camera_depth_optical_frame:
-                      {}
-                  camera_gyro_frame:
-                    camera_gyro_optical_frame:
-                      {}
-                  camera_infra_frame:
-                    camera_infra_optical_frame:
-                      {}
-            intake_tilt_link:
-              intake_link:
-                {}
-<<<<<<< HEAD
-            left_inner_climber_tilt_link:
-              left_inner_climber_link:
-                left_inner_hook_link:
-                  {}
-            left_laser_link:
-              {}
-            left_outer_climber_tilt_link:
-              left_outer_climber_link:
-                left_outer_hook_link:
-                  {}
-            right_inner_climber_tilt_link:
-              right_inner_climber_link:
-                right_inner_hook_link:
-                  {}
-            right_laser_link:
-              {}
-            right_outer_climber_tilt_link:
-              right_outer_climber_link:
-                right_outer_hook_link:
-                  {}
-            turret_tilt_link:
-              turret_link:
-                limelight_link:
-                  {}
-=======
-              right_outer_climber_tilt_link:
-                right_outer_climber_link:
-                  right_outer_hook_link:
-                    {}
-              turret_tilt_link:
-                turret_link:
-                  limelight_link:
-                    {}
-=======
               base_footprint:
                 camera_link:
                   camera_accel_frame:
@@ -290,8 +156,6 @@ Visualization Manager:
                   {}
                 swerve_wheel_3:
                   {}
->>>>>>> diffyjr
->>>>>>> e02ea32c28777cd6448efc4e67b5ba4b4bafc3c2
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988079071
@@ -304,121 +168,35 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-<<<<<<< HEAD
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        camera_tilt_base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        intake_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        intake_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        left_inner_climber_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        left_inner_climber_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        left_inner_hook_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        left_outer_climber_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        left_outer_climber_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        left_outer_hook_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        right_inner_climber_link:
-=======
         base_footprint:
           Alpha: 1
           Show Axes: false
           Show Trail: false
         base_link:
->>>>>>> diffyjr
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-<<<<<<< HEAD
-        right_inner_climber_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        right_inner_hook_link:
-=======
         swerve_wheel_0:
->>>>>>> diffyjr
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-<<<<<<< HEAD
-        right_outer_climber_link:
-=======
         swerve_wheel_1:
->>>>>>> diffyjr
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-<<<<<<< HEAD
-        right_outer_climber_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        right_outer_hook_link:
-=======
         swerve_wheel_2:
->>>>>>> diffyjr
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-<<<<<<< HEAD
-        turret_link:
-=======
         swerve_wheel_3:
->>>>>>> diffyjr
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-<<<<<<< HEAD
-        turret_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-=======
->>>>>>> diffyjr
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -444,8 +222,8 @@ Visualization Manager:
       Axis: Z
       Channel Name: intensity
       Class: rviz/LaserScan
-      Color: 239; 41; 41
-      Color Transformer: FlatColor
+      Color: 255; 255; 255
+      Color Transformer: Intensity
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -458,7 +236,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.10000000149011612
       Style: Flat Squares
-      Topic: /laser/scan
+      Topic: /laser/scan_filtered
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -468,35 +246,6 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-<<<<<<< HEAD
-        {}
-=======
-<<<<<<< HEAD
-        posblue_end_1: true
-        posblue_end_2: true
-        posblue_point_a_1: true
-        posblue_point_a_2: true
-        posblue_start_1: true
-        posblue_start_2: true
-        posred_end_1: true
-        posred_end_2: true
-        posred_point_a_1: true
-        posred_point_a_2: true
-        posred_start_1: true
-        posred_start_2: true
-        textblue_end_1: true
-        textblue_end_2: true
-        textblue_point_a_1: true
-        textblue_point_a_2: true
-        textblue_start_1: true
-        textblue_start_2: true
-        textred_end_1: true
-        textred_end_2: true
-        textred_point_a_1: true
-        textred_point_a_2: true
-        textred_start_1: true
-        textred_start_2: true
-=======
         posend: true
         pospoint1: true
         pospoint2: true
@@ -505,8 +254,6 @@ Visualization Manager:
         textpoint1: true
         textpoint2: true
         textstart: true
->>>>>>> diffyjr
->>>>>>> e02ea32c28777cd6448efc4e67b5ba4b4bafc3c2
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -527,7 +274,7 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Camera
-      Enabled: false
+      Enabled: true
       Image Rendering: background and overlay
       Image Topic: /camera/color_decimate/image_raw
       Name: RealSense
@@ -535,7 +282,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: compressed
       Unreliable: false
-      Value: false
+      Value: true
       Visibility:
         AMCL Pose: true
         Bar Markers: true
@@ -626,7 +373,8 @@ Visualization Manager:
       Marker Topic: /tj2/powercell/markers
       Name: Power Cell Markers
       Namespaces:
-        {}
+        sphere_power_cell: true
+        text_sphere_power_cell: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -829,108 +577,11 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
-<<<<<<< HEAD
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/LaserScan
-      Color: 138; 226; 52
-      Color Transformer: FlatColor
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Min Color: 0; 0; 0
-      Name: LaserScan
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.20000000298023224
-      Style: Flat Squares
-      Topic: /left_laser/scan
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/LaserScan
-      Color: 114; 159; 207
-      Color Transformer: FlatColor
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Min Color: 0; 0; 0
-      Name: LaserScan
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.20000000298023224
-      Style: Flat Squares
-      Topic: /right_laser/scan
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-<<<<<<< HEAD
-=======
-    - Class: rviz/Camera
-      Enabled: true
-      Image Rendering: background and overlay
-      Image Topic: /camera/color_decimate/image_raw_rotated
-      Name: Camera
-      Overlay Alpha: 0.5
-      Queue Size: 2
-      Transport Hint: compressed
-      Unreliable: false
-      Value: true
-      Visibility:
-        AMCL Pose: true
-        Bar Markers: true
-        Cargo Markers: true
-        DepthCloud: true
-        Follow Object Goal: true
-        Global Costmap: true
-        Global Plan: true
-        Grid: true
-        LaserScan: true
-        Local Costmap: true
-        Local Plan: true
-        Map: true
-        Move Base Goal: true
-        Move Base Waypoints: true
-        Power Cell Markers: true
-        Pursuit Goal: true
-        Pursuit Local Plan: true
-        RealSense: true
-        RealSense Depth: true
-        RobotModel: true
-        TF: true
-        Value: true
-        Waypoints: true
-      Zoom Factor: 1
-=======
->>>>>>> diffyjr
->>>>>>> e02ea32c28777cd6448efc4e67b5ba4b4bafc3c2
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: odom
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -954,15 +605,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-<<<<<<< HEAD
-      Distance: 43.06712341308594
-=======
-<<<<<<< HEAD
-      Distance: 0.8366469144821167
-=======
-      Distance: 12.765989303588867
->>>>>>> diffyjr
->>>>>>> e02ea32c28777cd6448efc4e67b5ba4b4bafc3c2
+      Distance: 5.774684906005859
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -970,41 +613,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-<<<<<<< HEAD
-        X: 21.85615348815918
-        Y: 11.910378456115723
-        Z: -6.89405632019043
-=======
-<<<<<<< HEAD
-        X: -1.3587106466293335
-        Y: 2.471050262451172
-        Z: 0.9622551202774048
-=======
         X: 2.147801399230957
         Y: -0.32054847478866577
         Z: 0.13896241784095764
->>>>>>> diffyjr
->>>>>>> e02ea32c28777cd6448efc4e67b5ba4b4bafc3c2
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-<<<<<<< HEAD
-      Pitch: 0.9653980135917664
-      Target Frame: <Fixed Frame>
-      Yaw: 1.7003976106643677
-=======
-<<<<<<< HEAD
-      Pitch: 0.12039817124605179
-      Target Frame: <Fixed Frame>
-      Yaw: 0.8603988289833069
-=======
       Pitch: 1.1497970819473267
       Target Frame: <Fixed Frame>
       Yaw: 1.286712408065796
->>>>>>> diffyjr
->>>>>>> e02ea32c28777cd6448efc4e67b5ba4b4bafc3c2
     Saved: ~
 Window Geometry:
   Displays:
@@ -1012,15 +631,7 @@ Window Geometry:
   Height: 2032
   Hide Left Dock: false
   Hide Right Dock: false
-<<<<<<< HEAD
-  QMainWindow State: 000000ff00000000fd00000004000000000000019d00000330fc0200000016fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000330000000c900fffffffb00000012005200650061006c00530065006e007300650000000219000001540000001600fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000000000000000fb0000000c00430061006d0065007200610000000257000001160000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000c00430061006d0065007200610000000248000001250000000000000000fb0000000a0049006d00610067006501000001da000001930000000000000000fb0000000c00430061006d00650072006101000002000000016d0000000000000000000000010000019e00000330fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc0000003d00000330000000a400fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000010000fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073800000068fc0100000002fb0000000800540069006d0065010000000000000738000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000003f10000033000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
-=======
-<<<<<<< HEAD
-  QMainWindow State: 000000ff00000000fd00000004000000000000019d00000330fc0200000016fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000001bd000000c900fffffffb00000012005200650061006c00530065006e007300650000000219000001540000001600fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000000000000000fb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000c00430061006d0065007200610000000248000001250000000000000000fb0000000a0049006d00610067006501000001da000001930000000000000000fb0000000c00430061006d00650072006101000002000000016d0000001600ffffff000000010000019e00000330fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc0000003d00000330000000a400fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000010000fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073800000068fc0100000002fb0000000800540069006d0065010000000000000738000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000003f10000033000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
-=======
-  QMainWindow State: 000000ff00000000fd00000004000000000000034d000006d8fc0200000013fb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000072000006d80000018a00fffffffb00000012005200650061006c00530065006e0073006500000005000000024a0000002a00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000000000000000fb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000000000010000019e000006d8fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc00000072000006d80000013e00fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000019e00fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e7000000068fc0100000002fb0000000800540069006d0065010000000000000e700000058600fffffffb0000000800540069006d006501000000000000045000000000000000000000096d000006d800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
->>>>>>> diffyjr
->>>>>>> e02ea32c28777cd6448efc4e67b5ba4b4bafc3c2
+  QMainWindow State: 000000ff00000000fd00000004000000000000034d000006d8fc0200000013fb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000072000004820000018a00fffffffb00000012005200650061006c00530065006e0073006501000005000000024a0000002a00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000000000000000fb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000000000010000019e000006d8fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc00000072000006d80000013e00fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000019e00fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e7000000068fc0100000002fb0000000800540069006d0065010000000000000e700000058600fffffffb0000000800540069006d006501000000000000045000000000000000000000096d000006d800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   RealSense:
     collapsed: false
   Selection:
