@@ -142,12 +142,11 @@ class TJ2DebugJoystick:
             elif axis_value < 0:
                 self.set_speed_mode(self.speed_mode - 1)
         
-        if (self.joystick.did_axis_change(self.toggle_nt_axis)):
-            axis_value = self.joystick.get_axis(self.toggle_nt_axis)
-            if axis_value > 0.0:
-                self.command_with_topic = True
-            else:
-                self.command_with_topic = False
+        axis_value = self.joystick.get_axis(self.toggle_nt_axis)
+        if axis_value > 0.0:  # trigger released
+            self.command_with_topic = False
+        else:  # trigger pressed
+            self.command_with_topic = True
         
         self.publish_nt()
 
@@ -192,10 +191,11 @@ class TJ2DebugJoystick:
         self.set_field_relative_pub.publish(msg)
     
     def publish_nt(self):
-        self.nt.getEntry("joystick/button/A").setValue(self.joystick.is_button_down(("main", "A")))
-        self.nt.getEntry("joystick/button/B").setValue(self.joystick.is_button_down(("main", "B")))
-        self.nt.getEntry("joystick/button/X").setValue(self.joystick.is_button_down(("main", "X")))
-        self.nt.getEntry("joystick/button/Y").setValue(self.joystick.is_button_down(("main", "Y")))
+        self.nt.getEntry("joystick/button/A").setBoolean(self.joystick.is_button_down(("main", "A")))
+        self.nt.getEntry("joystick/button/B").setBoolean(self.joystick.is_button_down(("main", "B")))
+        self.nt.getEntry("joystick/button/X").setBoolean(self.joystick.is_button_down(("main", "X")))
+        self.nt.getEntry("joystick/button/Y").setBoolean(self.joystick.is_button_down(("main", "Y")))
+        self.nt.getEntry("joystick/button/RT").setBoolean(self.joystick.get_axis(self.toggle_nt_axis) < 0.0)
 
         if not self.command_with_topic:
             self.nt.getEntry("joystick/axis/x").setValue(self.twist_command.linear.x)

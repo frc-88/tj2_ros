@@ -23,6 +23,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~pose_estimate_theta_std_deg", _pose_estimate_theta_std_deg, 15.0);
     ros::param::param<string>("~pose_estimate_frame_id", _pose_estimate_frame_id, _map_frame);
 
+    _cmd_vel_timeout = ros::Duration(_cmd_vel_timeout_param);
+
     string key;
     if (!ros::param::search("joint_names", key)) {
         ROS_ERROR("Failed to find joint_names parameter");
@@ -37,6 +39,61 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _imu_angular_velocity_covariance = get_double_list_param("imu_angular_velocity_covariance", 9);
     _imu_linear_acceleration_covariance = get_double_list_param("imu_linear_acceleration_covariance", 9);
 
+    _odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 50);
+    _odom_msg.header.frame_id = _odom_frame;
+    _odom_msg.child_frame_id = _base_frame;
+    /* [
+         0,  1,  2,  3,  4,  5,
+         6,  7,  8,  9, 10, 11,
+        12, 13, 14, 15, 16, 17,
+        18, 19, 20, 21, 22, 23,
+        24, 25, 26, 27, 28, 29,
+        30, 31, 32, 33, 34, 35
+    ] */
+    _odom_msg.pose.covariance = as_array<36>(_odom_covariance);
+    _odom_msg.twist.covariance = as_array<36>(_twist_covariance);
+
+    _imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 50);
+    _imu_msg.header.frame_id = _imu_frame;
+    /* [
+        0, 1, 2,
+        3, 4, 5,
+        6, 7, 8
+    ] */
+    _imu_msg.orientation_covariance = as_array<9>(_imu_orientation_covariance);
+    _imu_msg.angular_velocity_covariance = as_array<9>(_imu_angular_velocity_covariance);
+    _imu_msg.linear_acceleration_covariance = as_array<9>(_imu_linear_acceleration_covariance);
+
+    _raw_joint_pubs = new vector<ros::Publisher>();
+    _raw_joint_msgs = new vector<std_msgs::Float64*>();
+    _joint_entries = new vector<NT_Entry*>();
+    
+    for (size_t index = 0; index < _joint_names.size(); index++) {
+        add_joint_pub(_joint_names.at(index));
+    }
+
+    _match_time_pub = nh.advertise<std_msgs::Float64>("match_time", 10);
+    _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
+    _team_color_pub = nh.advertise<std_msgs::String>("team_color", 10);
+
+    _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 1);
+
+    _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
+
+    _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
+
+    _prev_twist_timestamp = ros::Time(0);
+    _twist_cmd_vx = 0.0;
+    _twist_cmd_vy = 0.0;
+    _twist_cmd_vt = 0.0;
+
+    _currentGoalStatus = INVALID;
+
+    _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2NetworkTables::odom_reset_callback, this);
+
+    _ping_pub = nh.advertise<std_msgs::Float64>("ping", 50);
+    _ping_timer = nh.createTimer(ros::Duration(0.5), &TJ2NetworkTables::ping_timer_callback, this);
+
     _nt = nt::GetDefaultInstance();
     nt::AddLogger(_nt,
                 [](const nt::LogMessage& msg) {
@@ -46,7 +103,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
                 },
                 0, UINT_MAX
     );
-    nt::StartServer(_nt, "tj2_networktables.ini", "127.0.0.1", _nt_port);
+    nt::StartServer(_nt, "tj2_networktables.ini", "", _nt_port);
     nt::SetUpdateRate(_nt, _update_interval);
 
     _base_key = "/ROS/";
@@ -129,63 +186,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::AddEntryListener(_reset_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::reset_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
     nt::AddEntryListener(_cancel_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::cancel_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
-    _odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 50);
-    _odom_msg.header.frame_id = _odom_frame;
-    _odom_msg.child_frame_id = _base_frame;
-    /* [
-         0,  1,  2,  3,  4,  5,
-         6,  7,  8,  9, 10, 11,
-        12, 13, 14, 15, 16, 17,
-        18, 19, 20, 21, 22, 23,
-        24, 25, 26, 27, 28, 29,
-        30, 31, 32, 33, 34, 35
-    ] */
-    _odom_msg.pose.covariance = as_array<36>(_odom_covariance);
-    _odom_msg.twist.covariance = as_array<36>(_twist_covariance);
-
-    _imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 50);
-    _imu_msg.header.frame_id = _imu_frame;
-    /* [
-        0, 1, 2,
-        3, 4, 5,
-        6, 7, 8
-    ] */
-    _imu_msg.orientation_covariance = as_array<9>(_imu_orientation_covariance);
-    _imu_msg.angular_velocity_covariance = as_array<9>(_imu_angular_velocity_covariance);
-    _imu_msg.linear_acceleration_covariance = as_array<9>(_imu_linear_acceleration_covariance);
-
-    _raw_joint_pubs = new vector<ros::Publisher>();
-    _raw_joint_msgs = new vector<std_msgs::Float64*>();
-    _joint_entries = new vector<NT_Entry*>();
-    
-    for (size_t index = 0; index < _joint_names.size(); index++) {
-        add_joint_pub(_joint_names.at(index));
-    }
-
-    _match_time_pub = nh.advertise<std_msgs::Float64>("match_time", 10);
-    _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
-    _team_color_pub = nh.advertise<std_msgs::String>("team_color", 10);
-
-    _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 1);
-
-    _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
-
-    _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
-
-    _prev_twist_timestamp = ros::Time(0);
-    _twist_cmd_vx = 0.0;
-    _twist_cmd_vy = 0.0;
-    _twist_cmd_vt = 0.0;
-
-    _currentGoalStatus = INVALID;
-
-    _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2NetworkTables::odom_reset_callback, this);
-
-    _ping_pub = nh.advertise<std_msgs::Float64>("ping", 50);
-    _ping_timer = nh.createTimer(ros::Duration(0.5), &TJ2NetworkTables::ping_timer_callback, this);
-
-    // _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2NetworkTables::odom_reset_callback, this);
-
     ROS_INFO("tj2_networktables init complete");
 }
 
@@ -233,6 +233,7 @@ void TJ2NetworkTables::publish_goal_status()
         _currentGoalStatus = currentPollStatus;
     }
     nt::SetEntryValue(_goal_status_entry, nt::Value::MakeDouble((double)_currentGoalStatus));
+    nt::SetEntryValue(_goal_status_update_entry, nt::Value::MakeDouble(get_time()));
 }
 
 void TJ2NetworkTables::publish_robot_global_pose()
@@ -433,7 +434,7 @@ void TJ2NetworkTables::joint_callback(size_t joint_index, const nt::EntryNotific
 void TJ2NetworkTables::match_callback(const nt::EntryNotification& event)
 {
     std_msgs::Float64 timer_msg;
-    timer_msg.data = get_double(_match_time_entry, NAN);
+    timer_msg.data = get_double(_match_time_entry, -1.0);
     _match_time_pub.publish(timer_msg);
 
     std_msgs::Bool is_auto_msg;
