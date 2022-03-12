@@ -115,7 +115,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES tj2_networktables
   CATKIN_DEPENDS rospy std_msgs sensor_msgs message_runtime dynamic_reconfigure tf2 nav_msgs 
- DEPENDS system_lib
+#  DEPENDS system_lib
 )
 
 ###########
