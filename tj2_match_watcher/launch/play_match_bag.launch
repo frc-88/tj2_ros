@@ -10,14 +10,14 @@
         <remap from="odom" to="/tj2/odom"/>
     </node>
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
-    <group ns="left_laser">
-        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="left_laser_filter">
-            <rosparam command="load" file="$(find tj2_rplidar)/config/left_laser_filter.yaml" />
+    <group ns="sinister_laser">
+        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="sinister_laser_filter">
+            <rosparam command="load" file="$(find tj2_rplidar)/config/sinister_laser_filter.yaml" />
         </node>
     </group>
-    <group ns="right_laser">
-        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="right_laser_filter">
-            <rosparam command="load" file="$(find tj2_rplidar)/config/right_laser_filter.yaml" />
+    <group ns="dexter_laser">
+        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="dexter_laser_filter">
+            <rosparam command="load" file="$(find tj2_rplidar)/config/dexter_laser_filter.yaml" />
         </node>
     </group>
 
