@@ -187,6 +187,7 @@ private:
     // Members
     ros::Timer _ping_timer;
     ros::Duration _cmd_vel_timeout;
+    ros::Timer _joint_timer;
 
     ros::Time _prev_twist_timestamp;
     double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
@@ -222,6 +223,7 @@ private:
     void publish_cmd_vel();
     void publish_goal_status();
     void publish_robot_global_pose();
+    void publish_joints();
 
     // Subscription callbacks
     void twist_callback(const geometry_msgs::TwistConstPtr& msg);
@@ -233,7 +235,7 @@ private:
     void odom_callback(const nt::EntryNotification& event);
     void ping_callback(const nt::EntryNotification& event);
     void imu_callback(const nt::EntryNotification& event);
-    void joint_callback(size_t joint_index, const nt::EntryNotification& event);
+    void joint_callback(size_t joint_index);
     void match_callback(const nt::EntryNotification& event);
     void pose_estimate_callback(const nt::EntryNotification& event);
 
@@ -244,6 +246,7 @@ private:
 
     // Timer callbacks
     void ping_timer_callback(const ros::TimerEvent& event);
+    void joint_timer_callback(const ros::TimerEvent& event);
 
     // NT helpers
     double get_double(NT_Entry entry, double default_value = 0.0);

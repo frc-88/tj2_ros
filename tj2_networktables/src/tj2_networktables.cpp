@@ -93,6 +93,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
 
     _ping_pub = nh.advertise<std_msgs::Float64>("ping", 50);
     _ping_timer = nh.createTimer(ros::Duration(0.5), &TJ2NetworkTables::ping_timer_callback, this);
+    _joint_timer = nh.createTimer(ros::Duration(0.1), &TJ2NetworkTables::joint_timer_callback, this);
 
     _nt = nt::GetDefaultInstance();
     nt::AddLogger(_nt,
@@ -240,6 +241,12 @@ void TJ2NetworkTables::publish_robot_global_pose()
     nt::SetEntryValue(_global_t_entry, nt::Value::MakeDouble(theta));
 }
 
+void TJ2NetworkTables::publish_joints()
+{
+    for (size_t index = 0; index < _joint_names.size(); index++) {
+        joint_callback(index);
+    }
+}
 
 // ---
 // Subscription callbacks
@@ -399,9 +406,9 @@ void TJ2NetworkTables::imu_callback(const nt::EntryNotification& event)
     _imu_pub.publish(_imu_msg);
 }
 
-void TJ2NetworkTables::joint_callback(size_t joint_index, const nt::EntryNotification& event)
+void TJ2NetworkTables::joint_callback(size_t joint_index)
 {
-    double joint_position = get_double(event.entry, NAN);
+    double joint_position = get_double(*(_joint_entries->at(joint_index)), NAN);
     if (joint_index >= _raw_joint_msgs->size()) {
         ROS_WARN("Invalid joint index received: %ld. Valid range is 0..%ld. (Joint value was %f)", joint_index, _raw_joint_msgs->size() - 1, joint_position);
         return;
@@ -538,6 +545,12 @@ void TJ2NetworkTables::ping_timer_callback(const ros::TimerEvent& event)
     nt::SetEntryValue(_ping_entry, nt::Value::MakeDouble(get_time()));
 }
 
+void TJ2NetworkTables::joint_timer_callback(const ros::TimerEvent& event)
+{
+    publish_joints();
+}
+
+
 // ---
 // Other helpers
 // ---
@@ -551,11 +564,6 @@ void TJ2NetworkTables::add_joint_pub(string name)
 
     NT_Entry entry = nt::GetEntry(_nt, _base_key + "joints/" + std::to_string(joint_index));
     _joint_entries->push_back(&entry);
-    nt::AddEntryListener(entry, boost::bind(
-        &TJ2NetworkTables::joint_callback, this, joint_index, _1),
-        nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate
-    );
-
 }
 
 double TJ2NetworkTables::get_time() {
