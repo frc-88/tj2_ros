@@ -1,10 +1,10 @@
 watch_topics:
   - /camera/color/camera_info
   - /camera/depth/camera_info
-  - /left_laser/scan
-  - /left_laser/scan_filtered
-  - /right_laser/scan
-  - /right_laser/scan_filtered
+  - /sinister_laser/scan
+  - /sinister_laser/scan_filtered
+  - /dexter_laser/scan
+  - /dexter_laser/scan_filtered
   - /limelight/color/camera_info
   - /tj2/is_autonomous
   - /tj2/match_time
@@ -23,10 +23,10 @@ watch_nodes:
   - /camera/realsense2_camera
   - /camera/realsense2_camera_manager
   - /joint_state_publisher
-  - /left_laser/laser_filter
-  - /left_laser/left_rplidar
-  - /right_laser/laser_filter
-  - /right_laser/right_rplidar
+  - /sinister_laser/laser_filter
+  - /sinister_laser/sinister_rplidar
+  - /dexter_laser/laser_filter
+  - /dexter_laser/dexter_rplidar
   - /move_base
   - /pursuit/pursuit_move_base
   - /robot_state_publisher

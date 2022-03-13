@@ -128,6 +128,7 @@ class Tj2Pursuit:
         rate = rospy.Rate(self.send_rate)
         start_timer = rospy.Time.now()
         detection_timeout = goal.timeout
+        rospy.loginfo("Pursuit received goal: %s" % str(goal))
         self.tracking_object_name = goal.object_name
         self.prev_pose_stamped = None
         while True:
@@ -221,7 +222,11 @@ class Tj2Pursuit:
         self.stop_motors()
 
     def stop_motors(self):
-        self.cmd_vel_pub.publish(Twist())
+        stop_msg = Twist()
+        stop_msg.linear.x = 0.0
+        stop_msg.angular.z = 0.0
+        for _ in range(10):
+            self.cmd_vel_pub.publish(stop_msg)
 
     def get_pose_in_map(self, pose_stamped):
         frame = pose_stamped.header.frame_id
