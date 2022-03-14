@@ -1,9 +1,7 @@
 <launch>
     <arg name="model" default="$(find tj2_description)/urdf/2022-robot.urdf.xml"/>
-    <arg name="gui" default="false" />
-
+    
     <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
-    <param name="use_gui" value="$(arg gui)"/>
     <rosparam param="source_list" subst_value="True">
     [
         "/tj2/joint_states",
@@ -15,11 +13,16 @@
 
     <group ns="tj2" >
         <node name="tj2_description" pkg="tj2_description" type="tj2_description_node" output="screen">
-            <rosparam param="joint_names" file="$(find tj2_description)/config/diffyjr_joints.yaml" command="load"/>
+            <rosparam param="joint_names" file="$(find tj2_description)/config/2022_robot_joints.yaml" command="load"/>
         </node>
     </group>
 
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_front_laser" args="-0.306757 -0.000102 0.259478   -1 0 0 0 base_link front_laser_link 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_rear_laser" args="0.123430 0.289422 0.342376   -0.0000  0.0000  0.9063  -0.4226 base_link rear_laser_link 20" />
-    <node pkg="tf" type="static_transform_publisher" name="turret_to_limelight" args="0.201 -0.001630 0.298295   0.4026  -0.0000  0.9154  0.0000 turret_link limelight_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_sinistra_laser" args="-0.290143 0.294453 0.227728   -1 0 0 0 base_link sinistra_laser_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_dextra_laser" args="-0.290143 -0.294453 0.227728   -1 0 0 0 base_link dextra_laser_link 20" />
+
+    <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_sinistra_laser" args="-0.306757 -0.000102 0.259478   -1 0 0 0 base_link sinistra_laser_link 20" /> -->
+    <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_dextra_laser" args="0.123430 0.289422 0.342376   -0.0000  0.0000  0.9063  -0.4226 base_link dextra_laser_link 20" /> -->
+
+    <node pkg="tf" type="static_transform_publisher" name="turret_to_limelight" args="0.227 0.0 0.233   0.3625  -0.0000  0.9320  0.0000 turret_link limelight_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="tilt_to_camera" args="0.017000 0 0   0 0 0 1 camera_tilt_link camera_link 20" />
 </launch>

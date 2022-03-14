@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     sensor_msgs
     roslaunch
-    message_generation
     message_filters
     visualization_msgs
     vision_msgs
@@ -78,10 +77,10 @@ find_package(OpenCV REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

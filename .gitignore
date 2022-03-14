@@ -15,6 +15,7 @@ dataset_builder/cargo_2022/wandb/
 playground/particle_filter/data
 playground/bounce_trajectories/data
 
+.OutlineViewer/
 .idea/
 .vscode/
 bags/

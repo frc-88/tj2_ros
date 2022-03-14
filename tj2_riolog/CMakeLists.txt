@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   message_generation
   genmsg
-  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
