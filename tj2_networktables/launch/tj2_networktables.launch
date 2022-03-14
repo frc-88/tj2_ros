@@ -18,6 +18,7 @@
             <!-- <rosparam param="joint_names" file="$(find tj2_description)/config/diffyjr_joints.yaml" command="load"/> -->
             <param name="nt_port" value="5800"/>
             <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
+            <param name="update_interval" value="0.033"/>
         </node>
     </group>
 

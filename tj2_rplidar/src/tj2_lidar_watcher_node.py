@@ -15,22 +15,22 @@ class TJ2LidarWatcher:
         )
         # rospy.on_shutdown(self.shutdown_hook)
 
-        self.expected_sinister_rate = rospy.get_param("~expected_sinister_rate", 10.0)
-        self.expected_dexter_rate = rospy.get_param("~expected_dexter_rate", 10.0)
+        self.expected_sinistra_rate = rospy.get_param("~expected_sinistra_rate", 10.0)
+        self.expected_dextra_rate = rospy.get_param("~expected_dextra_rate", 10.0)
         self.min_rate_offset = rospy.get_param("~rate_band", 5.0)
-        self.sinister_min_rate_threshold = max(0.0, self.expected_sinister_rate - self.min_rate_offset)
-        self.sinister_max_rate_threshold = max(0.0, self.expected_sinister_rate + self.min_rate_offset)
-        self.dexter_min_rate_threshold = max(0.0, self.expected_dexter_rate - self.min_rate_offset)
-        self.dexter_max_rate_threshold = max(0.0, self.expected_dexter_rate + self.min_rate_offset)
+        self.sinistra_min_rate_threshold = max(0.0, self.expected_sinistra_rate - self.min_rate_offset)
+        self.sinistra_max_rate_threshold = max(0.0, self.expected_sinistra_rate + self.min_rate_offset)
+        self.dextra_min_rate_threshold = max(0.0, self.expected_dextra_rate - self.min_rate_offset)
+        self.dextra_max_rate_threshold = max(0.0, self.expected_dextra_rate + self.min_rate_offset)
         self.combiner_config = rospy.get_param("~combiner_config", None)
 
-        self.sinister_rate = rostopic.ROSTopicHz(15)
-        self.sinister_topic = "/sinister_laser/scan_filtered"
-        rospy.Subscriber(self.sinister_topic, rospy.AnyMsg, self.sinister_rate.callback_hz, callback_args=self.sinister_topic, queue_size=5)
+        self.sinistra_rate = rostopic.ROSTopicHz(15)
+        self.sinistra_topic = "/sinistra_laser/scan_filtered"
+        rospy.Subscriber(self.sinistra_topic, rospy.AnyMsg, self.sinistra_rate.callback_hz, callback_args=self.sinistra_topic, queue_size=5)
 
-        self.dexter_rate = rostopic.ROSTopicHz(15)
-        self.dexter_topic = "/dexter_laser/scan_filtered"
-        rospy.Subscriber(self.dexter_topic, rospy.AnyMsg, self.dexter_rate.callback_hz, callback_args=self.dexter_topic, queue_size=5)
+        self.dextra_rate = rostopic.ROSTopicHz(15)
+        self.dextra_topic = "/dextra_laser/scan_filtered"
+        rospy.Subscriber(self.dextra_topic, rospy.AnyMsg, self.dextra_rate.callback_hz, callback_args=self.dextra_topic, queue_size=5)
 
         self.combiner_client = None
         self.combiner_dyn_topic = "/laserscan_multi_merger"
@@ -42,11 +42,11 @@ class TJ2LidarWatcher:
             self.combiner_client = DynamicClient(self.combiner_dyn_topic)
 
     def get_publish_rate(self):
-        sinister_result = self.sinister_rate.get_hz(self.sinister_topic)
-        dexter_result = self.dexter_rate.get_hz(self.dexter_topic)
-        sinister_rate = 0.0 if sinister_result is None else sinister_result[0]
-        dexter_rate = 0.0 if dexter_result is None else dexter_result[0]
-        return sinister_rate, dexter_rate
+        sinistra_result = self.sinistra_rate.get_hz(self.sinistra_topic)
+        dextra_result = self.dextra_rate.get_hz(self.dextra_topic)
+        sinistra_rate = 0.0 if sinistra_result is None else sinistra_result[0]
+        dextra_rate = 0.0 if dextra_result is None else dextra_result[0]
+        return sinistra_rate, dextra_rate
 
     def set_parameters(self):
         self.init_dynamic_clients()
@@ -61,18 +61,18 @@ class TJ2LidarWatcher:
         parameters_set = False
         while not rospy.is_shutdown():
             rospy.sleep(1.0)
-            sinister_rate, dexter_rate = self.get_publish_rate()
-            if not parameters_set and (sinister_rate > 0.0 or dexter_rate > 0.0):
+            sinistra_rate, dextra_rate = self.get_publish_rate()
+            if not parameters_set and (sinistra_rate > 0.0 or dextra_rate > 0.0):
                 self.set_parameters()
                 parameters_set = True
 
-            if not (self.sinister_min_rate_threshold <= sinister_rate <= self.sinister_max_rate_threshold and
-                    self.dexter_min_rate_threshold <= dexter_rate <= self.dexter_max_rate_threshold):
+            if not (self.sinistra_min_rate_threshold <= sinistra_rate <= self.sinistra_max_rate_threshold and
+                    self.dextra_min_rate_threshold <= dextra_rate <= self.dextra_max_rate_threshold):
                 rospy.logwarn_throttle(2.0, 
                     "LIDARs are not publishing within the threshold. " \
-                    "sinister (%0.1f..%0.1f): %0.2f. dexter (%0.1f..%0.1f): %0.2f" % (
-                        self.sinister_min_rate_threshold, self.sinister_max_rate_threshold, sinister_rate,
-                        self.dexter_min_rate_threshold, self.dexter_max_rate_threshold, dexter_rate)
+                    "sinistra (%0.1f..%0.1f): %0.2f. dextra (%0.1f..%0.1f): %0.2f" % (
+                        self.sinistra_min_rate_threshold, self.sinistra_max_rate_threshold, sinistra_rate,
+                        self.dextra_min_rate_threshold, self.dextra_max_rate_threshold, dextra_rate)
                 )
 
 
