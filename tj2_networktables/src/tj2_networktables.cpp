@@ -66,7 +66,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
 
     _raw_joint_pubs = new vector<ros::Publisher>();
     _raw_joint_msgs = new vector<std_msgs::Float64*>();
-    _joint_entries = new vector<NT_Entry*>();
     
     for (size_t index = 0; index < _joint_names.size(); index++) {
         add_joint_pub(_joint_names.at(index));
@@ -93,6 +92,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
 
     _ping_pub = nh.advertise<std_msgs::Float64>("ping", 50);
     _ping_timer = nh.createTimer(ros::Duration(0.5), &TJ2NetworkTables::ping_timer_callback, this);
+    _joint_timer = nh.createTimer(ros::Duration(0.1), &TJ2NetworkTables::joint_timer_callback, this);
 
     _nt = nt::GetDefaultInstance();
     nt::AddLogger(_nt,
@@ -225,7 +225,7 @@ void TJ2NetworkTables::publish_robot_global_pose()
 {
     tf::StampedTransform transform;
     try {
-        _tf_listener.lookupTransform(_base_frame, _map_frame, ros::Time(0), transform);
+        _tf_listener.lookupTransform(_map_frame, _base_frame, ros::Time(0), transform);
     }
     catch (tf::TransformException ex) {
         return;
@@ -238,8 +238,15 @@ void TJ2NetworkTables::publish_robot_global_pose()
     nt::SetEntryValue(_global_x_entry, nt::Value::MakeDouble(x));
     nt::SetEntryValue(_global_y_entry, nt::Value::MakeDouble(y));
     nt::SetEntryValue(_global_t_entry, nt::Value::MakeDouble(theta));
+    nt::SetEntryValue(_global_update_entry, nt::Value::MakeDouble(get_time()));
 }
 
+void TJ2NetworkTables::publish_joints()
+{
+    for (size_t index = 0; index < _joint_names.size(); index++) {
+        joint_callback(index);
+    }
+}
 
 // ---
 // Subscription callbacks
@@ -399,9 +406,10 @@ void TJ2NetworkTables::imu_callback(const nt::EntryNotification& event)
     _imu_pub.publish(_imu_msg);
 }
 
-void TJ2NetworkTables::joint_callback(size_t joint_index, const nt::EntryNotification& event)
+void TJ2NetworkTables::joint_callback(size_t joint_index)
 {
-    double joint_position = get_double(event.entry, NAN);
+    NT_Entry joint_entry = nt::GetEntry(_nt, _base_key + "joints/" + std::to_string(joint_index));
+    double joint_position = get_double(joint_entry, NAN);
     if (joint_index >= _raw_joint_msgs->size()) {
         ROS_WARN("Invalid joint index received: %ld. Valid range is 0..%ld. (Joint value was %f)", joint_index, _raw_joint_msgs->size() - 1, joint_position);
         return;
@@ -538,24 +546,22 @@ void TJ2NetworkTables::ping_timer_callback(const ros::TimerEvent& event)
     nt::SetEntryValue(_ping_entry, nt::Value::MakeDouble(get_time()));
 }
 
+void TJ2NetworkTables::joint_timer_callback(const ros::TimerEvent& event)
+{
+    publish_joints();
+}
+
+
 // ---
 // Other helpers
 // ---
 
 void TJ2NetworkTables::add_joint_pub(string name)
 {
-    ROS_INFO("Publishing to joint topic: %s", name.c_str());
     size_t joint_index = _raw_joint_pubs->size();
+    ROS_INFO("Publishing to joint topic: %s. Index: %ld", name.c_str(), joint_index);
     _raw_joint_pubs->push_back(nh.advertise<std_msgs::Float64>(name, 50));
     _raw_joint_msgs->push_back(new std_msgs::Float64);
-
-    NT_Entry entry = nt::GetEntry(_nt, _base_key + "joints/" + std::to_string(joint_index));
-    _joint_entries->push_back(&entry);
-    nt::AddEntryListener(entry, boost::bind(
-        &TJ2NetworkTables::joint_callback, this, joint_index, _1),
-        nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate
-    );
-
 }
 
 double TJ2NetworkTables::get_time() {

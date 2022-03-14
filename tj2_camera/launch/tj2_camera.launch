@@ -41,6 +41,23 @@
             <remap from="camera" to="color"/>
             <remap from="camera_out" to="color_decimate"/>
         </node>
+
+        <!-- <node pkg="nodelet" type="nodelet" name="rotate_rgb"
+                args="load image_rotate/image_rotate $(arg post_processing_manager_name)">
+            <remap from="image" to="color_decimate/image_raw"/>
+            <remap from="rotated/image" to="color_decimate/image_raw_rotated"/>
+        </node> -->
+
+        <!-- Parameters for rotate_rgb -->
+        <!-- <group ns="$(arg post_processing_manager_name)">
+            <param name="source_x" value="1.0"/>
+            <param name="source_y" value="0.0"/>
+            <param name="source_z" value="0.0"/>
+            <param name="target_x" value="-1.0"/>
+            <param name="target_y" value="0.0"/>
+            <param name="target_z" value="0.0"/>
+            <param name="use_camera_info" value="false"/>
+        </group> -->
     </group>
 
 

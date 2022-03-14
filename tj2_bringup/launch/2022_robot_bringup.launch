@@ -5,22 +5,26 @@
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
-    <include file="$(find tj2_description)/launch/tj2_description_diffyjr.launch"/>
+    <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
     <include file="$(find tj2_camera)/launch/tj2_camera.launch"/>
     <include file="$(find tj2_camera)/launch/camera_watcher.launch"/>
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/>
-    <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/>
-    <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
-    <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
-    <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch"/>
+    <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
+
+    <include file="$(find tj2_rplidar)/launch/sinistra_laser.launch"/>
+    <include file="$(find tj2_rplidar)/launch/dextra_laser.launch"/>
+    <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
+
     <!-- <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/> -->
     <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
     <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/>
-
+    <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
+    <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
+    
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
-        <!-- <arg name="mode" value="localize"/> -->
-        <arg name="mode" value="idle"/>
+        <arg name="mode" value="localize"/>
+        <!-- <arg name="mode" value="idle"/> -->
         <arg name="map_name" value="$(arg map_name)"/>
     </include>
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
