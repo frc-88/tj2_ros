@@ -157,9 +157,6 @@ private:
     NT_Entry _pose_est_t_entry;
     NT_Entry _pose_est_update_entry;
 
-    // joint entries
-    vector<NT_Entry*>* _joint_entries;
-
     // waypoint entries
     NT_Entry _waypoint_is_continuous_entry;
     NT_Entry _waypoint_ignore_orientation_entry;
