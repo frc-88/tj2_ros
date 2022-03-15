@@ -10,6 +10,7 @@
 /camera/gyro/imu_info
 /camera/gyro/metadata
 /camera/gyro/sample
+/amcl_pose
 /initialpose
 /sinistra_laser/scan
 /dextra_laser/scan
