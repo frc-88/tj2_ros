@@ -72,9 +72,22 @@ class State:
     def relative_to(self, other):
         if not isinstance(other, self.__class__):
             raise ValueError("Can't transform %s to %s" % (self.__class__, other.__class__))
-        state = self - other
+        state = self.__class__.from_state(self)
+        state = state.rotate_by(other.theta)
+        state.x += other.x
+        state.y += other.y
         state.theta = self.normalize_theta(state.theta)
-        return state.rotate_by(-other.theta)
+        return state
+
+    def relative_to_reverse(self, other):
+        if not isinstance(other, self.__class__):
+            raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
+        state = self.__class__.from_state(self)
+        state.x -= other.x
+        state.y -= other.y
+        state = state.rotate_by(-other.theta)
+        state.theta = self.normalize_theta(state.theta)
+        return state
 
     def rotate_by(self, theta):
         """
@@ -84,6 +97,36 @@ class State:
         state.x = self.x * math.cos(theta) - self.y * math.sin(theta)
         state.y = self.x * math.sin(theta) + self.y * math.cos(theta)
         state.theta = self.theta
+        return state
+    
+    def delta(self, other, states="xy"):
+        if not isinstance(other, self.__class__):
+            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
+
+        state = self.__class__.from_state(self)
+        for key in states:
+            if key == "x":
+                state.x = self.x - other.x
+            elif key == "y":
+                state.y = self.y - other.y
+            elif key == "t":
+                state.theta = self.theta - other.theta
+
+        return state
+
+    def add(self, other, states="xy"):
+        if not isinstance(other, self.__class__):
+            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
+
+        state = self.__class__.from_state(self)
+        for key in states:
+            if key == "x":
+                state.x = self.x + other.x
+            elif key == "y":
+                state.y = self.y + other.y
+            elif key == "t":
+                state.theta = self.theta + other.theta
+
         return state
 
     @staticmethod
@@ -166,6 +209,16 @@ class State:
         ros_pose.position.y = self.y
         ros_pose.orientation = self.get_theta_as_quat()
         return ros_pose
+
+    def __pos__(self):
+        return self
+
+    def __neg__(self):
+        new_state = self.from_state(self)
+        new_state.x = -new_state.x
+        new_state.y = -new_state.y
+        new_state.theta = -new_state.theta
+        return new_state
 
     def __add__(self, other):
         if not isinstance(other, self.__class__):
