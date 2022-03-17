@@ -196,7 +196,6 @@ class TJ2NetworkTables:
     def limelight_callback(self, timer):
         has_targets = self.get_entry("limelight/tv") == 1.0
         if not has_targets:
-            rospy.loginfo_throttle(3.0, "Limelight has no targets")
             return
         msg = LimelightTargetArray()
         msg.header.stamp = rospy.Time.now()

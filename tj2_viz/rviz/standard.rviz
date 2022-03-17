@@ -5,10 +5,10 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Grid1
         - /TF1/Frames1
         - /TF1/Tree1
         - /Map1
-        - /Map1/Status1
         - /Waypoints1
         - /RealSense1
         - /DepthCloud1/Auto Size1
@@ -33,7 +33,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -56,14 +56,86 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 10
+      Plane Cell Count: 100
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        base_link:
+          Value: true
+        camera_accel_frame:
+          Value: true
+        camera_accel_optical_frame:
+          Value: true
+        camera_aligned_depth_to_color_frame:
+          Value: true
+        camera_color_frame:
+          Value: true
+        camera_color_optical_frame:
+          Value: true
+        camera_depth_frame:
+          Value: true
+        camera_depth_optical_frame:
+          Value: true
+        camera_gyro_frame:
+          Value: true
+        camera_gyro_optical_frame:
+          Value: true
+        camera_infra_frame:
+          Value: true
+        camera_infra_optical_frame:
+          Value: true
+        camera_link:
+          Value: true
+        camera_tilt_base_link:
+          Value: true
+        camera_tilt_link:
+          Value: true
+        dextra_laser_link:
+          Value: true
+        intake_link:
+          Value: true
+        intake_tilt_link:
+          Value: true
+        left_inner_climber_link:
+          Value: true
+        left_inner_climber_tilt_link:
+          Value: true
+        left_inner_hook_link:
+          Value: true
+        left_outer_climber_link:
+          Value: true
+        left_outer_climber_tilt_link:
+          Value: true
+        left_outer_hook_link:
+          Value: true
+        limelight_link:
+          Value: true
+        map:
+          Value: true
+        odom:
+          Value: true
+        right_inner_climber_link:
+          Value: true
+        right_inner_climber_tilt_link:
+          Value: true
+        right_inner_hook_link:
+          Value: true
+        right_outer_climber_link:
+          Value: true
+        right_outer_climber_tilt_link:
+          Value: true
+        right_outer_hook_link:
+          Value: true
+        sinistra_laser_link:
+          Value: true
+        turret_link:
+          Value: true
+        turret_tilt_link:
+          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -71,24 +143,161 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        {}
+        map:
+          odom:
+            base_link:
+              camera_tilt_base_link:
+                camera_tilt_link:
+                  camera_link:
+                    camera_accel_frame:
+                      camera_accel_optical_frame:
+                        {}
+                    camera_aligned_depth_to_color_frame:
+                      camera_color_optical_frame:
+                        {}
+                    camera_color_frame:
+                      {}
+                    camera_depth_frame:
+                      camera_depth_optical_frame:
+                        {}
+                    camera_gyro_frame:
+                      camera_gyro_optical_frame:
+                        {}
+                    camera_infra_frame:
+                      camera_infra_optical_frame:
+                        {}
+              dextra_laser_link:
+                {}
+              intake_tilt_link:
+                intake_link:
+                  {}
+              left_inner_climber_tilt_link:
+                left_inner_climber_link:
+                  left_inner_hook_link:
+                    {}
+              left_outer_climber_tilt_link:
+                left_outer_climber_link:
+                  left_outer_hook_link:
+                    {}
+              right_inner_climber_tilt_link:
+                right_inner_climber_link:
+                  right_inner_hook_link:
+                    {}
+              right_outer_climber_tilt_link:
+                right_outer_climber_link:
+                  right_outer_hook_link:
+                    {}
+              sinistra_laser_link:
+                {}
+              turret_tilt_link:
+                turret_link:
+                  limelight_link:
+                    {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Alpha: 0.699999988079071
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: false
+      Enabled: true
       Links:
         All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_tilt_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        intake_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        intake_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_inner_climber_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_inner_climber_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_inner_hook_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_outer_climber_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_outer_climber_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_outer_hook_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_inner_climber_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_inner_climber_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_inner_hook_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_outer_climber_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_outer_climber_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_outer_hook_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turret_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turret_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: false
+      Value: true
       Visual Enabled: true
     - Alpha: 0.699999988079071
       Class: rviz/Map
@@ -133,40 +342,12 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        posblue_end_1: true
-        posblue_end_2: true
-        posblue_point_a_1: true
-        posblue_point_a_2: true
-        posblue_point_b_1: true
-        posblue_point_b_2: true
-        posblue_start_1: true
-        posblue_start_2: true
         poscenter: true
-        posred_end_1: true
-        posred_end_2: true
-        posred_point_a_1: true
-        posred_point_a_2: true
-        posred_point_b_1: true
-        posred_point_b_2: true
-        posred_start_1: true
-        posred_start_2: true
-        textblue_end_1: true
-        textblue_end_2: true
-        textblue_point_a_1: true
-        textblue_point_a_2: true
-        textblue_point_b_1: true
-        textblue_point_b_2: true
-        textblue_start_1: true
-        textblue_start_2: true
+        posstart_blue: true
+        posstart_red: true
         textcenter: true
-        textred_end_1: true
-        textred_end_2: true
-        textred_point_a_1: true
-        textred_point_a_2: true
-        textred_point_b_1: true
-        textred_point_b_2: true
-        textred_start_1: true
-        textred_start_2: true
+        textstart_blue: true
+        textstart_red: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -281,7 +462,10 @@ Visualization Manager:
       Marker Topic: /tj2/cargo/markers
       Name: Cargo Markers
       Namespaces:
-        {}
+        sphere_cargo_blue: true
+        sphere_cargo_red: true
+        text_sphere_cargo_blue: true
+        text_sphere_cargo_red: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -561,7 +745,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 18.40996551513672
+      Distance: 17.16974449157715
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -569,17 +753,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.8452612161636353
-        Y: 1.8618892431259155
-        Z: 0.43616747856140137
+        X: 8.03671646118164
+        Y: 2.002284049987793
+        Z: 1.7177382707595825
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.5647963285446167
       Target Frame: <Fixed Frame>
-      Yaw: 4.68858003616333
+      Yaw: 4.608578681945801
     Saved: ~
 Window Geometry:
   Displays:
