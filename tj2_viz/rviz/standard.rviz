@@ -7,6 +7,9 @@ Panels:
         - /Global Options1
         - /TF1/Frames1
         - /TF1/Tree1
+        - /Map1
+        - /Map1/Status1
+        - /Waypoints1
         - /RealSense1
         - /DepthCloud1/Auto Size1
         - /Pursuit Local Plan1
@@ -30,7 +33,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -57,58 +60,10 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_footprint:
-          Value: true
-        base_link:
-          Value: true
-        camera_accel_frame:
-          Value: true
-        camera_accel_optical_frame:
-          Value: true
-        camera_aligned_depth_to_color_frame:
-          Value: true
-        camera_color_frame:
-          Value: true
-        camera_color_optical_frame:
-          Value: true
-        camera_depth_frame:
-          Value: true
-        camera_depth_optical_frame:
-          Value: true
-        camera_gyro_frame:
-          Value: true
-        camera_gyro_optical_frame:
-          Value: true
-        camera_infra_frame:
-          Value: true
-        camera_infra_optical_frame:
-          Value: true
-        camera_link:
-          Value: true
-        imu:
-          Value: true
-        laser:
-          Value: true
-        limelight_link:
-          Value: true
-        limelight_optical_link:
-          Value: true
-        map:
-          Value: true
-        odom:
-          Value: true
-        swerve_wheel_0:
-          Value: true
-        swerve_wheel_1:
-          Value: true
-        swerve_wheel_2:
-          Value: true
-        swerve_wheel_3:
-          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -116,89 +71,24 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        map:
-          odom:
-            base_link:
-              base_footprint:
-                camera_link:
-                  camera_accel_frame:
-                    camera_accel_optical_frame:
-                      {}
-                  camera_aligned_depth_to_color_frame:
-                    camera_color_optical_frame:
-                      {}
-                  camera_color_frame:
-                    {}
-                  camera_depth_frame:
-                    camera_depth_optical_frame:
-                      {}
-                  camera_gyro_frame:
-                    camera_gyro_optical_frame:
-                      {}
-                  camera_infra_frame:
-                    camera_infra_optical_frame:
-                      {}
-                imu:
-                  {}
-                laser:
-                  {}
-                limelight_link:
-                  limelight_optical_link:
-                    {}
-                swerve_wheel_0:
-                  {}
-                swerve_wheel_1:
-                  {}
-                swerve_wheel_2:
-                  {}
-                swerve_wheel_3:
-                  {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Alpha: 0.699999988079071
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: true
+      Enabled: false
       Links:
         All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        swerve_wheel_0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        swerve_wheel_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        swerve_wheel_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        swerve_wheel_3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: true
+      Value: false
       Visual Enabled: true
     - Alpha: 0.699999988079071
       Class: rviz/Map
@@ -243,14 +133,40 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        posend: true
-        pospoint1: true
-        pospoint2: true
-        posstart: true
-        textend: true
-        textpoint1: true
-        textpoint2: true
-        textstart: true
+        posblue_end_1: true
+        posblue_end_2: true
+        posblue_point_a_1: true
+        posblue_point_a_2: true
+        posblue_point_b_1: true
+        posblue_point_b_2: true
+        posblue_start_1: true
+        posblue_start_2: true
+        poscenter: true
+        posred_end_1: true
+        posred_end_2: true
+        posred_point_a_1: true
+        posred_point_a_2: true
+        posred_point_b_1: true
+        posred_point_b_2: true
+        posred_start_1: true
+        posred_start_2: true
+        textblue_end_1: true
+        textblue_end_2: true
+        textblue_point_a_1: true
+        textblue_point_a_2: true
+        textblue_point_b_1: true
+        textblue_point_b_2: true
+        textblue_start_1: true
+        textblue_start_2: true
+        textcenter: true
+        textred_end_1: true
+        textred_end_2: true
+        textred_point_a_1: true
+        textred_point_a_2: true
+        textred_point_b_1: true
+        textred_point_b_2: true
+        textred_start_1: true
+        textred_start_2: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -373,8 +289,7 @@ Visualization Manager:
       Marker Topic: /tj2/powercell/markers
       Name: Power Cell Markers
       Namespaces:
-        sphere_power_cell: true
-        text_sphere_power_cell: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -646,7 +561,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 137.25621032714844
+      Distance: 18.40996551513672
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -654,17 +569,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -12.104259490966797
-        Y: -45.4715690612793
-        Z: -0.18828842043876648
+        X: 0.8452612161636353
+        Y: 1.8618892431259155
+        Z: 0.43616747856140137
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5647963285446167
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 1.4954140186309814
+      Yaw: 4.68858003616333
     Saved: ~
 Window Geometry:
   Displays:
@@ -672,7 +587,7 @@ Window Geometry:
   Height: 1016
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000015600000330fc0200000014fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000330000000c900fffffffb00000012005200650061006c00530065006e0073006500000001bb000001b20000001600fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000000000000000fb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000000000010000019e00000330fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc0000003d000003300000000000fffffffa000000000100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730000000d4c000001b40000010000fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073800000068fc0100000002fb0000000800540069006d0065010000000000000738000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000005dc0000033000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000015600000330fc0200000014fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000330000000c900fffffffb00000012005200650061006c00530065006e0073006500000001bb000001b20000001600fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000000000000000fb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000000000010000019e00000330fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc0000003d00000330000000a400fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000010000fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073800000068fc0100000002fb0000000800540069006d0065010000000000000738000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000004380000033000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   RealSense:
     collapsed: false
   Selection:

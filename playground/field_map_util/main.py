@@ -107,7 +107,7 @@ def draw_pose(image, name, pose, map_config):
 
 def draw_waypoints(map_image, map_config, waypoints):
     draw_image = cv2.cvtColor(map_image, cv2.COLOR_GRAY2BGR)
-    draw_pose(draw_image, "origin", Pose2d(theta=-map_config["origin"][2]), map_config)
+    draw_pose(draw_image, "origin", Pose2d(), map_config)
     for name, pose in waypoints.items():
         draw_pose(draw_image, name, pose, map_config)
     return draw_image
@@ -120,6 +120,7 @@ def save_waypoints(waypoints, path):
 
     with open(path, 'w') as file:
         yaml.dump(waypoints_config, file)
+    print("Wrote new waypoints to %s" % path)
 
 def get_image_center(image):
     return (np.array(image.shape[:2][::-1]) - 1.0) / 2.0
@@ -144,48 +145,30 @@ def center_map_on_pose(origin_pose: Pose2d, map_image, map_config, waypoints, ne
     unknown_value = (map_config["occupied_thresh"] + map_config["free_thresh"]) / 2.0
     unknown_value = int(unknown_value * np.iinfo(map_image.dtype).max)
 
-    image_rotate_angle = -origin_pose.theta
-    rotated_image = rotate_image(map_image, image_rotate_angle, unknown_value)
-
-    map_center_px = Pose2d(*get_image_center(map_image))
-    rotate_center_px = Pose2d(*get_image_center(rotated_image))
-    rotate_center_px.theta = -image_rotate_angle
-    map_origin = Pose2d(*map_config["origin"])
-    map_origin_px = Pose2d(*pose_origin_to_pixel(map_origin.x, map_origin.y, map_config["resolution"], map_image.shape[0]))
-
-    new_map_origin_px = (map_origin_px.delta(map_center_px)).relative_to(rotate_center_px)
-    new_map_origin = Pose2d(*pixel_origin_to_pose(new_map_origin_px.x, new_map_origin_px.y, map_config["resolution"], rotated_image.shape[0]))
-    new_map_origin.theta = image_rotate_angle
-
-    # map_image = cv2.cvtColor(map_image, cv2.COLOR_GRAY2BGR)
-    # rotated_image = cv2.cvtColor(rotated_image, cv2.COLOR_GRAY2BGR)
-
-    # cv2.circle(map_image, (int(map_origin_px.x), int(map_origin_px.y)), 5, (255, 0, 0), 3)
-    # cv2.circle(rotated_image, (int(new_map_origin_px.x), int(new_map_origin_px.y)), 5, (255, 0, 0), 3)
-    # draw_maps(map_image, rotated_image)
+    new_origin = Pose2d(*new_origin)
+    map_relative_origin = Pose2d(*map_config["origin"]).relative_to_reverse(origin_pose)
+    map_relative_origin = map_relative_origin.add(new_origin)
 
     new_map_config = copy.deepcopy(map_config)
-    # origin_pose.theta = 0.0
-    # new_map_config["origin"] = new_map_origin.relative_to_reverse(origin_pose).to_list()
-    new_map_config["origin"] = new_map_origin.to_list()
+    new_map_config["origin"] = map_relative_origin.to_list()
     new_map_config["image"] = new_image_filename
 
-    # map_transform = new_map_origin.relative_to_reverse(map_origin)
     new_waypoints = {}
     for name, pose in waypoints.items():
-        # new_pose = pose.relative_to_reverse(origin_pose)
-        new_pose = pose
-        new_pose.x += new_origin[0]
-        new_pose.y += new_origin[1]
+        new_pose = Pose2d.from_state(pose)
+        new_pose = new_pose.relative_to_reverse(origin_pose)
+        new_pose = new_pose.add(new_origin)
         new_waypoints[name] = new_pose
     
     with open(new_map_path, 'w') as file:
         yaml.dump(new_map_config, file)
+    print("Wrote new map config to %s" % new_map_path)
 
-    cv2.imwrite(new_image_path, rotated_image)
+    cv2.imwrite(new_image_path, map_image)
+    print("Wrote new map image to %s" % new_image_path)
     save_waypoints(new_waypoints, new_waypoints_path)
 
-    return rotated_image, new_map_config, new_waypoints
+    return map_image, new_map_config, new_waypoints
 
 
 def center_map_on_waypoint(waypoint_name, map_image, map_config, waypoints, new_origin=(0.0, 0.0)):
@@ -196,11 +179,11 @@ def main():
     map_image, map_config = load_map(map_name)
     waypoints = load_waypoints(map_name)
 
-    rotated_image, new_map_config, new_waypoints = center_map_on_waypoint("center", map_image, map_config, waypoints)
-
-    old_map_image = draw_waypoints(map_image, map_config, waypoints)
-    new_map_image = draw_waypoints(rotated_image, new_map_config, new_waypoints)
-    draw_maps(old_map_image, new_map_image)
+    center_map_on_waypoint("center", map_image, map_config, waypoints, (0.0, 0.0))
+    # rotated_image, new_map_config, new_waypoints = center_map_on_waypoint("center", map_image, map_config, waypoints, (0.0, 0.0))
+    # old_map_image = draw_waypoints(map_image, map_config, waypoints)
+    # new_map_image = draw_waypoints(rotated_image, new_map_config, new_waypoints)
+    # draw_maps(old_map_image, new_map_image)
 
 
 if __name__ == '__main__':
