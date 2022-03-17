@@ -96,7 +96,7 @@ class State:
         state = self.__class__()
         state.x = self.x * math.cos(theta) - self.y * math.sin(theta)
         state.y = self.x * math.sin(theta) + self.y * math.cos(theta)
-        state.theta = self.theta
+        state.theta = self.theta + theta
         return state
     
     def delta(self, other, states="xy"):
@@ -192,11 +192,11 @@ class State:
         output = []
         for state in states:
             if state == "x":
-                output.append(self.x)
+                output.append(float(self.x))
             elif state == "y":
-                output.append(self.y)
+                output.append(float(self.y))
             elif state == "t":
-                output.append(self.theta)
+                output.append(float(self.theta))
         return output
 
     @classmethod
