@@ -3,32 +3,14 @@ import cv2
 import yaml
 import math
 import copy
-import rospkg
 import argparse
 import scipy.ndimage
 import numpy as np
 from collections import defaultdict
 
 from tj2_tools.robot_state import Pose2d
+from file_management import load_map, load_waypoints, map_dir, waypoints_dir
 
-rospack = rospkg.RosPack()
-map_dir = os.path.join(rospack.get_path("tj2_laser_slam"), "maps")
-waypoints_dir = os.path.join(rospack.get_path("tj2_waypoints"), "waypoints")
-
-
-def load_map(map_name):
-    map_config_filename = map_name + ".yaml"
-    map_config_path = os.path.join(map_dir, map_config_filename)
-    with open(map_config_path) as file:
-        map_config = yaml.safe_load(file)
-    map_image_filename = map_config["image"]
-    if map_image_filename.startswith("/"):
-        map_image_path = map_image_filename
-    else:
-        map_image_path = os.path.join(map_dir, map_image_filename)
-    map_image = cv2.imread(map_image_path)
-    map_image = cv2.cvtColor(map_image, cv2.COLOR_BGR2GRAY)
-    return (map_image, map_config)
 
 
 def rotate_with_warp(image, angle_radians, rotate_center, fill_value):
@@ -52,19 +34,6 @@ def rotate_with_warp(image, angle_radians, rotate_center, fill_value):
 
 def rotate_image(image, angle_radians, fill_value):
     return scipy.ndimage.rotate(image, math.degrees(angle_radians), cval=fill_value)
-
-
-def load_waypoints(map_name):
-    waypoints_path = os.path.join(waypoints_dir, map_name + ".yaml")
-    with open(waypoints_path) as file:
-        waypoints_config = yaml.safe_load(file)
-        if waypoints_config is None:
-            waypoints_config = {}
-    waypoints = {}
-    for name, coords in waypoints_config.items():
-        pose = Pose2d(*coords)
-        waypoints[name] = pose
-    return waypoints
 
 
 def pose_to_pixel(pose: Pose2d, map_config, map_shape):
@@ -176,7 +145,7 @@ def center_map_on_waypoint(waypoint_name, map_image, map_config, waypoints, new_
     return center_map_on_pose(waypoints[waypoint_name], map_image, map_config, waypoints, f"{{map_name}}-{waypoint_name}", new_origin)
 
 def main():
-    parser = argparse.ArgumentParser(description="generate camera-calibration pattern", add_help=False)
+    parser = argparse.ArgumentParser(description="field_map_util", add_help=True)
     parser.add_argument("map_name", help="name of map to transform")
     parser.add_argument("waypoint", help="name of waypoint to center around")
     parser.add_argument("-x", default=0.0, type=float, help="X offset to apply to map and waypoints (map origin and reference waypoint x will have this value)")
