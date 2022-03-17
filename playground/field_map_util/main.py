@@ -2,8 +2,9 @@ import os
 import cv2
 import yaml
 import math
-import rospkg
 import copy
+import rospkg
+import argparse
 import scipy.ndimage
 import numpy as np
 from collections import defaultdict
@@ -175,11 +176,18 @@ def center_map_on_waypoint(waypoint_name, map_image, map_config, waypoints, new_
     return center_map_on_pose(waypoints[waypoint_name], map_image, map_config, waypoints, f"{{map_name}}-{waypoint_name}", new_origin)
 
 def main():
-    map_name = "rapid-react-2022-02-19T07-55-53--407688-edited"
+    parser = argparse.ArgumentParser(description="generate camera-calibration pattern", add_help=False)
+    parser.add_argument("map_name", help="name of map to transform")
+    parser.add_argument("waypoint", help="name of waypoint to center around")
+    parser.add_argument("-x", default=0.0, type=float, help="X offset to apply to map and waypoints (map origin and reference waypoint x will have this value)")
+    parser.add_argument("-y", default=0.0, type=float, help="Y offset to apply to map and waypoints (map origin and reference waypoint y will have this value)")
+    args = parser.parse_args()
+
+    map_name = args.map_name
     map_image, map_config = load_map(map_name)
     waypoints = load_waypoints(map_name)
 
-    center_map_on_waypoint("center", map_image, map_config, waypoints, (0.0, 0.0))
+    center_map_on_waypoint(args.waypoint, map_image, map_config, waypoints, (args.x, args.y))
     # rotated_image, new_map_config, new_waypoints = center_map_on_waypoint("center", map_image, map_config, waypoints, (0.0, 0.0))
     # old_map_image = draw_waypoints(map_image, map_config, waypoints)
     # new_map_image = draw_waypoints(rotated_image, new_map_config, new_waypoints)
