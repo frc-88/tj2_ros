@@ -111,17 +111,17 @@ class TJ2NetworkTables:
                     "waypoints": {}
                 }
             },
-            "limelight": {
-                "tv": 0.0,
-            }
+            # "limelight": {
+            #     "tv": 0.0,
+            # }
         }
-        for index in range(self.num_limelight_targets):
-            self.path_defaults["limelight"].update({
-                "tx%d" % index: 0.0,
-                "ty%d" % index: 0.0,
-                "thor%d" % index: 0.0,
-                "tvert%d" % index: 0.0,
-            })
+        # for index in range(self.num_limelight_targets):
+        #     self.path_defaults["limelight"].update({
+        #         "tx%d" % index: 0.0,
+        #         "ty%d" % index: 0.0,
+        #         "thor%d" % index: 0.0,
+        #         "tvert%d" % index: 0.0,
+        #     })
         self.flat_path_defaults = flatten_paths(self.path_defaults)
         self.entries = {path: self.nt.getEntry(path) for path in self.flat_path_defaults.keys()}
 
@@ -132,7 +132,7 @@ class TJ2NetworkTables:
 
         self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback, queue_size=10)
 
-        self.limelight_target_pub = rospy.Publisher("/limelight/targets", LimelightTargetArray, queue_size=10)
+        # self.limelight_target_pub = rospy.Publisher("/limelight/targets", LimelightTargetArray, queue_size=10)
 
         self.topic_listeners = {}
         for topic in self.watch_topics:
@@ -140,7 +140,7 @@ class TJ2NetworkTables:
 
         # self.topic_timer = rospy.Timer(rospy.Duration(2.0), self.topic_poll_callback)
         self.node_timer = rospy.Timer(rospy.Duration(2.0), self.node_poll_callback)
-        self.limelight_timer = rospy.Timer(rospy.Duration(1.0 / 10.0), self.limelight_callback)
+        # self.limelight_timer = rospy.Timer(rospy.Duration(1.0 / 10.0), self.limelight_callback)
 
         rospy.loginfo("%s_py init complete" % self.node_name)
 
