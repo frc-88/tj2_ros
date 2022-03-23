@@ -6,12 +6,14 @@ Panels:
       Expanded:
         - /Global Options1
         - /Grid1
+        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
         - /Map1
         - /Waypoints1
         - /RealSense1
         - /RealSense1/Visibility1
+        - /AMCL Pose1
         - /DepthCloud1/Auto Size1
         - /Pursuit Local Plan1
       Splitter Ratio: 0.6061684489250183
@@ -34,7 +36,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -66,28 +68,6 @@ Visualization Manager:
       Frames:
         All Enabled: false
         base_link:
-          Value: true
-        camera_accel_frame:
-          Value: true
-        camera_accel_optical_frame:
-          Value: true
-        camera_aligned_depth_to_color_frame:
-          Value: true
-        camera_color_frame:
-          Value: true
-        camera_color_optical_frame:
-          Value: true
-        camera_depth_frame:
-          Value: true
-        camera_depth_optical_frame:
-          Value: true
-        camera_gyro_frame:
-          Value: true
-        camera_gyro_optical_frame:
-          Value: true
-        camera_infra_frame:
-          Value: true
-        camera_infra_optical_frame:
           Value: true
         camera_link:
           Value: true
@@ -142,7 +122,7 @@ Visualization Manager:
       Name: TF
       Show Arrows: true
       Show Axes: true
-      Show Names: false
+      Show Names: true
       Tree:
         map:
           odom:
@@ -150,23 +130,7 @@ Visualization Manager:
               camera_tilt_base_link:
                 camera_tilt_link:
                   camera_link:
-                    camera_accel_frame:
-                      camera_accel_optical_frame:
-                        {}
-                    camera_aligned_depth_to_color_frame:
-                      camera_color_optical_frame:
-                        {}
-                    camera_color_frame:
-                      {}
-                    camera_depth_frame:
-                      camera_depth_optical_frame:
-                        {}
-                    camera_gyro_frame:
-                      camera_gyro_optical_frame:
-                        {}
-                    camera_infra_frame:
-                      camera_infra_optical_frame:
-                        {}
+                    {}
               dextra_laser_link:
                 {}
               intake_tilt_link:
@@ -344,11 +308,9 @@ Visualization Manager:
       Name: Waypoints
       Namespaces:
         poscenter: true
-        posstart2_red: true
         posstart_blue: true
         posstart_red: true
         textcenter: true
-        textstart2_red: true
         textstart_blue: true
         textstart_red: true
       Queue Size: 100
@@ -397,6 +359,7 @@ Visualization Manager:
         Move Base Goal: true
         Move Base Waypoints: true
         Object Marker: true
+        Pose: true
         PoseArray: true
         Power Cell Markers: true
         Pursuit Goal: true
@@ -465,10 +428,7 @@ Visualization Manager:
       Marker Topic: /tj2/cargo/markers
       Name: Cargo Markers
       Namespaces:
-        sphere_cargo_blue: true
-        sphere_cargo_red: true
-        text_sphere_cargo_blue: true
-        text_sphere_cargo_red: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -720,6 +680,22 @@ Visualization Manager:
       Topic: /pursuit/pursuit_move_base/DWAPlannerROS/local_plan
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /tj2/turret_target
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -748,7 +724,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 19.877450942993164
+      Distance: 7.113500118255615
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -756,17 +732,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 5.565986156463623
-        Y: 1.4586389064788818
-        Z: 0.14750507473945618
+        X: 0.32813456654548645
+        Y: 0.08355838060379028
+        Z: 0.5464972853660583
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4697962999343872
+      Pitch: 1.2253974676132202
       Target Frame: <Fixed Frame>
-      Yaw: 2.1885733604431152
+      Yaw: 1.9053972959518433
     Saved: ~
 Window Geometry:
   Displays:

@@ -39,6 +39,7 @@
 #include "tj2_waypoints/WaypointArray.h"
 
 #include "tj2_networktables/OdomReset.h"
+#include "tj2_networktables/NTEntry.h"
 
 #include "networktables/EntryListenerFlags.h"
 
@@ -211,6 +212,8 @@ private:
 
     // Subscribers
     ros::Subscriber _twist_sub;
+    ros::Subscriber _nt_passthrough_sub;
+    ros::Subscriber _waypoints_sub;
     tf::TransformListener _tf_listener;
 
     // Service Servers
@@ -224,6 +227,8 @@ private:
 
     // Subscription callbacks
     void twist_callback(const geometry_msgs::TwistConstPtr& msg);
+    void nt_passthrough_callback(const tj2_networktables::NTEntryConstPtr& msg);
+    void waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg);
 
     // Service callbacks
     bool odom_reset_callback(tj2_networktables::OdomReset::Request &req, tj2_networktables::OdomReset::Response &resp);

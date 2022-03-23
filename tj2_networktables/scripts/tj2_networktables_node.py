@@ -108,20 +108,19 @@ class TJ2NetworkTables:
                         "enable": True,
                         "status": True,
                     },
-                    "waypoints": {}
                 }
             },
-            # "limelight": {
-            #     "tv": 0.0,
-            # }
+            "limelight": {
+                "tv": 0.0,
+            }
         }
-        # for index in range(self.num_limelight_targets):
-        #     self.path_defaults["limelight"].update({
-        #         "tx%d" % index: 0.0,
-        #         "ty%d" % index: 0.0,
-        #         "thor%d" % index: 0.0,
-        #         "tvert%d" % index: 0.0,
-        #     })
+        for index in range(self.num_limelight_targets):
+            self.path_defaults["limelight"].update({
+                "tx%d" % index: 0.0,
+                "ty%d" % index: 0.0,
+                "thor%d" % index: 0.0,
+                "tvert%d" % index: 0.0,
+            })
         self.flat_path_defaults = flatten_paths(self.path_defaults)
         self.entries = {path: self.nt.getEntry(path) for path in self.flat_path_defaults.keys()}
 
@@ -130,9 +129,7 @@ class TJ2NetworkTables:
         self.bag_status_sub = rospy.Subscriber("bag_status", String, self.bag_status_callback, queue_size=10)
         self.bag_name_sub = rospy.Subscriber("bag_name", String, self.bag_name_callback, queue_size=10)
 
-        self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback, queue_size=10)
-
-        # self.limelight_target_pub = rospy.Publisher("/limelight/targets", LimelightTargetArray, queue_size=10)
+        self.limelight_target_pub = rospy.Publisher("/limelight/targets", LimelightTargetArray, queue_size=10)
 
         self.topic_listeners = {}
         for topic in self.watch_topics:
@@ -140,7 +137,7 @@ class TJ2NetworkTables:
 
         # self.topic_timer = rospy.Timer(rospy.Duration(2.0), self.topic_poll_callback)
         self.node_timer = rospy.Timer(rospy.Duration(2.0), self.node_poll_callback)
-        # self.limelight_timer = rospy.Timer(rospy.Duration(1.0 / 10.0), self.limelight_callback)
+        self.limelight_timer = rospy.Timer(rospy.Duration(1.0 / 10.0), self.limelight_callback)
 
         rospy.loginfo("%s_py init complete" % self.node_name)
 
@@ -216,21 +213,9 @@ class TJ2NetworkTables:
     def bag_name_callback(self, msg):
         self.set_entry("ROS/status/recording/bag_name", msg.data)
 
-    def waypoints_callback(self, msg):
-        for waypoint in msg.waypoints:
-            name = waypoint.name
-            pose = waypoint.pose
-
-            pose_2d = State.from_ros_pose(pose)
-
-            self.set_entry("ROS/status/waypoints/%s/x" % name, pose_2d.x)
-            self.set_entry("ROS/status/waypoints/%s/y" % name, pose_2d.y)
-            self.set_entry("ROS/status/waypoints/%s/theta" % name, pose_2d.theta)
-
     def is_wifi_enabled(self):
         results = pynmcli.get_data(self.get_wifi().execute())
         return len(results) != 0
-        return False
 
     def disable_wifi(self):
         rospy.loginfo("Disabling wifi")

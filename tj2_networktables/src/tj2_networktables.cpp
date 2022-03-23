@@ -80,6 +80,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
+    _nt_passthrough_sub = nh.subscribe<tj2_networktables::NTEntry>("nt_passthrough", 50, &TJ2NetworkTables::nt_passthrough_callback, this);
+    _waypoints_sub = nh.subscribe<tj2_waypoints::WaypointArray>("waypoints", 50, &TJ2NetworkTables::waypoints_callback, this);
 
     _prev_twist_timestamp = ros::Time(0);
     _twist_cmd_vx = 0.0;
@@ -216,9 +218,9 @@ void TJ2NetworkTables::publish_goal_status()
         ROS_INFO("Current goal status changed to: %d", _currentGoalStatus);
         _prevPollStatus = currentPollStatus;
         _currentGoalStatus = currentPollStatus;
+        nt::SetEntryValue(_goal_status_entry, nt::Value::MakeDouble((double)_currentGoalStatus));
+        nt::SetEntryValue(_goal_status_update_entry, nt::Value::MakeDouble(get_time()));
     }
-    nt::SetEntryValue(_goal_status_entry, nt::Value::MakeDouble((double)_currentGoalStatus));
-    nt::SetEntryValue(_goal_status_update_entry, nt::Value::MakeDouble(get_time()));
 }
 
 void TJ2NetworkTables::publish_robot_global_pose()
@@ -288,6 +290,41 @@ void TJ2NetworkTables::twist_callback(const geometry_msgs::TwistConstPtr& msg)
     _twist_cmd_vy = vy;
     _twist_cmd_vt = vt;
 }
+
+void TJ2NetworkTables::nt_passthrough_callback(const tj2_networktables::NTEntryConstPtr& msg)
+{
+    NT_Entry entry = nt::GetEntry(_nt, _base_key + msg->path);
+    nt::SetEntryValue(entry, nt::Value::MakeDouble(msg->value));
+}
+
+void TJ2NetworkTables::waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg)
+{
+    for (size_t index = 0; index < msg->waypoints.size(); index++)
+    {
+        string name = msg->waypoints.at(index).name;
+        NT_Entry x_entry = nt::GetEntry(_nt, _base_key + "waypoints/" + name + "/x");
+        NT_Entry y_entry = nt::GetEntry(_nt, _base_key + "waypoints/" + name + "/y");
+        NT_Entry theta_entry = nt::GetEntry(_nt, _base_key + "waypoints/" + name + "/theta");
+
+        geometry_msgs::Pose pose = msg->waypoints.at(index).pose;
+        double x = pose.position.x;
+        double y = pose.position.y;
+
+        tf::Quaternion q(
+            pose.orientation.x,
+            pose.orientation.y,
+            pose.orientation.z,
+            pose.orientation.w);
+        tf::Matrix3x3 m(q);
+        double roll, pitch, yaw;
+        m.getRPY(roll, pitch, yaw);
+        
+        nt::SetEntryValue(x_entry, nt::Value::MakeDouble(x));
+        nt::SetEntryValue(y_entry, nt::Value::MakeDouble(y));
+        nt::SetEntryValue(theta_entry, nt::Value::MakeDouble(yaw));
+    }
+}
+
 
 // ---
 // Service callbacks
