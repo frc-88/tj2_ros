@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="probability_map_path" default="$(find tj2_turret)/maps/$(env ROS_MAP_NAME)"/>
+    <group ns="tj2">
+        <node pkg="tj2_turret" type="tj2_turret_node.py" name="tj2_turret" output="screen" required="false">
+            <remap from="amcl_pose" to="/amcl_pose"/>
+            <param name="time_of_flight_file_path" value="$(find tj2_turret)/config/time_of_flight.txt"/>
+        </node>
+
+        <group ns="turret">
+            <node pkg="map_server" type="map_server" name="shooting_probability_map_server" args="$(arg probability_map_path)" />
+        </group>
+    </group>
+</launch>
