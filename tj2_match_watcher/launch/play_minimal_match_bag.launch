@@ -6,6 +6,9 @@
     <node name="match_bag" pkg="rosbag" type="play" output="screen" args="$(find tj2_match_watcher)/bags/$(arg bag_name) --clock --pause -s $(arg start_time)"/>
     <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
     
+    <node pkg="tj2_laser_slam" type="odom_bag_publisher.py" name="odom_bag_publisher" output="screen">
+        <remap from="odom" to="/tj2/odom"/>
+    </node>
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
     <group ns="sinistra_laser">
         <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="sinistra_laser_filter">
@@ -19,7 +22,10 @@
     </group>
 
     <arg name="map_name" default="rapid-react-2022-02-19T07-55-53--407688-edited"/>
-    <node pkg="map_server" type="map_server" name="map_server" args="$(find tj2_laser_slam)/maps/$(arg map_name).yaml" />
+    <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
+        <arg name="mode" value="localize"/>
+        <arg name="map_name" value="$(arg map_name)"/>
+    </include>
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
     </include>
