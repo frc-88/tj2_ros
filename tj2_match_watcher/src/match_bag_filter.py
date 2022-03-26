@@ -78,12 +78,13 @@ if __name__ == '__main__':
     directory = "week3"
     
     bags = {
+        "2022_robot_2022-03-19-09-18-32.bag": 660,
         # "2022_robot_2022-03-19-10-12-13.bag": 275,
         # "2022_robot_2022-03-19-11-47-53.bag": 595,
         # "2022_robot_2022-03-19-14-03-24.bag": 290,
         # "2022_robot_2022-03-19-14-51-16.bag": 100,
         # "2022_robot_2022-03-19-15-23-57.bag": 132,
-        "2022_robot_2022-03-19-15-54-11.bag": 186,
+        # "2022_robot_2022-03-19-15-54-11.bag": 186,
     }
     for bag, start_time in bags.items():
         main(directory, bag, time_start=start_time)
