@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="map_file" default="$(find tj2_turret)/config/updated_map.yaml"/>
+    <node pkg="map_server" type="map_server" name="updated_map_server" args="$(arg map_file)" />
+</launch>
