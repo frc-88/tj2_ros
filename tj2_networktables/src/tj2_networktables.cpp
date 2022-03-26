@@ -12,6 +12,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~map_frame", _map_frame, "map");
     ros::param::param<string>("~imu_frame", _imu_frame, "imu");
 
+    ros::param::param<double>("~odom_timeout_warning", _odom_timeout_param, 0.1);
 
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
     ros::param::param<double>("~min_linear_cmd", _min_linear_cmd, 0.05);
@@ -24,6 +25,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~pose_estimate_frame_id", _pose_estimate_frame_id, _map_frame);
 
     _cmd_vel_timeout = ros::Duration(_cmd_vel_timeout_param);
+    _odom_timeout = ros::Duration(_odom_timeout_param);
 
     string key;
     if (!ros::param::search("joint_names", key)) {
@@ -76,6 +78,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _team_color_pub = nh.advertise<std_msgs::String>("team_color", 10);
 
     _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 1);
+
+    _hood_pub = nh.advertise<std_msgs::Bool>("hood", 1);
 
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
@@ -172,6 +176,10 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::AddEntryListener(_exec_waypoint_plan_update_entry, boost::bind(&TJ2NetworkTables::exec_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
     nt::AddEntryListener(_reset_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::reset_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
     nt::AddEntryListener(_cancel_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::cancel_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _hood_state_entry = nt::GetEntry(_nt, _base_key + "hood/state");
+    _hood_update_entry = nt::GetEntry(_nt, _base_key + "hood/update");
+    nt::AddEntryListener(_hood_update_entry, boost::bind(&TJ2NetworkTables::hood_state_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -574,6 +582,13 @@ void TJ2NetworkTables::cancel_waypoint_plan_callback(const nt::EntryNotification
     cancel_waypoint_goal();
 }
 
+void TJ2NetworkTables::hood_state_callback(const nt::EntryNotification& event)
+{
+    bool hood_state = get_boolean(_hood_state_entry, false);
+    std_msgs::Bool msg;
+    msg.data = hood_state;
+    _hood_pub.publish(msg);
+}
 
 // ---
 // Timer callbacks
@@ -737,6 +752,10 @@ void TJ2NetworkTables::loop()
     publish_cmd_vel();
     publish_goal_status();
     publish_robot_global_pose();
+    ros::Duration odom_duration = ros::Time::now() - _odom_msg.header.stamp;
+    if (odom_duration > _odom_timeout) {
+        ROS_WARN_THROTTLE(1.0, "No odom received for %f seconds", odom_duration.toSec());
+    }
 }
 
 int TJ2NetworkTables::run()
