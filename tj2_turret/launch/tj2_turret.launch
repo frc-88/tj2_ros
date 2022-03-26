@@ -5,6 +5,8 @@
         <node pkg="tj2_turret" type="tj2_turret_node.py" name="tj2_turret" output="screen" required="false">
             <remap from="amcl_pose" to="/amcl_pose"/>
             <param name="time_of_flight_file_path" value="$(find tj2_turret)/config/time_of_flight.txt"/>
+            <param name="enable_shot_correction" value="false"/>
+            <param name="enable_shot_probability" value="false"/>
         </node>
 
         <group ns="turret">

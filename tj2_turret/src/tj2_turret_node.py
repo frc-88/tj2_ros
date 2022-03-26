@@ -11,7 +11,7 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 
 from nav_msgs.msg import Odometry
 
-from occupancy_grid_python import OccupancyGridManager
+from tj2_tools.occupancy_grid import OccupancyGridManager
 
 from tj2_waypoints.msg import WaypointArray
 
@@ -38,12 +38,18 @@ class TJ2Turret(object):
         self.y_std_threshold = rospy.get_param("~y_std_threshold", 0.2)
         self.theta_std_threshold = rospy.get_param("~theta_std_threshold", math.radians(5.0))
 
+        self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
+        self.enable_shot_probability = rospy.get_param("~enable_shot_probability", True)
+
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.txt")
 
         self.waypoints = {}
 
-        x_samples, y_samples = self.read_tof_file(self.time_of_flight_file_path)
-        self.traj_interp = interp1d(x_samples, y_samples, kind="linear")
+        if self.enable_shot_correction:
+            x_samples, y_samples = self.read_tof_file(self.time_of_flight_file_path)
+            self.traj_interp = interp1d(x_samples, y_samples, kind="linear")
+        else:
+            self.traj_interp = None
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -55,7 +61,10 @@ class TJ2Turret(object):
         self.amcl_pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.amcl_pose_callback)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback)
 
-        self.ogm = OccupancyGridManager("map", subscribe_to_updates=True)
+        if self.enable_shot_probability:
+            self.ogm = OccupancyGridManager("map", subscribe_to_updates=True)
+        else:
+            self.ogm = None
 
         self.amcl_pose = None
         self.robot_velocity = Velocity()
@@ -110,13 +119,17 @@ class TJ2Turret(object):
 
             base_to_map_tf = lookup_transform(self.tf_buffer, self.map_frame, self.base_frame)
             robot_pose = tf2_geometry_msgs.do_transform_pose(zero_pose_base, base_to_map_tf)
-            
-            shot_probability = self.get_shot_probability(Pose2d.from_ros_pose(robot_pose.pose))
+
+            if self.enable_shot_probability:
+                shot_probability = self.get_shot_probability(Pose2d.from_ros_pose(robot_pose.pose))
+            else:
+                shot_probability = 1.0
 
             target = Pose2d.from_ros_pose(target_pose_turret.pose)
-            tof = self.get_tof(target.distance())
-            if tof > 0.0:
-                target.x -= self.robot_velocity.x * tof
+            if self.enable_shot_correction:
+                tof = self.get_tof(target.distance())
+                if tof > 0.0:
+                    target.x -= self.robot_velocity.x * tof
             self.publish_turret(target.distance(), target.heading(), shot_probability)
 
             target_pose_stamped = PoseStamped()
@@ -129,7 +142,10 @@ class TJ2Turret(object):
     def get_tof(self, distance):
         # compute the time of flight of the ball to the target based on a lookup table
         try:
-            return self.traj_interp(distance)
+            if self.traj_interp is None:
+                return 0.0
+            else:
+                return self.traj_interp(distance)
         except ValueError as e:
             rospy.logwarn_throttle(1.0, "Failed to compute TOF: %s" % str(e))
             return -1.0
@@ -137,11 +153,15 @@ class TJ2Turret(object):
     def get_shot_probability(self, pose2d: Pose2d):
         # see OccupancyGrid message docs
         # cost is -1 for unknown. Otherwise, 0..100 for probability
+        # I remap this to 1.0..0.0
+        if self.ogm is None:
+            return 1.0
+
         cost = self.ogm.get_cost_from_world_x_y(pose2d.x, pose2d.y)
         if cost < 0.0:
             return 0.0
         else:
-            return cost / 100.0
+            return 1.0 - (cost / 100.0)
     
     def publish_turret(self, distance, heading, probability):
         self.nt_pub.publish(self.make_entry("turret/distance", distance))
