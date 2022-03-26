@@ -1,10 +1,15 @@
 #!/usr/bin/python3
+import csv
 import math
 import rospy
 import tf2_ros
 import tf2_geometry_msgs
 
+import numpy as np
+
 from scipy.interpolate import interp1d
+
+from std_msgs.msg import Bool
 
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -34,9 +39,9 @@ class TJ2Turret(object):
         self.turret_frame = rospy.get_param("~turret", "turret_tilt_link")
         self.target_waypoint = rospy.get_param("~target_waypoint", "center")
 
-        self.x_std_threshold = rospy.get_param("~x_std_threshold", 0.2)
-        self.y_std_threshold = rospy.get_param("~y_std_threshold", 0.2)
-        self.theta_std_threshold = rospy.get_param("~theta_std_threshold", math.radians(5.0))
+        self.x_std_threshold = rospy.get_param("~x_std_threshold", 1.0)
+        self.y_std_threshold = rospy.get_param("~y_std_threshold", 1.0)
+        self.theta_std_threshold = rospy.get_param("~theta_std_threshold", math.radians(45.0))
 
         self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
         self.enable_shot_probability = rospy.get_param("~enable_shot_probability", True)
@@ -44,12 +49,16 @@ class TJ2Turret(object):
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.txt")
 
         self.waypoints = {}
+        
+        self.hood_state = False  # False == down, True == up
 
         if self.enable_shot_correction:
-            x_samples, y_samples = self.read_tof_file(self.time_of_flight_file_path)
-            self.traj_interp = interp1d(x_samples, y_samples, kind="linear")
+            hood_up_table, hood_down_table = self.read_tof_file(self.time_of_flight_file_path)
+            self.traj_interp_up = self.create_interp(hood_up_table)
+            self.traj_interp_down = self.create_interp(hood_down_table)
         else:
-            self.traj_interp = None
+            self.traj_interp_up = None
+            self.traj_interp_down = None
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -60,6 +69,7 @@ class TJ2Turret(object):
         self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback)
         self.amcl_pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.amcl_pose_callback)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback)
+        self.hood_sub = rospy.Subscriber("hood", Bool, self.hood_callback)
 
         if self.enable_shot_probability:
             self.ogm = OccupancyGridManager("map", subscribe_to_updates=True)
@@ -72,16 +82,31 @@ class TJ2Turret(object):
         rospy.loginfo("%s init complete" % self.node_name)
     
     def read_tof_file(self, path):
+        hood_up_table = []
+        hood_down_table = []
         with open(path) as file:
-            contents = file.read()
-        distances = []
-        times = []
-        for line in contents.splitlines():
-            values = list(map(float, line.split(",")))
-            assert len(values) == 2, len(values)
-            distances.append(values[0])
-            times.append(values[1])
-        return distances, times
+            reader = csv.reader(file)
+            header = next(reader)
+            for row in reader:
+                rospy.loginfo("Table row: %s" % str(row))
+                parsed_row = list(map(float, row[1:]))
+                if row[0] == "up":
+                    hood_up_table.append(parsed_row)
+                elif row[0] == "down":
+                    hood_down_table.append(parsed_row)
+
+        hood_up_table.sort(key=lambda x: x[0])
+        hood_down_table.sort(key=lambda x: x[0])
+        rospy.loginfo("Hood up table: %s" % str(hood_up_table))
+        rospy.loginfo("Hood down table: %s" % str(hood_down_table))
+        return np.array(hood_up_table), np.array(hood_down_table)
+    
+    def create_interp(self, table):
+        if len(table) == 0:
+            return None
+        x_samples = table[:, 0]
+        y_samples = table[:, 1]
+        return interp1d(x_samples, y_samples, kind="linear")
 
     def waypoints_callback(self, msg):
         self.waypoints = {}
@@ -98,6 +123,9 @@ class TJ2Turret(object):
         self.robot_velocity.x = msg.twist.twist.linear.x
         self.robot_velocity.y = msg.twist.twist.linear.y
         self.robot_velocity.theta = msg.twist.twist.angular.z
+    
+    def hood_callback(self, msg):
+        self.hood_state = msg.data
 
     def run(self):
         rospy.sleep(1.0)  # wait for waypoints to populate
@@ -108,16 +136,25 @@ class TJ2Turret(object):
         
         while not rospy.is_shutdown():
             if not self.is_global_pose_valid(self.amcl_pose):
-                self.publish_turret(0.0, 0.0)
+                self.publish_turret(0.0, 0.0, 0.0)
                 continue
             if self.target_waypoint not in self.waypoints:
+                self.publish_turret(0.0, 0.0, 0.0)
                 rospy.logwarn_throttle(1.0, "%s is not an available waypoint" % self.target_waypoint)
                 continue
             target_pose_map = self.waypoints[self.target_waypoint]
             map_to_turret_tf = lookup_transform(self.tf_buffer, self.turret_frame, self.map_frame)
+            if map_to_turret_tf is None:
+                self.publish_turret(0.0, 0.0, 0.0)
+                rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.turret_frame, self.map_frame))
+                continue
             target_pose_turret = tf2_geometry_msgs.do_transform_pose(target_pose_map, map_to_turret_tf)
 
             base_to_map_tf = lookup_transform(self.tf_buffer, self.map_frame, self.base_frame)
+            if base_to_map_tf is None:
+                self.publish_turret(0.0, 0.0, 0.0)
+                rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.map_frame, self.base_frame))
+                continue
             robot_pose = tf2_geometry_msgs.do_transform_pose(zero_pose_base, base_to_map_tf)
 
             if self.enable_shot_probability:
@@ -127,10 +164,16 @@ class TJ2Turret(object):
 
             target = Pose2d.from_ros_pose(target_pose_turret.pose)
             if self.enable_shot_correction:
-                tof = self.get_tof(target.distance())
+                if self.hood_state:
+                    traj_interp = self.traj_interp_up
+                else:
+                    traj_interp = self.traj_interp_down
+                tof = self.get_tof(traj_interp, target.distance())
                 if tof > 0.0:
                     target.x -= self.robot_velocity.x * tof
-            self.publish_turret(target.distance(), target.heading(), shot_probability)
+            target_heading = target.heading()
+            target_heading = Pose2d.normalize_theta(target_heading + math.pi)
+            self.publish_turret(target.distance(), target_heading, shot_probability)
 
             target_pose_stamped = PoseStamped()
             target_pose_stamped.header.frame_id = self.turret_frame
@@ -139,13 +182,13 @@ class TJ2Turret(object):
 
             clock.sleep()
     
-    def get_tof(self, distance):
+    def get_tof(self, traj_interp, distance):
         # compute the time of flight of the ball to the target based on a lookup table
         try:
-            if self.traj_interp is None:
+            if traj_interp is None:
                 return 0.0
             else:
-                return self.traj_interp(distance)
+                return traj_interp(distance)
         except ValueError as e:
             rospy.logwarn_throttle(1.0, "Failed to compute TOF: %s" % str(e))
             return -1.0
