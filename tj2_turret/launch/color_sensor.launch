@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2">
+        <node pkg="tj2_turret" type="color_sensor.py" name="color_sensor" output="screen" respawn="true">
+        </node>
+    </group>
+</launch>
