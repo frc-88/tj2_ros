@@ -194,14 +194,6 @@ private:
     NT_Entry _hood_state_entry;
     NT_Entry _hood_update_entry;
 
-    // detections entries
-    NT_Entry _detection_nearest_name_entry;
-    NT_Entry _detection_nearest_x_entry;
-    NT_Entry _detection_nearest_y_entry;
-    NT_Entry _detection_nearest_z_entry;
-    NT_Entry _detection_num_entry;
-    NT_Entry _detection_update_entry;
-
     // Members
     ros::Timer _ping_timer;
     ros::Duration _cmd_vel_timeout;

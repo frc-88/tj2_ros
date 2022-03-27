@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <arg name="map_file" default="$(find tj2_laser_slam)/config/fake_map.yaml"/>
-    <node pkg="map_server" type="map_server" name="probability_map_server" args="$(arg map_file)" />
+    <group ns="turret">
+        <node pkg="map_server" type="map_server" name="probability_map_server" args="$(arg map_file)" />
+    </group>
 </launch>

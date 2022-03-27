@@ -64,9 +64,6 @@ class ProbabilityMapTool:
         self.rospack = rospkg.RosPack()
         self.package_dir = self.rospack.get_path("tj2_turret")
         self.default_launches_dir = os.path.join(self.package_dir, "launch/sublaunch")
-        self.updated_map_launch_path = os.path.join(self.default_launches_dir, "/updated_map.launch")
-        self.updated_map_launcher = LaunchManager(self.updated_map_launch_path)
-
         self.map_saver_launcher = LaunchManager(self.default_launches_dir + "/map_saver.launch")
         self.map_server_launcher = LaunchManager(self.default_launches_dir + "/map_server.launch")
 

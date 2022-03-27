@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import os
 import csv
 import math
 import rospy
@@ -21,6 +22,9 @@ from tj2_tools.occupancy_grid import OccupancyGridManager
 from tj2_waypoints.msg import WaypointArray
 
 from tj2_networktables.msg import NTEntry
+
+from tj2_turret.srv import RecordValue, RecordValueResponse
+from std_srvs.srv import Trigger, TriggerResponse
 
 from tj2_tools.transforms import lookup_transform
 from tj2_tools.robot_state import Pose2d, Velocity
@@ -46,11 +50,20 @@ class TJ2Turret(object):
         self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
         self.enable_shot_probability = rospy.get_param("~enable_shot_probability", True)
 
-        self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.txt")
+        self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.csv")
+        self.recorded_data_file_path = rospy.get_param("~recorded_data_file_path", "./recorded_data.csv")
 
         self.waypoints = {}
-        
+        self.target_heading = 0.0
+        self.target_distance = 0.0
+        self.robot_pose = PoseStamped()
         self.hood_state = False  # False == down, True == up
+
+        self.amcl_pose = None
+        self.robot_velocity = Velocity()
+        
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         if self.enable_shot_correction:
             hood_up_table, hood_down_table = self.read_tof_file(self.time_of_flight_file_path)
@@ -59,9 +72,6 @@ class TJ2Turret(object):
         else:
             self.traj_interp_up = None
             self.traj_interp_down = None
-
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.nt_pub = rospy.Publisher("nt_passthrough", NTEntry, queue_size=10)
         self.turret_target_pub = rospy.Publisher("turret_target", PoseStamped, queue_size=10)
@@ -75,11 +85,106 @@ class TJ2Turret(object):
             self.ogm = OccupancyGridManager("map", subscribe_to_updates=True)
         else:
             self.ogm = None
+        
+        self.record_tof_srv = self.make_service("record_tof", RecordValue, self.record_tof)
+        self.record_probability_srv = self.make_service("record_probability", RecordValue, self.record_probability)
+        self.record_wheel_srv = self.make_service("record_flywheel", RecordValue, self.record_flywheel)
+        self.convert_to_tof_srv = self.make_service("convert_to_tof_file", Trigger, self.convert_to_tof_file)
+        self.convert_to_flywheel_srv = self.make_service("convert_to_flywheel", Trigger, self.convert_to_flywheel_file)
 
-        self.amcl_pose = None
-        self.robot_velocity = Velocity()
+        recorded_dir = os.path.dirname(self.recorded_data_file_path)
+        if not os.path.isdir(recorded_dir):
+            os.makedirs(recorded_dir)
+        if not os.path.isfile(self.recorded_data_file_path):
+            self.create_data_file(self.recorded_data_file_path)
 
         rospy.loginfo("%s init complete" % self.node_name)
+    
+    def make_service(self, name, srv_type, callback):
+        rospy.loginfo("Setting up service %s" % name)
+        srv_obj = rospy.Service(name, srv_type, callback)
+        rospy.loginfo("%s service is ready" % name)
+        return srv_obj
+
+    def record_tof(self, req):
+        tof = req.value
+        robot_pose = Pose2d.from_ros_pose(self.robot_pose.pose)
+        self.record_row("tof", tof, robot_pose)
+        return RecordValueResponse(True)
+
+    def record_probability(self, req):
+        probability = req.value
+        robot_pose = Pose2d.from_ros_pose(self.robot_pose.pose)
+        self.record_row("prob", probability, robot_pose)
+        return RecordValueResponse(True)
+    
+    def record_flywheel(self, req):
+        speed = req.value
+        robot_pose = Pose2d.from_ros_pose(self.robot_pose.pose)
+        self.record_row("flywheel", speed, robot_pose)
+        return RecordValueResponse(True)
+    
+    def convert_to_tof_file(self, req):
+        data = []
+        with open(self.recorded_data_file_path) as file:
+            reader = csv.reader(file)
+            header = next(reader)
+            for row in reader:
+                row_type = row[header.index("type")]
+                if row_type != "tof":
+                    continue
+                hood_state_str = row[header.index("hood")]
+                distance = float(row[header.index("distance")])
+                tof = float(row[header.index("value")])
+                data.append([hood_state_str, distance, tof])
+        new_path = os.path.splitext(self.time_of_flight_file_path)[0]
+        new_path += "-new.csv"
+        rospy.loginfo("Writing table to %s" % str(new_path))
+        with open(new_path, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["hood", "distance", "time"])
+            for row in data:
+                writer.writerow(row)
+        return TriggerResponse()
+    
+    def convert_to_flywheel_file(self, req):
+        with open(self.recorded_data_file_path) as file:
+            reader = csv.reader(file)
+            header = next(reader)
+            for row in reader:
+                row_type = row[header.index("type")]
+                if row_type != "flywheel":
+                    continue
+                hood_state_str = row[header.index("hood")]
+                distance = float(row[header.index("distance")])
+                speed = float(row[header.index("value")])
+                print("%s\t%s\t%s" % (hood_state_str, distance, speed))
+        
+        return TriggerResponse()
+    
+    def record_row(self, row_type, value, robot_pose):
+        row = {
+            "type": row_type,
+            "hood": "up" if self.hood_state else "down",
+            "distance": self.target_distance,
+            "heading": self.target_heading,
+            "value": value,
+            "x": robot_pose.x,
+            "y": robot_pose.y,
+            "theta": robot_pose.theta
+        }
+        print("Writing: %s" % str(row))
+        with open(self.recorded_data_file_path, 'a', newline='') as file:
+            writer = self.get_data_writer(file)
+            writer.writerow(row)
+    
+    def create_data_file(self, path):
+        with open(path, 'w', newline='') as file:
+            writer = self.get_data_writer(file)
+            writer.writeheader()
+        
+    def get_data_writer(self, file):
+        return csv.DictWriter(file, fieldnames=("type", "hood", "distance", "heading", "value", "x", "y", "theta"))
     
     def read_tof_file(self, path):
         hood_up_table = []
@@ -133,6 +238,7 @@ class TJ2Turret(object):
         
         zero_pose_base = PoseStamped()
         zero_pose_base.header.frame_id = self.base_frame
+        zero_pose_base.pose.orientation.w = 1.0
         
         while not rospy.is_shutdown():
             if not self.is_global_pose_valid(self.amcl_pose):
@@ -155,10 +261,10 @@ class TJ2Turret(object):
                 self.publish_turret(0.0, 0.0, 0.0)
                 rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.map_frame, self.base_frame))
                 continue
-            robot_pose = tf2_geometry_msgs.do_transform_pose(zero_pose_base, base_to_map_tf)
+            self.robot_pose = tf2_geometry_msgs.do_transform_pose(zero_pose_base, base_to_map_tf)
 
             if self.enable_shot_probability:
-                shot_probability = self.get_shot_probability(Pose2d.from_ros_pose(robot_pose.pose))
+                shot_probability = self.get_shot_probability(Pose2d.from_ros_pose(self.robot_pose.pose))
             else:
                 shot_probability = 1.0
 
@@ -171,9 +277,10 @@ class TJ2Turret(object):
                 tof = self.get_tof(traj_interp, target.distance())
                 if tof > 0.0:
                     target.x -= self.robot_velocity.x * tof
-            target_heading = target.heading()
-            target_heading = Pose2d.normalize_theta(target_heading + math.pi)
-            self.publish_turret(target.distance(), target_heading, shot_probability)
+            self.target_heading = target.heading()
+            self.target_heading = Pose2d.normalize_theta(self.target_heading + math.pi)
+            self.target_distance = target.distance()
+            self.publish_turret(self.target_distance, self.target_heading, shot_probability)
 
             target_pose_stamped = PoseStamped()
             target_pose_stamped.header.frame_id = self.turret_frame
@@ -190,7 +297,7 @@ class TJ2Turret(object):
             else:
                 return traj_interp(distance)
         except ValueError as e:
-            rospy.logwarn_throttle(1.0, "Failed to compute TOF: %s" % str(e))
+            rospy.logwarn_throttle(1.0, "Failed to compute TOF: %s. distance=%0.1fm" % (str(e), distance))
             return -1.0
 
     def get_shot_probability(self, pose2d: Pose2d):
