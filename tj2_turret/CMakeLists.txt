@@ -4,9 +4,9 @@ project(tj2_turret)
 find_package(catkin REQUIRED COMPONENTS
     rospy
     # geometry_msgs
-    # std_msgs
-    # message_generation
-    # genmsg
+    std_msgs
+    message_generation
+    genmsg
     # actionlib_msgs
     # actionlib
 )
@@ -15,22 +15,23 @@ catkin_python_setup() # added if there is a setup.py. In this case for the node
 
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#     FILES
-# )
+add_service_files(
+    FILES
+    SetProbability.srv
+    SetProbabilityRing.srv
+)
 
 # add_action_files(
 #     DIRECTORY action
 #     FILES
-
 # )
 
-# generate_messages(
-#     DEPENDENCIES
-#     std_msgs
-#     geometry_msgs
-#     actionlib_msgs
-# )
+generate_messages(
+    DEPENDENCIES
+    std_msgs
+    # geometry_msgs
+    # actionlib_msgs
+)
 
 
 ## Specify additional locations of header files
@@ -45,7 +46,7 @@ include_directories(
 # )
 
 catkin_package(
-    CATKIN_DEPENDS rospy #std_msgs message_runtime
+    CATKIN_DEPENDS rospy std_msgs message_runtime
 )
 
 # catkin_install_python(PROGRAMS src/tj2_turret/central_planning.py

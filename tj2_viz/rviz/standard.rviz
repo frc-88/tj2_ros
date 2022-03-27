@@ -8,6 +8,7 @@ Panels:
         - /Grid1
         - /TF1/Frames1
         - /TF1/Tree1
+        - /Map1/Status1
         - /RealSense1/Visibility1
         - /DepthCloud1/Auto Size1
         - /RealSense Image1
@@ -62,52 +63,6 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_link:
-          Value: true
-        camera_link:
-          Value: true
-        camera_tilt_base_link:
-          Value: true
-        camera_tilt_link:
-          Value: true
-        dextra_laser_link:
-          Value: true
-        intake_link:
-          Value: true
-        intake_tilt_link:
-          Value: true
-        left_inner_climber_link:
-          Value: true
-        left_inner_climber_tilt_link:
-          Value: true
-        left_inner_hook_link:
-          Value: true
-        left_outer_climber_link:
-          Value: true
-        left_outer_climber_tilt_link:
-          Value: true
-        left_outer_hook_link:
-          Value: true
-        limelight_link:
-          Value: true
-        right_inner_climber_link:
-          Value: true
-        right_inner_climber_tilt_link:
-          Value: true
-        right_inner_hook_link:
-          Value: true
-        right_outer_climber_link:
-          Value: true
-        right_outer_climber_tilt_link:
-          Value: true
-        right_outer_hook_link:
-          Value: true
-        sinistra_laser_link:
-          Value: true
-        turret_link:
-          Value: true
-        turret_tilt_link:
-          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF

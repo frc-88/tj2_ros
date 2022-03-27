@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <fstream>
+#include <iostream>
 #include <math.h>
 
 #include <boost/array.hpp>
@@ -31,6 +34,8 @@
 #include "std_msgs/String.h"
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include "geometry_msgs/Pose.h"
+#include "vision_msgs/Detection3DArray.h"
 
 #include "tj2_waypoints/FollowPathGoal.h"
 #include "tj2_waypoints/FollowPathAction.h"
@@ -101,6 +106,8 @@ private:
     std::vector<double> _imu_orientation_covariance;
     std::vector<double> _imu_angular_velocity_covariance;
     std::vector<double> _imu_linear_acceleration_covariance;
+
+    string _classes_path;
 
     // NT entries
     NT_Inst _nt;
@@ -187,6 +194,14 @@ private:
     NT_Entry _hood_state_entry;
     NT_Entry _hood_update_entry;
 
+    // detections entries
+    NT_Entry _detection_nearest_name_entry;
+    NT_Entry _detection_nearest_x_entry;
+    NT_Entry _detection_nearest_y_entry;
+    NT_Entry _detection_nearest_z_entry;
+    NT_Entry _detection_num_entry;
+    NT_Entry _detection_update_entry;
+
     // Members
     ros::Timer _ping_timer;
     ros::Duration _cmd_vel_timeout;
@@ -200,7 +215,7 @@ private:
     actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction> *_waypoints_action_client;
     GoalStatus _currentGoalStatus;
     GoalStatus _prevPollStatus;
-
+    std::vector<std::string> _class_names;
 
     // Messages
     nav_msgs::Odometry _odom_msg;
@@ -221,6 +236,7 @@ private:
     ros::Subscriber _twist_sub;
     ros::Subscriber _nt_passthrough_sub;
     ros::Subscriber _waypoints_sub;
+    ros::Subscriber _detections_sub;
     tf::TransformListener _tf_listener;
 
     // Service Servers
@@ -236,6 +252,7 @@ private:
     void twist_callback(const geometry_msgs::TwistConstPtr& msg);
     void nt_passthrough_callback(const tj2_networktables::NTEntryConstPtr& msg);
     void waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg);
+    void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
 
     // Service callbacks
     bool odom_reset_callback(tj2_networktables::OdomReset::Request &req, tj2_networktables::OdomReset::Response &resp);
@@ -267,6 +284,9 @@ private:
     void add_joint_pub(string name);
     double get_time();
     vector<double> get_double_list_param(string name, size_t length);
+    string get_label(int obj_id);
+    int get_index(int obj_id);
+    std::vector<std::string> load_label_names(const string& path);
 
     // Waypoint control
     void set_goal_status(GoalStatus status);
