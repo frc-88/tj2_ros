@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0)
 project(tj2_turret)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -19,6 +19,7 @@ add_service_files(
     FILES
     SetProbability.srv
     SetProbabilityRing.srv
+    RecordValue.srv
 )
 
 # add_action_files(

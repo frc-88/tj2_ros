@@ -191,13 +191,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _hood_update_entry = nt::GetEntry(_nt, _base_key + "hood/update");
     nt::AddEntryListener(_hood_update_entry, boost::bind(&TJ2NetworkTables::hood_state_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
-    _detection_nearest_name_entry = nt::GetEntry(_nt, _base_key + "detections/name");
-    _detection_nearest_x_entry = nt::GetEntry(_nt, _base_key + "detections/x");
-    _detection_nearest_y_entry = nt::GetEntry(_nt, _base_key + "detections/y");
-    _detection_nearest_z_entry = nt::GetEntry(_nt, _base_key + "detections/z");
-    _detection_num_entry = nt::GetEntry(_nt, _base_key + "detections/count");
-    _detection_update_entry = nt::GetEntry(_nt, _base_key + "detections/update");
-
     ROS_INFO("tj2_networktables init complete");
 }
 
@@ -357,39 +350,39 @@ void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayCo
         return;
     }
 
-    string nearest_name = "";
-    double nearest_x = 0.0;
-    double nearest_y = 0.0;
-    double nearest_z = 0.0;
-    int num_detections = 0;
-    size_t nearest_index = 0;
-
-    double min_dist = NAN;
-    for (size_t index = 0; index < msg->detections.size(); index++) {
-        vision_msgs::ObjectHypothesisWithPose hyp = msg->detections.at(index).results[0];
-        geometry_msgs::Pose pose = hyp.pose.pose;
-        double dist = sqrt(pose.position.x * pose.position.x + pose.position.y * pose.position.y + pose.position.z * pose.position.z);
-        if (!std::isfinite(min_dist) || dist < min_dist) {
-            min_dist = dist;
-            nearest_index = index;
+    for (size_t name_index = 0; name_index < _class_names.size(); name_index++) {
+        double min_dist = NAN;
+        string label = _class_names.at(name_index);
+        geometry_msgs::Pose nearest_pose;
+        int num_detections = 0;
+        for (size_t index = 0; index < msg->detections.size(); index++) {
+            vision_msgs::ObjectHypothesisWithPose hyp = msg->detections.at(index).results[0];
+            string name = get_label(hyp.id);
+            if (name == label) {
+                num_detections++;
+                geometry_msgs::Pose pose = hyp.pose.pose;
+                double dist = sqrt(pose.position.x * pose.position.x + pose.position.y * pose.position.y + pose.position.z * pose.position.z);
+                if (!std::isfinite(min_dist) || dist < min_dist) {
+                    min_dist = dist;
+                    nearest_pose = hyp.pose.pose;
+                }
+            }
         }
-    }
+        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/count"), nt::Value::MakeDouble(num_detections));
+        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/update"), nt::Value::MakeDouble(get_time()));
+        
+        if (!std::isfinite(min_dist)) {
+            continue;
+        }
 
-    if (msg->detections.size() > 0) {
-        vision_msgs::ObjectHypothesisWithPose hyp = msg->detections.at(nearest_index).results[0];
-        geometry_msgs::Pose pose = hyp.pose.pose;
-        nearest_x = pose.position.x;
-        nearest_y = pose.position.y;
-        nearest_z = pose.position.z;
-        nearest_name = get_label(hyp.id);
-    }
+        double nearest_x = nearest_pose.position.x;
+        double nearest_y = nearest_pose.position.y;
+        double nearest_z = nearest_pose.position.z;
 
-    nt::SetEntryValue(_detection_nearest_name_entry, nt::Value::MakeString(nearest_name));
-    nt::SetEntryValue(_detection_nearest_x_entry, nt::Value::MakeDouble(nearest_x));
-    nt::SetEntryValue(_detection_nearest_y_entry, nt::Value::MakeDouble(nearest_y));
-    nt::SetEntryValue(_detection_nearest_z_entry, nt::Value::MakeDouble(nearest_z));
-    nt::SetEntryValue(_detection_num_entry, nt::Value::MakeDouble(num_detections));
-    nt::SetEntryValue(_detection_update_entry, nt::Value::MakeDouble(get_time()));
+        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/x"), nt::Value::MakeDouble(nearest_x));
+        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/y"), nt::Value::MakeDouble(nearest_y));
+        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/z"), nt::Value::MakeDouble(nearest_z));
+    }
 }
 
 
