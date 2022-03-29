@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 
+import os
+import cv2
+import yaml
 from nav_msgs.msg import OccupancyGrid
 import numpy as np
 from itertools import product
+from geometry_msgs.msg import Pose
+
+from tj2_tools.robot_state import Pose2d
 
 """
 Adapted from https://github.com/awesomebytes/occupancy_grid_python
@@ -14,50 +20,162 @@ Author: Sammy Pfeiffer <Sammy.Pfeiffer at student.uts.edu.au>
 
 
 class OccupancyGridManager:
-    def __init__(self, map_msg: OccupancyGrid):
+    def __init__(self):
         # OccupancyGrid starts on lower left corner
-        self.map_msg = map_msg
-        self.load_grid_data(self.map_msg)
+        self.map_config = {}
+        self._reference_frame = ""
+        self.grid_data = np.array([], dtype=np.int8)
 
-    def load_grid_data(self, map_msg: OccupancyGrid):
+    @classmethod
+    def from_msg(cls, msg: OccupancyGrid):
+        self = cls()
         # Contains resolution, width & height
         # np.set_printoptions(threshold=99999999999, linewidth=200)
         # data comes in row-major order http://docs.ros.org/en/melodic/api/nav_msgs/html/msg/OccupancyGrid.html
         # first index is the row, second index the column
-        self.grid_data = np.array(map_msg.data,
-                                   dtype=np.int8).reshape(map_msg.info.height,
-                                                          map_msg.info.width)
+        self.grid_data = np.array(msg.data,
+                                   dtype=np.int8).reshape(msg.info.height,
+                                                          msg.info.width)
+        self.map_config["resolution"] = msg.info.resolution
+        self.map_config["width"] = msg.info.width
+        self.map_config["height"] = msg.info.height
+        self.map_config["origin"] = Pose2d.from_ros_pose(msg.info.origin)
+        self._reference_frame = msg.header.frame_id
+
+    @classmethod
+    def from_map_file(cls, config_path, reference_frame="map", image_path=None):
+        self = cls()
+        with open(config_path) as file:
+            map_file_config = yaml.safe_load(file)
+        
+        image = self._load_from_dict(map_file_config, reference_frame, config_path, image_path)
+
+        max_value = np.iinfo(image.dtype).max
+        occupied_thresh = int(map_file_config["occupied_thresh"] * max_value)
+        free_thresh = int(map_file_config["free_thresh"] * max_value)
+        negate = map_file_config["negate"] != 0
+        if negate:
+            image = cv2.bitwise_not(image)
+
+        self.grid_data = np.zeros_like(image)
+        self.grid_data = self.grid_data.astype(np.int8)
+        self.grid_data[np.where(image < free_thresh)] = 100
+        self.grid_data[np.where(image > occupied_thresh)] = 0
+        self.grid_data[np.where((image > free_thresh) & (image < occupied_thresh))] = -1
+
+        return self
+    
+    @classmethod
+    def from_cost_file(cls, config_path, reference_frame="map", image_path=None):
+        self = cls()
+        with open(config_path) as file:
+            map_file_config = yaml.safe_load(file)
+        
+        image = self._load_from_dict(map_file_config, reference_frame, config_path, image_path)
+
+        max_value = np.iinfo(image.dtype).max
+
+        data = np.bitwise_not(image)
+        data = data.astype(np.float32)
+        data = 100 * data / max_value
+        self.grid_data = data.astype(np.int8)
+        return self
+    
+    def _load_from_dict(self, map_file_config, reference_frame, config_path, image_path):
+        self._reference_frame = reference_frame
+        self.map_config["resolution"] = map_file_config["resolution"]
+        self.map_config["origin"] = Pose2d(*map_file_config["origin"])
+
+        if image_path is None:
+            image_path = map_file_config["image"]
+        if not image_path.startswith("/"):
+            image_path = os.path.join(os.path.dirname(config_path), os.path.basename(image_path))
+        if not os.path.isfile(image_path):
+            raise FileNotFoundError("Map image file not found: %s" % str(image_path))
+        image = cv2.imread(image_path)
+        image = image.astype(np.uint8)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        self.map_config["width"] = image.shape[1]
+        self.map_config["height"] = image.shape[0]
+        return image
+
+    def to_msg(self):
+        msg = OccupancyGrid()
+        msg.header.frame_id = self._reference_frame
+        msg.info.resolution = self.resolution
+        msg.info.width = self.width
+        msg.info.height = self.height
+        msg.info.origin = self.origin.to_ros_pose()
+        msg.data = self.grid_data.tobytes()
+        return msg
+    
+    def to_file(self, path, occupied_thresh=0.9, free_thresh=0.1, negate=False):
+        map_file_config = {}
+        map_file_config["resolution"] = self.resolution
+        map_file_config["origin"] = self.origin.to_list()
+        map_file_config["occupied_thresh"] = occupied_thresh
+        map_file_config["free_thresh"] = free_thresh
+        map_file_config["negate"] = int(negate)
+
+        image_path = os.path.join(os.path.splitext(path)[0] + ".pgm")
+        map_file_config["image"] = os.path.basename(image_path)
+
+        with open(path, 'w') as file:
+            yaml.dump(map_file_config, file)
+        
+        max_value = np.iinfo(np.uint8).max
+        unknown_value = int(max_value * (occupied_thresh + free_thresh) / 2.0)
+        image = self.grid_data.astype(np.float32)
+        image = image / 100.0 * max_value
+        image = image.astype(np.uint8)
+        image = cv2.bitwise_not(image)
+        image[np.where(self.grid_data < 0)] = unknown_value
+        cv2.imwrite(image_path, image)
 
     @property
     def resolution(self):
-        return self.map_msg.info.resolution
+        return self.map_config["resolution"]
 
     @property
     def width(self):
-        return self.map_msg.info.width
+        return self.map_config["width"]
 
     @property
     def height(self):
-        return self.map_msg.info.height
+        return self.map_config["height"]
 
     @property
     def origin(self):
-        return self.map_msg.info.origin
+        return self.map_config["origin"]
 
     @property
     def reference_frame(self):
-        return self.map_msg.header.frame_id
+        return self._reference_frame
+    
+    def get_image(self):
+        max_value = np.iinfo(np.uint8).max
+        image = self.grid_data.astype(np.float32)
+        image = image / 100.0 * max_value
+        image = image.astype(np.uint8)
+        image = cv2.bitwise_not(image)
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        image[np.where(self.grid_data < 0)] = np.array([128, 128, 0])
+        image = image.astype(np.uint8)
+        return image
 
     def get_world_x_y(self, costmap_x, costmap_y):
-        world_x = costmap_x * self.resolution + self.origin.position.x
-        world_y = costmap_y * self.resolution + self.origin.position.y
+        world_x = costmap_x * self.resolution + self.origin.x
+        world_y = costmap_y * self.resolution + self.origin.y
         return world_x, world_y
 
     def get_costmap_x_y(self, world_x, world_y):
         costmap_x = int(
-            round((world_x - self.origin.position.x) / self.resolution))
+            round((world_x - self.origin.x) / self.resolution))
         costmap_y = int(
-            round((world_y - self.origin.position.y) / self.resolution))
+            round((world_y - self.origin.y) / self.resolution))
+        costmap_y = self.height - costmap_y  # image coordinates are inverted
+
         return costmap_x, costmap_y
 
     def get_cost_from_world_x_y(self, x, y):
@@ -66,11 +184,11 @@ class OccupancyGridManager:
             return self.get_cost_from_costmap_x_y(cx, cy)
         except IndexError as e:
             raise IndexError("Coordinates out of grid (in frame: {}) x: {}, y: {} must be in between: [{}, {}], [{}, {}]. Internal error: {}".format(
-                self.reference_frame, x, y,
-                self.origin.position.x,
-                self.origin.position.x + self.height * self.resolution,
-                self.origin.position.y,
-                self.origin.position.y + self.width * self.resolution,
+                self._reference_frame, x, y,
+                self.origin.x,
+                self.origin.x + self.height * self.resolution,
+                self.origin.y,
+                self.origin.y + self.width * self.resolution,
                 e))
 
     def get_cost_from_costmap_x_y(self, x, y):
