@@ -53,7 +53,8 @@ class TJ2Turret(object):
 
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.csv")
         self.recorded_data_file_path = rospy.get_param("~recorded_data_file_path", "./recorded_data.csv")
-        self.probability_map_path = rospy.get_param("~probability_map_path", "./probability.yaml")
+        self.probability_hood_up_map_path = rospy.get_param("~probability_hood_up_map_path", "./probability.yaml")
+        self.probability_hood_down_map_path = rospy.get_param("~probability_hood_down_map_path", "./probability.yaml")
 
         self.waypoints = {}
         self.target_heading = 0.0
@@ -77,7 +78,8 @@ class TJ2Turret(object):
 
         self.nt_pub = rospy.Publisher("nt_passthrough", NTEntry, queue_size=10)
         self.turret_target_pub = rospy.Publisher("turret_target", PoseStamped, queue_size=10)
-        self.probability_map_pub = rospy.Publisher("shot_probability_map", OccupancyGrid, queue_size=10)
+        self.probability_hood_up_pub = rospy.Publisher("shot_probability_hood_up_map", OccupancyGrid, queue_size=10)
+        self.probability_hood_down_pub = rospy.Publisher("shot_probability_hood_down_map", OccupancyGrid, queue_size=10)
 
         self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback)
         self.amcl_pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.amcl_pose_callback)
@@ -85,9 +87,11 @@ class TJ2Turret(object):
         self.hood_sub = rospy.Subscriber("hood", Bool, self.hood_callback)
 
         if self.enable_shot_probability:
-            self.ogm = OccupancyGridManager.from_cost_file(self.probability_map_path)
+            self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
+            self.ogm_down = OccupancyGridManager.from_cost_file(self.probability_hood_down_map_path)
         else:
-            self.ogm = None
+            self.ogm_up = None
+            self.ogm_down = None
         
         self.record_tof_srv = self.make_service("record_tof", RecordValue, self.record_tof)
         self.record_probability_srv = self.make_service("record_probability", RecordValue, self.record_probability)
@@ -219,7 +223,8 @@ class TJ2Turret(object):
         return interp1d(x_samples, y_samples, kind="linear")
 
     def map_publish_callback(self, timer):
-        self.probability_map_pub.publish(self.ogm.to_msg())
+        self.probability_hood_up_pub.publish(self.ogm_up.to_msg())
+        self.probability_hood_down_pub.publish(self.ogm_down.to_msg())
 
     def waypoints_callback(self, msg):
         self.waypoints = {}
@@ -312,10 +317,14 @@ class TJ2Turret(object):
         # see OccupancyGrid message docs
         # cost is -1 for unknown. Otherwise, 0..100
         # I remap this to 1.0..0.0 for probability (0 == 100% probability, 100 == 0% probability)
-        if self.ogm is None:
+        if self.hood_state:
+            ogm = self.ogm_up
+        else:
+            ogm = self.ogm_down
+        if ogm is None:
             return 1.0
 
-        cost = self.ogm.get_cost_from_world_x_y(pose2d.x, pose2d.y)
+        cost = ogm.get_cost_from_world_x_y(pose2d.x, pose2d.y)
         if cost < 0.0:
             return 0.0
         else:

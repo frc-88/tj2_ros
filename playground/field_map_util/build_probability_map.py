@@ -23,13 +23,15 @@ def draw_field_line(ogm, field_pt1, field_pt2, probability, robot_radius_px):
     cv2.line(ogm.grid_data, (img_x1, img_y1), (img_x2, img_y2), (probability * 100,), robot_radius_px)
 
 
-def build_map(practice_map_name, field_map_name, lines=None):
+def build_map(practice_map_name, field_map_name, lines=None, hood_state=None):
     turret_base_link_x_offset = -0.050456
 
     rospack = rospkg.RosPack()
     # in_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", practice_map_name + ".yaml")
     field_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", field_map_name + ".yaml")
-    out_map_path = os.path.join(rospack.get_path("tj2_turret"), "maps", field_map_path + ".yaml")
+    field_map_name = os.path.splitext(os.path.basename(field_map_path))[0]
+    hood_suffix = "-%s" % hood_state if hood_state is not None else ""
+    out_map_path = os.path.join(rospack.get_path("tj2_turret"), "maps", field_map_name + hood_suffix + ".yaml")
     data_path = os.path.join(rospack.get_path("tj2_turret"), "config", "recorded_data.csv")
 
     ogm = OccupancyGridManager.from_cost_file(field_map_path)
@@ -58,12 +60,12 @@ def build_map(practice_map_name, field_map_name, lines=None):
                     float(row[header.index("x")]),
                     float(row[header.index("y")]),
                     float(row[header.index("theta")]),
-                )
+                ),
+                "hood": row[header.index("hood")]
             }
-            hood = row[header.index("hood")]
-            # if hood == "up":
-            #     continue
-            print("%s\t%0.2f\t%0.3f" % (hood, data["probability"], data["distance"]))
+            if hood_state is not None and data["hood"] != hood_state:
+                continue
+            print("%s\t%0.2f\t%0.3f" % (data["hood"], data["probability"], data["distance"]))
             probabilities.append(data)
 
     field_map = ogm.get_image()
@@ -113,12 +115,11 @@ def build_map(practice_map_name, field_map_name, lines=None):
             mirror_field_pt2 = pt2.relative_to_reverse(center).relative_to(field_center_rotate)
             draw_field_line(ogm, mirror_field_pt1, mirror_field_pt2, row["probability"], robot_radius)
 
-    show_image = cv2.addWeighted(field_map, 0.5, ogm.get_image(), 0.5, 0.0)
-
+    print("Writing to %s" % out_map_path)
     ogm.to_file(out_map_path)
 
     results = {
-        "show_image": show_image,
+        "field_map": field_map,
         "practice_center": center,
         "field_center": field_center,
         "ogm": ogm,
@@ -142,23 +143,33 @@ def mouse_callback(event, x, y, flags, param):
 
 def main():
     practice_map_name = "br-114-03-26-2022"
-    # field_map_name = "br-114-03-26-2022"
-    field_map_name = "rapid-react-2022-02-19T07-55-53--407688-edited"
+    field_map_name = "br-114-03-26-2022"
+    # field_map_name = "rapid-react-2022-02-19T07-55-53--407688-edited"
 
     lines = []
-    lines.append({"pt1": "lower_bar_1", "pt2": "lower_bar_2", "probability": 0.0, "mirror": True})
-    lines.append({"pt1": "mid_bar_1", "pt2": "mid_bar_2", "probability": 0.0, "mirror": True})
-    lines.append({"pt1": "high_bar_1", "pt2": "high_bar_2", "probability": 0.0, "mirror": True})
-    lines.append({"pt1": "trav_bar_1", "pt2": "trav_bar_2", "probability": 0.0, "mirror": True})
+    # lines.append({"pt1": "lower_bar_1", "pt2": "lower_bar_2", "probability": 0.0, "mirror": True})
+    # lines.append({"pt1": "mid_bar_1", "pt2": "mid_bar_2", "probability": 0.0, "mirror": True})
+    # lines.append({"pt1": "high_bar_1", "pt2": "high_bar_2", "probability": 0.0, "mirror": True})
+    # lines.append({"pt1": "trav_bar_1", "pt2": "trav_bar_2", "probability": 0.0, "mirror": True})
 
-    results = build_map(practice_map_name, field_map_name, lines)
+    results_up = build_map(practice_map_name, field_map_name, lines, hood_state="up")
+    results_down = build_map(practice_map_name, field_map_name, lines, hood_state="down")
 
     window_name = "map"
     cv2.namedWindow(window_name)
-    cv2.setMouseCallback(window_name, mouse_callback, param=results)
-    cv2.imshow(window_name, results["show_image"])
+    cv2.setMouseCallback(window_name, mouse_callback, param=results_up)
+
+    show_image_up = cv2.addWeighted(results_up["field_map"], 0.5, results_up["ogm"].get_image(), 0.5, 0.0)
+    show_image_down = cv2.addWeighted(results_up["field_map"], 0.5, results_down["ogm"].get_image(), 0.5, 0.0)
+
+    cv2.imshow(window_name, show_image_up)
     while True:
         key = chr(cv2.waitKey(-1) & 0xff)
+        if key == 'u':
+            cv2.imshow(window_name, show_image_up)
+        elif key == 'd':
+            cv2.imshow(window_name, show_image_down)
+
         if key == 'q':
             break
 
