@@ -4,6 +4,7 @@ import csv
 import sys
 import math
 import rospkg
+import numpy as np
 
 sys.path.insert(0, "../../tj2_tools")
 
@@ -45,6 +46,7 @@ with open(data_path) as file:
         print("%s\t%0.2f\t%0.3f" % (hood, data["probability"], data["distance"]))
         probabilities.append(data)
 
+field_map = ogm.get_image()
 
 ogm.grid_data[:] = 100
 probabilities.sort(key=lambda x: x["distance"], reverse=True)
@@ -70,7 +72,12 @@ for row in probabilities:
     cv2.circle(ogm.grid_data, origin, radius, (probability * 100,), -1)
     # cv2.circle(ogm.grid_data, (image_x, image_y), int(robot_radius), (probability * 100,), -1)
 
+show_image = cv2.addWeighted(field_map, 0.5, ogm.get_image(), 0.5, 0.0)
+
 ogm.to_file(out_map_path)
 
-cv2.imshow("map", ogm.get_image())
-cv2.waitKey(-1)
+cv2.imshow("map", show_image)
+while True:
+    key = chr(cv2.waitKey(-1) & 0xff)
+    if key == 'q':
+        break
