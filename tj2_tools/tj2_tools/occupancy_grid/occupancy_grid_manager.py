@@ -166,7 +166,7 @@ class OccupancyGridManager:
 
     def get_world_x_y(self, costmap_x, costmap_y):
         world_x = costmap_x * self.resolution + self.origin.x
-        world_y = costmap_y * self.resolution + self.origin.y
+        world_y = (self.height - costmap_y) * self.resolution + self.origin.y
         return world_x, world_y
 
     def get_costmap_x_y(self, world_x, world_y):
