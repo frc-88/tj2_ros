@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<launch>
-    <group ns="tj2">
-        <node pkg="tj2_turret" type="probability_map_tool.py" name="probability_map_tool" output="screen" required="false">
-            <param name="map_name" value="$(find tj2_turret)/maps/$(env ROS_MAP_NAME).yaml"/>
-        </node>
-    </group>
-</launch>
