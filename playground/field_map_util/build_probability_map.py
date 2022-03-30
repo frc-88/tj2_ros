@@ -143,7 +143,7 @@ def mouse_callback(event, x, y, flags, param):
 
 def main():
     practice_map_name = "br-114-03-26-2022"
-    field_map_name = "br-114-03-26-2022"
+    field_map_name = "br-114-03-29-2022"
     # field_map_name = "rapid-react-2022-02-19T07-55-53--407688-edited"
 
     lines = []

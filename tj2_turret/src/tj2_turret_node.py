@@ -51,6 +51,9 @@ class TJ2Turret(object):
         self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
         self.enable_shot_probability = rospy.get_param("~enable_shot_probability", True)
 
+        # a constant to fix weird unknown turret issues
+        self.turret_cosmic_ray_compensation = rospy.get_param("turret_cosmic_ray_compensation", math.radians(5))
+
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.csv")
         self.recorded_data_file_path = rospy.get_param("~recorded_data_file_path", "./recorded_data.csv")
         self.probability_hood_up_map_path = rospy.get_param("~probability_hood_up_map_path", "./probability.yaml")
@@ -89,6 +92,8 @@ class TJ2Turret(object):
         if self.enable_shot_probability:
             self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
             self.ogm_down = OccupancyGridManager.from_cost_file(self.probability_hood_down_map_path)
+            self.ogm_up.grid_data = np.flipud(self.ogm_up.grid_data)
+            self.ogm_down.grid_data = np.flipud(self.ogm_down.grid_data)
         else:
             self.ogm_up = None
             self.ogm_down = None
@@ -282,15 +287,8 @@ class TJ2Turret(object):
                 shot_probability = 1.0
 
             target = Pose2d.from_ros_pose(target_pose_turret.pose)
-            if self.enable_shot_correction:
-                if self.hood_state:
-                    traj_interp = self.traj_interp_up
-                else:
-                    traj_interp = self.traj_interp_down
-                tof = self.get_tof(traj_interp, target.distance())
-                if tof > 0.0:
-                    target.x -= self.robot_velocity.x * tof
-            self.target_heading = target.heading()
+            target = self.compensate_for_robot_velocity(target)
+            self.target_heading = target.heading() + self.turret_cosmic_ray_compensation
             self.target_heading = Pose2d.normalize_theta(self.target_heading + math.pi)
             self.target_distance = target.distance()
             self.publish_turret(self.target_distance, self.target_heading, shot_probability)
@@ -301,6 +299,20 @@ class TJ2Turret(object):
             self.turret_target_pub.publish(target_pose_stamped)
 
             clock.sleep()
+    
+    def compensate_for_robot_velocity(self, target: Pose2d, iterations=4):
+        if not self.enable_shot_correction:
+            return target
+        initial_target = Pose2d.from_state(target)
+        for _ in range(iterations):
+            if self.hood_state:
+                traj_interp = self.traj_interp_up
+            else:
+                traj_interp = self.traj_interp_down
+            tof = self.get_tof(traj_interp, target.distance())
+            if tof > 0.0:
+                target.x = initial_target.x - self.robot_velocity.x * tof
+        return target
     
     def get_tof(self, traj_interp, distance):
         # compute the time of flight of the ball to the target based on a lookup table

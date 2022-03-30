@@ -9,7 +9,7 @@
     <node pkg="tj2_laser_slam" type="odom_bag_publisher.py" name="odom_bag_publisher" output="screen">
         <remap from="odom" to="/tj2/odom"/>
     </node>
-    <include file="$(find tj2_rplidar)/launch/laser_filter.launch"/>
+    <!-- <include file="$(find tj2_rplidar)/launch/laser_filter.launch"/> -->
     <!-- <include file="$(find tj2_description)/launch/basic_transforms.launch"/> -->
     <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
 
