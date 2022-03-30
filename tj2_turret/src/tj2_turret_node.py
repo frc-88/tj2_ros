@@ -52,7 +52,7 @@ class TJ2Turret(object):
         self.enable_shot_probability = rospy.get_param("~enable_shot_probability", True)
 
         # a constant to fix weird unknown turret issues
-        self.turret_cosmic_ray_compensation = rospy.get_param("turret_cosmic_ray_compensation", math.radians(5))
+        self.turret_cosmic_ray_compensation = math.radians(rospy.get_param("turret_cosmic_ray_compensation_degrees", 0.0))
 
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.csv")
         self.recorded_data_file_path = rospy.get_param("~recorded_data_file_path", "./recorded_data.csv")
@@ -92,8 +92,6 @@ class TJ2Turret(object):
         if self.enable_shot_probability:
             self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
             self.ogm_down = OccupancyGridManager.from_cost_file(self.probability_hood_down_map_path)
-            self.ogm_up.grid_data = np.flipud(self.ogm_up.grid_data)
-            self.ogm_down.grid_data = np.flipud(self.ogm_down.grid_data)
         else:
             self.ogm_up = None
             self.ogm_down = None
@@ -304,6 +302,7 @@ class TJ2Turret(object):
         if not self.enable_shot_correction:
             return target
         initial_target = Pose2d.from_state(target)
+        target = Pose2d.from_state(target)
         for _ in range(iterations):
             if self.hood_state:
                 traj_interp = self.traj_interp_up
