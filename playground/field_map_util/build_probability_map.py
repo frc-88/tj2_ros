@@ -4,6 +4,7 @@ import csv
 import sys
 import math
 import rospkg
+import argparse
 import numpy as np
 
 sys.path.insert(0, "../../tj2_tools")
@@ -142,8 +143,15 @@ def mouse_callback(event, x, y, flags, param):
 
 
 def main():
-    practice_map_name = "br-114-03-26-2022"
-    field_map_name = "br-114-03-29-2022"
+    parser = argparse.ArgumentParser(description="build probability map", add_help=True)
+    parser.add_argument("practice_map_name", help="name of map recorded_data.csv was taken on")
+    parser.add_argument("field_map_name", help="name of map to generate probability map for")
+    parser.add_argument("-s", "--show", action="store_true", help="Show image")
+    args = parser.parse_args()
+
+    # practice_map_name = "br-114-03-26-2022"
+    # field_map_name = "br-114-03-26-2022"
+    # field_map_name = "br-114-03-29-2022"
     # field_map_name = "rapid-react-2022-02-19T07-55-53--407688-edited"
 
     lines = []
@@ -152,26 +160,27 @@ def main():
     # lines.append({"pt1": "high_bar_1", "pt2": "high_bar_2", "probability": 0.0, "mirror": True})
     # lines.append({"pt1": "trav_bar_1", "pt2": "trav_bar_2", "probability": 0.0, "mirror": True})
 
-    results_up = build_map(practice_map_name, field_map_name, lines, hood_state="up")
-    results_down = build_map(practice_map_name, field_map_name, lines, hood_state="down")
+    results_up = build_map(args.practice_map_name, args.field_map_name, lines, hood_state="up")
+    results_down = build_map(args.practice_map_name, args.field_map_name, lines, hood_state="down")
 
-    window_name = "map"
-    cv2.namedWindow(window_name)
-    cv2.setMouseCallback(window_name, mouse_callback, param=results_up)
+    if args.show:
+        window_name = "map"
+        cv2.namedWindow(window_name)
+        cv2.setMouseCallback(window_name, mouse_callback, param=results_up)
 
-    show_image_up = cv2.addWeighted(results_up["field_map"], 0.5, results_up["ogm"].get_image(), 0.5, 0.0)
-    show_image_down = cv2.addWeighted(results_up["field_map"], 0.5, results_down["ogm"].get_image(), 0.5, 0.0)
+        show_image_up = cv2.addWeighted(results_up["field_map"], 0.5, results_up["ogm"].get_image(), 0.5, 0.0)
+        show_image_down = cv2.addWeighted(results_up["field_map"], 0.5, results_down["ogm"].get_image(), 0.5, 0.0)
 
-    cv2.imshow(window_name, show_image_up)
-    while True:
-        key = chr(cv2.waitKey(-1) & 0xff)
-        if key == 'u':
-            cv2.imshow(window_name, show_image_up)
-        elif key == 'd':
-            cv2.imshow(window_name, show_image_down)
+        cv2.imshow(window_name, show_image_up)
+        while True:
+            key = chr(cv2.waitKey(-1) & 0xff)
+            if key == 'u':
+                cv2.imshow(window_name, show_image_up)
+            elif key == 'd':
+                cv2.imshow(window_name, show_image_down)
 
-        if key == 'q':
-            break
+            if key == 'q':
+                break
 
 if __name__ == "__main__":
     main()

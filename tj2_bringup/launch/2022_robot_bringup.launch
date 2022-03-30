@@ -16,7 +16,7 @@
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
 
     <!-- <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/> -->
-    <!-- <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/> -->
+    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
     <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/>
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
     <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>

@@ -14,6 +14,7 @@ Panels:
         - /RealSense Image1
         - /Hood Down Map1
         - /Hood Up Map1
+        - /Odometry1
       Splitter Ratio: 0.6061684489250183
     Tree Height: 617
   - Class: rviz/Selection
@@ -66,28 +67,6 @@ Visualization Manager:
       Frames:
         All Enabled: false
         base_link:
-          Value: true
-        camera_accel_frame:
-          Value: true
-        camera_accel_optical_frame:
-          Value: true
-        camera_aligned_depth_to_color_frame:
-          Value: true
-        camera_color_frame:
-          Value: true
-        camera_color_optical_frame:
-          Value: true
-        camera_depth_frame:
-          Value: true
-        camera_depth_optical_frame:
-          Value: true
-        camera_gyro_frame:
-          Value: true
-        camera_gyro_optical_frame:
-          Value: true
-        camera_infra_frame:
-          Value: true
-        camera_infra_optical_frame:
           Value: true
         camera_link:
           Value: true
@@ -150,23 +129,7 @@ Visualization Manager:
               camera_tilt_base_link:
                 camera_tilt_link:
                   camera_link:
-                    camera_accel_frame:
-                      camera_accel_optical_frame:
-                        {}
-                    camera_aligned_depth_to_color_frame:
-                      camera_color_optical_frame:
-                        {}
-                    camera_color_frame:
-                      {}
-                    camera_depth_frame:
-                      camera_depth_optical_frame:
-                        {}
-                    camera_gyro_frame:
-                      camera_gyro_optical_frame:
-                        {}
-                    camera_infra_frame:
-                      camera_infra_optical_frame:
-                        {}
+                    {}
               dextra_laser_link:
                 {}
               intake_tilt_link:
@@ -343,14 +306,7 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        poscenter: true
-        pospoint1: true
-        pospoint2: true
-        pospoint3: true
-        textcenter: true
-        textpoint1: true
-        textpoint2: true
-        textpoint3: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -399,6 +355,7 @@ Visualization Manager:
         Move Base Goal: true
         Move Base Waypoints: true
         Object Marker: true
+        Odometry: true
         Pose: true
         PoseArray: true
         Pursuit Goal: true
@@ -677,7 +634,7 @@ Visualization Manager:
       Marker Topic: /standalone_converter/costmap_polygon_markers
       Name: Object Marker
       Namespaces:
-        Polygons: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -752,6 +709,41 @@ Visualization Manager:
       Unreliable: false
       Use Timestamp: false
       Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 1000
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Axes
+      Topic: /tj2/odom
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -779,20 +771,26 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -0.3899998366832733
-      Class: rviz/TopDownOrtho
+      Class: rviz/Orbit
+      Distance: 18.088701248168945
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
+      Field of View: 0.7853981852531433
+      Focal Point:
+        X: -2.809178113937378
+        Y: 2.5507194995880127
+        Z: 0.3871874511241913
+      Focal Shape Fixed Size: false
+      Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 57.28218460083008
+      Pitch: 1.2803977727890015
       Target Frame: <Fixed Frame>
-      X: -3.1488730907440186
-      Y: 3.128462314605713
+      Yaw: 3.070399761199951
     Saved: ~
 Window Geometry:
   Displays:

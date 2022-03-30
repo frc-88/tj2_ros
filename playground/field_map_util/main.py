@@ -9,7 +9,7 @@ import numpy as np
 from collections import defaultdict
 
 from tj2_tools.robot_state import Pose2d
-from file_management import load_map, load_waypoints, map_dir, waypoints_dir
+from file_management import load_map, load_waypoints, save_waypoints, map_dir, waypoints_dir
 
 
 
@@ -81,16 +81,6 @@ def draw_waypoints(map_image, map_config, waypoints):
     for name, pose in waypoints.items():
         draw_pose(draw_image, name, pose, map_config)
     return draw_image
-
-
-def save_waypoints(waypoints, path):
-    waypoints_config = {}
-    for name, pose in waypoints.items():
-        waypoints_config[name] = pose.to_list()
-
-    with open(path, 'w') as file:
-        yaml.dump(waypoints_config, file)
-    print("Wrote new waypoints to %s" % path)
 
 def get_image_center(image):
     return (np.array(image.shape[:2][::-1]) - 1.0) / 2.0

@@ -95,6 +95,7 @@ class OccupancyGridManager:
         image = cv2.imread(image_path)
         image = image.astype(np.uint8)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = np.flipud(image)
         
         self.map_config["width"] = image.shape[1]
         self.map_config["height"] = image.shape[0]
@@ -166,7 +167,7 @@ class OccupancyGridManager:
 
     def get_world_x_y(self, costmap_x, costmap_y):
         world_x = costmap_x * self.resolution + self.origin.x
-        world_y = (self.height - costmap_y) * self.resolution + self.origin.y
+        world_y = costmap_y * self.resolution + self.origin.y
         return world_x, world_y
 
     def get_costmap_x_y(self, world_x, world_y):
@@ -174,7 +175,6 @@ class OccupancyGridManager:
             round((world_x - self.origin.x) / self.resolution))
         costmap_y = int(
             round((world_y - self.origin.y) / self.resolution))
-        costmap_y = self.height - costmap_y  # image coordinates are inverted
 
         return costmap_x, costmap_y
 
