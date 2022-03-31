@@ -9,6 +9,8 @@
             <param name="probability_hood_down_map_path" value="$(find tj2_turret)/maps/$(env ROS_MAP_NAME)-down.yaml"/>
             <param name="enable_shot_correction" value="true"/>
             <param name="enable_shot_probability" value="true"/>
+            <param name="enable_limelight_fine_tuning" value="false"/>
+            <!-- <param name="turret_cosmic_ray_compensation_degrees" value="0.0"/> -->
             <param name="turret_cosmic_ray_compensation_degrees" value="5.0"/>
         </node>
     </group>
