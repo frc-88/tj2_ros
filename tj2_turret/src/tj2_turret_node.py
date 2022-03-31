@@ -50,6 +50,7 @@ class TJ2Turret(object):
 
         self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
         self.enable_shot_probability = rospy.get_param("~enable_shot_probability", True)
+        self.enable_limelight_fine_tuning = rospy.get_param("~enable_limelight_fine_tuning", True)
 
         # a constant to fix weird unknown turret issues
         self.turret_cosmic_ray_compensation = math.radians(rospy.get_param("turret_cosmic_ray_compensation_degrees", 0.0))
@@ -64,6 +65,7 @@ class TJ2Turret(object):
         self.target_distance = 0.0
         self.robot_pose = PoseStamped()
         self.hood_state = False  # False == down, True == up
+        self.limelight_target_pose = PoseStamped()
 
         self.amcl_pose = None
         self.robot_velocity = Velocity()
@@ -88,6 +90,7 @@ class TJ2Turret(object):
         self.amcl_pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.amcl_pose_callback)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback)
         self.hood_sub = rospy.Subscriber("hood", Bool, self.hood_callback)
+        self.limelight_sub = rospy.Subscriber("/limelight/target", PoseStamped, self.limelight_callback)
 
         if self.enable_shot_probability:
             self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
@@ -247,6 +250,9 @@ class TJ2Turret(object):
     
     def hood_callback(self, msg):
         self.hood_state = msg.data
+    
+    def limelight_callback(self, msg):
+        self.limelight_target_pose = msg
 
     def run(self):
         rospy.sleep(1.0)  # wait for waypoints to populate
@@ -283,6 +289,9 @@ class TJ2Turret(object):
                 shot_probability = self.get_shot_probability(Pose2d.from_ros_pose(self.robot_pose.pose))
             else:
                 shot_probability = 1.0
+            
+            if self.enable_limelight_fine_tuning:
+                target_pose_turret = self.get_fine_tuned_limelight_target(self.limelight_target_pose, target_pose_turret)
 
             target = Pose2d.from_ros_pose(target_pose_turret.pose)
             target = self.compensate_for_robot_velocity(target)
@@ -341,6 +350,18 @@ class TJ2Turret(object):
         else:
             return 1.0 - (cost / 100.0)
     
+    def get_fine_tuned_limelight_target(self, limelight_pose, waypoint_pose, stale_limelight_s=0.5, agreement_threshold_m=1.0):
+        dt = rospy.Time.now() - limelight_pose.header.stamp
+        if dt > rospy.Duration(stale_limelight_s):
+            return waypoint_pose
+        limelight_pose2d = Pose2d.from_ros_pose(limelight_pose.pose)
+        waypoint_pose2d = Pose2d.from_ros_pose(waypoint_pose.pose)
+
+        if waypoint_pose2d.distance(limelight_pose2d) < agreement_threshold_m:
+            return limelight_pose
+        else:
+            return waypoint_pose
+
     def publish_turret(self, distance, heading, probability):
         self.nt_pub.publish(self.make_entry("turret/distance", distance))
         self.nt_pub.publish(self.make_entry("turret/heading", heading))

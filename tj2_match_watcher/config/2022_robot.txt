@@ -14,7 +14,8 @@
 /initialpose
 /sinistra_laser/scan
 /dextra_laser/scan
-/limelight/targets
+/limelight/raw_targets
+/limelight/target
 /map
 /map_metadata
 /tf

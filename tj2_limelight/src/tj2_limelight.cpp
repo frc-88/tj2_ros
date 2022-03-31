@@ -12,7 +12,11 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~video_url", _video_url, "");
     ros::param::param<string>("~camera_info_url", _camera_info_url, "");
     ros::param::param<string>("~frame_id", _frame_id, "camera_link");
+    ros::param::param<string>("~base_frame_id", _base_frame, "base_link");
     ros::param::param<double>("~max_frame_rate", _max_frame_rate, 30.0);
+    ros::param::param<bool>("~publish_video", _publish_video, true);
+    ros::param::param<double>("~field_vision_target_height_m", _field_vision_target_height, 0.0);
+    ros::param::param<double>("~field_vision_target_distance_m", _field_vision_target_distance, 0.0);
 
     _nt = nt::GetDefaultInstance();
     nt::AddLogger(_nt,
@@ -35,8 +39,15 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
         _thor_entries.push_back(nt::GetEntry(_nt, "/limelight/thor" + std::to_string(index)));
         _tvert_entries.push_back(nt::GetEntry(_nt, "/limelight/tvert" + std::to_string(index)));
     }
+    _main_tx_entry = nt::GetEntry(_nt, "/limelight/tx");
+    _main_ty_entry = nt::GetEntry(_nt, "/limelight/ty");
 
-    _limelight_target_pub = nh.advertise<tj2_limelight::LimelightTargetArray>("targets", 5);
+    _limelight_height_entry = nt::GetEntry(_nt, "/Preferences/Limelight Height");
+    _limelight_angle_entry = nt::GetEntry(_nt, "/Preferences/Limelight Angle");
+    _limelight_radius_entry = nt::GetEntry(_nt, "/Preferences/Limelight Radius");
+
+    _limelight_raw_target_pub = nh.advertise<tj2_limelight::LimelightTargetArray>("raw_targets", 15);
+    _limelight_target_pub = nh.advertise<geometry_msgs::PoseStamped>("target", 15);
     _limelight_led_mode_sub = nh.subscribe<std_msgs::Bool>("led_mode", 5, &TJ2Limelight::led_mode_callback, this);
     _limelight_cam_mode_sub = nh.subscribe<std_msgs::Bool>("cam_mode", 5, &TJ2Limelight::cam_mode_callback, this);
 
@@ -55,20 +66,25 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
         ROS_WARN_STREAM("Given camera info url: " << _camera_info_url << " is not valid, using an uncalibrated config.");
     }
 
-    ROS_INFO_STREAM("Trying to connect to  " << _video_url);
-    _video_capture.open(_video_url);
+    if (_publish_video) {
+        ROS_INFO_STREAM("Trying to connect to  " << _video_url);
+        _video_capture.open(_video_url);
+    }
 
     _out_msg.header.frame_id = _frame_id;
     _out_msg.encoding = sensor_msgs::image_encodings::BGR8;
 
     _camera_info = _camera_info_manager.getCameraInfo();
     _camera_info.header.frame_id = _frame_id;
+    _camera_model.fromCameraInfo(_camera_info);
 
     _reopenSleep = ros::Duration(0.25);
 
     _camera_pub = _image_transport.advertiseCamera("camera/image", 10);
 
-    _watcher_thread = new boost::thread(&TJ2Limelight::watchVideoCapture, this);
+    if (_publish_video) {
+        _watcher_thread = new boost::thread(&TJ2Limelight::watchVideoCapture, this);
+    }
 }
 
 void TJ2Limelight::watchVideoCapture()
@@ -104,6 +120,10 @@ void TJ2Limelight::publish_limelight_targets()
         return;
     }
     tj2_limelight::LimelightTargetArray array_msg;
+
+    int width = _camera_info.width;
+    int height = _camera_info.height;
+
     for (int index = 0; index < _num_limelight_targets; index++) {
         tj2_limelight::LimelightTarget target_msg;
         target_msg.thor = (int)(getDouble(_thor_entries.at(index), 0.0));
@@ -112,14 +132,36 @@ void TJ2Limelight::publish_limelight_targets()
         double tx = getDouble(_tx_entries.at(index), 0.0);
         double ty = getDouble(_ty_entries.at(index), 0.0);
 
-        int width = _camera_info.width;
-        int height = _camera_info.height;
-
         target_msg.tx = (int)((tx + 1.0) / 2.0 * width);
         target_msg.ty = (int)((-ty + 1.0) / 2.0 * height);
         array_msg.targets.push_back(target_msg);
     }
-    _limelight_target_pub.publish(array_msg);
+    _limelight_raw_target_pub.publish(array_msg);
+
+    double main_tx = to_radians(getDouble(_main_tx_entry, 0.0));
+    double main_ty = to_radians(getDouble(_main_ty_entry, 0.0));
+
+    double limelight_height = to_meters(getDouble(_limelight_height_entry, 0.0));
+    double limelight_angle = to_radians(getDouble(_limelight_angle_entry, 0.0));
+    double limelight_radius = to_meters(getDouble(_limelight_radius_entry, 0.0));
+    double target_dist = (_field_vision_target_height - limelight_height) /
+                         (tan(limelight_angle + main_ty)
+                         * cos(main_tx));
+
+    double target_angle = atan(sin(main_tx) / (cos(main_tx) + limelight_radius / _field_vision_target_distance));
+
+    tf2::Quaternion quat;
+    quat.setRPY(0, 0, target_angle);
+    geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
+
+    geometry_msgs::PoseStamped pose;
+    pose.header.stamp = ros::Time::now();
+    pose.header.frame_id = _base_frame;
+    pose.pose.position.x = target_dist * cos(target_angle);
+    pose.pose.position.y = target_dist * sin(target_angle);
+    pose.pose.orientation = msg_quat;
+
+    _limelight_target_pub.publish(pose);
 }
 void TJ2Limelight::set_led_mode(bool mode)
 {
@@ -142,33 +184,33 @@ int TJ2Limelight::run()
 {
     cv::Mat frame;
     ros::Rate loop(_max_frame_rate);
-    set_led_mode(true);  // turn off limelight by default
     while (ros::ok())
     {
-        if (_video_capture.isOpened())
-        {
-            ROS_INFO_ONCE("Connection established");
-            if (!_video_capture.read(frame)) {
-                loop.sleep();
-                continue;
+        if (_publish_video) {
+            if (_video_capture.isOpened())
+            {
+                ROS_INFO_ONCE("Connection established");
+                if (!_video_capture.read(frame)) {
+                    loop.sleep();
+                    continue;
+                }
+                _last_publish_time = ros::Time::now();
+                _out_msg.header.stamp = _last_publish_time;
+                _out_msg.image = frame;
+                _camera_info.header.stamp = _last_publish_time;
+
+                _out_msg.toImageMsg(_ros_img);
+                _camera_pub.publish(_ros_img, _camera_info, _last_publish_time);
+
+
+                ros::spinOnce();
             }
-            _last_publish_time = ros::Time::now();
-            _out_msg.header.stamp = _last_publish_time;
-            _out_msg.image = frame;
-            _camera_info.header.stamp = _last_publish_time;
-
-            _out_msg.toImageMsg(_ros_img);
-            _camera_pub.publish(_ros_img, _camera_info, _last_publish_time);
-
-            publish_limelight_targets();
-
-            ros::spinOnce();
+            else
+            {
+                reopenCapture();
+            }
         }
-        else
-        {
-            reopenCapture();
-        }
-
+        publish_limelight_targets();
         ros::spinOnce();
         loop.sleep();
     }
