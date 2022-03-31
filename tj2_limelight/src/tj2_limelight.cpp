@@ -12,7 +12,7 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~video_url", _video_url, "");
     ros::param::param<string>("~camera_info_url", _camera_info_url, "");
     ros::param::param<string>("~frame_id", _frame_id, "camera_link");
-    ros::param::param<string>("~base_frame_id", _base_frame, "base_link");
+    ros::param::param<string>("~base_frame_id", _base_frame, "turret_tilt_link");
     ros::param::param<double>("~max_frame_rate", _max_frame_rate, 30.0);
     ros::param::param<bool>("~publish_video", _publish_video, true);
     ros::param::param<double>("~field_vision_target_height_m", _field_vision_target_height, 0.0);
