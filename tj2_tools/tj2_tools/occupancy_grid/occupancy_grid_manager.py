@@ -8,7 +8,7 @@ import numpy as np
 from itertools import product
 from geometry_msgs.msg import Pose
 
-from tj2_tools.robot_state import Pose2d
+from tj2_tools.robot_state import Pose2d, State
 
 """
 Adapted from https://github.com/awesomebytes/occupancy_grid_python
@@ -153,6 +153,37 @@ class OccupancyGridManager:
     @property
     def reference_frame(self):
         return self._reference_frame
+    
+    def set_resolution(self, value):
+        assert isinstance(value, float) or isinstance(value, int)
+        self.map_config["resolution"] = value
+
+    def set_width(self, value):
+        assert isinstance(value, float) or isinstance(value, int)
+        self.map_config["width"] = value
+
+    def set_height(self, value):
+        assert isinstance(value, float) or isinstance(value, int)
+        self.map_config["height"] = value
+
+    def set_origin(self, value):
+        if isinstance(value, list) or isinstance(value, tuple):
+            assert len(value) == 2
+            self.map_config["origin"] = Pose2d(value[0], value[1])
+        elif isinstance(value, dict):
+            assert "x" in value
+            assert "y" in value
+            self.map_config["origin"] = Pose2d(value["x"], value["y"])
+        elif isinstance(value, State):
+            self.map_config["origin"] = value
+        else:
+            raise ValueError("Invalid type for origin: %s" % repr(value))
+
+    def set_reference_frame(self, value):
+        self._reference_frame = value
+    
+    def set_image(self, grid_data):
+        self.grid_data = grid_data
     
     def get_image(self):
         max_value = np.iinfo(np.uint8).max
