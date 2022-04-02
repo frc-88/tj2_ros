@@ -35,7 +35,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -94,9 +94,7 @@ Visualization Manager:
           Value: true
         limelight_link:
           Value: true
-        map:
-          Value: true
-        odom:
+        limelight_optical_link:
           Value: true
         right_inner_climber_link:
           Value: true
@@ -123,40 +121,7 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        map:
-          odom:
-            base_link:
-              camera_tilt_base_link:
-                camera_tilt_link:
-                  camera_link:
-                    {}
-              dextra_laser_link:
-                {}
-              intake_tilt_link:
-                intake_link:
-                  {}
-              left_inner_climber_tilt_link:
-                left_inner_climber_link:
-                  left_inner_hook_link:
-                    {}
-              left_outer_climber_tilt_link:
-                left_outer_climber_link:
-                  left_outer_hook_link:
-                    {}
-              right_inner_climber_tilt_link:
-                right_inner_climber_link:
-                  right_inner_hook_link:
-                    {}
-              right_outer_climber_tilt_link:
-                right_outer_climber_link:
-                  right_outer_hook_link:
-                    {}
-              sinistra_laser_link:
-                {}
-              turret_tilt_link:
-                turret_link:
-                  limelight_link:
-                    {}
+        {}
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988079071

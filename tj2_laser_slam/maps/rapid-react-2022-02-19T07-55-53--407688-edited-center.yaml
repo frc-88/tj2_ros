@@ -1,0 +1,9 @@
+free_thresh: 0.1
+image: rapid-react-2022-02-19T07-55-53--407688-edited-center.pgm
+negate: 0
+occupied_thresh: 0.9
+origin:
+- -28.181449999999998
+- -20.24575
+- 0.0
+resolution: 0.05
