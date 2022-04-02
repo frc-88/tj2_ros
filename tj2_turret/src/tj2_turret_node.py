@@ -16,6 +16,7 @@ from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
 from nav_msgs.msg import Odometry
+from nav_msgs.msg import OccupancyGrid
 
 from tj2_tools.occupancy_grid import OccupancyGridManager
 
@@ -49,15 +50,22 @@ class TJ2Turret(object):
 
         self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
         self.enable_shot_probability = rospy.get_param("~enable_shot_probability", True)
+        self.enable_limelight_fine_tuning = rospy.get_param("~enable_limelight_fine_tuning", True)
+
+        # a constant to fix weird unknown turret issues
+        self.turret_cosmic_ray_compensation = math.radians(rospy.get_param("turret_cosmic_ray_compensation_degrees", 0.0))
 
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.csv")
         self.recorded_data_file_path = rospy.get_param("~recorded_data_file_path", "./recorded_data.csv")
+        self.probability_hood_up_map_path = rospy.get_param("~probability_hood_up_map_path", "./probability.yaml")
+        self.probability_hood_down_map_path = rospy.get_param("~probability_hood_down_map_path", "./probability.yaml")
 
         self.waypoints = {}
         self.target_heading = 0.0
         self.target_distance = 0.0
         self.robot_pose = PoseStamped()
         self.hood_state = False  # False == down, True == up
+        self.limelight_target_pose = PoseStamped()
 
         self.amcl_pose = None
         self.robot_velocity = Velocity()
@@ -75,16 +83,21 @@ class TJ2Turret(object):
 
         self.nt_pub = rospy.Publisher("nt_passthrough", NTEntry, queue_size=10)
         self.turret_target_pub = rospy.Publisher("turret_target", PoseStamped, queue_size=10)
+        self.probability_hood_up_pub = rospy.Publisher("shot_probability_hood_up_map", OccupancyGrid, queue_size=10)
+        self.probability_hood_down_pub = rospy.Publisher("shot_probability_hood_down_map", OccupancyGrid, queue_size=10)
 
         self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback)
         self.amcl_pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.amcl_pose_callback)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback)
         self.hood_sub = rospy.Subscriber("hood", Bool, self.hood_callback)
+        self.limelight_sub = rospy.Subscriber("/limelight/target", PoseStamped, self.limelight_callback)
 
         if self.enable_shot_probability:
-            self.ogm = OccupancyGridManager("map", subscribe_to_updates=True)
+            self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
+            self.ogm_down = OccupancyGridManager.from_cost_file(self.probability_hood_down_map_path)
         else:
-            self.ogm = None
+            self.ogm_up = None
+            self.ogm_down = None
         
         self.record_tof_srv = self.make_service("record_tof", RecordValue, self.record_tof)
         self.record_probability_srv = self.make_service("record_probability", RecordValue, self.record_probability)
@@ -97,6 +110,8 @@ class TJ2Turret(object):
             os.makedirs(recorded_dir)
         if not os.path.isfile(self.recorded_data_file_path):
             self.create_data_file(self.recorded_data_file_path)
+
+        self.map_pub_timer = rospy.Timer(rospy.Duration(1.0), self.map_publish_callback)
 
         rospy.loginfo("%s init complete" % self.node_name)
     
@@ -213,6 +228,10 @@ class TJ2Turret(object):
         y_samples = table[:, 1]
         return interp1d(x_samples, y_samples, kind="linear")
 
+    def map_publish_callback(self, timer):
+        self.probability_hood_up_pub.publish(self.ogm_up.to_msg())
+        self.probability_hood_down_pub.publish(self.ogm_down.to_msg())
+
     def waypoints_callback(self, msg):
         self.waypoints = {}
         for waypoint_msg in msg.waypoints:
@@ -231,6 +250,9 @@ class TJ2Turret(object):
     
     def hood_callback(self, msg):
         self.hood_state = msg.data
+    
+    def limelight_callback(self, msg):
+        self.limelight_target_pose = msg
 
     def run(self):
         rospy.sleep(1.0)  # wait for waypoints to populate
@@ -267,17 +289,13 @@ class TJ2Turret(object):
                 shot_probability = self.get_shot_probability(Pose2d.from_ros_pose(self.robot_pose.pose))
             else:
                 shot_probability = 1.0
+            
+            if self.enable_limelight_fine_tuning:
+                target_pose_turret = self.get_fine_tuned_limelight_target(self.limelight_target_pose, target_pose_turret)
 
             target = Pose2d.from_ros_pose(target_pose_turret.pose)
-            if self.enable_shot_correction:
-                if self.hood_state:
-                    traj_interp = self.traj_interp_up
-                else:
-                    traj_interp = self.traj_interp_down
-                tof = self.get_tof(traj_interp, target.distance())
-                if tof > 0.0:
-                    target.x -= self.robot_velocity.x * tof
-            self.target_heading = target.heading()
+            target = self.compensate_for_robot_velocity(target)
+            self.target_heading = target.heading() + self.turret_cosmic_ray_compensation
             self.target_heading = Pose2d.normalize_theta(self.target_heading + math.pi)
             self.target_distance = target.distance()
             self.publish_turret(self.target_distance, self.target_heading, shot_probability)
@@ -288,6 +306,21 @@ class TJ2Turret(object):
             self.turret_target_pub.publish(target_pose_stamped)
 
             clock.sleep()
+    
+    def compensate_for_robot_velocity(self, target: Pose2d, iterations=4):
+        if not self.enable_shot_correction:
+            return target
+        initial_target = Pose2d.from_state(target)
+        target = Pose2d.from_state(target)
+        for _ in range(iterations):
+            if self.hood_state:
+                traj_interp = self.traj_interp_up
+            else:
+                traj_interp = self.traj_interp_down
+            tof = self.get_tof(traj_interp, target.distance())
+            if tof > 0.0:
+                target.x = initial_target.x - self.robot_velocity.x * tof
+        return target
     
     def get_tof(self, traj_interp, distance):
         # compute the time of flight of the ball to the target based on a lookup table
@@ -302,17 +335,33 @@ class TJ2Turret(object):
 
     def get_shot_probability(self, pose2d: Pose2d):
         # see OccupancyGrid message docs
-        # cost is -1 for unknown. Otherwise, 0..100 for probability
-        # I remap this to 1.0..0.0
-        if self.ogm is None:
+        # cost is -1 for unknown. Otherwise, 0..100
+        # I remap this to 1.0..0.0 for probability (0 == 100% probability, 100 == 0% probability)
+        if self.hood_state:
+            ogm = self.ogm_up
+        else:
+            ogm = self.ogm_down
+        if ogm is None:
             return 1.0
 
-        cost = self.ogm.get_cost_from_world_x_y(pose2d.x, pose2d.y)
+        cost = ogm.get_cost_from_world_x_y(pose2d.x, pose2d.y)
         if cost < 0.0:
             return 0.0
         else:
             return 1.0 - (cost / 100.0)
     
+    def get_fine_tuned_limelight_target(self, limelight_pose, waypoint_pose, stale_limelight_s=0.5, agreement_threshold_m=1.0):
+        dt = rospy.Time.now() - limelight_pose.header.stamp
+        if dt > rospy.Duration(stale_limelight_s):
+            return waypoint_pose
+        limelight_pose2d = Pose2d.from_ros_pose(limelight_pose.pose)
+        waypoint_pose2d = Pose2d.from_ros_pose(waypoint_pose.pose)
+
+        if waypoint_pose2d.distance(limelight_pose2d) < agreement_threshold_m:
+            return limelight_pose
+        else:
+            return waypoint_pose
+
     def publish_turret(self, distance, heading, probability):
         self.nt_pub.publish(self.make_entry("turret/distance", distance))
         self.nt_pub.publish(self.make_entry("turret/heading", heading))

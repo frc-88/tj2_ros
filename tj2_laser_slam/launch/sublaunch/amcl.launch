@@ -3,6 +3,7 @@
     <node pkg="amcl" type="amcl" name="amcl" output="screen">
         <rosparam file="$(find tj2_laser_slam)/config/amcl.yaml" command="load"/>
         <remap from="scan" to="/laser/scan"/>
+        <remap from="map" to="/map"/>
     </node>
     <node name="map_server" pkg="map_server" type="map_server" output="screen" args="$(arg map_path)"/>
 </launch>
