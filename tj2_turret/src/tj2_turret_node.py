@@ -43,9 +43,9 @@ class TJ2Turret(object):
         self.turret_frame = rospy.get_param("~turret", "turret_tilt_link")
         self.target_waypoint = rospy.get_param("~target_waypoint", "center")
 
-        self.x_std_threshold = rospy.get_param("~x_std_threshold", 1.0)
-        self.y_std_threshold = rospy.get_param("~y_std_threshold", 1.0)
-        self.theta_std_threshold = rospy.get_param("~theta_std_threshold", math.radians(45.0))
+        self.x_cov_threshold = rospy.get_param("~x_cov_threshold", 1.0)
+        self.y_cov_threshold = rospy.get_param("~y_cov_threshold", 1.0)
+        self.theta_cov_threshold = rospy.get_param("~theta_cov_threshold", math.radians(45.0))
 
         self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
         self.enable_shot_probability = rospy.get_param("~enable_shot_probability", True)
@@ -324,16 +324,16 @@ class TJ2Turret(object):
             rospy.logwarn_throttle(1.0, "Invalid AMCL pose! %s" % str(amcl_pose))
             return False
 
-        x_std = math.sqrt(amcl_pose.pose.covariance[0])
-        y_std = math.sqrt(amcl_pose.pose.covariance[7])
-        theta_std = math.sqrt(amcl_pose.pose.covariance[35])
+        x_cov = amcl_pose.pose.covariance[0]
+        y_cov = amcl_pose.pose.covariance[7]
+        theta_cov = amcl_pose.pose.covariance[35]
 
-        if (x_std < self.x_std_threshold and 
-                y_std < self.y_std_threshold and 
-                theta_std < self.theta_std_threshold):
+        if (x_cov < self.x_cov_threshold and 
+                y_cov < self.y_cov_threshold and 
+                theta_cov < self.theta_cov_threshold):
             return True
         else:
-            rospy.logwarn_throttle(1.0, "No valid turret target. stddev. x=%0.3f, y=%0.3f, theta=%0.3f" % (x_std, y_std, theta_std))
+            rospy.logwarn_throttle(1.0, "No valid turret target. stddev. x=%0.3f, y=%0.3f, theta=%0.3f" % (x_cov, y_cov, theta_cov))
             return False
     
     def make_entry(self, path, value):
