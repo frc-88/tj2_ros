@@ -39,3 +39,12 @@ def load_waypoints(map_name):
         waypoints[name] = pose
     return waypoints
 
+
+def save_waypoints(waypoints, path):
+    waypoints_config = {}
+    for name, pose in waypoints.items():
+        waypoints_config[name] = pose.to_list()
+
+    with open(path, 'w') as file:
+        yaml.dump(waypoints_config, file)
+    print("Wrote new waypoints to %s" % path)
