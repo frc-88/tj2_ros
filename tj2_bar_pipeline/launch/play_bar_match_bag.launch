@@ -4,7 +4,7 @@
     <arg name="bag_name" default="some.bag"/>
     <arg name="bag_dir" default="$(find tj2_match_watcher)/bags"/>
     <arg name="start_time" default="0"/>
-    <node name="match_bag" pkg="rosbag" type="play" output="screen" args="$(arg bag_dir)/$(arg bag_name) --clock --pause -s $(arg start_time)"/>
+    <node name="match_bag" pkg="rosbag" type="play" output="screen" args="$(arg bag_dir)/$(arg bag_name) --clock --loop --pause -s $(arg start_time)"/>
     <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
     
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
@@ -25,8 +25,10 @@
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
     </include>
 
-    <node pkg="tf" type="static_transform_publisher" name="depth_to_camera" args="0 0 0  1 0 0 0 camera_link camera_depth_optical_frame 100" />
-    <node pkg="tf" type="static_transform_publisher" name="color_to_camera" args="0 0 0  1 0 0 0 camera_link camera_color_optical_frame 100" />
+    <node pkg="tf" type="static_transform_publisher" name="optical_depth_to_depth" args="0.0 0.0 0.0  -0.500 0.500 -0.500 0.500 camera_depth_frame camera_depth_optical_frame 33" />
+    <node pkg="tf" type="static_transform_publisher" name="optical_color_to_color" args="0.0 0.0 0.0  -0.500 0.500 -0.500 0.500 camera_color_frame camera_color_optical_frame 33" />
+    <node pkg="tf" type="static_transform_publisher" name="depth_to_camera" args="0 0 0  0 0 0 1 camera_link camera_depth_frame 100" />
+    <node pkg="tf" type="static_transform_publisher" name="color_to_camera" args="0 0 0  0 0 0 1 camera_link camera_color_frame 100" />
 
     <include file="$(find tj2_bar_pipeline)/launch/tj2_bar_pipeline_py.launch"/>
 </launch>
