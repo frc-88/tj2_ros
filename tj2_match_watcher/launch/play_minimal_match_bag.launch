@@ -21,7 +21,7 @@
         </node>
     </group>
 
-    <arg name="map_name" default="rapid-react-2022-02-19T07-55-53--407688-edited"/>
+    <arg name="map_name" default="rapid-react-2022"/>
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="localize"/>
         <arg name="map_name" value="$(arg map_name)"/>

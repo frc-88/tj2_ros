@@ -79,6 +79,8 @@ def main():
         grid_pt2 = ogm.get_costmap_x_y(x1, y1)
 
         cv2.line(ogm.grid_data, grid_pt1, grid_pt2, (100,), int(args.line))
+    
+    ogm.grid_data = np.flipud(ogm.grid_data)
 
     show_image = ogm.get_image()
 
