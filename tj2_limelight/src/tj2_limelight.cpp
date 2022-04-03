@@ -12,7 +12,7 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~video_url", _video_url, "");
     ros::param::param<string>("~camera_info_url", _camera_info_url, "");
     ros::param::param<string>("~frame_id", _frame_id, "camera_link");
-    ros::param::param<string>("~base_frame_id", _base_frame, "turret_tilt_link");
+    ros::param::param<string>("~base_frame_id", _base_frame, "turret_link");
     ros::param::param<double>("~max_frame_rate", _max_frame_rate, 30.0);
     ros::param::param<bool>("~publish_video", _publish_video, true);
     ros::param::param<double>("~field_vision_target_height_m", _field_vision_target_height, 0.0);
@@ -85,6 +85,8 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
     if (_publish_video) {
         _watcher_thread = new boost::thread(&TJ2Limelight::watchVideoCapture, this);
     }
+
+    ROS_INFO("tj2_limelight init complete");
 }
 
 void TJ2Limelight::watchVideoCapture()
@@ -186,6 +188,10 @@ int TJ2Limelight::run()
     ros::Rate loop(_max_frame_rate);
     while (ros::ok())
     {
+        publish_limelight_targets();
+        ros::spinOnce();
+        loop.sleep();
+
         if (_publish_video) {
             if (_video_capture.isOpened())
             {
@@ -201,18 +207,12 @@ int TJ2Limelight::run()
 
                 _out_msg.toImageMsg(_ros_img);
                 _camera_pub.publish(_ros_img, _camera_info, _last_publish_time);
-
-
-                ros::spinOnce();
             }
             else
             {
                 reopenCapture();
             }
         }
-        publish_limelight_targets();
-        ros::spinOnce();
-        loop.sleep();
     }
     return 0;
 }

@@ -7,7 +7,7 @@
 ## Robot Configuration Parameters ##
 
 # Maximum translational acceleration of the robot in meters/sec^2
-acc_lim_x: 0.75 # 4.0
+acc_lim_x: 2.0 # 4.0
 
 # Maximum angular acceleration of the robot in radians/sec^2
 acc_lim_theta: 3.0 # 12.0
