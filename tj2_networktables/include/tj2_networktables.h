@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <fstream>
+#include <iostream>
 #include <math.h>
 
 #include <boost/array.hpp>
@@ -31,6 +34,8 @@
 #include "std_msgs/String.h"
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include "geometry_msgs/Pose.h"
+#include "vision_msgs/Detection3DArray.h"
 
 #include "tj2_waypoints/FollowPathGoal.h"
 #include "tj2_waypoints/FollowPathAction.h"
@@ -39,6 +44,7 @@
 #include "tj2_waypoints/WaypointArray.h"
 
 #include "tj2_networktables/OdomReset.h"
+#include "tj2_networktables/NTEntry.h"
 
 #include "networktables/EntryListenerFlags.h"
 
@@ -85,6 +91,7 @@ private:
     string _imu_frame;
 
     double _cmd_vel_timeout_param;
+    double _odom_timeout_param;
     double _min_linear_cmd;
     double _min_angular_z_cmd;
     double _zero_epsilon;
@@ -99,6 +106,8 @@ private:
     std::vector<double> _imu_orientation_covariance;
     std::vector<double> _imu_angular_velocity_covariance;
     std::vector<double> _imu_linear_acceleration_covariance;
+
+    string _classes_path;
 
     // NT entries
     NT_Inst _nt;
@@ -181,10 +190,15 @@ private:
     NT_Entry _cmd_vel_t_entry;
     NT_Entry _cmd_vel_update_entry;
 
+    // hood entries
+    NT_Entry _hood_state_entry;
+    NT_Entry _hood_update_entry;
+
     // Members
     ros::Timer _ping_timer;
     ros::Duration _cmd_vel_timeout;
     ros::Timer _joint_timer;
+    ros::Duration _odom_timeout;
 
     ros::Time _prev_twist_timestamp;
     double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
@@ -193,7 +207,7 @@ private:
     actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction> *_waypoints_action_client;
     GoalStatus _currentGoalStatus;
     GoalStatus _prevPollStatus;
-
+    std::vector<std::string> _class_names;
 
     // Messages
     nav_msgs::Odometry _odom_msg;
@@ -208,9 +222,13 @@ private:
     vector<ros::Publisher>* _raw_joint_pubs;
     ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
     ros::Publisher _pose_estimate_pub;
+    ros::Publisher _hood_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
+    ros::Subscriber _nt_passthrough_sub;
+    ros::Subscriber _waypoints_sub;
+    ros::Subscriber _detections_sub;
     tf::TransformListener _tf_listener;
 
     // Service Servers
@@ -224,6 +242,9 @@ private:
 
     // Subscription callbacks
     void twist_callback(const geometry_msgs::TwistConstPtr& msg);
+    void nt_passthrough_callback(const tj2_networktables::NTEntryConstPtr& msg);
+    void waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg);
+    void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
 
     // Service callbacks
     bool odom_reset_callback(tj2_networktables::OdomReset::Request &req, tj2_networktables::OdomReset::Response &resp);
@@ -240,6 +261,7 @@ private:
     void exec_waypoint_plan_callback(const nt::EntryNotification& event);
     void reset_waypoint_plan_callback(const nt::EntryNotification& event);
     void cancel_waypoint_plan_callback(const nt::EntryNotification& event);
+    void hood_state_callback(const nt::EntryNotification& event);
 
     // Timer callbacks
     void ping_timer_callback(const ros::TimerEvent& event);
@@ -254,6 +276,9 @@ private:
     void add_joint_pub(string name);
     double get_time();
     vector<double> get_double_list_param(string name, size_t length);
+    string get_label(int obj_id);
+    int get_index(int obj_id);
+    std::vector<std::string> load_label_names(const string& path);
 
     // Waypoint control
     void set_goal_status(GoalStatus status);

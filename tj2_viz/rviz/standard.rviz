@@ -6,16 +6,16 @@ Panels:
       Expanded:
         - /Global Options1
         - /Grid1
-        - /TF1/Frames1
+        - /TF1
         - /TF1/Tree1
-        - /Map1
-        - /Waypoints1
-        - /RealSense1
         - /RealSense1/Visibility1
         - /DepthCloud1/Auto Size1
-        - /Pursuit Local Plan1
+        - /MarkerArray1
+        - /RealSense Image1
+        - /Hood Down Map1
+        - /Hood Up Map1
       Splitter Ratio: 0.6061684489250183
-    Tree Height: 278
+    Tree Height: 1550
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -66,28 +66,6 @@ Visualization Manager:
       Frames:
         All Enabled: false
         base_link:
-          Value: true
-        camera_accel_frame:
-          Value: true
-        camera_accel_optical_frame:
-          Value: true
-        camera_aligned_depth_to_color_frame:
-          Value: true
-        camera_color_frame:
-          Value: true
-        camera_color_optical_frame:
-          Value: true
-        camera_depth_frame:
-          Value: true
-        camera_depth_optical_frame:
-          Value: true
-        camera_gyro_frame:
-          Value: true
-        camera_gyro_optical_frame:
-          Value: true
-        camera_infra_frame:
-          Value: true
-        camera_infra_optical_frame:
           Value: true
         camera_link:
           Value: true
@@ -150,23 +128,7 @@ Visualization Manager:
               camera_tilt_base_link:
                 camera_tilt_link:
                   camera_link:
-                    camera_accel_frame:
-                      camera_accel_optical_frame:
-                        {}
-                    camera_aligned_depth_to_color_frame:
-                      camera_color_optical_frame:
-                        {}
-                    camera_color_frame:
-                      {}
-                    camera_depth_frame:
-                      camera_depth_optical_frame:
-                        {}
-                    camera_gyro_frame:
-                      camera_gyro_optical_frame:
-                        {}
-                    camera_infra_frame:
-                      camera_infra_optical_frame:
-                        {}
+                    {}
               dextra_laser_link:
                 {}
               intake_tilt_link:
@@ -343,14 +305,7 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        poscenter: true
-        posstart2_red: true
-        posstart_blue: true
-        posstart_red: true
-        textcenter: true
-        textstart2_red: true
-        textstart_blue: true
-        textstart_red: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -371,15 +326,15 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Camera
-      Enabled: true
+      Enabled: false
       Image Rendering: background and overlay
-      Image Topic: /camera/color_decimate/image_raw
+      Image Topic: /camera/color/image_raw
       Name: RealSense
       Overlay Alpha: 0.5
       Queue Size: 2
-      Transport Hint: compressed
+      Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
       Visibility:
         AMCL Pose: true
         Bar Markers: true
@@ -389,6 +344,8 @@ Visualization Manager:
         Global Costmap: false
         Global Plan: true
         Grid: true
+        Hood Down Map: true
+        Hood Up Map: true
         LaserScan: true
         Local Costmap: false
         Local Plan: true
@@ -397,11 +354,12 @@ Visualization Manager:
         Move Base Goal: true
         Move Base Waypoints: true
         Object Marker: true
+        Pose: true
         PoseArray: true
-        Power Cell Markers: true
         Pursuit Goal: true
         Pursuit Local Plan: true
         RealSense Depth: true
+        RealSense Image: true
         RobotModel: false
         TF: false
         Value: true
@@ -464,17 +422,6 @@ Visualization Manager:
       Enabled: true
       Marker Topic: /tj2/cargo/markers
       Name: Cargo Markers
-      Namespaces:
-        sphere_cargo_blue: true
-        sphere_cargo_red: true
-        text_sphere_cargo_blue: true
-        text_sphere_cargo_red: true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /tj2/powercell/markers
-      Name: Power Cell Markers
       Namespaces:
         {}
       Queue Size: 100
@@ -617,7 +564,7 @@ Visualization Manager:
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
       Topic: /amcl_pose
-      Unreliable: false
+      Unreliable: true
       Value: true
     - Alpha: 1
       Auto Size:
@@ -655,14 +602,6 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /dodobot/markers
-      Name: MarkerArray
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /tj2/bar_markers
@@ -720,6 +659,54 @@ Visualization Manager:
       Topic: /pursuit/pursuit_move_base/DWAPlannerROS/local_plan
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /tj2/turret_target
+      Unreliable: false
+      Value: true
+    - Class: rviz/Image
+      Enabled: false
+      Image Topic: /camera/color/image_raw
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: RealSense Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: compressed
+      Unreliable: false
+      Value: false
+    - Alpha: 0.5
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: true
+      Enabled: true
+      Name: Hood Down Map
+      Topic: /tj2/shot_probability_hood_down_map
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
+    - Alpha: 0.5
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: true
+      Enabled: true
+      Name: Hood Up Map
+      Topic: /tj2/shot_probability_hood_up_map
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -748,7 +735,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 19.877450942993164
+      Distance: 21.6021728515625
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -756,26 +743,28 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 5.565986156463623
-        Y: 1.4586389064788818
-        Z: 0.14750507473945618
+        X: 0
+        Y: 0
+        Z: 0
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4697962999343872
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 2.1885733604431152
+      Yaw: 1.6153974533081055
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1016
+  Height: 2086
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000015600000330fc0200000014fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000001dd000000c900fffffffb00000012005200650061006c00530065006e0073006501000002200000014d0000001600fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000000000000000fb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000000000010000019e00000330fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc0000003d00000330000000a400fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000010000fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073800000068fc0100000002fb0000000800540069006d0065010000000000000738000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000004380000033000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000002440000070efc0200000015fb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007301000000720000070e0000018a00fffffffb0000001e005200650061006c00530065006e0073006500200049006d0061006700650000000270000000fd0000002a00fffffffb00000012005200650061006c00530065006e007300650000000280000000ed0000002a00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000fb0000000a0049006d006100670065010000052a000002560000000000000000000000010000019e0000070efc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc000000720000070e0000013e00fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000019e00fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000f0000000068fc0100000002fb0000000800540069006d0065010000000000000f000000058600fffffffb0000000800540069006d0065010000000000000450000000000000000000000b060000070e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   RealSense:
+    collapsed: false
+  RealSense Image:
     collapsed: false
   Selection:
     collapsed: false
@@ -785,6 +774,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1848
-  X: 72
-  Y: 27
+  Width: 3840
+  X: 3840
+  Y: 0

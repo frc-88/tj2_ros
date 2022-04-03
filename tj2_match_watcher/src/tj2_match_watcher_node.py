@@ -1,11 +1,14 @@
 #!/usr/bin/python3
 import rospy
+import rospkg
 
 from std_srvs.srv import Empty, EmptyResponse
 from std_msgs.msg import Float64
 from std_msgs.msg import Bool
 
 from tj2_match_watcher.srv import TriggerBag
+
+from tj2_tools.launch_manager import LaunchManager
 
 PREGAME = -1
 AUTONOMOUS = 0
@@ -33,28 +36,34 @@ class Tj2MatchWatcher(object):
             # disable_signals=True
             # log_level=rospy.DEBUG
         )
-        rospy.loginfo("%s init complete" % self.node_name)
+        rospy.on_shutdown(self.shutdown_hook)
 
         self.autonomous_period_s = 15.0
         self.timeout_period_s = 1.5
         self.teleop_period_s = 135.0
         self.end_game_period_s = 30.0
-        self.full_match_s = self.autonomous_period_s + self.teleop_period_s + self.end_game_period_s + self.timeout_period_s
+        self.full_match_s = self.autonomous_period_s + self.teleop_period_s + self.timeout_period_s
 
-        self.match_definitely_over_duration = rospy.Duration(self.full_match_s + 30.0)
+        self.match_definitely_over_duration = rospy.Duration(self.full_match_s + 45.0)
 
         self.game_start_time = rospy.Time(0)
 
         self.match_time = -1.0
         self.is_autonomous = False
 
-        self.start_bag_srv = self.make_service_client("/rosbag_controlled_recording/start", TriggerBag, wait=True)
-        self.resume_bag_srv = self.make_service_client("/rosbag_controlled_recording/resume", Empty, wait=True)
-        self.pause_bag_srv = self.make_service_client("/rosbag_controlled_recording/pause", Empty, wait=True)
-        self.stop_bag_srv = self.make_service_client("/rosbag_controlled_recording/stop", TriggerBag, wait=True)
+        # self.start_bag = self.make_service_client("/rosbag_controlled_recording/start", TriggerBag, wait=True)
+        # self.resume_bag = self.make_service_client("/rosbag_controlled_recording/resume", Empty, wait=True)
+        # self.stop_bag = self.make_service_client("/rosbag_controlled_recording/stop", TriggerBag, wait=True)
+
+        self.rospack = rospkg.RosPack()
+        self.package_dir = self.rospack.get_path(self.node_name)
+        self.default_launches_dir = self.package_dir + "/launch"
+
+        self.bag_launcher = LaunchManager(self.default_launches_dir + "/record_match.launch")
 
         self.match_time_sub = rospy.Subscriber("match_time", Float64, self.match_time_callback, queue_size=10)
         self.is_autonomous_sub = rospy.Subscriber("is_autonomous", Bool, self.is_autonomous_callback, queue_size=10)
+        rospy.loginfo("%s init complete" % self.node_name)
 
     def make_service_client(self, name, srv_type, timeout=None, wait=True):
         """
@@ -81,9 +90,20 @@ class Tj2MatchWatcher(object):
     
     def match_time_callback(self, msg):
         self.match_time = msg.data
+    
+    def start_bag(self):
+        rospy.loginfo("Starting match bag")
+
+    def resume_bag(self):
+        rospy.loginfo("Resuming match bag")
+        self.bag_launcher.start()
+
+    def stop_bag(self):
+        rospy.loginfo("Stopping match bag")
+        self.bag_launcher.stop()
 
     def run(self):
-        self.start_bag_srv()
+        self.start_bag()
         self.is_autonomous = False
         clock = rospy.Rate(30)
         while not rospy.is_shutdown():
@@ -92,17 +112,20 @@ class Tj2MatchWatcher(object):
                 if self.game_start_time <= rospy.Time(0):
                     self.game_start_time = rospy.Time.now()
                     rospy.loginfo("Detected autonomous mode. Starting recording")
-                    self.resume_bag_srv()
+                    self.resume_bag()
 
             if self.game_start_time > rospy.Time(0):
                 match_duration = rospy.Time.now() - self.game_start_time
                 rospy.loginfo_throttle(0.25, "Match timer: %s. Match start time: %s" % (match_duration.to_sec(), self.game_start_time.to_sec()))
                 if match_duration > self.match_definitely_over_duration:
                     rospy.loginfo("End of the match timer expired. Stopping bag")
-                    self.stop_bag_srv()
+                    self.stop_bag()
                     self.game_start_time = rospy.Time(0)
             clock.sleep()
 
+    def shutdown_hook(self):
+        rospy.loginfo("Shutdown called. Stopping bag")
+        self.stop_bag()
 
 
 if __name__ == "__main__":
