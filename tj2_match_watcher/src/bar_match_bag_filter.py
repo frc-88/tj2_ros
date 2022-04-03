@@ -2,6 +2,7 @@
 
 import os
 import tqdm
+import math
 import rospy
 import rospkg
 from rosbag import Bag
@@ -52,6 +53,21 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
                     continue
                 if topic.startswith("/camera"):
                     if not topic.startswith("/camera/depth"):
+                        continue
+                if "climber_joint" in topic:
+                    msg.data = -msg.data + math.radians(90)
+                if topic == "/tf":
+                    should_skip = True
+                    for transform in msg.transforms:
+                        parent_frame = transform.header.frame_id.lstrip('/')
+                        child_frame = transform.child_frame_id.lstrip('/')
+                        # print("%s -> %s" % (parent_frame, child_frame))
+                        if parent_frame in ("map", "odom"):
+                            should_skip = False
+                        if child_frame in ("sinistra_laser_link", "dextra_laser_link", "camera_link"):
+                            should_skip = False
+
+                    if should_skip:
                         continue
 
                 bag_out.write(topic, msg, timestamp, connection_header=conn_header)

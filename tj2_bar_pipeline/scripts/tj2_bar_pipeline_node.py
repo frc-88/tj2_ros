@@ -154,8 +154,8 @@ class TJ2BarPipeline(object):
 
         lines = self.filter_lines(normalized, lines)
 
-        print("lines: ", lines)
-        print('hough image shape: ', hough_debug_image.shape)
+        # print("lines: ", lines)
+        # print('hough image shape: ', hough_debug_image.shape)
 
         lines, clouds, debug_image = self.hough_line_clouds(depth_bounded, lines, hough_debug_image, debug_image)
         bars = self.bars_from_cloud(lines, clouds)
@@ -192,12 +192,12 @@ class TJ2BarPipeline(object):
             left = min(t_slope[2], b_slope[2])
             right = max(t_slope[3], b_slope[3])
             xs = np.array(list(range(left, right)))
-            ys = np.clip(k * xs + b + 0.5, 0, h - 1).astype(np.int)
-            xs = (xs + 0.5).astype(np.int)
+            ys = np.clip(k * xs + b + 0.5, 0, h - 1).astype(np.int32)
+            xs = (xs + 0.5).astype(np.int32)
             grays = normalized[ys, xs]
             effects = grays > 0
             ratio = sum(effects) / len(effects)
-            print('r: ', ratio)
+            # print('r: ', ratio)
             if ratio > th:
                 # normalized[ys, xs] = 255
                 ly, ry = int(k * left + b), int(k * right + b)
@@ -241,6 +241,7 @@ class TJ2BarPipeline(object):
 
             marker.scale.x = 0.025  # line width
             marker.color = ColorRGBA(0.3, 0.3, 1.0, 1.0)
+            # marker.lifetime = rospy.Duration(0.15)
             marker.lifetime = rospy.Duration(0.15)
 
             for point in points:
@@ -477,13 +478,11 @@ class TJ2BarPipeline(object):
                 # y2 = edges.shape[0] - y2
                 if line is not None:
                     result.append((x1, y1, x2, y2))
-                '''
                 if debug_image is not None:
                     if line is not None:
                         cv2.line(debug_image, (x1, y1), (x2, y2), (0, 255, 0), 3)
                     else:
                         cv2.line(debug_image, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                '''
         return result, debug_image
 
 
