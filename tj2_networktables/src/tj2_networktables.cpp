@@ -12,6 +12,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~map_frame", _map_frame, "map");
     ros::param::param<string>("~imu_frame", _imu_frame, "imu");
 
+    ros::param::param<double>("~odom_timeout_warning", _odom_timeout_param, 0.1);
 
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
     ros::param::param<double>("~min_linear_cmd", _min_linear_cmd, 0.05);
@@ -23,7 +24,12 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~pose_estimate_theta_std_deg", _pose_estimate_theta_std_deg, 15.0);
     ros::param::param<string>("~pose_estimate_frame_id", _pose_estimate_frame_id, _map_frame);
 
+    ros::param::param<std::string>("~classes_path", _classes_path, "coco.names");
+
+    _class_names = load_label_names(_classes_path);
+
     _cmd_vel_timeout = ros::Duration(_cmd_vel_timeout_param);
+    _odom_timeout = ros::Duration(_odom_timeout_param);
 
     string key;
     if (!ros::param::search("joint_names", key)) {
@@ -77,9 +83,19 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
 
     _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 1);
 
+    _hood_pub = nh.advertise<std_msgs::Bool>("hood", 1);
+
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
+    _nt_passthrough_sub = nh.subscribe<tj2_networktables::NTEntry>("nt_passthrough", 50, &TJ2NetworkTables::nt_passthrough_callback, this);
+    _waypoints_sub = nh.subscribe<tj2_waypoints::WaypointArray>("waypoints", 50, &TJ2NetworkTables::waypoints_callback, this);
+    if (_class_names.empty()) {
+        ROS_ERROR("Error loading class names! Not broadcasting detections");
+    }
+    else {
+        _detections_sub = nh.subscribe<vision_msgs::Detection3DArray>("detections", 50, &TJ2NetworkTables::detections_callback, this);
+    }
 
     _prev_twist_timestamp = ros::Time(0);
     _twist_cmd_vx = 0.0;
@@ -171,6 +187,10 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::AddEntryListener(_reset_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::reset_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
     nt::AddEntryListener(_cancel_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::cancel_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
+    _hood_state_entry = nt::GetEntry(_nt, _base_key + "hood/state");
+    _hood_update_entry = nt::GetEntry(_nt, _base_key + "hood/update");
+    nt::AddEntryListener(_hood_update_entry, boost::bind(&TJ2NetworkTables::hood_state_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
     ROS_INFO("tj2_networktables init complete");
 }
 
@@ -216,9 +236,9 @@ void TJ2NetworkTables::publish_goal_status()
         ROS_INFO("Current goal status changed to: %d", _currentGoalStatus);
         _prevPollStatus = currentPollStatus;
         _currentGoalStatus = currentPollStatus;
+        nt::SetEntryValue(_goal_status_entry, nt::Value::MakeDouble((double)_currentGoalStatus));
+        nt::SetEntryValue(_goal_status_update_entry, nt::Value::MakeDouble(get_time()));
     }
-    nt::SetEntryValue(_goal_status_entry, nt::Value::MakeDouble((double)_currentGoalStatus));
-    nt::SetEntryValue(_goal_status_update_entry, nt::Value::MakeDouble(get_time()));
 }
 
 void TJ2NetworkTables::publish_robot_global_pose()
@@ -288,6 +308,84 @@ void TJ2NetworkTables::twist_callback(const geometry_msgs::TwistConstPtr& msg)
     _twist_cmd_vy = vy;
     _twist_cmd_vt = vt;
 }
+
+void TJ2NetworkTables::nt_passthrough_callback(const tj2_networktables::NTEntryConstPtr& msg)
+{
+    NT_Entry entry = nt::GetEntry(_nt, _base_key + msg->path);
+    nt::SetEntryValue(entry, nt::Value::MakeDouble(msg->value));
+}
+
+void TJ2NetworkTables::waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg)
+{
+    for (size_t index = 0; index < msg->waypoints.size(); index++)
+    {
+        string name = msg->waypoints.at(index).name;
+        NT_Entry x_entry = nt::GetEntry(_nt, _base_key + "waypoints/" + name + "/x");
+        NT_Entry y_entry = nt::GetEntry(_nt, _base_key + "waypoints/" + name + "/y");
+        NT_Entry theta_entry = nt::GetEntry(_nt, _base_key + "waypoints/" + name + "/theta");
+
+        geometry_msgs::Pose pose = msg->waypoints.at(index).pose;
+        double x = pose.position.x;
+        double y = pose.position.y;
+
+        tf::Quaternion q(
+            pose.orientation.x,
+            pose.orientation.y,
+            pose.orientation.z,
+            pose.orientation.w);
+        tf::Matrix3x3 m(q);
+        double roll, pitch, yaw;
+        m.getRPY(roll, pitch, yaw);
+        
+        nt::SetEntryValue(x_entry, nt::Value::MakeDouble(x));
+        nt::SetEntryValue(y_entry, nt::Value::MakeDouble(y));
+        nt::SetEntryValue(theta_entry, nt::Value::MakeDouble(yaw));
+    }
+}
+
+void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg)
+{
+    if (_class_names.empty()) {
+        ROS_ERROR("No class names loaded! Not broadcasting detections");
+        return;
+    }
+
+    for (size_t name_index = 0; name_index < _class_names.size(); name_index++) {
+        double min_dist = NAN;
+        string label = _class_names.at(name_index);
+        geometry_msgs::Pose nearest_pose;
+        int num_detections = 0;
+        for (size_t index = 0; index < msg->detections.size(); index++) {
+            vision_msgs::ObjectHypothesisWithPose hyp = msg->detections.at(index).results[0];
+            string name = get_label(hyp.id);
+            if (name == label) {
+                num_detections++;
+                geometry_msgs::Pose pose = hyp.pose.pose;
+                double dist = sqrt(pose.position.x * pose.position.x + pose.position.y * pose.position.y + pose.position.z * pose.position.z);
+                if (!std::isfinite(min_dist) || dist < min_dist) {
+                    min_dist = dist;
+                    nearest_pose = hyp.pose.pose;
+                }
+            }
+        }
+        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/count"), nt::Value::MakeDouble(num_detections));
+        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/update"), nt::Value::MakeDouble(get_time()));
+        
+        if (!std::isfinite(min_dist)) {
+            continue;
+        }
+
+        double nearest_x = nearest_pose.position.x;
+        double nearest_y = nearest_pose.position.y;
+        double nearest_z = nearest_pose.position.z;
+
+        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/x"), nt::Value::MakeDouble(nearest_x));
+        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/y"), nt::Value::MakeDouble(nearest_y));
+        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/z"), nt::Value::MakeDouble(nearest_z));
+    }
+}
+
+
 
 // ---
 // Service callbacks
@@ -537,6 +635,13 @@ void TJ2NetworkTables::cancel_waypoint_plan_callback(const nt::EntryNotification
     cancel_waypoint_goal();
 }
 
+void TJ2NetworkTables::hood_state_callback(const nt::EntryNotification& event)
+{
+    bool hood_state = get_boolean(_hood_state_entry, false);
+    std_msgs::Bool msg;
+    msg.data = hood_state;
+    _hood_pub.publish(msg);
+}
 
 // ---
 // Timer callbacks
@@ -624,6 +729,40 @@ tj2_waypoints::Waypoint TJ2NetworkTables::make_waypoint_from_nt(size_t index)
     return waypoint;
 }
 
+string TJ2NetworkTables::get_label(int obj_id)
+{
+    size_t index = (size_t)(obj_id & 0xffff);
+    if (index < _class_names.size()) {
+        return _class_names.at(index);
+    }
+    else {
+        return "";
+    }
+}
+
+int TJ2NetworkTables::get_index(int obj_id) {
+    return obj_id >> 16;
+}
+
+
+std::vector<std::string> TJ2NetworkTables::load_label_names(const std::string& path) {
+    // load class names
+    std::vector<std::string> class_names;
+    std::ifstream infile(path);
+    if (infile.is_open()) {
+        std::string line;
+        while (getline (infile,line)) {
+            class_names.emplace_back(line);
+        }
+        infile.close();
+    }
+    else {
+        std::cerr << "Error loading the class names!\n";
+    }
+
+    return class_names;
+}
+
 
 // ---
 // Waypoint control
@@ -700,6 +839,10 @@ void TJ2NetworkTables::loop()
     publish_cmd_vel();
     publish_goal_status();
     publish_robot_global_pose();
+    ros::Duration odom_duration = ros::Time::now() - _odom_msg.header.stamp;
+    if (odom_duration > _odom_timeout) {
+        ROS_WARN_THROTTLE(1.0, "No odom received for %f seconds", odom_duration.toSec());
+    }
 }
 
 int TJ2NetworkTables::run()

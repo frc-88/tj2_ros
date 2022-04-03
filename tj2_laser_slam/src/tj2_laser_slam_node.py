@@ -84,6 +84,8 @@ class TJ2LaserSlam:
         # rospy.Subscriber(self.map_topic, rospy.AnyMsg, self.map_rate.callback_hz, callback_args=self.map_topic, queue_size=1)
 
         # signal.signal(signal.SIGINT, lambda sig, frame: self.signal_handler(sig, frame))
+
+        rospy.loginfo("%s init complete" % self.node_name)
     
     def get_publish_rate(self, rate_obj, topic):
         result = rate_obj.get_hz(topic)

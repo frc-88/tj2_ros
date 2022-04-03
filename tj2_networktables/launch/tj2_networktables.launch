@@ -19,6 +19,8 @@
             <param name="nt_port" value="5800"/>
             <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
             <param name="update_interval" value="0.033"/>
+            <remap from="detections" to="cargo/detections"/>
+            <param name="classes_path" value="$(find tj2_yolo)/models/cargo_2022.names"/>
         </node>
     </group>
 
