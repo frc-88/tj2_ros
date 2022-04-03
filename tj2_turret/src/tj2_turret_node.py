@@ -31,6 +31,10 @@ from tj2_tools.transforms import lookup_transform
 from tj2_tools.robot_state import Pose2d, Velocity
 
 
+def meters_to_in(meters):
+    return meters * 39.37
+
+
 class TJ2Turret(object):
     def __init__(self):
         self.node_name = "tj2_turret"
@@ -53,7 +57,7 @@ class TJ2Turret(object):
         self.enable_limelight_fine_tuning = rospy.get_param("~enable_limelight_fine_tuning", True)
 
         # a constant to fix weird unknown turret issues
-        self.turret_cosmic_ray_compensation = math.radians(rospy.get_param("turret_cosmic_ray_compensation_degrees", 0.0))
+        self.turret_cosmic_ray_compensation = math.radians(rospy.get_param("~turret_cosmic_ray_compensation_degrees", 0.0))
 
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.csv")
         self.recorded_data_file_path = rospy.get_param("~recorded_data_file_path", "./recorded_data.csv")
@@ -95,9 +99,11 @@ class TJ2Turret(object):
         if self.enable_shot_probability:
             self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
             self.ogm_down = OccupancyGridManager.from_cost_file(self.probability_hood_down_map_path)
+            self.map_pub_timer = rospy.Timer(rospy.Duration(1.0), self.map_publish_callback)
         else:
             self.ogm_up = None
             self.ogm_down = None
+            self.map_pub_timer = None
         
         self.record_tof_srv = self.make_service("record_tof", RecordValue, self.record_tof)
         self.record_probability_srv = self.make_service("record_probability", RecordValue, self.record_probability)
@@ -111,7 +117,6 @@ class TJ2Turret(object):
         if not os.path.isfile(self.recorded_data_file_path):
             self.create_data_file(self.recorded_data_file_path)
 
-        self.map_pub_timer = rospy.Timer(rospy.Duration(1.0), self.map_publish_callback)
 
         rospy.loginfo("%s init complete" % self.node_name)
     
@@ -364,7 +369,9 @@ class TJ2Turret(object):
 
     def publish_turret(self, distance, heading, probability):
         self.nt_pub.publish(self.make_entry("turret/distance", distance))
+        self.nt_pub.publish(self.make_entry("turret/distance_in", meters_to_in(distance)))
         self.nt_pub.publish(self.make_entry("turret/heading", heading))
+        self.nt_pub.publish(self.make_entry("turret/heading_deg", math.degrees(heading)))
         self.nt_pub.publish(self.make_entry("turret/probability", probability))
         self.nt_pub.publish(self.make_entry("turret/update", rospy.Time.now().to_sec()))
 

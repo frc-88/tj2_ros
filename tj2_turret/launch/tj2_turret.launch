@@ -10,7 +10,10 @@
             <param name="enable_shot_correction" value="true"/>
             <param name="enable_shot_probability" value="false"/>
             <param name="enable_limelight_fine_tuning" value="false"/>
-            <param name="turret_cosmic_ray_compensation_degrees" value="0.0"/>
+            <param name="turret_cosmic_ray_compensation_degrees" value="5.0"/>
+            <param name="x_cov_threshold" value="25.0"/>
+            <param name="y_cov_threshold" value="25.0"/>
+            <param name="theta_cov_threshold" value="30.0"/>
         </node>
     </group>
 </launch>
