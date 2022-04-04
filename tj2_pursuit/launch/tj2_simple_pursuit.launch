@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2" >
+        <node pkg="tj2_pursuit" type="tj2_simple_pursuit_node.py" respawn="false" name="tj2_simple_pursuit" output="screen">
+            <remap from="detections" to="cargo/detections"/>
+            <param name="class_names_path" value="$(find tj2_yolo)/models/cargo_2022.names"/>
+
+            <param name="rotate_kP" value="1.0"/>
+            <param name="camera_tilt_frame" value="camera_tilt_link"/>
+        </node>
+    </group>
+</launch>

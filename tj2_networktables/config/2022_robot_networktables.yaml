@@ -10,9 +10,9 @@ min_linear_cmd: 0.05
 min_angular_z_cmd: 0.1
 zero_epsilon: 0.001
 
-pose_estimate_x_std: 0.5
-pose_estimate_y_std: 0.5
-pose_estimate_theta_std_deg: 15.0
+pose_estimate_x_std: 0.025
+pose_estimate_y_std: 0.025
+pose_estimate_theta_std_deg: 1.0
 
 odom_covariance: [
   5e-2, 0.0, 0.0, 0.0, 0.0, 0.0,
