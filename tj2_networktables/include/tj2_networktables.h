@@ -230,6 +230,7 @@ private:
     ros::Subscriber _waypoints_sub;
     ros::Subscriber _detections_sub;
     tf::TransformListener _tf_listener;
+    vector<ros::Subscriber>* _raw_joint_subs;
 
     // Service Servers
     ros::ServiceServer _odom_reset_srv;
@@ -245,6 +246,7 @@ private:
     void nt_passthrough_callback(const tj2_networktables::NTEntryConstPtr& msg);
     void waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg);
     void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
+    void joint_command_callback(const std_msgs::Float64ConstPtr& msg, string joint_name, int joint_index);
 
     // Service callbacks
     bool odom_reset_callback(tj2_networktables::OdomReset::Request &req, tj2_networktables::OdomReset::Response &resp);
@@ -273,7 +275,7 @@ private:
     string get_string(NT_Entry entry, string default_value = "");
 
     // Other helpers
-    void add_joint_pub(string name);
+    void add_joint(string name);
     double get_time();
     vector<double> get_double_list_param(string name, size_t length);
     string get_label(int obj_id);
