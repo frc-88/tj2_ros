@@ -27,10 +27,10 @@ obstacle_layer:
         marking: true
         clearing: true
         
-        obstacle_range: 6.0
-        raytrace_range: 6.0
+        obstacle_range: 4.0
+        raytrace_range: 4.0
         max_obstacle_height: 1.0
-        min_obstacle_height: 0.30
+        min_obstacle_height: 0.50
         inflation_radius: 0.01
         track_unknown_space: true
         combination_method: 1
