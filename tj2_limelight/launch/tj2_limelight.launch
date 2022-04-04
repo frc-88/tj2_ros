@@ -5,13 +5,16 @@
     
     <group ns="limelight">
         <node pkg="tj2_limelight" type="tj2_limelight" name="tj2_limelight" output="screen" respawn="true">
-            <param name="video_url" value="http://10.0.88.42:5802/" />
+            <param name="video_url" value="http://10.0.88.11:5802/" />
             <param name="nt_host" value="10.0.88.2" />
             <param name="camera_info_url" value="package://tj2_limelight/config/320x240.yaml" />
             <!-- <param name="camera_info_url" value="package://tj2_limelight/config/960x720.yaml" /> -->
             <param name="frame_id" value="limelight_optical_link" />
-            <param name="max_frame_rate" value="90.0" />
+            <param name="max_frame_rate" value="15.0" />
             <remap from="camera/image" to="color/image_raw" />
+            <param name="publish_video" value="false" />
+            <param name="field_vision_target_height_m" value="2.59" />
+            <param name="field_vision_target_distance_m" value="0.508" />
         </node>
 
         <node pkg="nodelet" type="nodelet" args="manager" name="$(arg post_processing_manager_name)" output="screen"/>

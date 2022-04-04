@@ -176,7 +176,7 @@ class GoToWaypointState(State):
     def get_nearest_object_distance(self, object_name):
         if len(object_name) == 0:
             return None
-        return 10000.0  # TODO: fill with detection results
+        return None  # TODO: fill with detection results
 
     def close_enough_to_goal(self):
         rospy.loginfo("Robot is close enough to goal: %s. Moving on" % self.distance_to_goal)

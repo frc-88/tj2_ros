@@ -69,15 +69,72 @@ class FilterState(State):
         self.stamp = msg.header.stamp.to_sec()
         return self
 
-    def distance(self, other=None):
-        if other is None:  # if other is None, assume you're getting distance from the origin
-            other = self.__class__()
+    def distance(self, other=None, states="xyz"):
+        # if other is None, assume you're getting distance from the origin
         if not isinstance(other, self.__class__):
             raise ValueError("Can't get distance from %s to %s" % (self.__class__, other.__class__))
-        dx = self.x - other.x
-        dy = self.y - other.y
-        dz = self.z - other.z
-        return math.sqrt(dx * dx + dy * dy + dz * dz)
+
+        dimensions = []
+        other_dims = []
+        for state in states:
+            if state == "x":
+                dimensions.append(float(self.x))
+                if other is not None:
+                    other_dims.append(float(other.x))
+            elif state == "y":
+                dimensions.append(float(self.y))
+                if other is not None:
+                    other_dims.append(float(other.y))
+            elif state == "z":
+                dimensions.append(float(self.z))
+                if other is not None:
+                    other_dims.append(float(other.z))
+
+        assert len(dimensions) <= 3, len(dimensions)
+        assert len(other_dims) <= 3, len(other_dims)
+        assert len(other_dims) == 0 or len(other_dims) == len(dimensions), len(other_dims)
+
+        if other is None:
+            square_sum = 0.0
+            for value in dimensions:
+                square_sum += value * value
+            return math.sqrt(square_sum)
+        else:
+            square_sum = 0.0
+            for index in range(len(dimensions)):
+                delta = dimensions[index] - other_dims[index]
+                square_sum += delta * delta
+            return math.sqrt(square_sum)
+
+    def heading(self, other=None, states="xy"):
+        if other is not None and not isinstance(other, self.__class__):
+            raise ValueError("Can't get heading from %s to %s" % (self.__class__, other.__class__))
+
+        dimensions = []
+        other_dims = []
+        for state in states:
+            if state == "x":
+                dimensions.append(float(self.x))
+                if other is not None:
+                    other_dims.append(float(other.x))
+            elif state == "y":
+                dimensions.append(float(self.y))
+                if other is not None:
+                    other_dims.append(float(other.y))
+            elif state == "z":
+                dimensions.append(float(self.z))
+                if other is not None:
+                    other_dims.append(float(other.z))
+
+        assert len(dimensions) == 2, len(dimensions)
+        assert len(other_dims) == 0 or len(other_dims) == 2, len(other_dims)
+
+        if other is None:
+            return math.atan2(dimensions[1], dimensions[0])
+        else:
+            d1 = dimensions[0] - other_dims[0]
+            d2 = dimensions[1] - other_dims[1]
+            return math.atan2(d2, d1)
 
     def velocity_magnitude(self, other=None):
         if other is None:  # if other is None, assume you're getting distance from the origin

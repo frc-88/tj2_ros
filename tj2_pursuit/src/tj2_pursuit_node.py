@@ -131,6 +131,7 @@ class Tj2Pursuit:
         rospy.loginfo("Pursuit received goal: %s" % str(goal))
         self.tracking_object_name = goal.object_name
         self.prev_pose_stamped = None
+        success = False
         while True:
             rate.sleep()
             with self.lock:
@@ -149,10 +150,12 @@ class Tj2Pursuit:
 
                 if self.pursue_object(goal.xy_tolerance):
                     self.pursue_object_server.set_succeeded()
+                    success = True
                     break
 
         self.should_search = False
         self.cancel_goal()
+        return PursueObjectResult(success)
 
     def obj_odom_callback(self, detections_msg, odom_msg):
         # if len(self.tracking_object_name) == 0:

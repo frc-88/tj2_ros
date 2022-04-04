@@ -11,9 +11,6 @@ from networktables import NetworkTables
 
 import pynmcli
 
-from tj2_limelight.msg import LimelightTarget
-from tj2_limelight.msg import LimelightTargetArray
-
 from tj2_waypoints.msg import WaypointArray
 
 from tj2_tools.launch_manager import TopicListener
@@ -71,9 +68,7 @@ class TJ2NetworkTables:
         self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
         self.watch_topics = rospy.get_param("~watch_topics", None)
         self.watch_nodes = rospy.get_param("~watch_nodes", None)
-        self.num_limelight_targets = rospy.get_param("~num_limelight_targets", 3)
-        self.limelight_frame_id = rospy.get_param("~limelight_frame_id", "limelight_link")
-        
+
         NetworkTables.initialize(server=self.nt_host)
         self.nt = NetworkTables.getTable("")
 
@@ -108,20 +103,9 @@ class TJ2NetworkTables:
                         "enable": True,
                         "status": True,
                     },
-                    "waypoints": {}
                 }
-            },
-            "limelight": {
-                "tv": 0.0,
             }
         }
-        for index in range(self.num_limelight_targets):
-            self.path_defaults["limelight"].update({
-                "tx%d" % index: 0.0,
-                "ty%d" % index: 0.0,
-                "thor%d" % index: 0.0,
-                "tvert%d" % index: 0.0,
-            })
         self.flat_path_defaults = flatten_paths(self.path_defaults)
         self.entries = {path: self.nt.getEntry(path) for path in self.flat_path_defaults.keys()}
 
@@ -130,17 +114,12 @@ class TJ2NetworkTables:
         self.bag_status_sub = rospy.Subscriber("bag_status", String, self.bag_status_callback, queue_size=10)
         self.bag_name_sub = rospy.Subscriber("bag_name", String, self.bag_name_callback, queue_size=10)
 
-        self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback, queue_size=10)
-
-        self.limelight_target_pub = rospy.Publisher("/limelight/targets", LimelightTargetArray, queue_size=10)
-
         self.topic_listeners = {}
         for topic in self.watch_topics:
             self.topic_listeners[topic] = TopicListener(topic, 0.0)
 
         # self.topic_timer = rospy.Timer(rospy.Duration(2.0), self.topic_poll_callback)
         self.node_timer = rospy.Timer(rospy.Duration(2.0), self.node_poll_callback)
-        self.limelight_timer = rospy.Timer(rospy.Duration(1.0 / 10.0), self.limelight_callback)
 
         rospy.loginfo("%s_py init complete" % self.node_name)
 
@@ -193,45 +172,15 @@ class TJ2NetworkTables:
 
         self.set_entry("ROS/status/all_nodes_ok", all_nodes_ok)
 
-    def limelight_callback(self, timer):
-        has_targets = self.get_entry("limelight/tv") == 1.0
-        if not has_targets:
-            rospy.loginfo_throttle(3.0, "Limelight has no targets")
-            return
-        msg = LimelightTargetArray()
-        msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = self.limelight_frame_id
-        for index in range(self.num_limelight_targets):
-            target_msg = LimelightTarget()
-            target_msg.header = msg.header
-            target_msg.tx = self.get_entry("limelight/tx%d" % index)
-            target_msg.ty = self.get_entry("limelight/ty%d" % index)
-            target_msg.thor = self.get_entry("limelight/thor%d" % index)
-            target_msg.tvert = self.get_entry("limelight/tvert%d" % index)
-            msg.targets.append(target_msg)
-        self.limelight_target_pub.publish(msg)
-
     def bag_status_callback(self, msg):
         self.set_entry("ROS/status/recording/status", msg.data)
 
     def bag_name_callback(self, msg):
         self.set_entry("ROS/status/recording/bag_name", msg.data)
 
-    def waypoints_callback(self, msg):
-        for waypoint in msg.waypoints:
-            name = waypoint.name
-            pose = waypoint.pose
-
-            pose_2d = State.from_ros_pose(pose)
-
-            self.set_entry("ROS/status/waypoints/%s/x" % name, pose_2d.x)
-            self.set_entry("ROS/status/waypoints/%s/y" % name, pose_2d.y)
-            self.set_entry("ROS/status/waypoints/%s/theta" % name, pose_2d.theta)
-
     def is_wifi_enabled(self):
         results = pynmcli.get_data(self.get_wifi().execute())
         return len(results) != 0
-        return False
 
     def disable_wifi(self):
         rospy.loginfo("Disabling wifi")

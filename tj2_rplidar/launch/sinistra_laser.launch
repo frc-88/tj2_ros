@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+    <group ns="sinistra_laser">
+        <include file="$(find tj2_rplidar)/launch/tj2_rplidar.launch">
+            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.4:1.0-port0"/>
+            <arg name="lidar_node_name" value="sinistra_rplidar"/>
+            <arg name="laser_frame_id" value="sinistra_laser_link"/>
+        </include>
+
+        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="sinistra_laser_filter">
+            <rosparam command="load" file="$(find tj2_rplidar)/config/sinistra_laser_filter.yaml" />
+        </node>
+    </group>
+</launch>

@@ -81,7 +81,7 @@ class TJ2BarPipeline(object):
         self.debug_image_pub = rospy.Publisher("bar_pipeline_debug/image_raw", Image, queue_size=1)
         self.debug_info_pub = rospy.Publisher("bar_pipeline_debug/camera_info", CameraInfo, queue_size=1)
         self.bar_marker_pub = rospy.Publisher("bar_markers", MarkerArray, queue_size=10)
-        
+
         rospy.Subscriber(self.depth_topic, Image, self.depth_callback, queue_size=1)
         rospy.Subscriber(self.info_topic, CameraInfo, self.info_callback, queue_size=1)
 
@@ -110,7 +110,8 @@ class TJ2BarPipeline(object):
             return
         
         t0 = time.time()
-        bars, debug_image = self.pipeline(cv2_img, self.debug_image_pub.get_num_connections() > 0)
+        # bars, debug_image = self.pipeline(cv2_img, self.debug_image_pub.get_num_connections() > 0)
+        bars, debug_image = self.pipeline(cv2_img, True)
         t1 = time.time()
         rospy.loginfo_throttle(1, "Pipeline rate: %0.3f" % (1.0 / (t1 - t0)))
 
@@ -150,10 +151,59 @@ class TJ2BarPipeline(object):
 
         # identify lines in the image
         lines, hough_debug_image = self.houghlines(contours_image, debug_image)
+
+        lines = self.filter_lines(normalized, lines)
+
+        # print("lines: ", lines)
+        # print('hough image shape: ', hough_debug_image.shape)
+
         lines, clouds, debug_image = self.hough_line_clouds(depth_bounded, lines, hough_debug_image, debug_image)
         bars = self.bars_from_cloud(lines, clouds)
-        
+
         return bars, debug_image
+
+    def filter_lines(self, normalized, lines):
+        th = 0.8
+        h, w = normalized.shape[:2]
+        slopes = []
+        mid_x = normalized.shape[1] // 2
+        for line in lines:
+            x1, y1, x2, y2 = line
+            k = (y2 - y1) / (x2 - x1)
+            b = y1 - k * x1
+            mid_y = k * mid_x + b
+            if mid_y > 0 and mid_y < normalized.shape[0]:
+                slopes.append([mid_y, k, x1, x2, line])
+        slopes = sorted(slopes, key=lambda s: s[0])
+        if len(slopes) < 2:
+            return []
+        filtered_lines = []
+        for i in range(1, len(slopes)):
+            t_slope, b_slope = slopes[i - 1], slopes[i]
+            k1, k2 = t_slope[1], b_slope[1]
+            mid_y1, mid_y2 = t_slope[0], b_slope[0]
+            if mid_y2 - mid_y1 < 4:
+                continue
+            if abs(k1 - k2) > 0.05:
+                continue
+            k = (k1 + k2) / 2
+            mid_y = (mid_y1 + mid_y2) / 2
+            b = mid_y - k * mid_x
+            left = min(t_slope[2], b_slope[2])
+            right = max(t_slope[3], b_slope[3])
+            xs = np.array(list(range(left, right)))
+            ys = np.clip(k * xs + b + 0.5, 0, h - 1).astype(np.int32)
+            xs = (xs + 0.5).astype(np.int32)
+            grays = normalized[ys, xs]
+            effects = grays > 0
+            ratio = sum(effects) / len(effects)
+            # print('r: ', ratio)
+            if ratio > th:
+                # normalized[ys, xs] = 255
+                ly, ry = int(k * left + b), int(k * right + b)
+                filtered_line = (left, ly, right, ry)
+                filtered_lines.append(filtered_line)
+        return filtered_lines
 
     def normalize_depth(self, depth_image):
         return np.uint8(depth_image.astype(np.float64) * 255 / self.max_distance_mm)
@@ -191,6 +241,7 @@ class TJ2BarPipeline(object):
 
             marker.scale.x = 0.025  # line width
             marker.color = ColorRGBA(0.3, 0.3, 1.0, 1.0)
+            # marker.lifetime = rospy.Duration(0.15)
             marker.lifetime = rospy.Duration(0.15)
 
             for point in points:
@@ -308,7 +359,7 @@ class TJ2BarPipeline(object):
                 continue
             clouds.append(cloud)
             filtered_lines.append(line)
-        
+
         if debug_image is not None:
             masked_debug = cv2.cvtColor(total_mask * 255, cv2.COLOR_GRAY2BGR)
             masked_debug[:, :, 0] = 0
@@ -427,7 +478,6 @@ class TJ2BarPipeline(object):
                 # y2 = edges.shape[0] - y2
                 if line is not None:
                     result.append((x1, y1, x2, y2))
-
                 if debug_image is not None:
                     if line is not None:
                         cv2.line(debug_image, (x1, y1), (x2, y2), (0, 255, 0), 3)
