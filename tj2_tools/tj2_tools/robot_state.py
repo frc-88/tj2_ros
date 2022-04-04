@@ -177,6 +177,7 @@ class State:
 
     @classmethod
     def normalize_theta(cls, theta):
+        # normalize theta to -pi..pi
         theta = math.fmod(theta, 2 * math.pi)
         if abs(theta) > math.pi:
             if theta > 0:

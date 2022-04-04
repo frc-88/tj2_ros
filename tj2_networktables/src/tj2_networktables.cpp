@@ -71,10 +71,11 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _imu_msg.linear_acceleration_covariance = as_array<9>(_imu_linear_acceleration_covariance);
 
     _raw_joint_pubs = new vector<ros::Publisher>();
+    _raw_joint_subs = new vector<ros::Subscriber>();
     _raw_joint_msgs = new vector<std_msgs::Float64*>();
     
     for (size_t index = 0; index < _joint_names.size(); index++) {
-        add_joint_pub(_joint_names.at(index));
+        add_joint(_joint_names.at(index));
     }
 
     _match_time_pub = nh.advertise<std_msgs::Float64>("match_time", 10);
@@ -386,6 +387,15 @@ void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayCo
 }
 
 
+void TJ2NetworkTables::joint_command_callback(const std_msgs::Float64ConstPtr& msg, string joint_name, int joint_index)
+{
+    NT_Entry joint_entry = nt::GetEntry(_nt, _base_key + "joints/commands/value/" + std::to_string(joint_index));
+    NT_Entry update_entry = nt::GetEntry(_nt, _base_key + "joints/commands/update/" + std::to_string(joint_index));
+
+    nt::SetEntryValue(joint_entry, nt::Value::MakeDouble(msg->data));
+    nt::SetEntryValue(update_entry, nt::Value::MakeDouble(get_time()));
+}
+
 
 // ---
 // Service callbacks
@@ -661,12 +671,19 @@ void TJ2NetworkTables::joint_timer_callback(const ros::TimerEvent& event)
 // Other helpers
 // ---
 
-void TJ2NetworkTables::add_joint_pub(string name)
+void TJ2NetworkTables::add_joint(string name)
 {
     size_t joint_index = _raw_joint_pubs->size();
     ROS_INFO("Publishing to joint topic: %s. Index: %ld", name.c_str(), joint_index);
     _raw_joint_pubs->push_back(nh.advertise<std_msgs::Float64>(name, 50));
     _raw_joint_msgs->push_back(new std_msgs::Float64);
+
+    _raw_joint_subs->push_back(
+        nh.subscribe<std_msgs::Float64>(
+            "joint_command/" + name, 50,
+            boost::bind(&TJ2NetworkTables::joint_command_callback, this, _1, name, joint_index)
+        )
+    );
 }
 
 double TJ2NetworkTables::get_time() {
