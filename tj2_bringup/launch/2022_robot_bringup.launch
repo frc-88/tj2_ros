@@ -21,7 +21,7 @@
     <!-- <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/> -->
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
     <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
-    <include file="$(find tj2_turret)/launch/tj2_turret.launch"/>
+    <include file="$(find tj2_target)/launch/tj2_target.launch"/>
     
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">

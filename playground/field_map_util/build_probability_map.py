@@ -32,8 +32,8 @@ def build_map(practice_map_name, field_map_name, lines=None, hood_state=None):
     field_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", field_map_name + ".yaml")
     field_map_name = os.path.splitext(os.path.basename(field_map_path))[0]
     hood_suffix = "-%s" % hood_state if hood_state is not None else ""
-    out_map_path = os.path.join(rospack.get_path("tj2_turret"), "maps", field_map_name + hood_suffix + ".yaml")
-    data_path = os.path.join(rospack.get_path("tj2_turret"), "config", "recorded_data.csv")
+    out_map_path = os.path.join(rospack.get_path("tj2_target"), "maps", field_map_name + hood_suffix + ".yaml")
+    data_path = os.path.join(rospack.get_path("tj2_target"), "config", "recorded_data.csv")
 
     ogm = OccupancyGridManager.from_cost_file(field_map_path)
     waypoints = load_waypoints(practice_map_name)
