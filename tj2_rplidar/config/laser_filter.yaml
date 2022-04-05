@@ -2,8 +2,8 @@ scan_filter_chain:
 - name: range_filter
   type: laser_filters/LaserScanRangeFilter
   params:
-    lower_threshold: 0.15
-    upper_threshold: 10.0
+    lower_threshold: 0.35
+    upper_threshold: .inf
 - name: angle
   type: laser_filters/LaserScanAngularBoundsFilterInPlace
   params:

@@ -2,11 +2,12 @@
 <launch>
     <group ns="tj2" >
         <node pkg="tj2_pursuit" type="tj2_simple_pursuit_node.py" respawn="false" name="tj2_simple_pursuit" output="screen">
-            <remap from="detections" to="cargo/detections"/>
-            <param name="class_names_path" value="$(find tj2_yolo)/models/cargo_2022.names"/>
+            <param name="class_names_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
 
-            <param name="rotate_kP" value="1.0"/>
-            <param name="camera_tilt_frame" value="camera_tilt_link"/>
+            <param name="rotate_kP" value="3.0"/>
+            <param name="max_angular_vel" value="10.0"/>
+            <param name="camera_base_frame" value="camera_link"/>
+            <param name="object_reached_threshold" value="0.4"/>
         </node>
     </group>
 </launch>

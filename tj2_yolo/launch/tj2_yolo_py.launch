@@ -12,14 +12,13 @@
             <param name="use_depth" value="true"/>
             <param name="sync_method" value="last_depth"/>
 
-            <remap from="detections" to="cargo/detections"/>
-            <remap from="markers" to="cargo/markers"/>
             <remap from="color/image_raw" to="/camera/color/image_raw"/>
             <remap from="depth/image_raw" to="/camera/aligned_depth_to_color/image_raw"/>
             <remap from="color/camera_info" to="/camera/color/camera_info"/>
             <remap from="overlay" to="cargo/overlay"/>
 
-            <rosparam param="z_depth_estimations" file="$(find tj2_yolo)/config/cargo_depth_estimations.yaml" command="load"/>
+            <!-- <rosparam param="z_depth_estimations" file="$(find tj2_yolo)/config/cargo_depth_estimations.yaml" command="load"/> -->
+            <rosparam param="z_depth_estimations" file="$(find tj2_yolo)/config/power_cell_depth_estimations.yaml" command="load"/>
         </node>
         <node name="overlay_compressed_image" pkg="image_transport" type="republish" output="screen" required="false" args="
             raw
