@@ -173,6 +173,7 @@ private:
     NT_Entry _waypoint_ignore_obstacles_entry;
     NT_Entry _waypoint_ignore_walls_entry;
     NT_Entry _waypoint_interruptable_by_entry;
+    NT_Entry _waypoint_timeout_entry;
     NT_Entry _waypoint_goal_x_entry;
     NT_Entry _waypoint_goal_y_entry;
     NT_Entry _waypoint_goal_t_entry;

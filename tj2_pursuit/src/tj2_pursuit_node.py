@@ -135,7 +135,7 @@ class Tj2Pursuit:
         while True:
             rate.sleep()
             with self.lock:
-                if rospy.Time.now() - start_timer > detection_timeout:
+                if detection_timeout > rospy.Duration(0.0) and rospy.Time.now() - start_timer > detection_timeout:
                     self.pursue_object_server.set_aborted()
                     rospy.logwarn("Timed out while searching for '%s'" % self.tracking_object_name)
                     break

@@ -144,9 +144,9 @@ class TJ2DebugJoystick:
         
         axis_value = self.joystick.get_axis(self.toggle_nt_axis)
         if axis_value >= 0.0:  # trigger released
-            self.command_with_topic = False
-        else:  # trigger pressed
             self.command_with_topic = True
+        else:  # trigger pressed
+            self.command_with_topic = False
         
         self.publish_nt()
 

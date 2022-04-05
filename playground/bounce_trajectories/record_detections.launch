@@ -4,7 +4,7 @@
        args="record -o /media/storage/bags/detections
             /tj2/odom
             /tj2/cmd_vel
-            /tj2/powercell/detections
+            /tj2/detections
             " />
     <include file="$(find tj2_camera)/launch/record_to_file.launch"/>
 </launch>
