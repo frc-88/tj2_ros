@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(tj2_turret)
+project(tj2_target)
 
 find_package(catkin REQUIRED COMPONENTS
     rospy
@@ -50,7 +50,7 @@ catkin_package(
     CATKIN_DEPENDS rospy std_msgs message_runtime
 )
 
-# catkin_install_python(PROGRAMS src/tj2_turret/central_planning.py
+# catkin_install_python(PROGRAMS src/tj2_target/central_planning.py
 #     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 

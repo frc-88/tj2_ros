@@ -24,7 +24,7 @@ from tj2_waypoints.msg import WaypointArray
 
 from tj2_networktables.msg import NTEntry
 
-from tj2_turret.srv import RecordValue, RecordValueResponse
+from tj2_target.srv import RecordValue, RecordValueResponse
 from std_srvs.srv import Trigger, TriggerResponse
 
 from tj2_tools.transforms import lookup_transform
@@ -35,9 +35,9 @@ def meters_to_in(meters):
     return meters * 39.37
 
 
-class TJ2Turret(object):
+class TJ2Target(object):
     def __init__(self):
-        self.node_name = "tj2_turret"
+        self.node_name = "tj2_target"
         rospy.init_node(
             self.node_name
             # disable_signals=True
@@ -45,7 +45,7 @@ class TJ2Turret(object):
         )
         self.map_frame = rospy.get_param("~map", "map")
         self.base_frame = rospy.get_param("~base_link", "base_link")
-        self.turret_frame = rospy.get_param("~turret", "turret_tilt_link")
+        self.target_frame = rospy.get_param("~target", "base_link")
         self.target_waypoint = rospy.get_param("~target_waypoint", "center")
 
         self.x_cov_threshold = rospy.get_param("~x_cov_threshold", 1.0)
@@ -56,8 +56,8 @@ class TJ2Turret(object):
         self.enable_shot_probability = rospy.get_param("~enable_shot_probability", True)
         self.enable_limelight_fine_tuning = rospy.get_param("~enable_limelight_fine_tuning", True)
 
-        # a constant to fix weird unknown turret issues
-        self.turret_cosmic_ray_compensation = math.radians(rospy.get_param("~turret_cosmic_ray_compensation_degrees", 0.0))
+        # a constant to fix weird unknown target issues
+        self.target_cosmic_ray_compensation = math.radians(rospy.get_param("~target_cosmic_ray_compensation_degrees", 0.0))
 
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.csv")
         self.recorded_data_file_path = rospy.get_param("~recorded_data_file_path", "./recorded_data.csv")
@@ -86,7 +86,7 @@ class TJ2Turret(object):
             self.traj_interp_down = None
 
         self.nt_pub = rospy.Publisher("nt_passthrough", NTEntry, queue_size=10)
-        self.turret_target_pub = rospy.Publisher("turret_target", PoseStamped, queue_size=10)
+        self.target_pub = rospy.Publisher("target", PoseStamped, queue_size=10)
         self.probability_hood_up_pub = rospy.Publisher("shot_probability_hood_up_map", OccupancyGrid, queue_size=10)
         self.probability_hood_down_pub = rospy.Publisher("shot_probability_hood_down_map", OccupancyGrid, queue_size=10)
 
@@ -209,11 +209,12 @@ class TJ2Turret(object):
     def read_tof_file(self, path):
         hood_up_table = []
         hood_down_table = []
+        rospy.loginfo("Loading tof table from %s" % path)
         with open(path) as file:
             reader = csv.reader(file)
             header = next(reader)
             for row in reader:
-                rospy.loginfo("Table row: %s" % str(row))
+                rospy.logdebug("Table row: %s" % str(row))
                 parsed_row = list(map(float, row[1:]))
                 if row[0] == "up":
                     hood_up_table.append(parsed_row)
@@ -222,8 +223,8 @@ class TJ2Turret(object):
 
         hood_up_table.sort(key=lambda x: x[0])
         hood_down_table.sort(key=lambda x: x[0])
-        rospy.loginfo("Hood up table: %s" % str(hood_up_table))
-        rospy.loginfo("Hood down table: %s" % str(hood_down_table))
+        rospy.logdebug("Hood up table: %s" % str(hood_up_table))
+        rospy.logdebug("Hood down table: %s" % str(hood_down_table))
         return np.array(hood_up_table), np.array(hood_down_table)
     
     def create_interp(self, table):
@@ -268,47 +269,49 @@ class TJ2Turret(object):
         zero_pose_base.pose.orientation.w = 1.0
         
         while not rospy.is_shutdown():
+            shot_probability = 1.0
             if not self.is_global_pose_valid(self.amcl_pose):
-                self.publish_turret(0.0, 0.0, 0.0)
-                continue
+                shot_probability = 0.0
+
             if self.target_waypoint not in self.waypoints:
-                self.publish_turret(0.0, 0.0, 0.0)
+                shot_probability = 0.0
+                self.publish_target(self.target_distance, self.target_heading, shot_probability)
                 rospy.logwarn_throttle(1.0, "%s is not an available waypoint" % self.target_waypoint)
                 continue
             target_pose_map = self.waypoints[self.target_waypoint]
-            map_to_turret_tf = lookup_transform(self.tf_buffer, self.turret_frame, self.map_frame)
-            if map_to_turret_tf is None:
-                self.publish_turret(0.0, 0.0, 0.0)
-                rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.turret_frame, self.map_frame))
+            map_to_target_tf = lookup_transform(self.tf_buffer, self.target_frame, self.map_frame)
+            if map_to_target_tf is None:
+                shot_probability = 0.0
+                self.publish_target(self.target_distance, self.target_heading, shot_probability)
+                rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.target_frame, self.map_frame))
                 continue
-            target_pose_turret = tf2_geometry_msgs.do_transform_pose(target_pose_map, map_to_turret_tf)
+            target_pose = tf2_geometry_msgs.do_transform_pose(target_pose_map, map_to_target_tf)
 
             base_to_map_tf = lookup_transform(self.tf_buffer, self.map_frame, self.base_frame)
             if base_to_map_tf is None:
-                self.publish_turret(0.0, 0.0, 0.0)
+                shot_probability = 0.0
+                self.publish_target(self.target_distance, self.target_heading, shot_probability)
                 rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.map_frame, self.base_frame))
                 continue
             self.robot_pose = tf2_geometry_msgs.do_transform_pose(zero_pose_base, base_to_map_tf)
 
             if self.enable_shot_probability:
                 shot_probability = self.get_shot_probability(Pose2d.from_ros_pose(self.robot_pose.pose))
-            else:
-                shot_probability = 1.0
             
             if self.enable_limelight_fine_tuning:
-                target_pose_turret = self.get_fine_tuned_limelight_target(self.limelight_target_pose, target_pose_turret)
+                target_pose = self.get_fine_tuned_limelight_target(self.limelight_target_pose, target_pose)
 
-            target = Pose2d.from_ros_pose(target_pose_turret.pose)
+            target = Pose2d.from_ros_pose(target_pose.pose)
             target = self.compensate_for_robot_velocity(target)
-            self.target_heading = target.heading() + self.turret_cosmic_ray_compensation
+            self.target_heading = target.heading() + self.target_cosmic_ray_compensation
             self.target_heading = Pose2d.normalize_theta(self.target_heading + math.pi)
             self.target_distance = target.distance()
-            self.publish_turret(self.target_distance, self.target_heading, shot_probability)
+            self.publish_target(self.target_distance, self.target_heading, shot_probability)
 
             target_pose_stamped = PoseStamped()
-            target_pose_stamped.header.frame_id = self.turret_frame
+            target_pose_stamped.header.frame_id = self.target_frame
             target_pose_stamped.pose = target.to_ros_pose()
-            self.turret_target_pub.publish(target_pose_stamped)
+            self.target_pub.publish(target_pose_stamped)
 
             clock.sleep()
     
@@ -367,13 +370,13 @@ class TJ2Turret(object):
         else:
             return waypoint_pose
 
-    def publish_turret(self, distance, heading, probability):
-        self.nt_pub.publish(self.make_entry("turret/distance", distance))
-        self.nt_pub.publish(self.make_entry("turret/distance_in", meters_to_in(distance)))
-        self.nt_pub.publish(self.make_entry("turret/heading", heading))
-        self.nt_pub.publish(self.make_entry("turret/heading_deg", math.degrees(heading)))
-        self.nt_pub.publish(self.make_entry("turret/probability", probability))
-        self.nt_pub.publish(self.make_entry("turret/update", rospy.Time.now().to_sec()))
+    def publish_target(self, distance, heading, probability):
+        self.nt_pub.publish(self.make_entry("target/distance", distance))
+        self.nt_pub.publish(self.make_entry("target/distance_in", meters_to_in(distance)))
+        self.nt_pub.publish(self.make_entry("target/heading", heading))
+        self.nt_pub.publish(self.make_entry("target/heading_deg", math.degrees(heading)))
+        self.nt_pub.publish(self.make_entry("target/probability", probability))
+        self.nt_pub.publish(self.make_entry("target/update", rospy.Time.now().to_sec()))
 
     def is_global_pose_valid(self, amcl_pose):
         if amcl_pose is None or len(amcl_pose.pose.covariance) != 36:
@@ -389,7 +392,7 @@ class TJ2Turret(object):
                 theta_cov < self.theta_cov_threshold):
             return True
         else:
-            rospy.logwarn_throttle(1.0, "No valid turret target. stddev. x=%0.3f, y=%0.3f, theta=%0.3f" % (x_cov, y_cov, theta_cov))
+            rospy.logwarn_throttle(1.0, "No valid target. stddev. x=%0.3f, y=%0.3f, theta=%0.3f" % (x_cov, y_cov, theta_cov))
             return False
     
     def make_entry(self, path, value):
@@ -400,7 +403,7 @@ class TJ2Turret(object):
 
 
 if __name__ == "__main__":
-    node = TJ2Turret()
+    node = TJ2Target()
     try:
         node.run()
 
