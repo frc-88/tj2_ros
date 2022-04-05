@@ -42,9 +42,8 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
     _main_tx_entry = nt::GetEntry(_nt, "/limelight/tx");
     _main_ty_entry = nt::GetEntry(_nt, "/limelight/ty");
 
-    _limelight_height_entry = nt::GetEntry(_nt, "/Preferences/Limelight Height");
-    _limelight_angle_entry = nt::GetEntry(_nt, "/Preferences/Limelight Angle");
-    _limelight_radius_entry = nt::GetEntry(_nt, "/Preferences/Limelight Radius");
+    _limelight_target_angle_entry = nt::GetEntry(_nt, "/SmartDashboard/Limelight Target Angle");
+    _limelight_target_distance_entry = nt::GetEntry(_nt, "/SmartDashboard/Limelight Target Distance");
 
     _limelight_raw_target_pub = nh.advertise<tj2_limelight::LimelightTargetArray>("raw_targets", 15);
     _limelight_target_pub = nh.advertise<geometry_msgs::PoseStamped>("target", 15);
@@ -140,17 +139,20 @@ void TJ2Limelight::publish_limelight_targets()
     }
     _limelight_raw_target_pub.publish(array_msg);
 
-    double main_tx = to_radians(getDouble(_main_tx_entry, 0.0));
+    /*double main_tx = to_radians(getDouble(_main_tx_entry, 0.0));
     double main_ty = to_radians(getDouble(_main_ty_entry, 0.0));
 
-    double limelight_height = to_meters(getDouble(_limelight_height_entry, 0.0));
+    double limelight_height = inches_to_meters(getDouble(_limelight_height_entry, 0.0));
     double limelight_angle = to_radians(getDouble(_limelight_angle_entry, 0.0));
-    double limelight_radius = to_meters(getDouble(_limelight_radius_entry, 0.0));
+    double limelight_radius = inches_to_meters(getDouble(_limelight_radius_entry, 0.0));
     double target_dist = (_field_vision_target_height - limelight_height) /
                          (tan(limelight_angle + main_ty)
                          * cos(main_tx));
 
-    double target_angle = atan(sin(main_tx) / (cos(main_tx) + limelight_radius / _field_vision_target_distance));
+    double target_angle = atan(sin(main_tx) / (cos(main_tx) + limelight_radius / _field_vision_target_distance));*/
+
+    double target_angle = to_radians(getDouble(_limelight_target_angle_entry, 0.0));
+    double target_dist = inches_to_meters(getDouble(_limelight_target_distance_entry, 0.0));
 
     tf2::Quaternion quat;
     quat.setRPY(0, 0, target_angle);
