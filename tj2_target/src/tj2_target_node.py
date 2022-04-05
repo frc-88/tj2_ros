@@ -269,32 +269,34 @@ class TJ2Target(object):
         zero_pose_base.pose.orientation.w = 1.0
         
         while not rospy.is_shutdown():
+            shot_probability = 1.0
             if not self.is_global_pose_valid(self.amcl_pose):
-                self.publish_target(0.0, 0.0, 0.0)
-                continue
+                shot_probability = 0.0
+
             if self.target_waypoint not in self.waypoints:
-                self.publish_target(0.0, 0.0, 0.0)
+                shot_probability = 0.0
+                self.publish_target(self.target_distance, self.target_heading, shot_probability)
                 rospy.logwarn_throttle(1.0, "%s is not an available waypoint" % self.target_waypoint)
                 continue
             target_pose_map = self.waypoints[self.target_waypoint]
             map_to_target_tf = lookup_transform(self.tf_buffer, self.target_frame, self.map_frame)
             if map_to_target_tf is None:
-                self.publish_target(0.0, 0.0, 0.0)
+                shot_probability = 0.0
+                self.publish_target(self.target_distance, self.target_heading, shot_probability)
                 rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.target_frame, self.map_frame))
                 continue
             target_pose = tf2_geometry_msgs.do_transform_pose(target_pose_map, map_to_target_tf)
 
             base_to_map_tf = lookup_transform(self.tf_buffer, self.map_frame, self.base_frame)
             if base_to_map_tf is None:
-                self.publish_target(0.0, 0.0, 0.0)
+                shot_probability = 0.0
+                self.publish_target(self.target_distance, self.target_heading, shot_probability)
                 rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.map_frame, self.base_frame))
                 continue
             self.robot_pose = tf2_geometry_msgs.do_transform_pose(zero_pose_base, base_to_map_tf)
 
             if self.enable_shot_probability:
                 shot_probability = self.get_shot_probability(Pose2d.from_ros_pose(self.robot_pose.pose))
-            else:
-                shot_probability = 1.0
             
             if self.enable_limelight_fine_tuning:
                 target_pose = self.get_fine_tuned_limelight_target(self.limelight_target_pose, target_pose)
