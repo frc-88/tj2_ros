@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2">
+        <node pkg="tj2_target" type="tj2_target_node.py" name="tj2_target" output="screen" required="false">
+            <remap from="amcl_pose" to="/amcl_pose"/>
+            <param name="time_of_flight_file_path" value="$(find tj2_target)/config/time_of_flight.csv"/>
+            <param name="recorded_data_file_path" value="$(find tj2_target)/config/recorded_data.csv"/>
+            <param name="probability_hood_up_map_path" value="$(find tj2_target)/maps/$(env ROS_MAP_NAME)-up.yaml"/>
+            <param name="probability_hood_down_map_path" value="$(find tj2_target)/maps/$(env ROS_MAP_NAME)-down.yaml"/>
+            <param name="enable_shot_correction" value="true"/>
+            <param name="enable_shot_probability" value="false"/>
+            <param name="enable_limelight_fine_tuning" value="false"/>
+            <param name="target_cosmic_ray_compensation_degrees" value="5.0"/>
+            <param name="x_cov_threshold" value="25.0"/>
+            <param name="y_cov_threshold" value="25.0"/>
+            <param name="theta_cov_threshold" value="30.0"/>
+        </node>
+    </group>
+</launch>
