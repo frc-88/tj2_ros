@@ -209,11 +209,12 @@ class TJ2Target(object):
     def read_tof_file(self, path):
         hood_up_table = []
         hood_down_table = []
+        rospy.loginfo("Loading tof table from %s" % path)
         with open(path) as file:
             reader = csv.reader(file)
             header = next(reader)
             for row in reader:
-                rospy.loginfo("Table row: %s" % str(row))
+                rospy.logdebug("Table row: %s" % str(row))
                 parsed_row = list(map(float, row[1:]))
                 if row[0] == "up":
                     hood_up_table.append(parsed_row)
@@ -222,8 +223,8 @@ class TJ2Target(object):
 
         hood_up_table.sort(key=lambda x: x[0])
         hood_down_table.sort(key=lambda x: x[0])
-        rospy.loginfo("Hood up table: %s" % str(hood_up_table))
-        rospy.loginfo("Hood down table: %s" % str(hood_down_table))
+        rospy.logdebug("Hood up table: %s" % str(hood_up_table))
+        rospy.logdebug("Hood down table: %s" % str(hood_down_table))
         return np.array(hood_up_table), np.array(hood_down_table)
     
     def create_interp(self, table):
