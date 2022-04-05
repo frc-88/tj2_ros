@@ -20,7 +20,6 @@ playground/bounce_trajectories/data
 .vscode/
 bags/
 
-*.csv
 *.jpg
 *.png
 
