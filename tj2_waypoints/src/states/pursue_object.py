@@ -16,7 +16,6 @@ class PursueObjectState(State):
             input_keys=["waypoints_plan", "waypoint_index"],
             output_keys=["waypoints_plan", "waypoint_index"]
         )
-        self.search_timeout = rospy.Duration(15.0)
         self.goal_tolerance = 0.1
         self.pursuit_action = None
         self.action_server = None
@@ -34,7 +33,7 @@ class PursueObjectState(State):
         goal = PursueObjectGoal()
         goal.object_name = first_waypoint.name
         rospy.loginfo("Pursuit object name: %s" % goal.object_name)
-        goal.timeout = self.search_timeout
+        goal.timeout = first_waypoint.timeout
         goal.xy_tolerance = self.goal_tolerance
         self.pursuit_action.send_goal(goal, done_cb=self.pursuit_done)
         wait_result = self.wait_for_pursuit()

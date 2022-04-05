@@ -41,6 +41,6 @@
 /tj2/match_time
 /tj2/odom
 /tj2/ping
-/tj2/cargo/detections
+/tj2/detections
 /tj2/cargo/markers
 /tj2/team_color
