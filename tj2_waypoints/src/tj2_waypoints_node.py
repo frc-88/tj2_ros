@@ -245,6 +245,7 @@ class Tj2Waypoints:
         def append_to_sub_plan(waypoint):
             nonlocal sub_plan
             if not self.is_waypoint_valid(waypoint.name):
+                rospy.logwarn("Waypoint is not valid: %s" % waypoint)
                 return
 
             sub_plan.append(waypoint)

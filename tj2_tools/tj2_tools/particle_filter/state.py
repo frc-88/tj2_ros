@@ -71,7 +71,7 @@ class FilterState(State):
 
     def distance(self, other=None, states="xyz"):
         # if other is None, assume you're getting distance from the origin
-        if not isinstance(other, self.__class__):
+        if other is not None and not isinstance(other, self.__class__):
             raise ValueError("Can't get distance from %s to %s" % (self.__class__, other.__class__))
 
         dimensions = []
@@ -386,11 +386,22 @@ class DeltaTimer:
         return dt
 
 
-class VelocityFilter:
+
+class SimpleFilter:
     def __init__(self, k):
         self.k = k
+        self.value = None
+
+    def update(self, value):
+        if self.value is None:
+            self.value = value
+        self.value += self.k * (value - self.value)
+        return self.value
+
+class VelocityFilter:
+    def __init__(self, k):
+        self.filter = SimpleFilter(k)
         self.prev_value = None
-        self.speed = 0.0
 
     def update(self, dt, value):
         if self.prev_value is None:
@@ -400,7 +411,7 @@ class VelocityFilter:
         if self.k is None or self.k == 0.0:
             self.speed = raw_delta
         else:
-            self.speed = self.k * (raw_delta - self.speed)
+            self.speed = self.filter.update(raw_delta)
         return self.speed
 
 

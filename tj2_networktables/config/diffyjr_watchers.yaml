@@ -7,7 +7,7 @@ watch_topics:
   - /tj2/match_time
   - /tj2/odom
   - /tj2/joint_states
-  - /tj2/powercell/detections
+  - /tj2/detections
   - /tj2/team_color
   - /tj2/waypoint_markers
 watch_nodes:

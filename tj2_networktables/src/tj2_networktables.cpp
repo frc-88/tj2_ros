@@ -710,7 +710,7 @@ vector<double> TJ2NetworkTables::get_double_list_param(string name, size_t lengt
 void TJ2NetworkTables::add_waypoint(tj2_waypoints::Waypoint waypoint)
 {
     _waypoints.waypoints.insert(_waypoints.waypoints.end(), waypoint);
-    ROS_INFO("Received a waypoint: %s. pose: x=%0.4f, y=%0.4f. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d, interruptable_by: %s",
+    ROS_INFO("Received a waypoint: %s. pose: x=%0.4f, y=%0.4f. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d, interruptable_by: %s, timeout: %f",
         waypoint.name.c_str(),
         waypoint.pose.position.x,
         waypoint.pose.position.y,
@@ -718,7 +718,8 @@ void TJ2NetworkTables::add_waypoint(tj2_waypoints::Waypoint waypoint)
         waypoint.ignore_orientation,
         waypoint.ignore_obstacles,
         waypoint.ignore_walls,
-        waypoint.interruptable_by.c_str()
+        waypoint.interruptable_by.c_str(),
+        waypoint.timeout.toSec()
     );
 }
 
@@ -731,6 +732,7 @@ tj2_waypoints::Waypoint TJ2NetworkTables::make_waypoint_from_nt(size_t index)
     _waypoint_ignore_obstacles_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/ignore_obstacles");
     _waypoint_ignore_walls_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/ignore_walls");
     _waypoint_interruptable_by_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/interruptable_by");
+    _waypoint_timeout_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/timeout");
     _waypoint_goal_x_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/x");
     _waypoint_goal_y_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/y");
     _waypoint_goal_t_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/t");
@@ -743,6 +745,7 @@ tj2_waypoints::Waypoint TJ2NetworkTables::make_waypoint_from_nt(size_t index)
     waypoint.ignore_obstacles = get_boolean(_waypoint_ignore_obstacles_entry, false);
     waypoint.ignore_walls = get_boolean(_waypoint_ignore_walls_entry, false);
     waypoint.interruptable_by = get_string(_waypoint_interruptable_by_entry, "");
+    waypoint.timeout = ros::Duration(get_double(_waypoint_timeout_entry, 0.0));
     return waypoint;
 }
 
