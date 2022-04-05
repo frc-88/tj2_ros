@@ -295,14 +295,15 @@ class TJ2Target(object):
                 continue
             self.robot_pose = tf2_geometry_msgs.do_transform_pose(zero_pose_base, base_to_map_tf)
 
+            target = Pose2d.from_ros_pose(target_pose.pose)
+            target = self.compensate_for_robot_velocity(target)
+
             if self.enable_shot_probability:
-                shot_probability = self.get_shot_probability(Pose2d.from_ros_pose(self.robot_pose.pose))
+                shot_probability = self.get_shot_probability(target)
             
             if self.enable_limelight_fine_tuning:
                 target_pose = self.get_fine_tuned_limelight_target(self.limelight_target_pose, target_pose)
 
-            target = Pose2d.from_ros_pose(target_pose.pose)
-            target = self.compensate_for_robot_velocity(target)
             self.target_heading = target.heading() + self.target_cosmic_ray_compensation
             self.target_heading = Pose2d.normalize_theta(self.target_heading + math.pi)
             self.target_distance = target.distance()
