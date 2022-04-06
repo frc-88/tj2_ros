@@ -10,6 +10,9 @@
 /camera/gyro/imu_info
 /camera/gyro/metadata
 /camera/gyro/sample
+/color_sensor/raw
+/color_sensor/proximity
+/color_sensor/match
 /amcl_pose
 /initialpose
 /sinistra_laser/scan
