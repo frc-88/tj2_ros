@@ -455,9 +455,9 @@ costmap_converter/CostmapToDynamicObstacles:
   # min_occupancy_probability: 180
   # max_occupancy_neighbors: 100
   # morph_size: 1
-  # filter_by_area: True
-  # min_area: 3
-  # max_area: 300
+  filter_by_area: True
+  min_area: 10
+  max_area: 300
   # filter_by_circularity: True
   # min_circularity: 0.2
   # max_circularity: 1.0
