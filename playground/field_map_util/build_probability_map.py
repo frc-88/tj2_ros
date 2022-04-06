@@ -15,29 +15,35 @@ from tj2_tools.occupancy_grid import OccupancyGridManager
 from file_management import load_waypoints
 
 
-def draw_field_line(ogm, field_pt1, field_pt2, probability, robot_radius_px):
-    img_x1, img_y1 = ogm.get_costmap_x_y(field_pt1.x, field_pt1.y)
-    img_x2, img_y2 = ogm.get_costmap_x_y(field_pt2.x, field_pt2.y)
+rospack = rospkg.RosPack()
+
+
+def draw_field_shape(ogm, field_pts, probability, robot_radius_px, is_closed, is_filled):
+    polylines_pts = []
+    for point in field_pts:
+        img_x1, img_y1 = ogm.get_costmap_x_y(point.x, point.y)
+        polylines_pts.append([img_x1, img_y1])
+    polylines_pts = np.array(polylines_pts, np.int32)
 
     probability = 1.0 - probability
 
-    cv2.line(ogm.grid_data, (img_x1, img_y1), (img_x2, img_y2), (probability * 100,), robot_radius_px)
+    cv2.polylines(ogm.grid_data, [polylines_pts], is_closed, (probability * 100,), robot_radius_px)
+    if is_filled:
+        cv2.fillPoly(ogm.grid_data, [polylines_pts], (probability * 100,))
 
 
-def build_map(practice_map_name, field_map_name, lines=None, hood_state=None):
+def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_state=None, robot_radius=0.5):
     turret_base_link_x_offset = -0.050456
 
-    rospack = rospkg.RosPack()
     # in_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", practice_map_name + ".yaml")
     field_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", field_map_name + ".yaml")
     field_map_name = os.path.splitext(os.path.basename(field_map_path))[0]
     hood_suffix = "-%s" % hood_state if hood_state is not None else ""
-    out_map_path = os.path.join(rospack.get_path("tj2_turret"), "maps", field_map_name + hood_suffix + ".yaml")
-    data_path = os.path.join(rospack.get_path("tj2_turret"), "config", "recorded_data.csv")
+    out_map_path = os.path.join(rospack.get_path("tj2_target"), "maps", field_map_name + hood_suffix + ".yaml")
 
     ogm = OccupancyGridManager.from_cost_file(field_map_path)
-    waypoints = load_waypoints(practice_map_name)
-    center = waypoints["center"]
+    practice_waypoints = load_waypoints(practice_map_name)
+    practice_center = practice_waypoints["center"]
 
     field_waypoints = load_waypoints(field_map_name)
     field_center = field_waypoints["center"]
@@ -74,7 +80,7 @@ def build_map(practice_map_name, field_map_name, lines=None, hood_state=None):
     ogm.grid_data[:] = 100
     probabilities.sort(key=lambda x: x["distance"], reverse=True)
 
-    robot_radius = int(0.5 / ogm.resolution)
+    robot_radius_px = int(robot_radius / ogm.resolution)
 
     for row in probabilities:
         # calculate field position using distance
@@ -83,7 +89,7 @@ def build_map(practice_map_name, field_map_name, lines=None, hood_state=None):
         # y = field_center.y + turret_base_link_x_offset
         
         # calculate field position using robot pose
-        field_pose = row["pose"].relative_to_reverse(center).relative_to(field_center)
+        field_pose = row["pose"].relative_to_reverse(practice_center).relative_to(field_center)
         x = field_pose.x
         y = field_pose.y
         image_x, image_y = ogm.get_costmap_x_y(x, y)
@@ -93,35 +99,54 @@ def build_map(practice_map_name, field_map_name, lines=None, hood_state=None):
         x = image_x - origin[0]
         y = image_y - origin[1]
         radius = int(math.sqrt(x * x + y * y))
-        radius += robot_radius
+        radius += robot_radius_px
         if radius < 0:
             radius = 1
         probability = 1.0 - row["probability"]
         
         cv2.circle(ogm.grid_data, origin, radius, (probability * 100,), -1)
-        # cv2.circle(ogm.grid_data, (image_x, image_y), int(robot_radius), (probability * 100,), -1)
+        # cv2.circle(ogm.grid_data, (image_x, image_y), robot_radius_px, (probability * 100,), -1)
 
     field_center_rotate = Pose2d.from_state(field_center)
     field_center_rotate.theta += math.pi
+    
     for row in lines:
-        pt1 = waypoints[row["pt1"]]
-        pt2 = waypoints[row["pt2"]]
-        field_pt1 = pt1.relative_to_reverse(center).relative_to(field_center)
-        field_pt2 = pt2.relative_to_reverse(center).relative_to(field_center)
+        field_pts = []
+        practice_pts = []
+        is_closed = row.get("is_closed", True)
+        filled = row.get("filled", True)
+        use_field = row.get("use_field", False)
+        radius = int(row.get("radius", robot_radius) / ogm.resolution)
+        for waypoint in row["pts"]:
+            if use_field:
+                field_pt = point = field_waypoints[waypoint]
+            else:
+                point = practice_waypoints[waypoint]
+                field_pt = point.relative_to_reverse(practice_center).relative_to(field_center)
+            field_pts.append(field_pt)
+            practice_pts.append(point)
 
-        draw_field_line(ogm, field_pt1, field_pt2, row["probability"], robot_radius)
+        draw_field_shape(ogm, field_pts, row["probability"], radius, is_closed, filled)
 
         if row.get("mirror", False):
-            mirror_field_pt1 = pt1.relative_to_reverse(center).relative_to(field_center_rotate)
-            mirror_field_pt2 = pt2.relative_to_reverse(center).relative_to(field_center_rotate)
-            draw_field_line(ogm, mirror_field_pt1, mirror_field_pt2, row["probability"], robot_radius)
+            mirror_field_pts = []
+            for index in range(len(field_pts)):
+                if use_field:
+                    field_pt = field_pts[index]
+                    mirror_field_pt = field_pt.relative_to(field_center_rotate)
+                else:
+                    practice_pt = practice_pts[index]
+                    mirror_field_pt = practice_pt.relative_to_reverse(practice_center).relative_to(field_center_rotate)
+                mirror_field_pts.append(mirror_field_pt)
+
+            draw_field_shape(ogm, mirror_field_pts, row["probability"], radius, is_closed, filled)
 
     print("Writing to %s" % out_map_path)
     ogm.to_file(out_map_path)
 
     results = {
         "field_map": field_map,
-        "practice_center": center,
+        "practice_center": practice_center,
         "field_center": field_center,
         "ogm": ogm,
     }
@@ -146,6 +171,7 @@ def main():
     parser = argparse.ArgumentParser(description="build probability map", add_help=True)
     parser.add_argument("practice_map_name", help="name of map recorded_data.csv was taken on")
     parser.add_argument("field_map_name", help="name of map to generate probability map for")
+    parser.add_argument("-d", "--data", default="recorded_data.csv", help="name of csv to generate probability distributions from")
     parser.add_argument("-s", "--show", action="store_true", help="Show image")
     args = parser.parse_args()
 
@@ -155,13 +181,23 @@ def main():
     # field_map_name = "rapid-react-2022-02-19T07-55-53--407688-edited"
 
     lines = []
-    # lines.append({"pt1": "lower_bar_1", "pt2": "lower_bar_2", "probability": 0.0, "mirror": True})
-    # lines.append({"pt1": "mid_bar_1", "pt2": "mid_bar_2", "probability": 0.0, "mirror": True})
-    # lines.append({"pt1": "high_bar_1", "pt2": "high_bar_2", "probability": 0.0, "mirror": True})
-    # lines.append({"pt1": "trav_bar_1", "pt2": "trav_bar_2", "probability": 0.0, "mirror": True})
+    hangar_radius = 0.2
+    lines.append({"pts": ["hanger_se", "hanger_sw"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hangar_radius})
+    lines.append({"pts": ["hanger_ne", "hanger_nw"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hangar_radius})
 
-    results_up = build_map(args.practice_map_name, args.field_map_name, lines, hood_state="up")
-    results_down = build_map(args.practice_map_name, args.field_map_name, lines, hood_state="down")
+    bar_width = 0.3
+    lines.append({"pts": ["lower_bar_n", "lower_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+    lines.append({"pts": ["mid_bar_n", "mid_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+    lines.append({"pts": ["high_bar_n", "high_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+    lines.append({"pts": ["trav_bar_n", "trav_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+
+    hub_radius = 0.2
+    lines.append({"pts": ["hub_pt1", "hub_pt2", "hub_pt3", "hub_pt4", "hub_pt5", "hub_pt6"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
+    lines.append({"pts": ["hub_pt1_r", "hub_pt2_r", "hub_pt3_r", "hub_pt4_r", "hub_pt5_r", "hub_pt6_r"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
+
+    data_path = os.path.join(rospack.get_path("tj2_target"), "config", args.data)
+    results_up = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="up")
+    results_down = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="down")
 
     if args.show:
         window_name = "map"
