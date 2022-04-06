@@ -45,7 +45,7 @@ class TJ2Target(object):
         )
         self.map_frame = rospy.get_param("~map", "map")
         self.base_frame = rospy.get_param("~base_link", "base_link")
-        self.target_frame = rospy.get_param("~target", "base_link")
+        self.target_base_frame = rospy.get_param("~target_base_frame", "base_link")
         self.target_waypoint = rospy.get_param("~target_waypoint", "center")
 
         self.x_cov_threshold = rospy.get_param("~x_cov_threshold", 1.0)
@@ -279,11 +279,11 @@ class TJ2Target(object):
                 rospy.logwarn_throttle(1.0, "%s is not an available waypoint" % self.target_waypoint)
                 continue
             target_pose_map = self.waypoints[self.target_waypoint]
-            map_to_target_tf = lookup_transform(self.tf_buffer, self.target_frame, self.map_frame)
+            map_to_target_tf = lookup_transform(self.tf_buffer, self.target_base_frame, self.map_frame)
             if map_to_target_tf is None:
                 shot_probability = 0.0
                 self.publish_target(self.target_distance, self.target_heading, shot_probability)
-                rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.target_frame, self.map_frame))
+                rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.target_base_frame, self.map_frame))
                 continue
             target_pose = tf2_geometry_msgs.do_transform_pose(target_pose_map, map_to_target_tf)
 
@@ -309,7 +309,7 @@ class TJ2Target(object):
             self.publish_target(self.target_distance, self.target_heading, shot_probability)
 
             target_pose_stamped = PoseStamped()
-            target_pose_stamped.header.frame_id = self.target_frame
+            target_pose_stamped.header.frame_id = self.target_base_frame
             target_pose_stamped.pose = target.to_ros_pose()
             self.target_pub.publish(target_pose_stamped)
 
