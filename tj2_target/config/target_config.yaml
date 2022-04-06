@@ -1,0 +1,11 @@
+enable_shot_correction: true
+enable_shot_probability: false
+enable_limelight_fine_tuning: false
+enable_marauding: false
+target_cosmic_ray_compensation_degrees: 5.0
+target_base_frame: turret_tilt_link
+x_cov_threshold: 1.0
+y_cov_threshold: 1.0
+theta_cov_threshold: 10.0
+color_message_timeout: 0.5
+cargo_egress_timeout: 0.5
