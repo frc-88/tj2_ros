@@ -260,6 +260,7 @@ class TJ2BarPipeline(object):
         self.nt_pub.publish(NTEntry("bar/distance", bar_distance))
         self.nt_pub.publish(NTEntry("bar/angle", bar_angle))
         self.nt_pub.publish(NTEntry("bar/count", bar_count))
+        self.nt_pub.publish(NTEntry("bar/update", rospy.Time.now().to_sec()))
     
     def get_valid_bars(self, bars):
         valid_bars = []
