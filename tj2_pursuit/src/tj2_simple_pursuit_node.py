@@ -20,7 +20,6 @@ from tj2_pursuit.msg import PursueObjectAction, PursueObjectGoal, PursueObjectRe
 from tj2_tools.particle_filter.state import FilterState, SimpleFilter, DeltaTimer
 from tj2_tools.yolo.utils import get_label, read_class_names
 from tj2_tools.transforms import lookup_transform
-from tj2_tools.motion_profile import TrapezoidalProfile, PIDController
 
 
 class Tj2SimplePursuit:
@@ -34,17 +33,7 @@ class Tj2SimplePursuit:
         self.class_names = read_class_names(self.class_names_path)
 
         self.rotate_kP = rospy.get_param("~rotate_kP", 1.0)
-        self.rotate_kI = rospy.get_param("~rotate_kI", 0.0)
-        self.rotate_kD = rospy.get_param("~rotate_kD", 0.0)
-        
         self.max_angular_vel = rospy.get_param("~max_angular_vel", 5.0)
-        self.max_linear_vel = rospy.get_param("~max_linear_vel", 2.0)
-        self.max_linear_accel = rospy.get_param("~max_linear_accel", 1.0)
-
-        self.linear_kP = rospy.get_param("~linear_kP", 1.0)
-        self.linear_kI = rospy.get_param("~linear_kI", 0.0)
-        self.linear_kD = rospy.get_param("~linear_kD", 0.0)
-
         self.object_reached_threshold = rospy.get_param("~object_reached_threshold", 0.1)
         self.command_rate = rospy.get_param("~command_rate", 15.0)
         self.no_object_timeout = rospy.Duration(rospy.get_param("~no_object_timeout", 2.0))
@@ -60,24 +49,6 @@ class Tj2SimplePursuit:
             self.normalize_error = 1.0 / error
         else:
             raise ValueError("Angle error function returned an value: %0.4f" % error)
-        
-        self.delta_timer = DeltaTimer()
-        self.angular_pid = PIDController(
-            kp=self.rotate_kP,
-            ki=self.rotate_kI,
-            kd=self.rotate_kD,
-        )
-        self.linear_vel_controller = TrapezoidalProfile(
-            dict(
-                kp=self.linear_kP,
-                ki=self.linear_kI,
-                kd=self.linear_kD,
-            ),
-            dict(
-                max_speed=self.max_linear_vel,
-                max_accel=self.max_linear_accel
-            )
-        )
 
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
         self.camera_tilt_pub = rospy.Publisher("joint_command/camera_joint", Float64, queue_size=10)
@@ -250,24 +221,16 @@ class Tj2SimplePursuit:
         # if cargo is above, tilt camera up
         # drive forward to the tracked object following a trapezoidal profile
         
-        dt = self.delta_timer.dt(rospy.Time.now().to_sec())
-        # error = self.get_angle_error(track_robot_relative.heading())
-        # angular_velocity = self.rotate_kP * error
-        angular_velocity = self.angular_pid.update(0.0, track_robot_relative.heading(), dt)
+        error = self.get_angle_error(track_robot_relative.heading())
+        angular_velocity = self.rotate_kP * error
         if abs(angular_velocity) > self.max_angular_vel:
             angular_velocity = math.copysign(self.max_angular_vel, angular_velocity)
 
-        if rospy.Time.now() - self.no_object_timer < self.no_object_timeout:
-            target_distance = distance
-            target_vel = self.max_linear_vel
-        else:
-            target_distance = 0.0
-            target_vel = 0.0
-        self.linear_vel_controller.set_target_velocity(target_vel)
-        self.linear_vel_controller.set_target_position(target_distance)
-        
         twist = Twist()
-        twist.linear.x = self.linear_vel_controller.calculate_velocity(0.0, dt)
+        if rospy.Time.now() - self.no_object_timer < self.no_object_timeout:
+            twist.linear.x = 0.5
+        else:
+            twist.linear.x = 0.0
         twist.angular.z = angular_velocity
         self.cmd_vel_pub.publish(twist)
 
