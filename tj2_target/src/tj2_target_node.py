@@ -2,6 +2,8 @@
 import os
 import csv
 import math
+
+from numpy import concatenate
 import rospy
 import tf2_ros
 import tf2_geometry_msgs
@@ -11,7 +13,6 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from std_msgs.msg import Bool
-from std_msgs.msg import ColorRGBA
 from std_msgs.msg import String
 
 from geometry_msgs.msg import PoseStamped
@@ -60,13 +61,12 @@ class TJ2Target(object):
         self.enable_limelight_fine_tuning = rospy.get_param("~enable_limelight_fine_tuning", True)
         self.enable_marauding = rospy.get_param("~enable_marauding", True)
 
-        self.team_colors = ["red", "blue"]
-        self.object_colors = ["red", "blue"]
-
         # a constant to fix weird unknown target issues
         self.target_cosmic_ray_compensation = math.radians(rospy.get_param("~target_cosmic_ray_compensation_degrees", 0.0))
 
-        self.color_sensor_timeout = rospy.Duration(rospy.get_param("~color_sensor_timeout", 0.5))
+        self.color_message_timeout = rospy.Duration(rospy.get_param("~color_message_timeout", 0.5))
+        self.cargo_egress_timeout = rospy.Duration(rospy.get_param("~cargo_egress_timeout", 0.5))
+        self.cargo_egress_timer = rospy.Time.now()
 
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.csv")
         self.recorded_data_file_path = rospy.get_param("~recorded_data_file_path", "./recorded_data.csv")
@@ -95,7 +95,9 @@ class TJ2Target(object):
             self.traj_interp_down = None
         
         self.loaded_object_color = ""
+        self.buffered_object_color = ""  # cargo takes time to leave the chamber. Hold the last object color here
         self.color_timestamp = rospy.Time(0)
+        self.team_timestamp = rospy.Time(0)
 
         self.team_color = ""
 
@@ -109,7 +111,7 @@ class TJ2Target(object):
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback)
         self.hood_sub = rospy.Subscriber("hood", Bool, self.hood_callback)
         self.limelight_sub = rospy.Subscriber("/limelight/target", PoseStamped, self.limelight_callback)
-        self.color_sensor_sub = rospy.Subscriber("color_sensor", ColorRGBA, self.color_sensor_callback)
+        self.color_match_sub = rospy.Subscriber("/color_sensor/match", String, self.color_match_callback)
         self.team_color_sub = rospy.Subscriber("team_color", String, self.team_color_callback)
 
         if self.enable_shot_probability:
@@ -276,12 +278,12 @@ class TJ2Target(object):
     def limelight_callback(self, msg):
         self.limelight_target_pose = msg
 
-    def color_sensor_callback(self, msg):
+    def color_match_callback(self, msg):
         self.color_timestamp = rospy.Time.now()
-        # convert message from RGBA to and string (red or blue)
-        # self.loaded_object_color
-    
+        self.loaded_object_color = msg.data
+
     def team_color_callback(self, msg):
+        self.team_timestamp = rospy.Time.now()
         self.team_color = msg.data
 
     def run(self):
@@ -400,11 +402,25 @@ class TJ2Target(object):
             return waypoint_pose
 
     def get_target_waypoint(self, robot_pose):
-        if rospy.Time.now() - self.color_timestamp > self.color_sensor_timeout:
-            rospy.logwarn_throttle(1.0, "No color sensor message received for %s s" % (self.color_sensor_timeout.to_sec()))
+        if rospy.Time.now() - self.color_timestamp > self.color_message_timeout:
+            rospy.logwarn_throttle(1.0, "No color sensor message received for at least %s s" % (self.color_message_timeout.to_sec()))
+            return self.target_waypoint
+        if rospy.Time.now() - self.team_timestamp > self.color_message_timeout:
+            rospy.logwarn_throttle(1.0, "No team color message received for at least %s s" % (self.color_message_timeout.to_sec()))
             return self.target_waypoint
         
-        if len(self.loaded_object_color) == 0 or self.team_color == self.loaded_object_color:
+        if len(self.loaded_object_color) == 0:
+            # If the color sensor doesn't currently see a matching object,
+            if rospy.Time.now() - self.cargo_egress_timer > self.cargo_egress_timeout:
+                # If the egress timer has expired, assume we want to shoot at the goal
+                return self.target_waypoint
+            # otherwise, use the last detected object name
+        else:
+            # else use the currently detected object name
+            self.cargo_egress_timer = rospy.Time.now()
+            self.buffered_object_color = self.loaded_object_color
+
+        if self.team_color == self.buffered_object_color:
             return self.target_waypoint
         else:
             marauding_waypoints = []
