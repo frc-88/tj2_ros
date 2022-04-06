@@ -25,6 +25,10 @@ from image_geometry import PinholeCameraModel
 
 from std_msgs.msg import ColorRGBA
 
+from tj2_networktables.msg import NTEntry
+
+from tj2_tools.robot_state import Pose2d
+
 import ctypes
 # a thread gets killed improperly within CvBridge without this causing segfaults
 libgcc_s = ctypes.CDLL('libgcc_s.so.1')
@@ -81,6 +85,7 @@ class TJ2BarPipeline(object):
         self.debug_image_pub = rospy.Publisher("bar_pipeline_debug/image_raw", Image, queue_size=1)
         self.debug_info_pub = rospy.Publisher("bar_pipeline_debug/camera_info", CameraInfo, queue_size=1)
         self.bar_marker_pub = rospy.Publisher("bar_markers", MarkerArray, queue_size=10)
+        self.nt_pub = rospy.Publisher("nt_passthrough", NTEntry, queue_size=10)
 
         rospy.Subscriber(self.depth_topic, Image, self.depth_callback, queue_size=1)
         rospy.Subscriber(self.info_topic, CameraInfo, self.info_callback, queue_size=1)
@@ -102,7 +107,6 @@ class TJ2BarPipeline(object):
     def depth_callback(self, msg):
         if self.camera_model is None:
             return
-
         try:
             cv2_img = self.bridge.imgmsg_to_cv2(msg, "passthrough")
         except CvBridgeError as e:
@@ -110,10 +114,9 @@ class TJ2BarPipeline(object):
             return
         
         t0 = time.time()
-        # bars, debug_image = self.pipeline(cv2_img, self.debug_image_pub.get_num_connections() > 0)
-        bars, debug_image = self.pipeline(cv2_img, True)
+        bars, debug_image = self.pipeline(cv2_img, self.debug_image_pub.get_num_connections() > 0)
         t1 = time.time()
-        rospy.loginfo_throttle(1, "Pipeline rate: %0.3f" % (1.0 / (t1 - t0)))
+        rospy.loginfo_throttle(1.0, "Pipeline rate: %0.3f" % (1.0 / (t1 - t0)))
 
         self.publish_bars(bars)
         self.publish_bar_visualization(bars)
@@ -222,7 +225,54 @@ class TJ2BarPipeline(object):
             self.debug_info_pub.publish(self.camera_info)
 
     def publish_bars(self, bars):
-        pass
+        bar_count = 0
+        bar_distance = 0.0
+        bar_angle = 0.0
+        
+        valid_bars = self.get_valid_bars(bars)
+        bar_count = len(valid_bars)
+    
+        min_dist = None
+        min_index = -1
+        for index, ((x0, y0), (x1, y1)) in enumerate(valid_bars):
+            m = (y1 - y0) / (x1 - x0)
+            # calculation from: https://math.stackexchange.com/questions/1796400/estimate-line-in-theta-rho-space-given-2-points
+            rho = abs(m * x1 - y1) / math.sqrt(m * m + 1)
+            if min_dist is None or rho < min_dist:
+                min_dist = rho
+                min_index = index
+
+        if min_index >= 0:
+            points = bars[min_index]
+
+            pt1 = points[0]
+            pt2 = points[1]
+            x0 = pt1[0]
+            y0 = pt1[1]
+            x1 = pt2[0]
+            y1 = pt2[1]
+
+            m = (y1 - y0) / (x1 - x0)
+            bar_angle = math.atan(m)
+
+            bar_distance = min_dist
+
+        self.nt_pub.publish(NTEntry("bar/distance", bar_distance))
+        self.nt_pub.publish(NTEntry("bar/angle", bar_angle))
+        self.nt_pub.publish(NTEntry("bar/count", bar_count))
+    
+    def get_valid_bars(self, bars):
+        valid_bars = []
+        for points in bars:
+            is_valid = True
+            for point in points:
+                z_height = point[2]
+                if not (self.bar_z_lower_threshold <= z_height <= self.bar_z_upper_threshold):
+                    is_valid = False
+                    break
+            if is_valid:
+                valid_bars.append(points)
+        return valid_bars
     
     def publish_bar_visualization(self, bars):
         rospy.loginfo_throttle(2, "%s potential bars in view" % len(bars))
