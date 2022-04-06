@@ -38,7 +38,7 @@ double to_radians(double degrees) {
 }
 
 
-double to_meters(double inches) {
+double inches_to_meters(double inches) {
     return inches * 0.0254;
 }
 
@@ -85,9 +85,8 @@ private:
     NT_Entry _main_tx_entry;
     NT_Entry _main_ty_entry;
 
-    NT_Entry _limelight_height_entry;
-    NT_Entry _limelight_angle_entry;
-    NT_Entry _limelight_radius_entry;
+    NT_Entry _limelight_target_angle_entry;
+    NT_Entry _limelight_target_distance_entry;
 
     // Publishers
     image_transport::CameraPublisher _camera_pub;
