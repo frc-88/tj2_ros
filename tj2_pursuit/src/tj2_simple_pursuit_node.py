@@ -253,21 +253,19 @@ class Tj2SimplePursuit:
         dt = self.delta_timer.dt(rospy.Time.now().to_sec())
         # error = self.get_angle_error(track_robot_relative.heading())
         # angular_velocity = self.rotate_kP * error
-        angular_velocity = self.angular_pid.update(0.0, track_robot_relative.heading(), dt)
+        angular_velocity = self.angular_pid.update(0.0, -track_robot_relative.heading(), dt)
         if abs(angular_velocity) > self.max_angular_vel:
             angular_velocity = math.copysign(self.max_angular_vel, angular_velocity)
 
         if rospy.Time.now() - self.no_object_timer < self.no_object_timeout:
-            target_distance = distance
             target_vel = self.max_linear_vel
         else:
-            target_distance = 0.0
             target_vel = 0.0
         self.linear_vel_controller.set_target_velocity(target_vel)
-        self.linear_vel_controller.set_target_position(target_distance)
+        self.linear_vel_controller.set_target_position(0.0)
         
         twist = Twist()
-        twist.linear.x = self.linear_vel_controller.calculate_velocity(0.0, dt)
+        twist.linear.x = self.linear_vel_controller.calculate_velocity(distance, dt)
         twist.angular.z = angular_velocity
         self.cmd_vel_pub.publish(twist)
 
