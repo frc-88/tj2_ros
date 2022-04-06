@@ -8,6 +8,8 @@ import actionlib
 import tf2_ros
 import tf2_geometry_msgs
 
+from nav_msgs.msg import Odometry
+
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist
 
@@ -20,7 +22,10 @@ from tj2_pursuit.msg import PursueObjectAction, PursueObjectGoal, PursueObjectRe
 from tj2_tools.particle_filter.state import FilterState, SimpleFilter, DeltaTimer
 from tj2_tools.yolo.utils import get_label, read_class_names
 from tj2_tools.transforms import lookup_transform
-from tj2_tools.motion_profile import TrapezoidalProfile, PIDController
+# from tj2_tools.motion_profile import TrapezoidalProfileLive
+# from tj2_tools.motion_profile import TrapezoidalProfile
+from tj2_tools.motion_profile import PIDController
+from tj2_tools.predictions.predictor import BouncePredictor
 
 
 class Tj2SimplePursuit:
@@ -49,6 +54,9 @@ class Tj2SimplePursuit:
         self.command_rate = rospy.get_param("~command_rate", 15.0)
         self.no_object_timeout = rospy.Duration(rospy.get_param("~no_object_timeout", 2.0))
 
+        self.enable_linear_vel = rospy.get_param("~enable_linear_vel", True)
+        self.enable_prediction = rospy.get_param("~enable_prediction", False)
+
         self.camera_base_frame = rospy.get_param("~camera_base_frame", "base_link")
         self.odom_frame = rospy.get_param("~odom_frame", "odom")
         self.base_frame = rospy.get_param("~base_frame", "base_link")
@@ -67,23 +75,34 @@ class Tj2SimplePursuit:
             ki=self.rotate_kI,
             kd=self.rotate_kD,
         )
-        self.linear_vel_controller = TrapezoidalProfile(
-            dict(
-                kp=self.linear_kP,
-                ki=self.linear_kI,
-                kd=self.linear_kD,
-            ),
-            dict(
-                max_speed=self.max_linear_vel,
-                max_accel=self.max_linear_accel
-            )
+        self.linear_pid = PIDController(
+            kp=self.linear_kP,
+            ki=self.linear_kI,
+            kd=self.linear_kD,
+        )
+        self.limited_linear_command = 0.0
+        # self.linear_vel_controller = TrapezoidalProfileLive(
+        #     dict(
+        #         kp=self.linear_kP,
+        #         ki=self.linear_kI,
+        #         kd=self.linear_kD,
+        #     ),
+        #     dict(
+        #         max_speed=self.max_linear_vel,
+        #         max_accel=self.max_linear_accel
+        #     )
+        # )
+
+        self.predictor = BouncePredictor(  # TODO: make dynamically configurable
+            v_max_robot=4.0,
+            past_window_size=4,
+            vx_std_dev_threshold=1.0,
+            vy_std_dev_threshold=1.0
         )
 
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
         self.camera_tilt_pub = rospy.Publisher("joint_command/camera_joint", Float64, queue_size=10)
         self.follow_object_goal_pub = rospy.Publisher("follow_object_goal", PoseStamped, queue_size=10)
-
-        self.detections_sub = rospy.Subscriber("detections", Detection3DArray, self.obj_callback, queue_size=15)
 
         self.tracking_object_name = ""
         self.tracking_state = None
@@ -91,13 +110,21 @@ class Tj2SimplePursuit:
         self.object_is_in_view = False
         self.no_object_timer = rospy.Time.now()
 
+        self.odom_state = FilterState()
+
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+
+        self.detections_sub = rospy.Subscriber("detections", Detection3DArray, self.obj_callback, queue_size=15)
+        self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback, queue_size=15)
 
         self.pursue_object_server = actionlib.SimpleActionServer("pursue_object", PursueObjectAction, self.pursue_object_callback, auto_start=False)
         self.pursue_object_server.start()
 
         rospy.loginfo("%s is ready" % self.name)
+
+    def odom_callback(self, msg):
+        self.odom_state = FilterState.from_odom(msg)
 
     def pursue_object_callback(self, goal):
         rate = rospy.Rate(self.command_rate)
@@ -111,6 +138,7 @@ class Tj2SimplePursuit:
         self.tracking_tilt_state = None
         self.object_is_in_view = False
         self.no_object_timer = rospy.Time.now()
+        self.limited_linear_command = 0.0
 
         while True:
             rate.sleep()
@@ -140,7 +168,13 @@ class Tj2SimplePursuit:
         else:
             self.no_object_timer = rospy.Time.now()
             self.object_is_in_view = True
-            self.tracking_state = tracking_state
+            if tracking_state is None:
+                self.tracking_state = None
+            else:
+                if self.enable_prediction:
+                    self.tracking_state = self.predictor.get_robot_intersection(tracking_state, self.odom_state)
+                else:
+                    self.tracking_state = tracking_state
             self.tracking_tilt_state = tracking_tilt_state
 
     def get_nearest_detection(self, object_name, detections_msg):
@@ -241,7 +275,7 @@ class Tj2SimplePursuit:
         distance = self.distance_filter.update(
             track_robot_relative.distance(states="xy")
         )
-        rospy.loginfo("Tracking: X=%0.4f, Y=%0.4f, T=%0.4f" % (track_robot_relative.x, track_robot_relative.y, track_robot_relative.theta))
+        rospy.loginfo("Tracking: d=%0.4f, X=%0.4f, Y=%0.4f" % (distance, track_robot_relative.x, track_robot_relative.y))
         if distance < self.object_reached_threshold:
             rospy.loginfo("Arrived at object: %0.4f" % distance)
             return True
@@ -250,22 +284,35 @@ class Tj2SimplePursuit:
         # if cargo is above, tilt camera up
         # drive forward to the tracked object following a trapezoidal profile
         
-        dt = self.delta_timer.dt(rospy.Time.now().to_sec())
-        # error = self.get_angle_error(track_robot_relative.heading())
+        now = rospy.Time.now()
+        dt = self.delta_timer.dt(now.to_sec())
+        if dt == 0.0:
+            return False
+        error = self.get_angle_error(track_robot_relative.heading())
+        # error = track_robot_relative.heading()
         # angular_velocity = self.rotate_kP * error
-        angular_velocity = self.angular_pid.update(0.0, -track_robot_relative.heading(), dt)
+        angular_velocity = self.angular_pid.update(0.0, -error, dt)
         if abs(angular_velocity) > self.max_angular_vel:
             angular_velocity = math.copysign(self.max_angular_vel, angular_velocity)
 
+        # if now - self.no_object_timer > self.no_object_timeout:
+        #     distance = 0.0
+        # self.linear_vel_controller.reset_position(distance)
         if rospy.Time.now() - self.no_object_timer < self.no_object_timeout:
-            target_vel = self.max_linear_vel
+            target_dist = distance
         else:
-            target_vel = 0.0
-        self.linear_vel_controller.set_target_velocity(target_vel)
-        self.linear_vel_controller.set_target_position(0.0)
+            target_dist = 0.0
+        # self.linear_vel_controller.set_target_velocity(0.0)
+        # self.linear_vel_controller.set_target_position(target_dist)
         
         twist = Twist()
-        twist.linear.x = self.linear_vel_controller.calculate_velocity(distance, dt)
+        if self.enable_linear_vel:
+            # twist.linear.x = self.linear_vel_controller.calculate_velocity(distance, self.odom_state.vx, dt)
+            # twist.linear.x = self.linear_vel_controller.calculate_command_velocity(odom_state.vx, dt)
+            linear_command = self.linear_pid.update(0.0, -target_dist, dt)
+            self.limited_linear_command += math.copysign(self.max_linear_accel * dt, linear_command - self.limited_linear_command)
+            self.limited_linear_command = min(self.max_linear_vel, max(-self.max_linear_vel, self.limited_linear_command))
+            twist.linear.x = self.limited_linear_command
         twist.angular.z = angular_velocity
         self.cmd_vel_pub.publish(twist)
 
@@ -278,7 +325,6 @@ class Tj2SimplePursuit:
 
     def run(self):
         rospy.spin()
-
 
 if __name__ == "__main__":
     node = Tj2SimplePursuit()
