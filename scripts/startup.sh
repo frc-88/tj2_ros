@@ -10,4 +10,4 @@
 export ROS_MAP_NAME=3-101
 # export ENABLE_DRIVER_STATION=true
 export ENABLE_DRIVER_STATION=false
-export OBJECT_MODEL_NAMES=cargo_2022.names
+export OBJECT_MODEL_NAMES=powercell_2021.names
