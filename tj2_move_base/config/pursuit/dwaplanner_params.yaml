@@ -59,7 +59,7 @@ xy_goal_tolerance: 0.15
 latch_xy_goal_tolerance: false
 
 # The weight for penalizing any changes in robot heading
-twirling_scale: 0.05  # 0.0
+twirling_scale: 0.001  # 0.0
 
 
 ## Forward Simulation Parameters ##
@@ -110,7 +110,7 @@ forward_point_distance: 0.015  # 0.325
 stop_time_buffer: 0.25
 
 # The absolute value of the velocity at which to start scaling the robot's footprint, in m/s
-scaling_speed: 1.0
+scaling_speed: 2.0
 
 # The maximum factor to scale the robot's footprint by
 max_scaling_factor: 0.2
