@@ -56,11 +56,15 @@ class SimpleDynamicToggle:
         
         self.state = None
         if self.enabled:
-            self.dyn_client = dynamic_reconfigure.client.Client(
-                self.topic_name,
-                config_callback=self.callback,
-                **kwargs
-            )
+            try:
+                self.dyn_client = dynamic_reconfigure.client.Client(
+                    self.topic_name,
+                    config_callback=self.callback,
+                    **kwargs
+                )
+            except rospy.exceptions.ROSException as e:
+                rospy.logwarn("Failed to initialize SimpleDynamicToggle (%s): %s" % (self.topic_name, str(e)))
+                self.enabled = False
         else:
             self.dyn_client = None
         self.config_key = config_key
