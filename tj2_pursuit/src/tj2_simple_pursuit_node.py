@@ -63,6 +63,9 @@ class Tj2SimplePursuit:
         self.odom_frame = rospy.get_param("~odom_frame", "odom")
         self.base_frame = rospy.get_param("~base_frame", "base_link")
 
+        if not self.enable_linear_vel:
+            self.object_reached_threshold = 0.0
+
         self.distance_filter = SimpleFilter(0.9)
         self.normalize_error = 1.0
         error = self.get_angle_error(math.pi)
@@ -166,10 +169,7 @@ class Tj2SimplePursuit:
     def obj_callback(self, detections_msg):
         tracking_state, tracking_tilt_state = self.get_nearest_detection(self.tracking_object_name, detections_msg)
 
-        if len(self.tracking_object_name) > 0 and (tracking_state is None or tracking_tilt_state is None):
-            self.object_is_in_view = False
-            rospy.logwarn("No object is available to pursue!")
-        else:
+        if tracking_state is not None and tracking_tilt_state is not None:
             self.no_object_timer = rospy.Time.now()
             self.object_is_in_view = True
             if tracking_state is None:
@@ -180,6 +180,9 @@ class Tj2SimplePursuit:
                 else:
                     self.tracking_state = tracking_state
             self.tracking_tilt_state = tracking_tilt_state
+        elif len(self.tracking_object_name) > 0:
+            self.object_is_in_view = False
+            rospy.logwarn("No object is available to pursue!")
 
     def get_nearest_detection(self, object_name, detections_msg):
         nearest_pose = None
@@ -201,9 +204,9 @@ class Tj2SimplePursuit:
         if nearest_pose is not None:
             tracking_state_base = FilterState.from_ros_pose(nearest_pose.pose)
             if self.object_kF > 0.0:
-                dt = self.detection_loop_timer.update(rospy.Time.now())
+                dt = self.detection_loop_timer.dt(rospy.Time.now().to_sec())
                 if dt > 0.0:
-                    motion_compensate = FilterState(theta=self.object_kF * self.odom_state.vt * dt)
+                    motion_compensate = FilterState(theta=-self.object_kF * self.odom_state.vt * dt)
                     tracking_state_base = tracking_state_base.relative_to(motion_compensate)
             odom_state = self.get_odom_state()
             if odom_state is not None:
@@ -314,8 +317,8 @@ class Tj2SimplePursuit:
         dt = self.delta_timer.dt(now.to_sec())
         if dt == 0.0:
             return False
-        error = self.get_angle_error(track_robot_relative.heading())
-        # error = track_robot_relative.heading()
+        # error = self.get_angle_error(track_robot_relative.heading())
+        error = track_robot_relative.heading()
         # angular_velocity = self.rotate_kP * error
         angular_velocity = self.angular_pid.update(0.0, -error, dt)
         if abs(angular_velocity) > self.max_angular_vel:
