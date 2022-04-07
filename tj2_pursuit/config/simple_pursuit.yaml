@@ -11,6 +11,8 @@ linear_kP: 1.0
 linear_kI: 0.0
 linear_kD: 0.0
 
+object_kF: 0.9
+
 camera_base_frame: camera_link
 
 object_reached_threshold: 0.4
