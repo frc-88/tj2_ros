@@ -19,7 +19,8 @@
             <param name="nt_port" value="5800"/>
             <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
             <param name="update_interval" value="0.033"/>
-            <param name="min_angular_z_cmd" value="0.5"/>
+            <param name="min_angular_z_cmd" value="0.01"/>
+            <param name="min_linear_cmd" value="0.01"/>
             <param name="classes_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
         </node>
     </group>
