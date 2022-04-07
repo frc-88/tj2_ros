@@ -50,6 +50,8 @@ class Tj2SimplePursuit:
         self.linear_kI = rospy.get_param("~linear_kI", 0.0)
         self.linear_kD = rospy.get_param("~linear_kD", 0.0)
 
+        self.object_kF = rospy.get_param("~object_kF", 0.0)
+
         self.object_reached_threshold = rospy.get_param("~object_reached_threshold", 0.1)
         self.command_rate = rospy.get_param("~command_rate", 15.0)
         self.no_object_timeout = rospy.Duration(rospy.get_param("~no_object_timeout", 2.0))
@@ -70,6 +72,8 @@ class Tj2SimplePursuit:
             raise ValueError("Angle error function returned an value: %0.4f" % error)
         
         self.delta_timer = DeltaTimer()
+        self.detection_loop_timer = DeltaTimer()
+
         self.angular_pid = PIDController(
             kp=self.rotate_kP,
             ki=self.rotate_kI,
@@ -193,15 +197,31 @@ class Tj2SimplePursuit:
                 nearest_pose.header = detection.header
                 nearest_dist = detection_dist
         
-        target_pose = self.get_pose_in_odom(nearest_pose)
+        target_state = None
+        if nearest_pose is not None:
+            tracking_state_base = FilterState.from_ros_pose(nearest_pose.pose)
+            if self.object_kF > 0.0:
+                dt = self.detection_loop_timer.update(rospy.Time.now())
+                if dt > 0.0:
+                    motion_compensate = FilterState(theta=self.object_kF * self.odom_state.vt * dt)
+                    tracking_state_base = tracking_state_base.relative_to(motion_compensate)
+            odom_state = self.get_odom_state()
+            if odom_state is not None:
+                target_state = tracking_state_base.relative_to(odom_state)
+                target_state.stamp = detections_msg.header.stamp.to_sec()
+            
+        # target_pose = self.get_pose_in_odom(nearest_pose)
         target_tilt_pose = self.get_pose_in_camera_tilt(nearest_pose)  # this could create an issue if the camera isn't well centered on the intake
-        if target_pose is not None and target_tilt_pose is not None:
+        if target_state is not None and target_tilt_pose is not None:
+            target_pose = PoseStamped()
+            target_pose.header.frame_id = self.odom_frame
+            target_pose.pose = target_state.to_ros_pose()
             self.follow_object_goal_pub.publish(target_pose)
-            nearest_state = FilterState.from_ros_pose(target_pose.pose)
-            nearest_state.stamp = target_pose.header.stamp.to_sec()
-            nearest_tilt_state = FilterState.from_ros_pose(target_tilt_pose.pose)
-            nearest_tilt_state.stamp = target_tilt_pose.header.stamp.to_sec()
-            return nearest_state, nearest_tilt_state
+
+            # nearest_state = FilterState.from_ros_pose(target_pose.pose)
+            target_tilt_state = FilterState.from_ros_pose(target_tilt_pose.pose)
+            target_tilt_state.stamp = target_tilt_pose.header.stamp.to_sec()
+            return target_state, target_tilt_state
         else:
             return None, None
     
@@ -243,7 +263,11 @@ class Tj2SimplePursuit:
         pose.header.frame_id = self.base_frame
         pose.pose.orientation.w = 1.0
         odom_pose = self.get_pose_in_odom(pose)
-        return FilterState.from_ros_pose(odom_pose.pose)
+        if odom_pose is None:
+            rospy.logwarn_throttle(1.0, "Failed to get odom transform!")
+            return None
+        else:
+            return FilterState.from_ros_pose(odom_pose.pose)
 
     def cancel_goal(self):
         self.tracking_object_name = ""
@@ -271,6 +295,8 @@ class Tj2SimplePursuit:
         if self.tracking_state is None or self.tracking_tilt_state is None:
             return False
         odom_state = self.get_odom_state()
+        if odom_state is None:
+            return False
         track_robot_relative = self.tracking_state.relative_to_reverse(odom_state)
         distance = self.distance_filter.update(
             track_robot_relative.distance(states="xy")
