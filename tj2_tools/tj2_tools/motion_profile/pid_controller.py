@@ -4,7 +4,7 @@ class PIDController:
         self.ki = kwargs.get("ki", 0.0)
         self.kd = kwargs.get("kd", 0.0)
         self.kf = kwargs.get("kf", 0.0)
-        self.i_zone = kwargs.get("i_zone", 0.0)
+        self.i_zone = kwargs.get("i_zone", None)
         self.i_max = kwargs.get("i_max", 0.0)
         self.epsilon = kwargs.get("epsilon", 1E-9)
         self.tolerance = kwargs.get("tolerance", 0.0)
@@ -36,7 +36,9 @@ class PIDController:
     def calculate_i(self, error):
         if abs(self.ki) < self.epsilon:
             return 0.0
-        if self.i_zone <= self.epsilon:
+        if self.i_zone is None:
+            self.i_accum += error
+        elif self.i_zone <= self.epsilon:
             self.i_accum = 0.0
         elif abs(error) < self.i_zone:
             self.i_accum += error

@@ -1,0 +1,23 @@
+
+rotate_kP: 3.0
+rotate_kI: 0.0
+rotate_kD: 0.0
+
+max_angular_vel: 10.0
+max_linear_vel: 2.0
+max_linear_accel: 2.0
+
+linear_kP: 1.0
+linear_kI: 0.0
+linear_kD: 0.0
+
+camera_base_frame: camera_link
+
+object_reached_threshold: 0.4
+command_rate: 15.0
+no_object_timeout: 3.0
+odom_frame: odom
+base_frame: base_link
+
+enable_linear_vel: true
+enable_prediction: false
