@@ -59,7 +59,7 @@ xy_goal_tolerance: 0.15
 latch_xy_goal_tolerance: false
 
 # The weight for penalizing any changes in robot heading
-twirling_scale: 0.075  # 0.0
+twirling_scale: 0.001  # 0.0
 
 
 ## Forward Simulation Parameters ##
