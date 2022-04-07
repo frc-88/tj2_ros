@@ -1,12 +1,7 @@
 global_frame: odom
 robot_base_frame: base_link
-<<<<<<< HEAD
-update_frequency: 10.0
-publish_frequency: 2.0
-=======
 update_frequency: 5.0
 publish_frequency: 1.0
->>>>>>> bc86039... optimizing move_base parameters
 width: 4.0
 height: 4.0
 # origin_x: -1.5
@@ -21,40 +16,6 @@ inflation:
     enabled: true
     cost_scaling_factor: 3.0
     inflation_radius: 1.5
-
-obstacle_layer:
-    enabled: true
-    origin_z: 0.0
-    z_resolution: 0.2
-    z_voxels: 10
-    publish_voxel_map: false
-
-    observation_sources: point_cloud_sensor laser_sensor
-    point_cloud_sensor:
-        sensor_frame: camera_link
-        data_type: PointCloud2
-        topic: /camera/depth_filtered/points
-        marking: true
-        clearing: true
-
-        obstacle_range: 6.0
-        raytrace_range: 6.0
-        max_obstacle_height: 0.30
-        min_obstacle_height: 0.1
-        inflation_radius: 0.01
-        track_unknown_space: true
-        combination_method: 1
-        
-    laser_sensor:
-        sensor_frame: laser
-        data_type: LaserScan
-        topic: /laser/scan_filtered
-        marking: true
-        clearing: true
-        inflation_radius: 0.005
-        raytrace_range: 3.0
-        obstacle_range: 4.0
-
 
 obstacle_layer:
     enabled: true

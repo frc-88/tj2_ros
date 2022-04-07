@@ -2,16 +2,7 @@
 robot_radius: 0.0
 footprint_padding: 0.0
 
-<<<<<<< HEAD
 footprint: [[-0.437, -0.437], [-0.437, 0.437], [0.437, 0.437], [0.437, -0.437]]
-=======
-# without bumper:
-# footprint: [[-0.23, -0.23], [-0.23, 0.23], [0.23, 0.23], [0.23, -0.23]]
-
-# with bumper:
-# footprint: [[-0.313, -0.313], [-0.313, 0.313], [0.313, 0.313], [0.313, -0.313]]
-footprint: [[-0.300, -0.300], [-0.300, 0.300], [0.300, 0.300], [0.300, -0.300]]
->>>>>>> bc86039... optimizing move_base parameters
 
 inflation:
     enabled: true
@@ -20,9 +11,5 @@ inflation:
 
 # obstacle_range: 2.0
 # raytrace_range: 4.0
-<<<<<<< HEAD
-transform_tolerance: 1.0  # 0.2
-=======
 
 transform_tolerance: 0.25  # 0.2
->>>>>>> bc86039... optimizing move_base parameters
