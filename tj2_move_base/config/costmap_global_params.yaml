@@ -2,7 +2,7 @@ global_frame: map
 robot_base_frame: base_link
 update_frequency: 1.0
 publish_frequency: 0.5
-resolution: 0.05
+resolution: 0.075
 rolling_window: false
 
 footprint_padding: 0.0
@@ -15,5 +15,5 @@ inflation:
 plugins:
     - {name: static,                    type: "costmap_2d::StaticLayer"}
     # - {name: obstacle_layer,            type: "costmap_2d::VoxelLayer"}
-    - {name: obstacle_layer,            type: "costmap_2d::ObstacleLayer"}
+    # - {name: obstacle_layer,            type: "costmap_2d::ObstacleLayer"}
     - {name: inflation,                 type: "costmap_2d::InflationLayer"}
