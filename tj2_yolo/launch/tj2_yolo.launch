@@ -4,7 +4,7 @@
             <param name="model_path" value="$(find tj2_yolo)/models/cargo_2022-01-28.torchscript"/>
             <!-- <param name="model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/> -->
             <param name="classes_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
-            <rosparam param="z_depth_estimations" file="$(find tj2_yolo)/config/cargo_depth_estimations.yaml" command="load"/>
+            <rosparam param="yolo_z_depth_estimations" file="$(find tj2_yolo)/config/cargo_depth_estimations.yaml" command="load"/>
             <!-- <rosparam param="yolo_z_depth_estimations" file="$(find tj2_yolo)/config/power_cell_depth_estimations.yaml" command="load"/> -->
 
             <param name="confidence_threshold" value="0.7"/>
