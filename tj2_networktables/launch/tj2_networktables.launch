@@ -22,6 +22,8 @@
             <param name="min_angular_z_cmd" value="0.01"/>
             <param name="min_linear_cmd" value="0.01"/>
             <param name="classes_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
+            <param name="use_wheel_speed_odom" value="true"/>
+            <param name="wheel_distance_m" value="0.66675"/>
         </node>
     </group>
 

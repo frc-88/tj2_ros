@@ -20,6 +20,8 @@ LAUNCH_SCRIPT_NAME=roslaunch.sh
 STOP_LAUNCH_SCRIPT_NAME=stop_roslaunch.sh
 LAUNCH_SERVICE_NAME=roslaunch.service
 
+JETSON_CLOCKS_NAME=jetson_clocks.service
+
 chmod +x ${BASE_DIR}/${SCRIPT_NAME}
 chmod +x ${BASE_DIR}/${ENV_SCRIPT_NAME}
 chmod +x ${BASE_DIR}/${LAUNCH_SCRIPT_NAME}
@@ -33,6 +35,7 @@ SERVICE_ROOT_DIR=/etc/systemd/system/
 mkdir -p ${SERVICE_ROOT_DIR}
 cp ${BASE_DIR}/${SERVICE_NAME} ${SERVICE_ROOT_DIR}
 cp ${BASE_DIR}/${LAUNCH_SERVICE_NAME} ${SERVICE_ROOT_DIR}
+cp ${BASE_DIR}/${JETSON_CLOCKS_NAME} ${SERVICE_ROOT_DIR}
 
 cp ${BASE_DIR}/${SCRIPT_NAME} ${BIN_INSTALL_DIR}
 cp ${BASE_DIR}/${ENV_SCRIPT_NAME} ${BIN_INSTALL_DIR}
@@ -44,8 +47,10 @@ systemctl daemon-reload
 loginctl enable-linger $USER
 systemctl enable ${SERVICE_NAME}
 systemctl enable ${LAUNCH_SERVICE_NAME}
+systemctl enable ${JETSON_CLOCKS_NAME}
 
 systemctl restart ${SERVICE_NAME}
 systemctl restart ${LAUNCH_SERVICE_NAME}
+systemctl restart ${JETSON_CLOCKS_NAME}
 
 echo "tj2_ros systemd service installation complete"

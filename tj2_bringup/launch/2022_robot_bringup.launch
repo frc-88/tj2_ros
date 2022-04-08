@@ -8,7 +8,7 @@
     <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
     <include file="$(find tj2_camera)/launch/tj2_camera.launch"/>
     <include file="$(find tj2_camera)/launch/camera_watcher.launch"/>
-    <!-- <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/> -->
+    <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/>
     <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
 
     <include file="$(find tj2_rplidar)/launch/sinistra_laser.launch"/>
