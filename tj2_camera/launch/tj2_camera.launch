@@ -81,7 +81,7 @@
         <arg name="enable_fisheye"           value="false"/>
         <arg name="fisheye_fps"              value="30"/>
 
-        <arg name="depth_width"              value="640"/>
+        <arg name="depth_width"              value="848"/>
         <arg name="depth_height"             value="480"/>
         <arg name="enable_depth"             value="true"/>
         <arg name="depth_fps"                value="30"/>
@@ -112,7 +112,7 @@
 
         <arg name="clip_distance"            value="-1"/>
         <arg name="linear_accel_cov"         value="0.01"/>
-        <arg name="initial_reset"            value="false"/>
+        <arg name="initial_reset"            value="true"/>
         <arg name="unite_imu_method"         value=""/>
         <arg name="topic_odom_in"            value="odom_in"/>
         <arg name="calib_odom_file"          value=""/>
