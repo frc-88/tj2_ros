@@ -20,6 +20,8 @@
 
 #include <geometry_msgs/PoseStamped.h>
 
+#include <std_msgs/Float64.h>
+
 #include "tf2/LinearMath/Quaternion.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -92,6 +94,8 @@ private:
     image_transport::CameraPublisher _camera_pub;
     ros::Publisher _limelight_raw_target_pub;
     ros::Publisher _limelight_target_pub;
+    ros::Publisher _limelight_target_angle_pub;
+    ros::Publisher _limelight_target_distance_pub;
 
     // Subscribers
     ros::Subscriber _limelight_led_mode_sub;

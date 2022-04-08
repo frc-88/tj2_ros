@@ -47,6 +47,8 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
 
     _limelight_raw_target_pub = nh.advertise<tj2_limelight::LimelightTargetArray>("raw_targets", 15);
     _limelight_target_pub = nh.advertise<geometry_msgs::PoseStamped>("target", 15);
+    _limelight_target_angle_pub = nh.advertise<std_msgs::Float64>("target_angle", 15);
+    _limelight_target_distance_pub = nh.advertise<std_msgs::Float64>("target_distance", 15);
     _limelight_led_mode_sub = nh.subscribe<std_msgs::Bool>("led_mode", 5, &TJ2Limelight::led_mode_callback, this);
     _limelight_cam_mode_sub = nh.subscribe<std_msgs::Bool>("cam_mode", 5, &TJ2Limelight::cam_mode_callback, this);
 
@@ -165,7 +167,14 @@ void TJ2Limelight::publish_limelight_targets()
     pose.pose.position.y = target_dist * sin(target_angle);
     pose.pose.orientation = msg_quat;
 
+    std_msgs::Float64 angle_msg;
+    angle_msg.data = target_angle;
+    std_msgs::Float64 dist_msg;
+    dist_msg.data = target_dist;
+
     _limelight_target_pub.publish(pose);
+    _limelight_target_angle_pub.publish(angle_msg);
+    _limelight_target_distance_pub.publish(dist_msg);
 }
 void TJ2Limelight::set_led_mode(bool mode)
 {

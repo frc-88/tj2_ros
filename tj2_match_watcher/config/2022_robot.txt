@@ -19,6 +19,8 @@
 /dextra_laser/scan
 /limelight/raw_targets
 /limelight/target
+/limelight/target_angle
+/limelight/target_distance
 /map
 /map_metadata
 /tf
@@ -47,3 +49,6 @@
 /tj2/detections
 /tj2/cargo/markers
 /tj2/team_color
+/tj2/target_angle
+/tj2/target_distance
+/tj2/target_probability

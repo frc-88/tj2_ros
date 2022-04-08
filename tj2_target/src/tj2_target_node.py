@@ -14,6 +14,7 @@ from scipy.interpolate import interp1d
 
 from std_msgs.msg import Bool
 from std_msgs.msg import String
+from std_msgs.msg import Float64
 
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -105,6 +106,9 @@ class TJ2Target(object):
         self.target_pub = rospy.Publisher("target", PoseStamped, queue_size=10)
         self.probability_hood_up_pub = rospy.Publisher("shot_probability_hood_up_map", OccupancyGrid, queue_size=10)
         self.probability_hood_down_pub = rospy.Publisher("shot_probability_hood_down_map", OccupancyGrid, queue_size=10)
+        self.target_angle_pub = rospy.Publisher("target_angle", Float64, queue_size=15)
+        self.target_distance_pub = rospy.Publisher("target_distance", Float64, queue_size=15)
+        self.target_probability_pub = rospy.Publisher("target_probability", Float64, queue_size=15)
 
         self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback)
         self.amcl_pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.amcl_pose_callback)
@@ -439,6 +443,10 @@ class TJ2Target(object):
         self.nt_pub.publish(self.make_entry("target/heading_deg", math.degrees(heading)))
         self.nt_pub.publish(self.make_entry("target/probability", probability))
         self.nt_pub.publish(self.make_entry("target/update", rospy.Time.now().to_sec()))
+
+        self.target_angle_pub.publish(Float64(heading))
+        self.target_distance_pub.publish(Float64(distance))
+        self.target_probability_pub.publish(Float64(probability))
 
     def is_global_pose_valid(self, amcl_pose):
         if amcl_pose is None or len(amcl_pose.pose.covariance) != 36:
