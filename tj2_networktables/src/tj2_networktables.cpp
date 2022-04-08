@@ -24,9 +24,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~pose_estimate_theta_std_deg", _pose_estimate_theta_std_deg, 15.0);
     ros::param::param<string>("~pose_estimate_frame_id", _pose_estimate_frame_id, _map_frame);
 
-    ros::param::param<bool>("~use_wheel_speed_odom", _use_wheel_speed_odom, false);
-    ros::param::param<double>("~_wheel_distance_m", _wheel_distance_m, 1.0);
-
     ros::param::param<std::string>("~classes_path", _classes_path, "coco.names");
 
     _class_names = load_label_names(_classes_path);
@@ -76,7 +73,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _raw_joint_pubs = new vector<ros::Publisher>();
     _raw_joint_subs = new vector<ros::Subscriber>();
     _raw_joint_msgs = new vector<std_msgs::Float64*>();
-
+    
     for (size_t index = 0; index < _joint_names.size(); index++) {
         add_joint(_joint_names.at(index));
     }
@@ -194,9 +191,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _hood_state_entry = nt::GetEntry(_nt, _base_key + "hood/state");
     _hood_update_entry = nt::GetEntry(_nt, _base_key + "hood/update");
     nt::AddEntryListener(_hood_update_entry, boost::bind(&TJ2NetworkTables::hood_state_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
-
-    _wheel_speed_left_entry = nt::GetEntry(_nt, _base_key + "wheel_speeds/left");
-    _wheel_speed_right_entry = nt::GetEntry(_nt, _base_key + "wheel_speeds/right");
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -427,27 +421,9 @@ void TJ2NetworkTables::odom_callback(const nt::EntryNotification& event)
     double x = get_double(_odom_x_entry, NAN);
     double y = get_double(_odom_y_entry, NAN);
     double t = get_double(_odom_t_entry, NAN);
-
-    double vx;
-    double vy;
-    double vt;
-    if (_use_wheel_speed_odom) {
-        double left_speed = get_double(_wheel_speed_left_entry, NAN);
-        double right_speed = get_double(_wheel_speed_right_entry, NAN);
-        if (!(std::isfinite(left_speed) && std::isfinite(right_speed))) {
-            ROS_WARN_THROTTLE(1.0, "Odometry wheel speeds are nan or inf");
-            return;
-        }
-        vx = (left_speed + right_speed) / 2.0;
-        vy = 0.0;
-        vt = (right_speed - left_speed) / _wheel_distance_m;
-    }
-    else {
-        vx = get_double(_odom_vx_entry, NAN);
-        vy = get_double(_odom_vy_entry, NAN);
-        vt = get_double(_odom_vt_entry, NAN);
-    }
-
+    double vx = get_double(_odom_vx_entry, NAN);
+    double vy = get_double(_odom_vy_entry, NAN);
+    double vt = get_double(_odom_vt_entry, NAN);
     if (!(std::isfinite(x) && std::isfinite(y) && std::isfinite(t) && std::isfinite(vx) && std::isfinite(vy) && std::isfinite(vt))) {
         ROS_WARN_THROTTLE(1.0, "Odometry values are nan or inf");
         return;
