@@ -95,8 +95,6 @@ private:
     double _min_linear_cmd;
     double _min_angular_z_cmd;
     double _zero_epsilon;
-    bool _use_wheel_speed_odom;
-    double _wheel_distance_m;
 
     double _pose_estimate_x_std, _pose_estimate_y_std, _pose_estimate_theta_std_deg;
     string _pose_estimate_frame_id;
@@ -196,10 +194,6 @@ private:
     // hood entries
     NT_Entry _hood_state_entry;
     NT_Entry _hood_update_entry;
-
-    // wheel speed entries
-    NT_Entry _wheel_speed_left_entry;
-    NT_Entry _wheel_speed_right_entry;
 
     // Members
     ros::Timer _ping_timer;
