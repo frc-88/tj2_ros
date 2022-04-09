@@ -8,6 +8,7 @@ Panels:
         - /Grid1
         - /TF1
         - /TF1/Tree1
+        - /Map1
         - /LaserScan1
         - /RealSense1
         - /Cargo Markers1
@@ -17,6 +18,8 @@ Panels:
         - /DepthCloud1/Auto Size1
         - /Turret Target1
         - /RealSense Image1
+        - /Hood Down Map1
+        - /Hood Up Map1
         - /Limelight Target1
       Splitter Ratio: 0.6061684489250183
     Tree Height: 617
@@ -307,7 +310,7 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Alpha: 0.699999988079071
+    - Alpha: 0.5
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: false
@@ -353,15 +356,61 @@ Visualization Manager:
         posblue_start_2: true
         posblue_start_5: true
         poscenter: true
-        pospoint1: true
-        pospoint2: true
-        pospoint3: true
+        poshanger_ne: true
+        poshanger_nw: true
+        poshanger_se: true
+        poshanger_sw: true
+        poshigh_bar_n: true
+        poshigh_bar_s: true
+        poshub_pt1: true
+        poshub_pt1_r: true
+        poshub_pt2: true
+        poshub_pt2_r: true
+        poshub_pt3: true
+        poshub_pt3_r: true
+        poshub_pt4: true
+        poshub_pt4_r: true
+        poshub_pt5: true
+        poshub_pt5_r: true
+        poshub_pt6: true
+        poshub_pt6_r: true
+        poslower_bar_n: true
+        poslower_bar_s: true
+        posmid_bar_n: true
+        posmid_bar_s: true
+        posred_start_2: true
+        posred_start_5: true
+        postrav_bar_n: true
+        postrav_bar_s: true
         textblue_start_2: true
         textblue_start_5: true
         textcenter: true
-        textpoint1: true
-        textpoint2: true
-        textpoint3: true
+        texthanger_ne: true
+        texthanger_nw: true
+        texthanger_se: true
+        texthanger_sw: true
+        texthigh_bar_n: true
+        texthigh_bar_s: true
+        texthub_pt1: true
+        texthub_pt1_r: true
+        texthub_pt2: true
+        texthub_pt2_r: true
+        texthub_pt3: true
+        texthub_pt3_r: true
+        texthub_pt4: true
+        texthub_pt4_r: true
+        texthub_pt5: true
+        texthub_pt5_r: true
+        texthub_pt6: true
+        texthub_pt6_r: true
+        textlower_bar_n: true
+        textlower_bar_s: true
+        textmid_bar_n: true
+        textmid_bar_s: true
+        textred_start_2: true
+        textred_start_5: true
+        texttrav_bar_n: true
+        texttrav_bar_s: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -480,10 +529,7 @@ Visualization Manager:
       Marker Topic: /tj2/markers
       Name: Cargo Markers
       Namespaces:
-        sphere_cargo_blue: true
-        sphere_cargo_red: true
-        text_sphere_cargo_blue: true
-        text_sphere_cargo_red: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -742,23 +788,23 @@ Visualization Manager:
     - Alpha: 0.5
       Class: rviz/Map
       Color Scheme: map
-      Draw Behind: true
-      Enabled: true
+      Draw Behind: false
+      Enabled: false
       Name: Hood Down Map
       Topic: /tj2/shot_probability_hood_down_map
       Unreliable: false
       Use Timestamp: false
-      Value: true
+      Value: false
     - Alpha: 0.5
       Class: rviz/Map
       Color Scheme: map
-      Draw Behind: true
-      Enabled: true
+      Draw Behind: false
+      Enabled: false
       Name: Hood Up Map
       Topic: /tj2/shot_probability_hood_up_map
       Unreliable: false
       Use Timestamp: false
-      Value: true
+      Value: false
     - Class: rviz/Image
       Enabled: false
       Image Topic: /tj2/bar_pipeline_debug/image_raw
@@ -815,7 +861,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 18.533899307250977
+      Distance: 14.587018966674805
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -823,17 +869,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 3.9586265087127686
-        Y: -3.090512275695801
-        Z: 0.21334514021873474
+        X: 0.9331758618354797
+        Y: 0.17864084243774414
+        Z: 0.005402544047683477
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4397963285446167
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 1.8353972434997559
+      Yaw: 4.690398216247559
     Saved: ~
 Window Geometry:
   Bar Debug:

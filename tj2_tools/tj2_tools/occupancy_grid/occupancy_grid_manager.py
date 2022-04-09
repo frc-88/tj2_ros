@@ -132,6 +132,7 @@ class OccupancyGridManager:
         image = image.astype(np.uint8)
         image = cv2.bitwise_not(image)
         image[np.where(self.grid_data < 0)] = unknown_value
+        image = np.flipud(image)
         cv2.imwrite(image_path, image)
 
     @property

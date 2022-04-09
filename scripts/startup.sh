@@ -1,5 +1,5 @@
 # export ROS_MAP_NAME=rapid-react-2022-02-19T07-55-53--407688-edited
-# export ROS_MAP_NAME=rapid-react-2022
+export ROS_MAP_NAME=rapid-react-2022
 # export ROS_MAP_NAME=tja
 # export ROS_MAP_NAME=br-114
 # export ROS_MAP_NAME=br-114-03-17-2022-center
@@ -8,7 +8,7 @@
 # export ROS_MAP_NAME=br-114-04-02-2022
 # export ROS_MAP_NAME=br-114-2022-04-03T10-40-19--266149
 # export ROS_MAP_NAME=3-101
-export ROS_MAP_NAME=br-114-04-07-2022
+# export ROS_MAP_NAME=br-114-04-07-2022
 # export ENABLE_DRIVER_STATION=true
 export ENABLE_DRIVER_STATION=false
 export OBJECT_MODEL_NAMES=cargo_2022.names
