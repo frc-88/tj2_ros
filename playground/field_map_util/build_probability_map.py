@@ -156,15 +156,22 @@ def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_sta
 
 def mouse_callback(event, x, y, flags, param):
     if (event == cv2.EVENT_LBUTTONDOWN):
-        ogm = param["ogm"]
-        practice_center = param["practice_center"]
-        field_center = param["field_center"]
+        mode = param["mode"]
+        results = param[mode]
+        ogm = results["ogm"]
+        practice_center = results["practice_center"]
+        field_center = results["field_center"]
         field_pose = Pose2d(*ogm.get_world_x_y(x, y))
         practice_pose = field_pose.relative_to_reverse(field_center).relative_to(practice_center)
 
+        cost = ogm.get_cost_from_costmap_x_y(x, y)
+        probability = 1.0 - (cost / 100.0)
+
+        print("mode:", mode)
         print("practice:", practice_pose.to_list())
         print("field:", field_pose.to_list())
         print("pixel:", x, y)
+        print("probability:", probability)
 
 
 def main():
@@ -198,11 +205,16 @@ def main():
     data_path = os.path.join(rospack.get_path("tj2_target"), "config", args.data)
     results_up = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="up")
     results_down = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="down")
+    results = {
+        "mode": "up",
+        "up": results_up,
+        "down": results_down,
+    }
 
     if args.show:
         window_name = "map"
         cv2.namedWindow(window_name)
-        cv2.setMouseCallback(window_name, mouse_callback, param=results_up)
+        cv2.setMouseCallback(window_name, mouse_callback, param=results)
 
         show_image_up = cv2.addWeighted(results_up["field_map"], 0.5, results_up["ogm"].get_image(), 0.5, 0.0)
         show_image_down = cv2.addWeighted(results_up["field_map"], 0.5, results_down["ogm"].get_image(), 0.5, 0.0)
@@ -212,8 +224,10 @@ def main():
             key = chr(cv2.waitKey(-1) & 0xff)
             if key == 'u':
                 cv2.imshow(window_name, show_image_up)
+                results["mode"] = "up"
             elif key == 'd':
                 cv2.imshow(window_name, show_image_down)
+                results["mode"] = "down"
 
             if key == 'q':
                 break

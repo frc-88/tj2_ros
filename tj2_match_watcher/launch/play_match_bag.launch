@@ -19,7 +19,7 @@
         </node>
     </group>
 
-    <arg name="map_name" default="rapid-react-2022-02-19T07-55-53--407688-edited"/>
+    <arg name="map_name" default="rapid-react-2022"/>
     <node pkg="map_server" type="map_server" name="map_server" args="$(find tj2_laser_slam)/maps/$(arg map_name).yaml" />
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>

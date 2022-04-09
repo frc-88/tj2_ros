@@ -148,6 +148,14 @@ class Tj2Waypoints:
         self.save_tf_srv = self.create_service("save_tf", SaveTF, self.save_tf_callback)
         self.save_robot_pose_srv = self.create_service("save_robot_pose", SaveRobotPose, self.save_robot_pose_callback)
 
+        self.move_base_start_timer = rospy.Timer(rospy.Duration(0.1), self.start_move_base, oneshot=True)
+        rospy.loginfo("%s is ready" % self.node_name)
+
+    # ---
+    # Action callback
+    # ---
+
+    def start_move_base(self, timer):
         if self.enable_waypoint_navigation:
             self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
 
@@ -174,11 +182,6 @@ class Tj2Waypoints:
         self.follow_path_server = actionlib.SimpleActionServer("follow_path", FollowPathAction, self.follow_path_callback, auto_start=False)
         self.follow_path_server.start()
 
-        rospy.loginfo("%s is ready" % self.node_name)
-
-    # ---
-    # Action callback
-    # ---
 
     def follow_path_callback(self, goal):
         rospy.loginfo("Received waypoint plan")

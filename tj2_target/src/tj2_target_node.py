@@ -387,7 +387,11 @@ class TJ2Target(object):
         if ogm is None:
             return 1.0
 
-        cost = ogm.get_cost_from_world_x_y(pose2d.x, pose2d.y)
+        try:
+            cost = ogm.get_cost_from_world_x_y(pose2d.x, pose2d.y)
+        except BaseException as e:
+            rospy.logerr_throttle(1.0, "Failed to get probability: %s" % str(e))
+            return 0.0
         if cost < 0.0:
             return 0.0
         else:
