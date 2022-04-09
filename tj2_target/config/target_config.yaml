@@ -1,5 +1,5 @@
 enable_shot_correction: true
-enable_shot_probability: false
+enable_shot_probability: true
 enable_limelight_fine_tuning: false
 enable_marauding: false
 target_cosmic_ray_compensation_degrees: 5.0
