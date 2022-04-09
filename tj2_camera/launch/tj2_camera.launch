@@ -81,7 +81,7 @@
         <arg name="enable_fisheye"           value="false"/>
         <arg name="fisheye_fps"              value="30"/>
 
-        <arg name="depth_width"              value="848"/>
+        <arg name="depth_width"              value="640"/>
         <arg name="depth_height"             value="480"/>
         <arg name="enable_depth"             value="true"/>
         <arg name="depth_fps"                value="30"/>

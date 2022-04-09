@@ -441,7 +441,6 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         AMCL Pose: true
         Bar Debug: true
         Bar Markers: true
@@ -461,6 +460,7 @@ Visualization Manager:
         Move Base Goal: true
         Move Base Waypoints: true
         Object Marker: true
+        Odometry: true
         PoseArray: true
         Pursuit Goal: true
         Pursuit Local Plan: true
@@ -530,8 +530,7 @@ Visualization Manager:
       Marker Topic: /tj2/markers
       Name: Cargo Markers
       Namespaces:
-        sphere_cargo_red: true
-        text_sphere_cargo_red: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -772,7 +771,7 @@ Visualization Manager:
       Shaft Length: 0.25
       Shaft Radius: 0.10000000149011612
       Shape: Arrow
-      Topic: /tj2/turret_target
+      Topic: /tj2/target
       Unreliable: false
       Value: true
     - Class: rviz/Image
@@ -852,7 +851,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 100
       Name: Odometry
       Position Tolerance: 0.10000000149011612
@@ -869,7 +868,7 @@ Visualization Manager:
         Value: Arrow
       Topic: /tj2/odom
       Unreliable: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -898,7 +897,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 26.870603561401367
+      Distance: 28.58490753173828
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -906,17 +905,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.6689544916152954
-        Y: 0.28814104199409485
-        Z: 0.005506210029125214
+        X: 3.6691057682037354
+        Y: 1.3424172401428223
+        Z: 0.09956095367670059
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.4797961711883545
       Target Frame: <Fixed Frame>
-      Yaw: 4.690398216247559
+      Yaw: 4.573574542999268
     Saved: ~
 Window Geometry:
   Bar Debug:

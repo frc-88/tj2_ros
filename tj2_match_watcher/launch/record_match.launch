@@ -2,23 +2,14 @@
 <launch>
     <node pkg="rosbag" type="record" name="rosbag_record_match" output="screen" 
        args="record -o /media/storage/bags/2022_robot
-        /camera/accel/imu_info
-        /camera/accel/metadata
-        /camera/accel/sample
-        /camera/color/camera_info
-        /camera/color/metadata
-        /camera/color/image_raw
-        /camera/depth/camera_info
-        /camera/depth/metadata
-        /camera/depth/image_rect_raw
-        /camera/gyro/imu_info
-        /camera/gyro/metadata
-        /camera/gyro/sample
         /amcl_pose
         /initialpose
         /sinistra_laser/scan
         /dextra_laser/scan
-        /limelight/targets
+        /limelight/raw_targets
+        /limelight/target
+        /limelight/target_angle
+        /limelight/target_distance
         /map
         /map_metadata
         /tf
@@ -47,6 +38,12 @@
         /tj2/detections
         /tj2/cargo/markers
         /tj2/team_color
+        /color_sensor/raw
+        /color_sensor/proximity
+        /color_sensor/match
+        /tj2/target_angle
+        /tj2/target_distance
+        /tj2/target_probability
 
         --duration=180 --lz4
         " />
