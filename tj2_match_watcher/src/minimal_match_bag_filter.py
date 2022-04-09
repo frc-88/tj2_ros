@@ -70,7 +70,7 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
                 if topic.startswith("/tj2/odom"):
                     bag_out.write(topic, msg, timestamp, connection_header=conn_header)
                 if topic == "/tf":
-                    if timestamp - time_start < rospy.Duration(1.0):
+                    if timestamp - time_start < rospy.Duration(3.0):
                         continue
                     if initial_pose is not None:
                         continue
@@ -103,16 +103,21 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
         bag_out.close()
 
 if __name__ == '__main__':
-    directory = "week3"
+    # directory = "week3"
+    
+    # bags = {
+    #     # "2022_robot_2022-03-19-09-18-32.bag": 660,
+    #     # "2022_robot_2022-03-19-10-12-13.bag": 275,
+    #     # "2022_robot_2022-03-19-11-47-53.bag": 595,
+    #     # "2022_robot_2022-03-19-14-03-24.bag": 290,
+    #     "2022_robot_2022-03-19-14-51-16.bag": 100,
+    #     # "2022_robot_2022-03-19-15-23-57.bag": 132,
+    #     # "2022_robot_2022-03-19-15-54-11.bag": 186,
+    # }
+    directory = ""
     
     bags = {
-        # "2022_robot_2022-03-19-09-18-32.bag": 660,
-        # "2022_robot_2022-03-19-10-12-13.bag": 275,
-        # "2022_robot_2022-03-19-11-47-53.bag": 595,
-        # "2022_robot_2022-03-19-14-03-24.bag": 290,
-        "2022_robot_2022-03-19-14-51-16.bag": 100,
-        # "2022_robot_2022-03-19-15-23-57.bag": 132,
-        # "2022_robot_2022-03-19-15-54-11.bag": 186,
+        "2022_robot_2022-04-09-17-19-55.bag": 0
     }
     for bag, start_time in bags.items():
         main(directory, bag, time_start=start_time)

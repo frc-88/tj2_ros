@@ -21,6 +21,7 @@ Panels:
         - /Hood Down Map1
         - /Hood Up Map1
         - /Limelight Target1
+        - /AMCL Particles1
       Splitter Ratio: 0.6061684489250183
     Tree Height: 617
   - Class: rviz/Selection
@@ -441,6 +442,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        AMCL Particles: true
         AMCL Pose: true
         Bar Debug: true
         Bar Markers: true
@@ -869,6 +871,23 @@ Visualization Manager:
       Topic: /tj2/odom
       Unreliable: false
       Value: false
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 143; 89; 2
+      Enabled: true
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: AMCL Particles
+      Queue Size: 10
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic: /particlecloud
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -897,7 +916,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 28.58490753173828
+      Distance: 18.372737884521484
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -905,17 +924,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 3.6691057682037354
-        Y: 1.3424172401428223
-        Z: 0.09956095367670059
+        X: 1.3949991464614868
+        Y: 0.9663459062576294
+        Z: -1.8930150270462036
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4797961711883545
+      Pitch: 0.819796621799469
       Target Frame: <Fixed Frame>
-      Yaw: 4.573574542999268
+      Yaw: 4.643579006195068
     Saved: ~
 Window Geometry:
   Bar Debug:
