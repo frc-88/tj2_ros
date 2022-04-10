@@ -45,6 +45,7 @@
 
 #include "tj2_networktables/OdomReset.h"
 #include "tj2_networktables/NTEntry.h"
+#include "tj2_networktables/Shooter.h"
 
 #include "networktables/EntryListenerFlags.h"
 
@@ -191,9 +192,13 @@ private:
     NT_Entry _cmd_vel_t_entry;
     NT_Entry _cmd_vel_update_entry;
 
-    // hood entries
+    // shooter entries
     NT_Entry _hood_state_entry;
     NT_Entry _hood_update_entry;
+    NT_Entry _shoot_counter_entry;
+    NT_Entry _shoot_speed_entry;
+    NT_Entry _shoot_angle_entry;
+    NT_Entry _shoot_distance_entry;
 
     // Members
     ros::Timer _ping_timer;
@@ -224,6 +229,7 @@ private:
     ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
     ros::Publisher _pose_estimate_pub;
     ros::Publisher _hood_pub;
+    ros::Publisher _shooter_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
@@ -265,6 +271,7 @@ private:
     void reset_waypoint_plan_callback(const nt::EntryNotification& event);
     void cancel_waypoint_plan_callback(const nt::EntryNotification& event);
     void hood_state_callback(const nt::EntryNotification& event);
+    void shooter_callback(const nt::EntryNotification& event);
 
     // Timer callbacks
     void ping_timer_callback(const ros::TimerEvent& event);

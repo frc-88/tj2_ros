@@ -63,6 +63,7 @@ add_message_files(
   SwerveModule.msg
   SwerveMotor.msg
   NTEntry.msg
+  Shooter.msg
 )
 
 ## Generate services in the 'srv' folder
