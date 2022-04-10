@@ -44,6 +44,7 @@
         /tj2/target_angle
         /tj2/target_distance
         /tj2/target_probability
+        /tj2/shooter
 
         --duration=180 --lz4
         " />

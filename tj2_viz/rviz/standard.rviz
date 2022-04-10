@@ -532,7 +532,10 @@ Visualization Manager:
       Marker Topic: /tj2/markers
       Name: Cargo Markers
       Namespaces:
-        {}
+        sphere_cargo_blue: true
+        sphere_cargo_red: true
+        text_sphere_cargo_blue: true
+        text_sphere_cargo_red: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -916,7 +919,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 18.372737884521484
+      Distance: 22.892751693725586
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -924,17 +927,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.3949991464614868
-        Y: 0.9663459062576294
-        Z: -1.8930150270462036
+        X: 0.6256029605865479
+        Y: 0.2970634698867798
+        Z: -1.89693284034729
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.819796621799469
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 4.643579006195068
+      Yaw: 4.708581924438477
     Saved: ~
 Window Geometry:
   Bar Debug:

@@ -82,9 +82,10 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
     _team_color_pub = nh.advertise<std_msgs::String>("team_color", 10);
 
-    _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 1);
+    _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 10);
 
-    _hood_pub = nh.advertise<std_msgs::Bool>("hood", 1);
+    _hood_pub = nh.advertise<std_msgs::Bool>("hood", 10);
+    _shooter_pub = nh.advertise<tj2_networktables::Shooter>("shooter", 10);
 
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
@@ -191,6 +192,13 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _hood_state_entry = nt::GetEntry(_nt, _base_key + "hood/state");
     _hood_update_entry = nt::GetEntry(_nt, _base_key + "hood/update");
     nt::AddEntryListener(_hood_update_entry, boost::bind(&TJ2NetworkTables::hood_state_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _shoot_counter_entry = nt::GetEntry(_nt, _base_key + "shooter/counter");
+    _shoot_speed_entry = nt::GetEntry(_nt, _base_key + "shooter/speed");
+    _shoot_angle_entry = nt::GetEntry(_nt, _base_key + "shooter/angle");
+    _shoot_distance_entry = nt::GetEntry(_nt, _base_key + "shooter/distance");
+    nt::AddEntryListener(_shoot_counter_entry, boost::bind(&TJ2NetworkTables::shooter_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -651,6 +659,22 @@ void TJ2NetworkTables::hood_state_callback(const nt::EntryNotification& event)
     std_msgs::Bool msg;
     msg.data = hood_state;
     _hood_pub.publish(msg);
+}
+
+void TJ2NetworkTables::shooter_callback(const nt::EntryNotification& event)
+{
+    int counter = (int)get_double(_shoot_counter_entry, 0.0);
+    double speed = get_double(_shoot_speed_entry, 0.0);
+    double angle = get_double(_shoot_angle_entry, 0.0);
+    double distance = get_double(_shoot_distance_entry, 0.0);
+    tj2_networktables::Shooter msg;
+    msg.counter = counter;
+    msg.speed = speed;
+    msg.angle = angle;
+    msg.distance = distance;
+    
+    msg.header.stamp = ros::Time::now();
+    _shooter_pub.publish(msg);
 }
 
 // ---
