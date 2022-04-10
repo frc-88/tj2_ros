@@ -46,6 +46,6 @@
         /tj2/target_probability
         /tj2/shooter
 
-        --duration=180 --lz4
+        --duration=300 --lz4
         " />
 </launch>

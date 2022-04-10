@@ -50,9 +50,11 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
     sinistra_laser_topic = "/sinistra_laser"
     dextra_laser_topic = "/dextra_laser"
     initial_pose = None
+    initial_pose_count = 0
     base_to_odom = None
     odom_to_map = None
-    center_offset = Pose2d(2.98145, 4.24575)  # center waypoint on old field map. New one has it at 0.0, 0.0
+    # center_offset = Pose2d(2.98145, 4.24575)  # center waypoint on old field map. New one has it at 0.0, 0.0
+    center_offset = Pose2d(0.0, 0.0)
     try:
         with tqdm.tqdm(total=length) as pbar:
             for topic, msg, timestamp, conn_header in messages:
@@ -69,10 +71,13 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
                     bag_out.write(topic, msg, timestamp, connection_header=conn_header)
                 if topic.startswith("/tj2/odom"):
                     bag_out.write(topic, msg, timestamp, connection_header=conn_header)
+                if topic == "/initialpose":
+                    bag_out.write(topic, msg, timestamp, connection_header=conn_header)
+                    initial_pose_count = 10000
                 if topic == "/tf":
                     if timestamp - time_start < rospy.Duration(3.0):
                         continue
-                    if initial_pose is not None:
+                    if initial_pose_count > 10:
                         continue
                     for transform in msg.transforms:
                         parent_frame = transform.header.frame_id.lstrip('/')
@@ -88,11 +93,12 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
                         pose = base_to_map.to_ros_pose()
                         initial_pose = PoseWithCovarianceStamped()
                         initial_pose.pose.pose = pose
-                        initial_pose.pose.covariance[0] = 2.0
-                        initial_pose.pose.covariance[7] = 2.0
-                        initial_pose.pose.covariance[35] = math.radians(45.0)
+                        initial_pose.pose.covariance[0] = 0.25 * 0.25
+                        initial_pose.pose.covariance[7] = 0.25 * 0.25
+                        initial_pose.pose.covariance[35] = math.radians(1.0)
                         initial_pose.header.frame_id = "map"
                         bag_out.write("/initialpose", initial_pose, timestamp)
+                        initial_pose_count += 1
 
                         print(base_to_map)
 
@@ -117,7 +123,8 @@ if __name__ == '__main__':
     directory = ""
     
     bags = {
-        "2022_robot_2022-04-09-17-19-55.bag": 0
+        # "2022_robot_2022-04-09-17-19-55.bag": 0
+        "2022_robot_2022-04-10-11-43-55.bag": 30
     }
     for bag, start_time in bags.items():
         main(directory, bag, time_start=start_time)

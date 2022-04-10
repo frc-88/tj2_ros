@@ -58,9 +58,9 @@ class TJ2Target(object):
         self.theta_cov_threshold = rospy.get_param("~theta_cov_threshold", math.radians(45.0))
 
         self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
-        self.enable_shot_probability = rospy.get_param("~enable_shot_probability", True)
-        self.enable_limelight_fine_tuning = rospy.get_param("~enable_limelight_fine_tuning", True)
-        self.enable_marauding = rospy.get_param("~enable_marauding", True)
+        self.enable_shot_probability = rospy.get_param("~enable_shot_probability", False)
+        self.enable_limelight_fine_tuning = rospy.get_param("~enable_limelight_fine_tuning", False)
+        self.enable_marauding = rospy.get_param("~enable_marauding", False)
 
         # a constant to fix weird unknown target issues
         self.target_cosmic_ray_compensation = math.radians(rospy.get_param("~target_cosmic_ray_compensation_degrees", 0.0))
