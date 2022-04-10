@@ -124,7 +124,8 @@ if __name__ == '__main__':
     
     bags = {
         # "2022_robot_2022-04-09-17-19-55.bag": 0
-        "2022_robot_2022-04-10-11-43-55.bag": 30
+        # "2022_robot_2022-04-10-11-43-55.bag": 30
+        "2022_robot_2022-04-10-12-28-01.bag": 25
     }
     for bag, start_time in bags.items():
         main(directory, bag, time_start=start_time)
