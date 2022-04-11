@@ -194,6 +194,8 @@ void TJ2Limelight::publish_limelight_targets()
     double target_angle = to_radians(getDouble(_limelight_target_angle_entry, 0.0));
     double target_dist = inches_to_meters(getDouble(_limelight_target_distance_entry, 0.0));
 
+    target_angle += M_PI;  // turret ROS coordinate frame is 180 off from RIO coordinate frame
+
     tf2::Quaternion quat;
     quat.setRPY(0, 0, target_angle);
     geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
