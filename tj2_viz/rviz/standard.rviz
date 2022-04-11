@@ -12,6 +12,8 @@ Panels:
         - /LaserScan1
         - /RealSense1
         - /DepthCloud1/Auto Size1
+        - /Pose1
+        - /Pose2
       Splitter Ratio: 0.6061684489250183
     Tree Height: 617
   - Class: rviz/Selection
@@ -145,7 +147,56 @@ Visualization Manager:
       Show Names: false
       Tree:
         map:
-          {}
+          odom:
+            base_link:
+              camera_tilt_base_link:
+                camera_tilt_link:
+                  camera_link:
+                    camera_accel_frame:
+                      camera_accel_optical_frame:
+                        {}
+                    camera_aligned_depth_to_color_frame:
+                      camera_color_optical_frame:
+                        {}
+                    camera_color_frame:
+                      {}
+                    camera_depth_frame:
+                      camera_depth_optical_frame:
+                        {}
+                    camera_gyro_frame:
+                      camera_gyro_optical_frame:
+                        {}
+                    camera_infra_frame:
+                      camera_infra_optical_frame:
+                        {}
+              dextra_laser_link:
+                {}
+              intake_tilt_link:
+                intake_link:
+                  {}
+              left_inner_climber_tilt_link:
+                left_inner_climber_link:
+                  left_inner_hook_link:
+                    {}
+              left_outer_climber_tilt_link:
+                left_outer_climber_link:
+                  left_outer_hook_link:
+                    {}
+              right_inner_climber_tilt_link:
+                right_inner_climber_link:
+                  right_inner_hook_link:
+                    {}
+              right_outer_climber_tilt_link:
+                right_outer_climber_link:
+                  right_outer_hook_link:
+                    {}
+              sinistra_laser_link:
+                {}
+              turret_tilt_link:
+                turret_link:
+                  limelight_link:
+                    limelight_optical_link:
+                      {}
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988079071
@@ -295,7 +346,64 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        {}
+        posblue_start_2: true
+        posblue_start_5: true
+        poscenter: true
+        poshanger_ne: true
+        poshanger_nw: true
+        poshanger_se: true
+        poshanger_sw: true
+        poshigh_bar_n: true
+        poshigh_bar_s: true
+        poshub_pt1: true
+        poshub_pt1_r: true
+        poshub_pt2: true
+        poshub_pt2_r: true
+        poshub_pt3: true
+        poshub_pt3_r: true
+        poshub_pt4: true
+        poshub_pt4_r: true
+        poshub_pt5: true
+        poshub_pt5_r: true
+        poshub_pt6: true
+        poshub_pt6_r: true
+        poslower_bar_n: true
+        poslower_bar_s: true
+        posmid_bar_n: true
+        posmid_bar_s: true
+        posred_start_2: true
+        posred_start_5: true
+        postrav_bar_n: true
+        postrav_bar_s: true
+        textblue_start_2: true
+        textblue_start_5: true
+        textcenter: true
+        texthanger_ne: true
+        texthanger_nw: true
+        texthanger_se: true
+        texthanger_sw: true
+        texthigh_bar_n: true
+        texthigh_bar_s: true
+        texthub_pt1: true
+        texthub_pt1_r: true
+        texthub_pt2: true
+        texthub_pt2_r: true
+        texthub_pt3: true
+        texthub_pt3_r: true
+        texthub_pt4: true
+        texthub_pt4_r: true
+        texthub_pt5: true
+        texthub_pt5_r: true
+        texthub_pt6: true
+        texthub_pt6_r: true
+        textlower_bar_n: true
+        textlower_bar_s: true
+        textmid_bar_n: true
+        textmid_bar_s: true
+        textred_start_2: true
+        textred_start_5: true
+        texttrav_bar_n: true
+        texttrav_bar_s: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -326,6 +434,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         AMCL Particles: true
         AMCL Pose: true
         Bar Debug: true
@@ -772,6 +881,38 @@ Visualization Manager:
       Topic: /particlecloud
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 114; 159; 207
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /debug_target
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 138; 226; 52
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /debug_limelight_target
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -800,7 +941,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 20.63917350769043
+      Distance: 25.867280960083008
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -808,17 +949,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.10318264365196228
-        Y: 3.540961980819702
-        Z: -4.110002517700195
+        X: 0.9155925512313843
+        Y: 0.17446964979171753
+        Z: -4.39238166809082
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7797964215278625
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 5.038581371307373
+      Yaw: 4.698581695556641
     Saved: ~
 Window Geometry:
   Bar Debug:
