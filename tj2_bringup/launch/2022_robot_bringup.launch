@@ -2,9 +2,10 @@
 <launch>
     <arg name="robot_address" default="10.0.88.2"/>
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
-        <arg name="publish_odom_tf" value="true"/>
+        <arg name="publish_odom_tf" value="false"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
+    <include file="$(find tj2_kalman)/launch/tj2_kalman.launch"/>
     <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
     <include file="$(find tj2_camera)/launch/tj2_camera.launch"/>
     <include file="$(find tj2_camera)/launch/camera_watcher.launch"/>
