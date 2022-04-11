@@ -208,6 +208,7 @@ private:
 
     ros::Time _prev_twist_timestamp;
     double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
+    ros::Time _prev_odom_timestamp;
 
     tj2_waypoints::WaypointArray _waypoints;
     actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction> *_waypoints_action_client;
@@ -289,6 +290,7 @@ private:
     string get_label(int obj_id);
     int get_index(int obj_id);
     std::vector<std::string> load_label_names(const string& path);
+    void publish_odom();
 
     // Waypoint control
     void set_goal_status(GoalStatus status);

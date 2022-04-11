@@ -425,48 +425,8 @@ bool TJ2NetworkTables::odom_reset_callback(tj2_networktables::OdomReset::Request
 
 void TJ2NetworkTables::odom_callback(const nt::EntryNotification& event)
 {
-    ros::Time recv_time = ros::Time::now();
-    double x = get_double(_odom_x_entry, NAN);
-    double y = get_double(_odom_y_entry, NAN);
-    double t = get_double(_odom_t_entry, NAN);
-    double vx = get_double(_odom_vx_entry, NAN);
-    double vy = get_double(_odom_vy_entry, NAN);
-    double vt = get_double(_odom_vt_entry, NAN);
-    if (!(std::isfinite(x) && std::isfinite(y) && std::isfinite(t) && std::isfinite(vx) && std::isfinite(vy) && std::isfinite(vt))) {
-        ROS_WARN_THROTTLE(1.0, "Odometry values are nan or inf");
-        return;
-    }
-
-    tf2::Quaternion quat;
-    quat.setRPY(0, 0, t);
-
-    geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
-
-    _odom_msg.header.stamp = recv_time;
-    _odom_msg.pose.pose.position.x = x;
-    _odom_msg.pose.pose.position.y = y;
-    _odom_msg.pose.pose.position.z = 0.0;
-    _odom_msg.pose.pose.orientation = msg_quat;
-
-    _odom_msg.twist.twist.linear.x = vx;
-    _odom_msg.twist.twist.linear.y = vy;
-    _odom_msg.twist.twist.angular.z = vt;
-
-    if (_publish_odom_tf)
-    {
-        geometry_msgs::TransformStamped tf_stamped;
-        tf_stamped.header.stamp = recv_time;
-        tf_stamped.header.frame_id = _odom_frame;
-        tf_stamped.child_frame_id = _base_frame;
-        tf_stamped.transform.translation.x = x;
-        tf_stamped.transform.translation.y = y;
-        tf_stamped.transform.translation.z = 0.0;
-        tf_stamped.transform.rotation = msg_quat;
-
-        _tf_broadcaster.sendTransform(tf_stamped);
-    }
-    
-    _odom_pub.publish(_odom_msg);
+    // publish_odom();
+    _prev_odom_timestamp = ros::Time::now();
 }
 
 void TJ2NetworkTables::ping_callback(const nt::EntryNotification& event)
@@ -808,6 +768,52 @@ std::vector<std::string> TJ2NetworkTables::load_label_names(const std::string& p
 }
 
 
+void TJ2NetworkTables::publish_odom()
+{
+    ros::Time recv_time = ros::Time::now();
+    double x = get_double(_odom_x_entry, NAN);
+    double y = get_double(_odom_y_entry, NAN);
+    double t = get_double(_odom_t_entry, NAN);
+    double vx = get_double(_odom_vx_entry, NAN);
+    double vy = get_double(_odom_vy_entry, NAN);
+    double vt = get_double(_odom_vt_entry, NAN);
+    if (!(std::isfinite(x) && std::isfinite(y) && std::isfinite(t) && std::isfinite(vx) && std::isfinite(vy) && std::isfinite(vt))) {
+        ROS_WARN_THROTTLE(1.0, "Odometry values are nan or inf");
+        return;
+    }
+
+    tf2::Quaternion quat;
+    quat.setRPY(0, 0, t);
+
+    geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
+
+    _odom_msg.header.stamp = recv_time;
+    _odom_msg.pose.pose.position.x = x;
+    _odom_msg.pose.pose.position.y = y;
+    _odom_msg.pose.pose.position.z = 0.0;
+    _odom_msg.pose.pose.orientation = msg_quat;
+
+    _odom_msg.twist.twist.linear.x = vx;
+    _odom_msg.twist.twist.linear.y = vy;
+    _odom_msg.twist.twist.angular.z = vt;
+
+    if (_publish_odom_tf)
+    {
+        geometry_msgs::TransformStamped tf_stamped;
+        tf_stamped.header.stamp = recv_time;
+        tf_stamped.header.frame_id = _odom_frame;
+        tf_stamped.child_frame_id = _base_frame;
+        tf_stamped.transform.translation.x = x;
+        tf_stamped.transform.translation.y = y;
+        tf_stamped.transform.translation.z = 0.0;
+        tf_stamped.transform.rotation = msg_quat;
+
+        _tf_broadcaster.sendTransform(tf_stamped);
+    }
+    
+    _odom_pub.publish(_odom_msg);
+}
+
 // ---
 // Waypoint control
 // ---
@@ -880,10 +886,11 @@ string TJ2NetworkTables::get_string(NT_Entry entry, string default_value)
 
 void TJ2NetworkTables::loop()
 {
+    publish_odom();
     publish_cmd_vel();
     publish_goal_status();
     publish_robot_global_pose();
-    ros::Duration odom_duration = ros::Time::now() - _odom_msg.header.stamp;
+    ros::Duration odom_duration = ros::Time::now() - _prev_odom_timestamp;
     if (odom_duration > _odom_timeout) {
         ROS_WARN_THROTTLE(1.0, "No odom received for %f seconds", odom_duration.toSec());
     }
