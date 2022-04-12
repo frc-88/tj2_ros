@@ -200,6 +200,9 @@ private:
     NT_Entry _shoot_angle_entry;
     NT_Entry _shoot_distance_entry;
 
+    // Reset localization entryies
+    NT_Entry _reset_to_limelight_entry;
+
     // Members
     ros::Timer _ping_timer;
     ros::Duration _cmd_vel_timeout;
@@ -231,6 +234,7 @@ private:
     ros::Publisher _pose_estimate_pub;
     ros::Publisher _hood_pub;
     ros::Publisher _shooter_pub;
+    ros::Publisher _reset_to_limelight_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
@@ -266,6 +270,7 @@ private:
     void joint_callback(size_t joint_index);
     void match_callback(const nt::EntryNotification& event);
     void pose_estimate_callback(const nt::EntryNotification& event);
+    void reset_to_limelight_callback(const nt::EntryNotification& event);
 
     void create_waypoint(size_t index);
     void exec_waypoint_plan_callback(const nt::EntryNotification& event);

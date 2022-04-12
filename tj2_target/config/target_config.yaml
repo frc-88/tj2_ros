@@ -2,10 +2,16 @@ enable_shot_correction: true
 enable_shot_probability: true
 enable_limelight_fine_tuning: false
 enable_marauding: false
+enable_reset_to_limelight: false
 target_cosmic_ray_compensation_degrees: 3.0
 target_base_frame: turret_tilt_link
 x_cov_threshold: 1.0
 y_cov_threshold: 1.0
-theta_cov_threshold: 10.0
+theta_cov_threshold_deg: 10.0
 color_message_timeout: 0.5
 cargo_egress_timeout: 0.5
+reset_x_cov: 0.5
+reset_y_cov: 0.5
+reset_theta_cov_deg: 5.0
+stale_limelight_timeout: 0.25
+limelight_waypoint_agreement_threshold: 1.0

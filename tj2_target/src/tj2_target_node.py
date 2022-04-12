@@ -48,6 +48,7 @@ class TJ2Target(object):
             # log_level=rospy.DEBUG
         )
         self.map_frame = rospy.get_param("~map", "map")
+        self.odom_frame = rospy.get_param("~odom", "odom")
         self.base_frame = rospy.get_param("~base_link", "base_link")
         self.target_base_frame = rospy.get_param("~target_base_frame", "base_link")
         self.target_waypoint = rospy.get_param("~target_waypoint", "center")
@@ -55,12 +56,13 @@ class TJ2Target(object):
 
         self.x_cov_threshold = rospy.get_param("~x_cov_threshold", 1.0)
         self.y_cov_threshold = rospy.get_param("~y_cov_threshold", 1.0)
-        self.theta_cov_threshold = rospy.get_param("~theta_cov_threshold", math.radians(45.0))
+        self.theta_cov_threshold = math.radians(rospy.get_param("~theta_cov_threshold_deg", 45.0))
 
         self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
         self.enable_shot_probability = rospy.get_param("~enable_shot_probability", False)
         self.enable_limelight_fine_tuning = rospy.get_param("~enable_limelight_fine_tuning", False)
         self.enable_marauding = rospy.get_param("~enable_marauding", False)
+        self.enable_reset_to_limelight = rospy.get_param("~enable_reset_to_limelight", False)
 
         # a constant to fix weird unknown target issues
         self.target_cosmic_ray_compensation = math.radians(rospy.get_param("~target_cosmic_ray_compensation_degrees", 0.0))
@@ -68,6 +70,12 @@ class TJ2Target(object):
         self.color_message_timeout = rospy.Duration(rospy.get_param("~color_message_timeout", 0.5))
         self.cargo_egress_timeout = rospy.Duration(rospy.get_param("~cargo_egress_timeout", 0.5))
         self.cargo_egress_timer = rospy.Time.now()
+
+        self.reset_x_cov = rospy.get_param("~reset_x_cov", 1.0)
+        self.reset_y_cov = rospy.get_param("~reset_y_cov", 1.0)
+        self.reset_theta_cov = math.radians(rospy.get_param("~reset_theta_cov_deg", 45.0))
+        self.stale_limelight_timeout = rospy.Duration(rospy.get_param("~stale_limelight_timeout", 0.5))
+        self.limelight_waypoint_agreement_threshold = rospy.get_param("~limelight_waypoint_agreement_threshold", 1.0)
 
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.csv")
         self.recorded_data_file_path = rospy.get_param("~recorded_data_file_path", "./recorded_data.csv")
@@ -109,6 +117,7 @@ class TJ2Target(object):
         self.target_angle_pub = rospy.Publisher("target_angle", Float64, queue_size=15)
         self.target_distance_pub = rospy.Publisher("target_distance", Float64, queue_size=15)
         self.target_probability_pub = rospy.Publisher("target_probability", Float64, queue_size=15)
+        self.initialpose_pub = rospy.Publisher("/initialpose", PoseWithCovarianceStamped, queue_size=15)
 
         self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback)
         self.amcl_pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.amcl_pose_callback)
@@ -117,6 +126,7 @@ class TJ2Target(object):
         self.limelight_sub = rospy.Subscriber("/limelight/target", PoseStamped, self.limelight_callback)
         self.color_match_sub = rospy.Subscriber("/color_sensor/match", String, self.color_match_callback)
         self.team_color_sub = rospy.Subscriber("team_color", String, self.team_color_callback)
+        self.reset_to_limelight_sub = rospy.Subscriber("reset_to_limelight", Float64, self.reset_to_limelight_callback)
 
         if self.enable_shot_probability:
             self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
@@ -289,6 +299,28 @@ class TJ2Target(object):
     def team_color_callback(self, msg):
         self.team_timestamp = rospy.Time.now()
         self.team_color = msg.data
+    
+    def reset_to_limelight_callback(self, msg):
+        if self.enable_reset_to_limelight:
+            return
+        turret_to_odom_tf = lookup_transform(self.tf_buffer, self.odom_frame, self.limelight_target_pose.header.frame_id)
+        if turret_to_odom_tf is None:
+            return
+        dt = rospy.Time.now() - self.limelight_target_pose.header.stamp
+        if dt > rospy.Duration(self.stale_limelight_timeout):
+            rospy.logwarn("Not setting localization estimate to limelight. Measurement is too stale.")
+            return 
+        limelight_target_odom = tf2_geometry_msgs.do_transform_pose(self.limelight_target_pose, turret_to_odom_tf)
+
+        msg = PoseWithCovarianceStamped()
+        msg.header.frame_id = self.map_frame
+        msg.pose.pose = limelight_target_odom.pose
+        msg.pose.covariance[0] = self.reset_x_cov
+        msg.pose.covariance[7] = self.reset_y_cov
+        msg.pose.covariance[35] = self.reset_theta_cov
+        rospy.loginfo("Resetting localization to limelight target.")
+
+        self.initialpose_pub.publish(msg)
 
     def run(self):
         rospy.sleep(1.0)  # wait for waypoints to populate
@@ -336,7 +368,7 @@ class TJ2Target(object):
                 shot_probability = self.get_shot_probability(target)
             
             if self.enable_limelight_fine_tuning:
-                target_pose = self.get_fine_tuned_limelight_target(self.limelight_target_pose, target_pose)
+                target_pose = self.get_fine_tuned_limelight_target(self.limelight_target_pose, target_pose, self.stale_limelight_timeout, self.limelight_waypoint_agreement_threshold)
 
             self.target_heading = target.heading() + self.target_cosmic_ray_compensation
             self.target_heading = Pose2d.normalize_theta(self.target_heading + math.pi)

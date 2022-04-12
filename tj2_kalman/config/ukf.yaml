@@ -40,7 +40,7 @@ debug: false
 publish_tf: true
 
 # Whether to publish the acceleration state. Defaults to false if unspecified.
-publish_acceleration: false
+publish_acceleration: true
 
 # REP-105 (http://www.ros.org/reps/rep-0105.html) specifies four principal coordinate frames: base_link, odom, map, and
 # earth. base_link is the coordinate frame that is affixed to the robot. Both odom and map are world-fixed frames.
@@ -93,7 +93,7 @@ odom0_queue_size: 50
 # [ADVANCED] Large messages in ROS can exhibit strange behavior when they arrive at a high frequency. This is a result
 # of Nagle's algorithm. This option tells the ROS subscriber to use the tcpNoDelay option, which disables Nagle's
 # algorithm.
-odom0_nodelay: false
+odom0_nodelay: true
 
 # [ADVANCED] When measuring one pose variable with two sensors, a situation can arise in which both sensors under-
 # report their covariances. This can lead to the filter rapidly jumping back and forth between each measurement as they
@@ -133,7 +133,7 @@ imu0_relative: false
 imu0_queue_size: 50
 # imu0_pose_rejection_threshold: 2
 # imu0_twist_rejection_threshold: 0.2
-imu0_nodelay: false
+imu0_nodelay: true
 
 # limelight input parameters
 limelight0: /limelight/odom
@@ -148,7 +148,7 @@ limelight0_relative: false
 limelight0_queue_size: 50
 # imu0_pose_rejection_threshold: 2
 # imu0_twist_rejection_threshold: 0.2
-limelight0_nodelay: false
+limelight0_nodelay: true
 
 # [ADVANCED]  The EKF and UKF models follow a standard predict/correct cycle. During prediction, if there is no
 # acceleration reference, the velocity at time t+1 is simply predicted to be the same as the velocity at time t. During

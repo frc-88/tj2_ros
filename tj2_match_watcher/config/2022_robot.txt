@@ -46,6 +46,8 @@
 /tj2/is_autonomous
 /tj2/match_time
 /tj2/odom
+/tj2/odom/filtered
+/tj2/accel/filtered
 /tj2/ping
 /tj2/detections
 /tj2/cargo/markers

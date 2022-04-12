@@ -413,7 +413,8 @@ switching_blocking_period: 0.0 # 0.0
 
 # Topic name of the odometry message, provided by the robot driver or
 # simulator.
-odom_topic: "/tj2/odom" # "odom"
+# odom_topic: "/tj2/odom" # "odom"
+odom_topic: "/tj2/odom/filtered" # "odom"
 
 # Global planning frame (in case of a static map, this parameter must be
 # usually changed to "/map".
