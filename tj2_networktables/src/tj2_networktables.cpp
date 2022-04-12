@@ -86,6 +86,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
 
     _hood_pub = nh.advertise<std_msgs::Bool>("hood", 10);
     _shooter_pub = nh.advertise<tj2_networktables::Shooter>("shooter", 10);
+    _reset_to_limelight_pub = nh.advertise<std_msgs::Float64>("reset_to_limelight", 10);
 
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
@@ -199,6 +200,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _shoot_distance_entry = nt::GetEntry(_nt, _base_key + "shooter/distance");
     nt::AddEntryListener(_shoot_counter_entry, boost::bind(&TJ2NetworkTables::shooter_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
+    _reset_to_limelight_entry = nt::GetEntry(_nt, _base_key + "resetToLimelight/update");
+    nt::AddEntryListener(_reset_to_limelight_entry, boost::bind(&TJ2NetworkTables::reset_to_limelight_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -635,6 +638,13 @@ void TJ2NetworkTables::shooter_callback(const nt::EntryNotification& event)
     
     msg.header.stamp = ros::Time::now();
     _shooter_pub.publish(msg);
+}
+
+void TJ2NetworkTables::reset_to_limelight_callback(const nt::EntryNotification& event)
+{
+    std_msgs::Float64 msg;
+    msg.data = get_double(_reset_to_limelight_entry, 0.0);
+    _reset_to_limelight_pub.publish(msg);
 }
 
 // ---

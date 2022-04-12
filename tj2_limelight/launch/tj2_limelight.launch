@@ -15,7 +15,7 @@
             <param name="publish_video" value="false" />
             <param name="field_vision_target_height_m" value="2.59" />
             <param name="field_vision_target_distance_m" value="0.508" />
-            <param name="base_frame_id" value="turret_tilt_link" />
+            <param name="target_frame_id" value="turret_tilt_link" />
         </node>
 
         <node pkg="nodelet" type="nodelet" args="manager" name="$(arg post_processing_manager_name)" output="screen"/>

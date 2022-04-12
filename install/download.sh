@@ -4,7 +4,7 @@ DESTINATION_NAME=$1
 REMOTE_KEY=$2
 
 LOCAL_PATH=${PARENT_DIR}
-REMOTE_PATH=/home/tj2/tj2_ros/${DOWNLOAD_PATH}
+REMOTE_PATH=/home/tj2/tj2_ros
 
 if [ -z ${DESTINATION_NAME} ]; then
     echo "Please set a destination IP or hostname"
@@ -16,4 +16,4 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-rsync -avur --include-from=${LOCAL_PATH}/install/include.txt  -e "ssh -i ${REMOTE_KEY} -p 5810" tj2@${DESTINATION_NAME}:${DESTINATION_PATH} ${LOCAL_PATH}
+rsync -avur --files-from=${LOCAL_PATH}/install/include.txt  -e "ssh -i ${REMOTE_KEY} -p 5810" tj2@${DESTINATION_NAME}:${DESTINATION_PATH} ${LOCAL_PATH}
