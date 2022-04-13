@@ -88,6 +88,7 @@ class TJ2Target(object):
         self.robot_pose = PoseStamped()
         self.hood_state = False  # False == down, True == up
         self.limelight_target_pose = PoseStamped()
+        self.map_to_odom_tf_at_reset = None
 
         self.amcl_pose = None
         self.robot_velocity = Velocity()
@@ -127,6 +128,7 @@ class TJ2Target(object):
         self.color_match_sub = rospy.Subscriber("/color_sensor/match", String, self.color_match_callback)
         self.team_color_sub = rospy.Subscriber("team_color", String, self.team_color_callback)
         self.reset_to_limelight_sub = rospy.Subscriber("reset_to_limelight", Float64, self.reset_to_limelight_callback)
+        self.reset_pose_sub = rospy.Subscriber("reset_pose", PoseWithCovarianceStamped, self.reset_pose_callback)
 
         if self.enable_shot_probability:
             self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
@@ -306,21 +308,40 @@ class TJ2Target(object):
         turret_to_odom_tf = lookup_transform(self.tf_buffer, self.odom_frame, self.limelight_target_pose.header.frame_id)
         if turret_to_odom_tf is None:
             return
+        if self.map_to_odom_tf_at_reset is None:
+            return
         dt = rospy.Time.now() - self.limelight_target_pose.header.stamp
         if dt > rospy.Duration(self.stale_limelight_timeout):
             rospy.logwarn("Not setting localization estimate to limelight. Measurement is too stale.")
             return 
-        limelight_target_odom = tf2_geometry_msgs.do_transform_pose(self.limelight_target_pose, turret_to_odom_tf)
+        # ASSUMES limelight target pose is in the same child frame as self.map_to_odom_tf_at_reset
+        limelight_target_odom = tf2_geometry_msgs.do_transform_pose(self.limelight_target_pose, self.map_to_odom_tf_at_reset)
+        limelight_target_map_at_reset = tf2_geometry_msgs.do_transform_pose(limelight_target_odom, self.map_to_odom_tf_at_reset)
 
         msg = PoseWithCovarianceStamped()
         msg.header.frame_id = self.map_frame
-        msg.pose.pose = limelight_target_odom.pose
+        msg.pose.pose = limelight_target_map_at_reset.pose
         msg.pose.covariance[0] = self.reset_x_cov
         msg.pose.covariance[7] = self.reset_y_cov
         msg.pose.covariance[35] = self.reset_theta_cov
         rospy.loginfo("Resetting localization to limelight target.")
 
         self.initialpose_pub.publish(msg)
+    
+    def reset_pose_callback(self, msg):
+        self.map_to_odom_tf_at_reset = lookup_transform(self.tf_buffer, self.map_frame, self.odom_frame)
+        attempts = 0
+        while not rospy.is_shutdown():
+            if self.map_to_odom_tf_at_reset is not None:
+                break
+            rospy.sleep(0.25)
+            if attempts > 10:
+                break
+            attempts += 1
+        if self.map_to_odom_tf_at_reset is None:
+            rospy.logwarn("Failed to get reset transform")
+        else:
+            rospy.loginfo("Got reset transform: %s" % self.map_to_odom_tf_at_reset)
 
     def run(self):
         rospy.sleep(1.0)  # wait for waypoints to populate

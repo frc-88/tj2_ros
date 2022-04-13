@@ -232,6 +232,7 @@ private:
     vector<ros::Publisher>* _raw_joint_pubs;
     ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
     ros::Publisher _pose_estimate_pub;
+    ros::Publisher _pose_reset_pub;
     ros::Publisher _hood_pub;
     ros::Publisher _shooter_pub;
     ros::Publisher _reset_to_limelight_pub;

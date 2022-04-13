@@ -83,6 +83,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _team_color_pub = nh.advertise<std_msgs::String>("team_color", 10);
 
     _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 10);
+    _pose_reset_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("reset_pose", 10);  // for distiguishing between ROS and RIO requested resets
 
     _hood_pub = nh.advertise<std_msgs::Bool>("hood", 10);
     _shooter_pub = nh.advertise<tj2_networktables::Shooter>("shooter", 10);
@@ -562,6 +563,7 @@ void TJ2NetworkTables::pose_estimate_callback(const nt::EntryNotification& event
     pose_est.pose.covariance[35] = theta_std_rad * theta_std_rad;
 
     _pose_estimate_pub.publish(pose_est);
+    _pose_reset_pub.publish(pose_est);
 }
 
 void TJ2NetworkTables::create_waypoint(size_t index)

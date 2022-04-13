@@ -180,6 +180,7 @@ def main():
     parser.add_argument("field_map_name", help="name of map to generate probability map for")
     parser.add_argument("-d", "--data", default="recorded_data.csv", help="name of csv to generate probability distributions from")
     parser.add_argument("-s", "--show", action="store_true", help="Show image")
+    parser.add_argument("-b", "--draw-field-elements", action="store_true", help="Draw field elements like the hub and hangar")
     args = parser.parse_args()
 
     # practice_map_name = "br-114-03-26-2022"
@@ -188,19 +189,20 @@ def main():
     # field_map_name = "rapid-react-2022-02-19T07-55-53--407688-edited"
 
     lines = []
-    hangar_radius = 0.2
-    lines.append({"pts": ["hanger_se", "hanger_sw"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hangar_radius})
-    lines.append({"pts": ["hanger_ne", "hanger_nw"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hangar_radius})
+    if args.draw_field_elements:
+        hangar_radius = 0.2
+        lines.append({"pts": ["hanger_se", "hanger_sw"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hangar_radius})
+        lines.append({"pts": ["hanger_ne", "hanger_nw"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hangar_radius})
 
-    bar_width = 0.3
-    lines.append({"pts": ["lower_bar_n", "lower_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
-    lines.append({"pts": ["mid_bar_n", "mid_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
-    lines.append({"pts": ["high_bar_n", "high_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
-    lines.append({"pts": ["trav_bar_n", "trav_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+        bar_width = 0.3
+        lines.append({"pts": ["lower_bar_n", "lower_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+        lines.append({"pts": ["mid_bar_n", "mid_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+        lines.append({"pts": ["high_bar_n", "high_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+        lines.append({"pts": ["trav_bar_n", "trav_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
 
-    hub_radius = 0.2
-    lines.append({"pts": ["hub_pt1", "hub_pt2", "hub_pt3", "hub_pt4", "hub_pt5", "hub_pt6"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
-    lines.append({"pts": ["hub_pt1_r", "hub_pt2_r", "hub_pt3_r", "hub_pt4_r", "hub_pt5_r", "hub_pt6_r"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
+        hub_radius = 0.2
+        lines.append({"pts": ["hub_pt1", "hub_pt2", "hub_pt3", "hub_pt4", "hub_pt5", "hub_pt6"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
+        lines.append({"pts": ["hub_pt1_r", "hub_pt2_r", "hub_pt3_r", "hub_pt4_r", "hub_pt5_r", "hub_pt6_r"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
 
     data_path = os.path.join(rospack.get_path("tj2_target"), "config", args.data)
     results_up = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="up")

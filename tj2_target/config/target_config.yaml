@@ -1,8 +1,8 @@
 enable_shot_correction: true
-enable_shot_probability: true
+enable_shot_probability: false
 enable_limelight_fine_tuning: false
 enable_marauding: false
-enable_reset_to_limelight: false
+enable_reset_to_limelight: true
 target_cosmic_ray_compensation_degrees: 3.0
 target_base_frame: turret_tilt_link
 x_cov_threshold: 1.0

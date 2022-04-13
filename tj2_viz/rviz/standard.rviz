@@ -11,9 +11,9 @@ Panels:
         - /Map1
         - /LaserScan1
         - /RealSense1
+        - /Global Costmap1
+        - /Local Costmap1
         - /DepthCloud1/Auto Size1
-        - /Pose1
-        - /Pose2
       Splitter Ratio: 0.6061684489250183
     Tree Height: 617
   - Class: rviz/Selection
@@ -346,64 +346,14 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        posblue_start_2: true
-        posblue_start_5: true
         poscenter: true
-        poshanger_ne: true
-        poshanger_nw: true
-        poshanger_se: true
-        poshanger_sw: true
-        poshigh_bar_n: true
-        poshigh_bar_s: true
-        poshub_pt1: true
-        poshub_pt1_r: true
-        poshub_pt2: true
-        poshub_pt2_r: true
-        poshub_pt3: true
-        poshub_pt3_r: true
-        poshub_pt4: true
-        poshub_pt4_r: true
-        poshub_pt5: true
-        poshub_pt5_r: true
-        poshub_pt6: true
-        poshub_pt6_r: true
-        poslower_bar_n: true
-        poslower_bar_s: true
-        posmid_bar_n: true
-        posmid_bar_s: true
-        posred_start_2: true
-        posred_start_5: true
-        postrav_bar_n: true
-        postrav_bar_s: true
-        textblue_start_2: true
-        textblue_start_5: true
+        pospoint1: true
+        pospoint2: true
+        pospoint3: true
         textcenter: true
-        texthanger_ne: true
-        texthanger_nw: true
-        texthanger_se: true
-        texthanger_sw: true
-        texthigh_bar_n: true
-        texthigh_bar_s: true
-        texthub_pt1: true
-        texthub_pt1_r: true
-        texthub_pt2: true
-        texthub_pt2_r: true
-        texthub_pt3: true
-        texthub_pt3_r: true
-        texthub_pt4: true
-        texthub_pt4_r: true
-        texthub_pt5: true
-        texthub_pt5_r: true
-        texthub_pt6: true
-        texthub_pt6_r: true
-        textlower_bar_n: true
-        textlower_bar_s: true
-        textmid_bar_n: true
-        textmid_bar_s: true
-        textred_start_2: true
-        textred_start_5: true
-        texttrav_bar_n: true
-        texttrav_bar_s: true
+        textpoint1: true
+        textpoint2: true
+        textpoint3: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -434,7 +384,6 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         AMCL Particles: true
         AMCL Pose: true
         Bar Debug: true
@@ -617,7 +566,7 @@ Visualization Manager:
       Topic: /move_base/DWAPlannerROS/local_plan
       Unreliable: false
       Value: true
-    - Alpha: 0.699999988079071
+    - Alpha: 0.25
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: true
@@ -627,7 +576,7 @@ Visualization Manager:
       Unreliable: false
       Use Timestamp: false
       Value: true
-    - Alpha: 0.699999988079071
+    - Alpha: 0.25
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: true
@@ -769,6 +718,22 @@ Visualization Manager:
       Topic: /tj2/target
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 138; 226; 52
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.20000000298023224
+      Name: Limelight Target
+      Queue Size: 10
+      Shaft Length: 0.25
+      Shaft Radius: 0.10000000149011612
+      Shape: Arrow
+      Topic: /limelight/target
+      Unreliable: false
+      Value: true
     - Class: rviz/Image
       Enabled: false
       Image Topic: /camera/color/image_raw
@@ -784,23 +749,23 @@ Visualization Manager:
     - Alpha: 0.5
       Class: rviz/Map
       Color Scheme: map
-      Draw Behind: false
-      Enabled: false
+      Draw Behind: true
+      Enabled: true
       Name: Hood Down Map
       Topic: /tj2/shot_probability_hood_down_map
       Unreliable: false
       Use Timestamp: false
-      Value: false
+      Value: true
     - Alpha: 0.5
       Class: rviz/Map
       Color Scheme: map
-      Draw Behind: false
-      Enabled: false
+      Draw Behind: true
+      Enabled: true
       Name: Hood Up Map
       Topic: /tj2/shot_probability_hood_up_map
       Unreliable: false
       Use Timestamp: false
-      Value: false
+      Value: true
     - Class: rviz/Image
       Enabled: false
       Image Topic: /tj2/bar_pipeline_debug/image_raw
@@ -811,22 +776,6 @@ Visualization Manager:
       Normalize Range: true
       Queue Size: 2
       Transport Hint: raw
-      Unreliable: false
-      Value: false
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz/Pose
-      Color: 138; 226; 52
-      Enabled: false
-      Head Length: 0.30000001192092896
-      Head Radius: 0.20000000298023224
-      Name: Limelight Target
-      Queue Size: 10
-      Shaft Length: 0.25
-      Shaft Radius: 0.10000000149011612
-      Shape: Arrow
-      Topic: /limelight/target
       Unreliable: false
       Value: false
     - Angle Tolerance: 0.10000000149011612
@@ -870,7 +819,7 @@ Visualization Manager:
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
       Color: 143; 89; 2
-      Enabled: true
+      Enabled: false
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
       Name: AMCL Particles
@@ -880,39 +829,7 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /particlecloud
       Unreliable: false
-      Value: true
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz/Pose
-      Color: 114; 159; 207
-      Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Queue Size: 10
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Arrow
-      Topic: /debug_target
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz/Pose
-      Color: 138; 226; 52
-      Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Queue Size: 10
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Arrow
-      Topic: /debug_limelight_target
-      Unreliable: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -941,7 +858,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 25.867280960083008
+      Distance: 17.0156192779541
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -949,9 +866,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.9155925512313843
-        Y: 0.17446964979171753
-        Z: -4.39238166809082
+        X: 3.0399739742279053
+        Y: 0.7764840722084045
+        Z: -1.8103920221328735
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -959,7 +876,7 @@ Visualization Manager:
       Near Clip Distance: 0.009999999776482582
       Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 4.698581695556641
+      Yaw: 1.655397653579712
     Saved: ~
 Window Geometry:
   Bar Debug:
