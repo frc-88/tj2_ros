@@ -24,4 +24,8 @@
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
     </include>
+
+    <node name="match_video" pkg="tj2_match_watcher" type="publish_video_file.py" output="screen">
+        <param name="bag_name" value="$(arg bag_name)"/>
+    </node>
 </launch>

@@ -91,7 +91,9 @@ if __name__ == '__main__':
     directory = ""
     bags = {
         # "2022_robot_2022-04-09-09-59-29.bag": 0, 
-        "2022_robot_2022-04-09-11-44-20.bag": 0, 
+        # "2022_robot_2022-04-09-11-44-20.bag": 0, 
+        "2022_robot_2022-04-14-15-24-23.bag.active": 0, 
+        "2022_robot_2022-04-14-15-53-39.bag": 0, 
     }
     for bag, start_time in bags.items():
         main(directory, bag, time_start=start_time)
