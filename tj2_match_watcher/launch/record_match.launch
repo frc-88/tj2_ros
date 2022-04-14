@@ -2,6 +2,7 @@
 <launch>
     <node pkg="rosbag" type="record" name="rosbag_record_match" output="screen" 
        args="record -o /media/storage/bags/2022_robot
+        /camera/scan
         /amcl_pose
         /initialpose
         /sinistra_laser/scan
@@ -45,6 +46,7 @@
         /tj2/target_distance
         /tj2/target_probability
         /tj2/shooter
+        /tj2/is_obstacle_in_view
 
         --duration=300 --lz4
         " />

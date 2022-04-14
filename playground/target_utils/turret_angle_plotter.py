@@ -19,7 +19,8 @@ def limelight_correction(x):
     return a * -x * np.log(b * x) + c
 
 
-path = "target_data.csv"
+# path = "target_data.csv"
+path = "target_data_2_ball.csv"
 df = pd.read_csv(path)
 
 ax1 = plt.subplot(2, 1, 1)

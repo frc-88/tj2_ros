@@ -896,8 +896,7 @@ Visualization Manager:
       Marker Topic: /color_sensor/marker
       Name: MarkerArray
       Namespaces:
-        spherecolor_sensor: true
-        textcolor_sensor: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -956,7 +955,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.6938512325286865
+      Distance: 19.529216766357422
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -964,17 +963,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.7585679292678833
-        Y: -0.3280622363090515
-        Z: -0.1131003350019455
+        X: 0
+        Y: 0
+        Z: 0
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7197970151901245
+      Pitch: 1.2703977823257446
       Target Frame: <Fixed Frame>
-      Yaw: 2.3154003620147705
+      Yaw: 1.5503977537155151
     Saved: ~
 Window Geometry:
   Bar Debug:

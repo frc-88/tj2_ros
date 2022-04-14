@@ -16,6 +16,7 @@ from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist
 
 from std_msgs.msg import Float64
+from std_msgs.msg import Bool
 
 from vision_msgs.msg import Detection3DArray
 
@@ -118,6 +119,7 @@ class Tj2SimplePursuit:
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
         self.camera_tilt_pub = rospy.Publisher("joint_command/camera_joint", Float64, queue_size=10)
         self.follow_object_goal_pub = rospy.Publisher("follow_object_goal", PoseStamped, queue_size=10)
+        self.is_obstacle_in_view_pub = rospy.Publisher("is_obstacle_in_view", Bool, queue_size=15)
 
         self.tracking_object_name = ""
         self.tracking_state = None
@@ -202,8 +204,7 @@ class Tj2SimplePursuit:
                     is_obstacle_in_view = True
             angle += msg.angle_increment
         self.is_obstacle_in_view = is_obstacle_in_view
-        if self.is_obstacle_in_view:
-            rospy.loginfo_throttle(0.1, "Pursuit laser source sees an obstacle!")
+        self.is_obstacle_in_view_pub.publish(Bool(self.is_obstacle_in_view))
 
     def get_nearest_detection(self, object_name, detections_msg):
         nearest_pose = None
