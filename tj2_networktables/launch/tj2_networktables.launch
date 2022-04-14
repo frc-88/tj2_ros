@@ -22,6 +22,7 @@
             <param name="min_angular_z_cmd" value="0.01"/>
             <param name="min_linear_cmd" value="0.01"/>
             <param name="classes_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
+            <remap from="camera_joint" to="camera_joint_nt"/>
         </node>
     </group>
 

@@ -67,7 +67,7 @@ class Tj2MatchWatcher(object):
 
         self.match_time_sub = rospy.Subscriber("match_time", Float64, self.match_time_callback, queue_size=10)
         self.is_autonomous_sub = rospy.Subscriber("is_autonomous", Bool, self.is_autonomous_callback, queue_size=10)
-        self.initial_pose_sub = rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initialpose_callback, queue_size=10)
+        self.initial_pose_sub = rospy.Subscriber("/tj2/reset_pose", PoseWithCovarianceStamped, self.initialpose_callback, queue_size=10)
         rospy.loginfo("%s init complete" % self.node_name)
 
     def make_service_client(self, name, srv_type, timeout=None, wait=True):

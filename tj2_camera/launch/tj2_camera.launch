@@ -2,6 +2,7 @@
 <launch>
     <arg name="post_processing_manager_name" value="camera_post_processing_manager"/>
     <arg name="camera_manager_name" value="realsense2_camera_manager"/>
+    <include file="$(find tj2_camera)/launch/imu_filter.launch"/>
     
     <group ns="camera">
         <node pkg="nodelet" type="nodelet" args="manager" name="$(arg post_processing_manager_name)" output="screen"/>
