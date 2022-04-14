@@ -88,6 +88,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _hood_pub = nh.advertise<std_msgs::Bool>("hood", 10);
     _shooter_pub = nh.advertise<tj2_networktables::Shooter>("shooter", 10);
     _reset_to_limelight_pub = nh.advertise<std_msgs::Float64>("reset_to_limelight", 10);
+    _target_config_pub = nh.advertise<tj2_target::TargetConfig>("target_config", 10);
 
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
@@ -152,9 +153,9 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _imu_gx_entry = nt::GetEntry(_nt, _base_key + "imu/gyro/x");
     _imu_gy_entry = nt::GetEntry(_nt, _base_key + "imu/gyro/y");
     _imu_gz_entry = nt::GetEntry(_nt, _base_key + "imu/gyro/z");
-    _imu_r_entry = nt::GetEntry(_nt, _base_key + "imu/angle/roll");
-    _imu_p_entry = nt::GetEntry(_nt, _base_key + "imu/angle/pitch");
-    _imu_y_entry = nt::GetEntry(_nt, _base_key + "imu/angle/yaw");
+    _imu_r_entry = nt::GetEntry(_nt, _base_key + "imu/angle/x");
+    _imu_p_entry = nt::GetEntry(_nt, _base_key + "imu/angle/y");
+    _imu_y_entry = nt::GetEntry(_nt, _base_key + "imu/angle/z");
     _imu_update_entry = nt::GetEntry(_nt, _base_key + "imu/update");
     nt::AddEntryListener(_imu_update_entry, boost::bind(&TJ2NetworkTables::imu_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
@@ -203,6 +204,14 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
 
     _reset_to_limelight_entry = nt::GetEntry(_nt, _base_key + "resetToLimelight/update");
     nt::AddEntryListener(_reset_to_limelight_entry, boost::bind(&TJ2NetworkTables::reset_to_limelight_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _enable_shot_correction_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_shot_correction");
+    _enable_shot_probability_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_shot_probability");
+    _enable_limelight_fine_tuning_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_limelight_fine_tuning");
+    _enable_marauding_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_marauding");
+    _enable_reset_to_limelight_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_reset_to_limelight");
+    _target_config_update_entry = nt::GetEntry(_nt, _base_key + "target_config/update");
+    nt::AddEntryListener(_target_config_update_entry, boost::bind(&TJ2NetworkTables::target_config_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -647,6 +656,18 @@ void TJ2NetworkTables::reset_to_limelight_callback(const nt::EntryNotification& 
     std_msgs::Float64 msg;
     msg.data = get_double(_reset_to_limelight_entry, 0.0);
     _reset_to_limelight_pub.publish(msg);
+}
+
+
+void TJ2NetworkTables::target_config_callback(const nt::EntryNotification& event)
+{
+    tj2_target::TargetConfig msg;
+    msg.enable_shot_correction = get_boolean(_enable_shot_correction_entry, false);
+    msg.enable_shot_probability = get_boolean(_enable_shot_probability_entry, false);
+    msg.enable_limelight_fine_tuning = get_boolean(_enable_limelight_fine_tuning_entry, false);
+    msg.enable_marauding = get_boolean(_enable_marauding_entry, false);
+    msg.enable_reset_to_limelight = get_boolean(_enable_reset_to_limelight_entry, false);
+    _target_config_pub.publish(msg);
 }
 
 // ---

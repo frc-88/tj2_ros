@@ -28,6 +28,9 @@ from tj2_waypoints.msg import WaypointArray
 
 from tj2_networktables.msg import NTEntry
 
+from tj2_target.msg import RevColorSensor
+from tj2_target.msg import TargetConfig
+
 from tj2_target.srv import RecordValue, RecordValueResponse
 from std_srvs.srv import Trigger, TriggerResponse
 
@@ -83,6 +86,7 @@ class TJ2Target(object):
         self.probability_hood_down_map_path = rospy.get_param("~probability_hood_down_map_path", "./probability.yaml")
 
         self.waypoints = {}
+        self.waypoints_pose2d = {}
         self.target_heading = 0.0
         self.target_distance = 0.0
         self.robot_pose = PoseStamped()
@@ -125,10 +129,11 @@ class TJ2Target(object):
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback)
         self.hood_sub = rospy.Subscriber("hood", Bool, self.hood_callback)
         self.limelight_sub = rospy.Subscriber("/limelight/target", PoseStamped, self.limelight_callback)
-        self.color_match_sub = rospy.Subscriber("/color_sensor/match", String, self.color_match_callback)
+        self.color_sensor_sub = rospy.Subscriber("/color_sensor/sensor", RevColorSensor, self.color_sensor_callback)
         self.team_color_sub = rospy.Subscriber("team_color", String, self.team_color_callback)
         self.reset_to_limelight_sub = rospy.Subscriber("reset_to_limelight", Float64, self.reset_to_limelight_callback)
         self.reset_pose_sub = rospy.Subscriber("reset_pose", PoseWithCovarianceStamped, self.reset_pose_callback)
+        self.target_config_sub = rospy.Subscriber("target_config", TargetConfig, self.target_config_callback)
 
         if self.enable_shot_probability:
             self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
@@ -274,11 +279,13 @@ class TJ2Target(object):
 
     def waypoints_callback(self, msg):
         self.waypoints = {}
+        self.waypoints_pose2d = {}
         for waypoint_msg in msg.waypoints:
             pose_stamped = PoseStamped()
             pose_stamped.header.frame_id = self.map_frame
             pose_stamped.pose = waypoint_msg.pose
             self.waypoints[waypoint_msg.name] = pose_stamped
+            self.waypoints_pose2d[waypoint_msg.name] = Pose2d.from_ros_pose(pose_stamped.pose)
     
     def amcl_pose_callback(self, msg):
         self.amcl_pose = msg
@@ -294,9 +301,9 @@ class TJ2Target(object):
     def limelight_callback(self, msg):
         self.limelight_target_pose = msg
 
-    def color_match_callback(self, msg):
+    def color_sensor_callback(self, msg):
         self.color_timestamp = rospy.Time.now()
-        self.loaded_object_color = msg.data
+        self.loaded_object_color = msg.match
 
     def team_color_callback(self, msg):
         self.team_timestamp = rospy.Time.now()
@@ -343,6 +350,24 @@ class TJ2Target(object):
         else:
             rospy.loginfo("Got reset transform: %s" % self.map_to_odom_tf_at_reset)
 
+    def target_config_callback(self, msg):
+        self.enable_shot_correction = msg.enable_shot_correction
+        self.enable_shot_probability = msg.enable_shot_probability
+        self.enable_limelight_fine_tuning = msg.enable_limelight_fine_tuning
+        self.enable_marauding = msg.enable_marauding
+        self.enable_reset_to_limelight = msg.enable_reset_to_limelight
+        config = {
+            "enable_shot_correction": self.enable_shot_correction,
+            "enable_shot_probability": self.enable_shot_probability,
+            "enable_limelight_fine_tuning": self.enable_limelight_fine_tuning,
+            "enable_marauding": self.enable_marauding,
+            "enable_reset_to_limelight": self.enable_reset_to_limelight
+        }
+        config_strs = []
+        for key, value in config.items():
+            config_strs.append("%s: %s" % (key, value))
+        rospy.loginfo("Updating target config: %s" % ", ".join(config_strs))
+
     def run(self):
         rospy.sleep(1.0)  # wait for waypoints to populate
         clock = rospy.Rate(30.0)
@@ -356,16 +381,21 @@ class TJ2Target(object):
             if not self.is_global_pose_valid(self.amcl_pose):
                 shot_probability = 0.0
 
+            target_waypoint_name = self.target_waypoint
             if self.enable_marauding:
-                target_waypoint = self.get_target_waypoint()
+                target_pose_map = self.get_target_waypoint(Pose2d.from_ros_pose(self.robot_pose.pose))
+                if target_pose_map is None and target_waypoint_name in self.waypoints:
+                    target_pose_map = self.waypoints[target_waypoint_name]
             else:
-                target_waypoint = self.target_waypoint
-            if target_waypoint not in self.waypoints:
+                if target_waypoint_name in self.waypoints:
+                    target_pose_map = self.waypoints[target_waypoint_name]
+                else:
+                    target_pose_map = None
+            if target_pose_map is None:
                 shot_probability = 0.0
                 self.publish_target(self.target_distance, self.target_heading, shot_probability)
-                rospy.logwarn_throttle(1.0, "%s is not an available waypoint" % target_waypoint)
+                rospy.logwarn_throttle(1.0, "%s is not an available waypoint" % target_waypoint_name)
                 continue
-            target_pose_map = self.waypoints[target_waypoint]
             map_to_target_tf = lookup_transform(self.tf_buffer, self.target_base_frame, self.map_frame)
             if map_to_target_tf is None:
                 shot_probability = 0.0
@@ -465,16 +495,16 @@ class TJ2Target(object):
     def get_target_waypoint(self, robot_pose):
         if rospy.Time.now() - self.color_timestamp > self.color_message_timeout:
             rospy.logwarn_throttle(1.0, "No color sensor message received for at least %s s" % (self.color_message_timeout.to_sec()))
-            return self.target_waypoint
+            return None
         if rospy.Time.now() - self.team_timestamp > self.color_message_timeout:
             rospy.logwarn_throttle(1.0, "No team color message received for at least %s s" % (self.color_message_timeout.to_sec()))
-            return self.target_waypoint
+            return None
         
         if len(self.loaded_object_color) == 0:
             # If the color sensor doesn't currently see a matching object,
             if rospy.Time.now() - self.cargo_egress_timer > self.cargo_egress_timeout:
                 # If the egress timer has expired, assume we want to shoot at the goal
-                return self.target_waypoint
+                return None
             # otherwise, use the last detected object name
         else:
             # else use the currently detected object name
@@ -482,16 +512,19 @@ class TJ2Target(object):
             self.buffered_object_color = self.loaded_object_color
 
         if self.team_color == self.buffered_object_color:
-            return self.target_waypoint
+            return None
         else:
             marauding_waypoints = []
             team_prefix = self.marauding_target_prefix.replace("<team>", self.team_color)
-            for name, waypoint in self.waypoints.items():
+            for name, waypoint in self.waypoints_pose2d.items():
                 if name.startswith(team_prefix):
                     marauding_waypoints.append(waypoint)
 
             closest_point = min(marauding_waypoints, key=lambda x: x.distance(robot_pose))
-            return closest_point
+            closest_pose = PoseStamped()
+            closest_pose.header.frame_id = self.map_frame
+            closest_pose.pose = closest_point.to_ros_pose()
+            return closest_pose
 
     def publish_target(self, distance, heading, probability):
         self.nt_pub.publish(self.make_entry("target/distance", distance))

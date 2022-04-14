@@ -3,6 +3,7 @@
     <group ns="tj2" >
         <node pkg="tj2_pursuit" type="tj2_simple_pursuit_node.py" respawn="false" name="tj2_simple_pursuit" output="screen">
             <param name="class_names_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
+            <remap from="scan" to="/camera/scan"/>
 
             <rosparam command="load" file="$(find tj2_pursuit)/config/simple_pursuit.yaml" />
         </node>

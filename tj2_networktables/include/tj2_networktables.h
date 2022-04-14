@@ -47,6 +47,8 @@
 #include "tj2_networktables/NTEntry.h"
 #include "tj2_networktables/Shooter.h"
 
+#include "tj2_target/TargetConfig.h"
+
 #include "networktables/EntryListenerFlags.h"
 
 using namespace std;
@@ -203,6 +205,14 @@ private:
     // Reset localization entries
     NT_Entry _reset_to_limelight_entry;
 
+    // Target config
+    NT_Entry _enable_shot_correction_entry;
+    NT_Entry _enable_shot_probability_entry;
+    NT_Entry _enable_limelight_fine_tuning_entry;
+    NT_Entry _enable_marauding_entry;
+    NT_Entry _enable_reset_to_limelight_entry;
+    NT_Entry _target_config_update_entry;
+
     // Members
     ros::Timer _ping_timer;
     ros::Duration _cmd_vel_timeout;
@@ -236,6 +246,7 @@ private:
     ros::Publisher _hood_pub;
     ros::Publisher _shooter_pub;
     ros::Publisher _reset_to_limelight_pub;
+    ros::Publisher _target_config_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
@@ -272,6 +283,7 @@ private:
     void match_callback(const nt::EntryNotification& event);
     void pose_estimate_callback(const nt::EntryNotification& event);
     void reset_to_limelight_callback(const nt::EntryNotification& event);
+    void target_config_callback(const nt::EntryNotification& event);
 
     void create_waypoint(size_t index);
     void exec_waypoint_plan_callback(const nt::EntryNotification& event);

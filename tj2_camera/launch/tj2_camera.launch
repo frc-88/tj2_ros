@@ -34,6 +34,23 @@
             <remap from="camera_info" to="depth_filtered/camera_info" />
         </node>
 
+        <node name="realsense_cloud_to_scan" pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" output="screen">
+            <remap from="cloud_in" to="depth_filtered/points" />
+            <!-- <remap from="scan" to="/camera/scan" /> -->
+
+            <param name="min_height" value="0.5" />
+            <param name="max_height" value="1.0" />
+            <param name="angle_min" value="-1.5707" />
+            <param name="angle_max" value="1.5707" />
+            <param name="angle_increment" value="0.01" />
+            <param name="scan_time" value="0.1428" />
+            <param name="range_min" value="0.7" />
+            <param name="range_max" value="9.0" />
+            <param name="target_frame" value="base_link" />
+            <param name="concurrency_level" value="" />
+            <param name="use_inf" value="true" />
+        </node>
+
         <node pkg="nodelet" type="nodelet" name="downsample_rgb"
                 args="load image_proc/crop_decimate $(arg post_processing_manager_name)">
             <param name="decimation_x" value="2"/>

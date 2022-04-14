@@ -23,3 +23,8 @@ base_frame: base_link
 
 enable_linear_vel: true
 enable_prediction: false
+
+
+laser_obstacle_lower_angle: -1.5707
+laser_obstacle_upper_angle: 1.5707
+laser_obstacle_threshold: 2.0

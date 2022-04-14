@@ -26,6 +26,7 @@
     </include>
     <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
     <include file="$(find tj2_target)/launch/tj2_target.launch"/>
+    <include file="$(find tj2_target)/launch/color_sensor.launch"/>
     
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">

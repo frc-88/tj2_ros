@@ -14,6 +14,8 @@ Panels:
         - /Global Costmap1
         - /Local Costmap1
         - /DepthCloud1/Auto Size1
+        - /Odometry1
+        - /LaserScan2
       Splitter Ratio: 0.6061684489250183
     Tree Height: 617
   - Class: rviz/Selection
@@ -346,6 +348,8 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
+        posblue_maraude_1: true
+        posblue_maraude_2: true
         posblue_start_2: true
         posblue_start_5: true
         poscenter: true
@@ -371,10 +375,14 @@ Visualization Manager:
         poslower_bar_s: true
         posmid_bar_n: true
         posmid_bar_s: true
+        posred_maraude_1: true
+        posred_maraude_2: true
         posred_start_2: true
         posred_start_5: true
         postrav_bar_n: true
         postrav_bar_s: true
+        textblue_maraude_1: true
+        textblue_maraude_2: true
         textblue_start_2: true
         textblue_start_5: true
         textcenter: true
@@ -400,6 +408,8 @@ Visualization Manager:
         textlower_bar_s: true
         textmid_bar_n: true
         textmid_bar_s: true
+        textred_maraude_1: true
+        textred_maraude_2: true
         textred_start_2: true
         textred_start_5: true
         texttrav_bar_n: true
@@ -451,6 +461,7 @@ Visualization Manager:
         Local Costmap: false
         Local Plan: true
         Map: false
+        MarkerArray: true
         Move Base Goal: true
         Move Base Waypoints: true
         Object Marker: true
@@ -869,7 +880,7 @@ Visualization Manager:
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
       Color: 143; 89; 2
-      Enabled: false
+      Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
       Name: AMCL Particles
@@ -879,7 +890,44 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /particlecloud
       Unreliable: false
-      Value: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /color_sensor/marker
+      Name: MarkerArray
+      Namespaces:
+        spherecolor_sensor: true
+        textcolor_sensor: true
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/LaserScan
+      Color: 114; 159; 207
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: LaserScan
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.10000000149011612
+      Style: Flat Squares
+      Topic: /camera/scan
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -908,7 +956,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 16.615535736083984
+      Distance: 3.6938512325286865
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -916,17 +964,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 0.7585679292678833
+        Y: -0.3280622363090515
+        Z: -0.1131003350019455
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3253978490829468
+      Pitch: 0.7197970151901245
       Target Frame: <Fixed Frame>
-      Yaw: 1.7403976917266846
+      Yaw: 2.3154003620147705
     Saved: ~
 Window Geometry:
   Bar Debug:

@@ -1,0 +1,5 @@
+bool enable_shot_correction
+bool enable_shot_probability
+bool enable_limelight_fine_tuning
+bool enable_marauding
+bool enable_reset_to_limelight

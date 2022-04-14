@@ -72,8 +72,6 @@ import enum
 import smbus
 import sys
 
-bus = smbus.SMBus(0)
-
 
 class Color:
 
@@ -105,13 +103,16 @@ class ColorSensorV3:
 
     kAddress = 0x52
     kPartID = 0xC2
+    I2C_BUS = None
 
-    def __init__(self):
+    def __init__(self, bus_id):
         """
         Constructs a ColorSensor.
 
         port  The I2C port the color sensor is attached to
         """
+
+        ColorSensorV3.I2C_BUS = smbus.SMBus(bus_id)
 
         if not self._checkDeviceID():
             raise RuntimeError("Failed to get device ID. Check sensor connection")
@@ -262,7 +263,10 @@ class ColorSensorV3:
         g = self.getGreen()
         b = self.getBlue()
         mag = r + g + b
-        return Color(r / mag, g / mag, b / mag)
+        if mag < 0.001:
+            return Color(0.0, 0.0, 0.0)
+        else:
+            return Color(r / mag, g / mag, b / mag)
 
     def getProximity(self):
         """
@@ -352,12 +356,12 @@ class ColorSensorV3:
 
         Returns bool indicating if the device was reset
         """
-        raw = bus.read_byte_data(self.kAddress, self.Register.kMainStatus)
+        raw = ColorSensorV3.I2C_BUS.read_byte_data(self.kAddress, self.Register.kMainStatus)
 
         return (raw & 0x20) != 0
 
     def _checkDeviceID(self) -> bool:
-        raw = bus.read_byte_data(self.kAddress, self.Register.kPartID)
+        raw = ColorSensorV3.I2C_BUS.read_byte_data(self.kAddress, self.Register.kPartID)
 
         if self.kPartID != raw:
             print(
@@ -380,18 +384,18 @@ class ColorSensorV3:
         self._write8(self.Register.kProximitySensorPulses, 32)
 
     def _read11BitRegister(self, reg: Register) -> int:
-        raw = bus.read_i2c_block_data(self.kAddress, reg, 2)
+        raw = ColorSensorV3.I2C_BUS.read_i2c_block_data(self.kAddress, reg, 2)
 
         return ((raw[0] & 0xFF) | ((raw[1] & 0xFF) << 8)) & 0x7FF
 
     def _read20BitRegister(self, reg: Register) -> int:
-        raw = bus.read_i2c_block_data(self.kAddress, reg, 3)
+        raw = ColorSensorV3.I2C_BUS.read_i2c_block_data(self.kAddress, reg, 3)
 
         return ((raw[0] & 0xFF) | ((raw[1] & 0xFF) << 8) |
                 ((raw[2] & 0xFF) << 16)) & 0x03FFFF
 
     def _write8(self, reg: Register, data: int):
-        bus.write_byte_data(self.kAddress, reg, data)
+        ColorSensorV3.I2C_BUS.write_byte_data(self.kAddress, reg, data)
 
 
 configFile = "/boot/frc.json"

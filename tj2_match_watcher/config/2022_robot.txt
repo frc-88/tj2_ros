@@ -11,9 +11,7 @@
 /camera/gyro/imu_info
 /camera/gyro/metadata
 /camera/gyro/sample
-/color_sensor/raw
-/color_sensor/proximity
-/color_sensor/match
+/color_sensor/sensor
 /amcl_pose
 /initialpose
 /sinistra_laser/scan
@@ -50,7 +48,6 @@
 /tj2/accel/filtered
 /tj2/ping
 /tj2/detections
-/tj2/cargo/markers
 /tj2/team_color
 /tj2/target_angle
 /tj2/target_distance
