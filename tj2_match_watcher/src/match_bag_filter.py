@@ -81,6 +81,8 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
                     continue
                 if topic.startswith("/pursuit"):
                     continue
+                if topic == "/tj2/target":
+                    continue
                 if topic == "/tj2/target_angle":
                     target_angle = msg.data + math.pi
                     if enable_target_computation:
@@ -122,7 +124,8 @@ if __name__ == '__main__':
         # "2022_robot_2022-04-09-11-44-20.bag": 0, 
         # "2022_robot_2022-04-14-15-24-23.bag.active": 0, 
         # "2022_robot_2022-04-14-15-53-39.bag": 0, 
-        "2022_robot_2022-04-15-14-09-03.bag": 0,
+        # "2022_robot_2022-04-15-14-09-03.bag": 0,
+        "2022_robot_2022-04-15-17-18-12.bag": 10
     }
     for bag, start_time in bags.items():
         main(directory, bag, time_start=start_time)

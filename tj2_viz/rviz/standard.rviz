@@ -69,28 +69,6 @@ Visualization Manager:
         All Enabled: false
         base_link:
           Value: true
-        camera_accel_frame:
-          Value: true
-        camera_accel_optical_frame:
-          Value: true
-        camera_aligned_depth_to_color_frame:
-          Value: true
-        camera_color_frame:
-          Value: true
-        camera_color_optical_frame:
-          Value: true
-        camera_depth_frame:
-          Value: true
-        camera_depth_optical_frame:
-          Value: true
-        camera_gyro_frame:
-          Value: true
-        camera_gyro_optical_frame:
-          Value: true
-        camera_infra_frame:
-          Value: true
-        camera_infra_optical_frame:
-          Value: true
         camera_link:
           Value: true
         camera_tilt_base_link:
@@ -116,8 +94,6 @@ Visualization Manager:
         left_outer_hook_link:
           Value: true
         limelight_link:
-          Value: true
-        limelight_optical_link:
           Value: true
         map:
           Value: true
@@ -154,23 +130,7 @@ Visualization Manager:
               camera_tilt_base_link:
                 camera_tilt_link:
                   camera_link:
-                    camera_accel_frame:
-                      camera_accel_optical_frame:
-                        {}
-                    camera_aligned_depth_to_color_frame:
-                      camera_color_optical_frame:
-                        {}
-                    camera_color_frame:
-                      {}
-                    camera_depth_frame:
-                      camera_depth_optical_frame:
-                        {}
-                    camera_gyro_frame:
-                      camera_gyro_optical_frame:
-                        {}
-                    camera_infra_frame:
-                      camera_infra_optical_frame:
-                        {}
+                    {}
               dextra_laser_link:
                 {}
               intake_tilt_link:
@@ -967,7 +927,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 15.242758750915527
+      Distance: 19.85439109802246
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -975,17 +935,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.06057403236627579
-        Y: -0.9768663644790649
-        Z: 0.7112241983413696
+        X: -0.7679142355918884
+        Y: -1.8613688945770264
+        Z: -0.4308457374572754
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.1047968864440918
       Target Frame: <Fixed Frame>
-      Yaw: 1.4453976154327393
+      Yaw: 1.3553977012634277
     Saved: ~
 Window Geometry:
   Bar Debug:
