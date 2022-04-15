@@ -41,6 +41,7 @@
         /color_sensor/raw
         /color_sensor/proximity
         /color_sensor/match
+        /tj2/target
         /tj2/target_angle
         /tj2/target_distance
         /tj2/target_probability

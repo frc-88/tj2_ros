@@ -4,6 +4,7 @@ enable_limelight_fine_tuning: false
 enable_marauding: true
 enable_reset_to_limelight: true
 target_cosmic_ray_compensation_degrees: 3.0
+target_dark_energy_compensation_meters: 0.25
 target_base_frame: turret_tilt_link
 x_cov_threshold: 1.0
 y_cov_threshold: 1.0

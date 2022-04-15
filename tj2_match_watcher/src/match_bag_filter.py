@@ -1,16 +1,33 @@
 #!/usr/bin/env python3
 
 import os
+import math
 import tqdm
 import rospy
 import rospkg
 from rosbag import Bag
 
+from geometry_msgs.msg import PoseStamped
+from tj2_tools.robot_state import Pose2d
+
+
+def target_to_pose(angle, distance):
+    if math.isnan(angle) or math.isnan(distance):
+        return None
+    target_x = distance * math.cos(angle)
+    target_y = distance * math.sin(angle)
+    target_pose2d = Pose2d(target_x, target_y)
+    target_pose = PoseStamped()
+    target_pose.header.frame_id = "turret_tilt_link"
+    target_pose.pose = target_pose2d.to_ros_pose()
+    return target_pose
+
 
 def main(directory, bag_in_name, time_start=None, time_stop=None):
+    enable_target_computation = True
     rospack = rospkg.RosPack()
-    # root_dir = rospack.get_path("tj2_match_watcher")
-    root_dir = "/media/storage"
+    root_dir = rospack.get_path("tj2_match_watcher")
+    # root_dir = "/media/storage"
 
     bag_in_path = os.path.join(root_dir, "bags", directory, bag_in_name)
     bag_out_path = os.path.join(
@@ -36,6 +53,9 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
     left_laser_topic = "/left_laser"
     right_laser_topic = "/right_laser"
     camera_timer = None
+
+    target_angle = 0.0
+    target_distance = 0.0
     try:
         with tqdm.tqdm(total=length) as pbar:
             for topic, msg, timestamp, conn_header in messages:
@@ -61,6 +81,14 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
                     continue
                 if topic.startswith("/pursuit"):
                     continue
+                if topic == "/tj2/target_angle":
+                    target_angle = msg.data + math.pi
+                    if enable_target_computation:
+                        pose = target_to_pose(target_angle, target_distance)
+                        if pose is not None:
+                            bag_out.write("/tj2/target", pose, timestamp)
+                if topic == "/tj2/target_distance":
+                    target_distance = msg.data
                 if topic == "/tf":
                     should_skip = True
                     for transform in msg.transforms:
@@ -92,8 +120,9 @@ if __name__ == '__main__':
     bags = {
         # "2022_robot_2022-04-09-09-59-29.bag": 0, 
         # "2022_robot_2022-04-09-11-44-20.bag": 0, 
-        "2022_robot_2022-04-14-15-24-23.bag.active": 0, 
-        "2022_robot_2022-04-14-15-53-39.bag": 0, 
+        # "2022_robot_2022-04-14-15-24-23.bag.active": 0, 
+        # "2022_robot_2022-04-14-15-53-39.bag": 0, 
+        "2022_robot_2022-04-15-14-09-03.bag": 0,
     }
     for bag, start_time in bags.items():
         main(directory, bag, time_start=start_time)

@@ -69,6 +69,28 @@ Visualization Manager:
         All Enabled: false
         base_link:
           Value: true
+        camera_accel_frame:
+          Value: true
+        camera_accel_optical_frame:
+          Value: true
+        camera_aligned_depth_to_color_frame:
+          Value: true
+        camera_color_frame:
+          Value: true
+        camera_color_optical_frame:
+          Value: true
+        camera_depth_frame:
+          Value: true
+        camera_depth_optical_frame:
+          Value: true
+        camera_gyro_frame:
+          Value: true
+        camera_gyro_optical_frame:
+          Value: true
+        camera_infra_frame:
+          Value: true
+        camera_infra_optical_frame:
+          Value: true
         camera_link:
           Value: true
         camera_tilt_base_link:
@@ -132,7 +154,23 @@ Visualization Manager:
               camera_tilt_base_link:
                 camera_tilt_link:
                   camera_link:
-                    {}
+                    camera_accel_frame:
+                      camera_accel_optical_frame:
+                        {}
+                    camera_aligned_depth_to_color_frame:
+                      camera_color_optical_frame:
+                        {}
+                    camera_color_frame:
+                      {}
+                    camera_depth_frame:
+                      camera_depth_optical_frame:
+                        {}
+                    camera_gyro_frame:
+                      camera_gyro_optical_frame:
+                        {}
+                    camera_infra_frame:
+                      camera_infra_optical_frame:
+                        {}
               dextra_laser_link:
                 {}
               intake_tilt_link:
@@ -159,8 +197,7 @@ Visualization Manager:
               turret_tilt_link:
                 turret_link:
                   limelight_link:
-                    limelight_optical_link:
-                      {}
+                    {}
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988079071
@@ -859,8 +896,7 @@ Visualization Manager:
       Marker Topic: /color_sensor/marker
       Name: MarkerArray
       Namespaces:
-        spherecolor_sensor: true
-        textcolor_sensor: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -931,7 +967,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.979722023010254
+      Distance: 15.242758750915527
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -939,17 +975,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.0989072322845459
-        Y: 0.5056127905845642
-        Z: 0.11850138008594513
+        X: -0.06057403236627579
+        Y: -0.9768663644790649
+        Z: 0.7112241983413696
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.34539794921875
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 4.613578796386719
+      Yaw: 1.4453976154327393
     Saved: ~
 Window Geometry:
   Bar Debug:

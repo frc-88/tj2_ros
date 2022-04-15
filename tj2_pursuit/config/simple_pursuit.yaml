@@ -4,8 +4,8 @@ rotate_kI: 0.0
 rotate_kD: 0.0
 
 max_angular_vel: 10.0
-max_linear_vel: 2.0
-max_linear_accel: 1.5
+max_linear_vel: 4.0
+max_linear_accel: 2.0
 
 linear_kP: 1.0
 linear_kI: 0.0

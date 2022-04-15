@@ -69,6 +69,7 @@ class TJ2Target(object):
 
         # a constant to fix weird unknown target issues
         self.target_cosmic_ray_compensation = math.radians(rospy.get_param("~target_cosmic_ray_compensation_degrees", 0.0))
+        self.target_dark_energy_compensation = math.radians(rospy.get_param("~target_dark_energy_compensation_meters", 0.0))
 
         self.color_message_timeout = rospy.Duration(rospy.get_param("~color_message_timeout", 0.5))
         self.cargo_egress_timeout = rospy.Duration(rospy.get_param("~cargo_egress_timeout", 0.5))
@@ -421,7 +422,7 @@ class TJ2Target(object):
 
             self.target_heading = target.heading() + self.target_cosmic_ray_compensation
             self.target_heading = Pose2d.normalize_theta(self.target_heading + math.pi)
-            self.target_distance = target.distance()
+            self.target_distance = target.distance() + self.target_dark_energy_compensation
             self.publish_target(self.target_distance, self.target_heading, shot_probability)
 
             target_pose_stamped = PoseStamped()
