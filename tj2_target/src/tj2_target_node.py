@@ -278,8 +278,6 @@ class TJ2Target(object):
         self.probability_hood_down_pub.publish(self.ogm_down.to_msg())
 
     def waypoints_callback(self, msg):
-        self.waypoints = {}
-        self.waypoints_pose2d = {}
         for waypoint_msg in msg.waypoints:
             pose_stamped = PoseStamped()
             pose_stamped.header.frame_id = self.map_frame
@@ -519,6 +517,8 @@ class TJ2Target(object):
             for name, waypoint in self.waypoints_pose2d.items():
                 if name.startswith(team_prefix):
                     marauding_waypoints.append(waypoint)
+            if len(marauding_waypoints) == 0:
+                return None
 
             closest_point = min(marauding_waypoints, key=lambda x: x.distance(robot_pose))
             closest_pose = PoseStamped()

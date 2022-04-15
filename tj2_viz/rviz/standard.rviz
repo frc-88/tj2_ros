@@ -69,28 +69,6 @@ Visualization Manager:
         All Enabled: false
         base_link:
           Value: true
-        camera_accel_frame:
-          Value: true
-        camera_accel_optical_frame:
-          Value: true
-        camera_aligned_depth_to_color_frame:
-          Value: true
-        camera_color_frame:
-          Value: true
-        camera_color_optical_frame:
-          Value: true
-        camera_depth_frame:
-          Value: true
-        camera_depth_optical_frame:
-          Value: true
-        camera_gyro_frame:
-          Value: true
-        camera_gyro_optical_frame:
-          Value: true
-        camera_infra_frame:
-          Value: true
-        camera_infra_optical_frame:
-          Value: true
         camera_link:
           Value: true
         camera_tilt_base_link:
@@ -154,23 +132,7 @@ Visualization Manager:
               camera_tilt_base_link:
                 camera_tilt_link:
                   camera_link:
-                    camera_accel_frame:
-                      camera_accel_optical_frame:
-                        {}
-                    camera_aligned_depth_to_color_frame:
-                      camera_color_optical_frame:
-                        {}
-                    camera_color_frame:
-                      {}
-                    camera_depth_frame:
-                      camera_depth_optical_frame:
-                        {}
-                    camera_gyro_frame:
-                      camera_gyro_optical_frame:
-                        {}
-                    camera_infra_frame:
-                      camera_infra_optical_frame:
-                        {}
+                    {}
               dextra_laser_link:
                 {}
               intake_tilt_link:
@@ -536,10 +498,7 @@ Visualization Manager:
       Marker Topic: /tj2/markers
       Name: Cargo Markers
       Namespaces:
-        sphere_cargo_blue: true
-        sphere_cargo_red: true
-        text_sphere_cargo_blue: true
-        text_sphere_cargo_red: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -972,7 +931,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 8.750051498413086
+      Distance: 11.979722023010254
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -980,17 +939,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -1.3135091066360474
-        Y: -5.606435775756836
-        Z: -3.348996162414551
+        X: -0.0989072322845459
+        Y: 0.5056127905845642
+        Z: 0.11850138008594513
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6003981232643127
+      Pitch: 1.34539794921875
       Target Frame: <Fixed Frame>
-      Yaw: 1.3304003477096558
+      Yaw: 4.613578796386719
     Saved: ~
 Window Geometry:
   Bar Debug:
