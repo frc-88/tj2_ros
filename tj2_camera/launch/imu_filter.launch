@@ -8,6 +8,8 @@
             <!-- <remap from="imu" to="imu"/> -->
             <!-- <remap from="imu/filtered" to="imu/filtered"/> -->
             <remap from="joint" to="/tj2/camera_joint"/>
+            <remap from="accel" to="accel/sample"/>
+            <remap from="gyro" to="gyro/sample"/>
         </node>
         
         <node pkg="imu_filter_madgwick" type="imu_filter_node" name="camera_imu_filter">

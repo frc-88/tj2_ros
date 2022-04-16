@@ -13,30 +13,40 @@ TJ2ImuMerger::TJ2ImuMerger(ros::NodeHandle* nodehandle) :
     
     _sync_imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 10);
     _camera_joint_pub = nh.advertise<std_msgs::Float64>("joint", 10);
+
+    _imu_msg.header.frame_id = _imu_base_frame;
 }
 
 void TJ2ImuMerger::_accel_callback(const sensor_msgs::ImuConstPtr& accel)
 {
-    _imu_msg.header = accel->header;
+    _imu_msg.header.stamp = accel->header.stamp;
     _imu_msg.orientation.x = 0.0;
     _imu_msg.orientation.y = 0.0;
     _imu_msg.orientation.z = 0.0;
     _imu_msg.orientation.w = 1.0;
     
-    _imu_msg.linear_acceleration = accel->linear_acceleration;
-    _imu_msg.linear_acceleration_covariance = accel->linear_acceleration_covariance;
+    _imu_msg.linear_acceleration.x = accel->linear_acceleration.x;
+    _imu_msg.linear_acceleration.y = accel->linear_acceleration.y;
+    _imu_msg.linear_acceleration.z = accel->linear_acceleration.z;
+    for (size_t index = 0; index < accel->linear_acceleration_covariance.size(); index++) {
+        _imu_msg.linear_acceleration_covariance.at(index) = accel->linear_acceleration_covariance.at(index);
+    }
 }
 
 void TJ2ImuMerger::_gyro_callback(const sensor_msgs::ImuConstPtr& gyro)
 {
-    _imu_msg.header = gyro->header;
+    _imu_msg.header.stamp = gyro->header.stamp;
     _imu_msg.orientation.x = 0.0;
     _imu_msg.orientation.y = 0.0;
     _imu_msg.orientation.z = 0.0;
     _imu_msg.orientation.w = 1.0;
     
-    _imu_msg.angular_velocity = gyro->angular_velocity;
-    _imu_msg.angular_velocity_covariance = gyro->angular_velocity_covariance;
+    _imu_msg.angular_velocity.x = gyro->angular_velocity.x;
+    _imu_msg.angular_velocity.y = gyro->angular_velocity.y;
+    _imu_msg.angular_velocity.z = gyro->angular_velocity.z;
+    for (size_t index = 0; index < gyro->angular_velocity_covariance.size(); index++) {
+        _imu_msg.angular_velocity_covariance.at(index) = gyro->angular_velocity_covariance.at(index);
+    }
 }
 
 void TJ2ImuMerger::_imu_filtered_callback(const sensor_msgs::ImuConstPtr& imu)
@@ -64,7 +74,6 @@ int TJ2ImuMerger::run()
 
         _camera_joint_pub.publish(_joint_msg);
 
-        _imu_msg.header.frame_id = _imu_base_frame;
         _sync_imu_pub.publish(_imu_msg);
     }
     return 0;

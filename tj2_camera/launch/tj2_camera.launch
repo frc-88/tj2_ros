@@ -21,7 +21,7 @@
             <remap from="points" to="depth_filtered/points" />
         </node>
 
-        <node pkg="tj2_depth_converter" type="tj2_depth_converter" name="tj2_depth_converter" output="screen" respawn="false">
+        <node pkg="tj2_camera" type="tj2_depth_converter" name="tj2_depth_converter" output="screen" respawn="false">
             <param name="rescale" value="1.0" />
             <param name="erosion_size" value="3" />
             <param name="connected_components_size_threshold" value="500.0" />
