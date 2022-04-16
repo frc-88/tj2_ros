@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <group ns="camera">
-        <node pkg="tj2_camera" type="imu_merger.py" name="camera_imu_merge"/>
+        <node pkg="tj2_camera" type="tj2_imu_merger" name="camera_imu_merge">
+            <param name="imu_base_frame" value="camera_link"/>
+            <param name="publish_rate" value="10.0"/>
+            <param name="sync_time_threshold" value="0.25"/>
+            <!-- <remap from="imu" to="imu"/> -->
+            <!-- <remap from="imu/filtered" to="imu/filtered"/> -->
+            <remap from="joint" to="/tj2/camera_joint"/>
+        </node>
         
         <node pkg="imu_filter_madgwick" type="imu_filter_node" name="camera_imu_filter">
             <param name="publish_tf" value="false"/>

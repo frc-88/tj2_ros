@@ -11,6 +11,7 @@
     <include file="$(find tj2_camera)/launch/tj2_camera.launch"/>
     <include file="$(find tj2_camera)/launch/camera_watcher.launch"/>
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/>
+    <include file="$(find tj2_camera)/launch/imu_filter.launch"/>
     <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
 
     <include file="$(find tj2_rplidar)/launch/sinistra_laser.launch"/>
@@ -21,10 +22,10 @@
     <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
     <include file="$(find tj2_pursuit)/launch/tj2_simple_pursuit.launch"/>
     <!-- <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/> -->
-    <include file="$(find tj2_move_base)/launch/tj2_move_base.launch">
+    <!-- <include file="$(find tj2_move_base)/launch/tj2_move_base.launch">
         <arg name="use_filtered_odom" value="$(arg use_filtered_odom)"/>
-    </include>
-    <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
+    </include> -->
+    <!-- <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/> -->
     <include file="$(find tj2_target)/launch/tj2_target.launch"/>
     <include file="$(find tj2_target)/launch/color_sensor.launch"/>
     
