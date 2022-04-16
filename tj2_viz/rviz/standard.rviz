@@ -69,28 +69,6 @@ Visualization Manager:
         All Enabled: false
         base_link:
           Value: true
-        camera_accel_frame:
-          Value: true
-        camera_accel_optical_frame:
-          Value: true
-        camera_aligned_depth_to_color_frame:
-          Value: true
-        camera_color_frame:
-          Value: true
-        camera_color_optical_frame:
-          Value: true
-        camera_depth_frame:
-          Value: true
-        camera_depth_optical_frame:
-          Value: true
-        camera_gyro_frame:
-          Value: true
-        camera_gyro_optical_frame:
-          Value: true
-        camera_infra_frame:
-          Value: true
-        camera_infra_optical_frame:
-          Value: true
         camera_link:
           Value: true
         camera_tilt_base_link:
@@ -116,8 +94,6 @@ Visualization Manager:
         left_outer_hook_link:
           Value: true
         limelight_link:
-          Value: true
-        limelight_optical_link:
           Value: true
         map:
           Value: true
@@ -154,23 +130,7 @@ Visualization Manager:
               camera_tilt_base_link:
                 camera_tilt_link:
                   camera_link:
-                    camera_accel_frame:
-                      camera_accel_optical_frame:
-                        {}
-                    camera_aligned_depth_to_color_frame:
-                      camera_color_optical_frame:
-                        {}
-                    camera_color_frame:
-                      {}
-                    camera_depth_frame:
-                      camera_depth_optical_frame:
-                        {}
-                    camera_gyro_frame:
-                      camera_gyro_optical_frame:
-                        {}
-                    camera_infra_frame:
-                      camera_infra_optical_frame:
-                        {}
+                    {}
               dextra_laser_link:
                 {}
               intake_tilt_link:
@@ -197,8 +157,7 @@ Visualization Manager:
               turret_tilt_link:
                 turret_link:
                   limelight_link:
-                    limelight_optical_link:
-                      {}
+                    {}
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988079071
@@ -536,10 +495,7 @@ Visualization Manager:
       Marker Topic: /tj2/markers
       Name: Cargo Markers
       Namespaces:
-        sphere_cargo_blue: true
-        sphere_cargo_red: true
-        text_sphere_cargo_blue: true
-        text_sphere_cargo_red: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -900,8 +856,7 @@ Visualization Manager:
       Marker Topic: /color_sensor/marker
       Name: MarkerArray
       Namespaces:
-        spherecolor_sensor: true
-        textcolor_sensor: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -972,7 +927,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.609360933303833
+      Distance: 18.313899993896484
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -980,17 +935,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.2120157927274704
-        Y: -1.7207642793655396
-        Z: 0.09279211610555649
+        X: -0.02933507226407528
+        Y: -0.029739875346422195
+        Z: 2.156447172164917
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3997972905635834
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 1.3853976726531982
+      Yaw: 1.5853946208953857
     Saved: ~
 Window Geometry:
   Bar Debug:
