@@ -7,9 +7,9 @@ import numpy as np
 # ffmpeg -i input.mp4 -vcodec libx265 -crf 28 output.mp4
 # see: https://unix.stackexchange.com/questions/28803/how-can-i-reduce-a-videos-size-with-ffmpeg
 
-path1 = "/home/ben/Videos/2022_robot_2022-03-19-14-51-16-filter.mp4"
-path2 = "/home/ben/Videos/2022_robot_2022-03-19-14-51-16-minimal.mp4"
-out_path = "/home/ben/Videos/2022_robot_2022-03-19-14-51-16-minimal+filter.mp4"
+path1 = "/home/benjamin/Videos/new-amcl-on-week3-2022-04-16_22.05.39.mp4"
+path2 = "/home/benjamin/Videos/week3-2022-04-16_22.08.54.mp4"
+out_path = "/home/benjamin/Videos/2022-04-16_22.05.39-new-vs-old.mp4"
 
 video1 = cv2.VideoCapture(path1)
 video2 = cv2.VideoCapture(path2)
