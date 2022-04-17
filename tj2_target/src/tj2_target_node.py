@@ -3,14 +3,9 @@ import os
 import csv
 import math
 
-from numpy import concatenate
 import rospy
 import tf2_ros
 import tf2_geometry_msgs
-
-import numpy as np
-
-from scipy.interpolate import interp1d
 
 from std_msgs.msg import Bool
 from std_msgs.msg import String
@@ -41,6 +36,9 @@ from tj2_tools.robot_state import Pose2d, Velocity
 def meters_to_in(meters):
     return meters * 39.37
 
+def tof_fit_fn(x, a, b):
+    return a * x + b
+
 
 class TJ2Target(object):
     def __init__(self):
@@ -60,6 +58,13 @@ class TJ2Target(object):
         self.x_cov_threshold = rospy.get_param("~x_cov_threshold", 1.0)
         self.y_cov_threshold = rospy.get_param("~y_cov_threshold", 1.0)
         self.theta_cov_threshold = math.radians(rospy.get_param("~theta_cov_threshold_deg", 45.0))
+
+        self.tof_up_a_const = rospy.get_param("~tof_up_a_const", 1.0)
+        self.tof_up_b_const = rospy.get_param("~tof_up_b_const", 0.0)
+        self.tof_down_a_const = rospy.get_param("~tof_down_a_const", 1.0)
+        self.tof_down_b_const = rospy.get_param("~tof_down_b_const", 0.0)
+
+        self.velocity_filter_k = rospy.get_param("~velocity_filter_k", 0.9)
 
         self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
         self.enable_shot_probability = rospy.get_param("~enable_shot_probability", False)
@@ -101,14 +106,6 @@ class TJ2Target(object):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        if self.enable_shot_correction:
-            hood_up_table, hood_down_table = self.read_tof_file(self.time_of_flight_file_path)
-            self.traj_interp_up = self.create_interp(hood_up_table)
-            self.traj_interp_down = self.create_interp(hood_down_table)
-        else:
-            self.traj_interp_up = None
-            self.traj_interp_down = None
-        
         self.loaded_object_color = ""
         self.buffered_object_color = ""  # cargo takes time to leave the chamber. Hold the last object color here
         self.color_timestamp = rospy.Time(0)
@@ -245,34 +242,6 @@ class TJ2Target(object):
         
     def get_data_writer(self, file):
         return csv.DictWriter(file, fieldnames=("type", "hood", "distance", "heading", "value", "x", "y", "theta"))
-    
-    def read_tof_file(self, path):
-        hood_up_table = []
-        hood_down_table = []
-        rospy.loginfo("Loading tof table from %s" % path)
-        with open(path) as file:
-            reader = csv.reader(file)
-            header = next(reader)
-            for row in reader:
-                rospy.logdebug("Table row: %s" % str(row))
-                parsed_row = list(map(float, row[1:]))
-                if row[0] == "up":
-                    hood_up_table.append(parsed_row)
-                elif row[0] == "down":
-                    hood_down_table.append(parsed_row)
-
-        hood_up_table.sort(key=lambda x: x[0])
-        hood_down_table.sort(key=lambda x: x[0])
-        rospy.logdebug("Hood up table: %s" % str(hood_up_table))
-        rospy.logdebug("Hood down table: %s" % str(hood_down_table))
-        return np.array(hood_up_table), np.array(hood_down_table)
-    
-    def create_interp(self, table):
-        if len(table) == 0:
-            return None
-        x_samples = table[:, 0]
-        y_samples = table[:, 1]
-        return interp1d(x_samples, y_samples, kind="linear")
 
     def map_publish_callback(self, timer):
         self.probability_hood_up_pub.publish(self.ogm_up.to_msg())
@@ -439,24 +408,12 @@ class TJ2Target(object):
         target = Pose2d.from_state(target)
         for _ in range(iterations):
             if self.hood_state:
-                traj_interp = self.traj_interp_up
+                tof = tof_fit_fn(target.distance(), self.tof_up_a_const, self.tof_up_b_const)
             else:
-                traj_interp = self.traj_interp_down
-            tof = self.get_tof(traj_interp, target.distance())
+                tof = tof_fit_fn(target.distance(), self.tof_down_a_const, self.tof_down_b_const)
             if tof > 0.0:
                 target.x = initial_target.x - self.robot_velocity.x * tof
         return target
-    
-    def get_tof(self, traj_interp, distance):
-        # compute the time of flight of the ball to the target based on a lookup table
-        try:
-            if traj_interp is None:
-                return 0.0
-            else:
-                return traj_interp(distance)
-        except ValueError as e:
-            rospy.logwarn_throttle(1.0, "Failed to compute TOF: %s. distance=%0.1fm" % (str(e), distance))
-            return -1.0
 
     def get_shot_probability(self, pose2d: Pose2d):
         # see OccupancyGrid message docs
@@ -513,19 +470,22 @@ class TJ2Target(object):
         if self.team_color == self.buffered_object_color:
             return None
         else:
-            marauding_waypoints = []
             team_prefix = self.marauding_target_prefix.replace("<team>", self.team_color)
+            closest_dist = None
+            closest_point = None
             for name, waypoint in self.waypoints_pose2d.items():
                 if name.startswith(team_prefix):
-                    marauding_waypoints.append(waypoint)
-            if len(marauding_waypoints) == 0:
+                    distance = waypoint.distance(robot_pose)
+                    if closest_dist is None or distance < closest_dist:
+                        closest_point = waypoint
+                        closest_dist = distance
+            if closest_point is None:
                 return None
-
-            closest_point = min(marauding_waypoints, key=lambda x: x.distance(robot_pose))
-            closest_pose = PoseStamped()
-            closest_pose.header.frame_id = self.map_frame
-            closest_pose.pose = closest_point.to_ros_pose()
-            return closest_pose
+            else:
+                closest_pose = PoseStamped()
+                closest_pose.header.frame_id = self.map_frame
+                closest_pose.pose = closest_point.to_ros_pose()
+                return closest_pose
 
     def publish_target(self, distance, heading, probability):
         self.nt_pub.publish(self.make_entry("target/distance", distance))

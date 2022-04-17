@@ -18,3 +18,7 @@ stale_limelight_timeout: 0.25
 limelight_waypoint_agreement_threshold: 1.0
 color_proximity_min: 225
 color_proximity_max: 2047
+tof_up_a_const: 0.22700445
+tof_up_b_const: 0.23155699
+tof_down_a_const: 0.13807447
+tof_down_b_const: 0.81575534

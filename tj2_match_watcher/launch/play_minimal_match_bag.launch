@@ -5,6 +5,7 @@
     <arg name="start_time" default="0"/>
     <node name="match_bag" pkg="rosbag" type="play" output="screen" args="$(find tj2_match_watcher)/bags/$(arg bag_name) --clock --pause -s $(arg start_time)"/>
     <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
+    <include file="$(find tj2_target)/launch/tj2_target.launch"/>
     
     <node pkg="tj2_laser_slam" type="odom_bag_publisher.py" name="odom_bag_publisher" output="screen">
         <remap from="odom" to="/tj2/odom"/>

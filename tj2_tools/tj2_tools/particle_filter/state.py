@@ -395,7 +395,10 @@ class SimpleFilter:
     def update(self, value):
         if self.value is None:
             self.value = value
-        self.value += self.k * (value - self.value)
+        if self.k is None or self.k == 0.0:
+            self.value = value
+        else:
+            self.value += self.k * (value - self.value)
         return self.value
 
 class VelocityFilter:
@@ -408,10 +411,7 @@ class VelocityFilter:
             self.prev_value = value
         raw_delta = (value - self.prev_value) / dt
         self.prev_value = value
-        if self.k is None or self.k == 0.0:
-            self.speed = raw_delta
-        else:
-            self.speed = self.filter.update(raw_delta)
+        self.speed = self.filter.update(raw_delta)
         return self.speed
 
 
