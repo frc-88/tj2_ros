@@ -71,10 +71,9 @@ int TJ2ImuMerger::run()
     while (ros::ok())
     {
         clock_rate.sleep();
-
         _camera_joint_pub.publish(_joint_msg);
-
         _sync_imu_pub.publish(_imu_msg);
+        ros::spinOnce();
     }
     return 0;
 }

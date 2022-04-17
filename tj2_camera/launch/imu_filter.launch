@@ -3,7 +3,7 @@
     <group ns="camera">
         <node pkg="tj2_camera" type="tj2_imu_merger" name="camera_imu_merge">
             <param name="imu_base_frame" value="camera_link"/>
-            <param name="publish_rate" value="10.0"/>
+            <param name="publish_rate" value="15.0"/>
             <param name="sync_time_threshold" value="0.25"/>
             <!-- <remap from="imu" to="imu"/> -->
             <!-- <remap from="imu/filtered" to="imu/filtered"/> -->
@@ -19,6 +19,7 @@
             <param name="use_mag" value="false"/>
             <param name="use_magnetic_field_msg" value="false"/>
             <remap from="imu/data_raw" to="imu"/>
+            <!-- <remap from="imu/data_raw" to="accel/sample"/> -->
             <remap from="imu/data" to="imu/filtered"/>
         </node>
     </group>
