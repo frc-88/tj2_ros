@@ -206,7 +206,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::AddEntryListener(_reset_to_limelight_entry, boost::bind(&TJ2NetworkTables::reset_to_limelight_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     _enable_shot_correction_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_shot_correction");
-    _enable_shot_probability_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_shot_probability");
+    _enable_moving_shot_probability_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_moving_shot_probability");
+    _enable_stationary_shot_probability_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_stationary_shot_probability");
     _enable_limelight_fine_tuning_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_limelight_fine_tuning");
     _enable_marauding_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_marauding");
     _enable_reset_to_limelight_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_reset_to_limelight");
@@ -662,11 +663,12 @@ void TJ2NetworkTables::reset_to_limelight_callback(const nt::EntryNotification& 
 void TJ2NetworkTables::target_config_callback(const nt::EntryNotification& event)
 {
     tj2_target::TargetConfig msg;
-    msg.enable_shot_correction = get_boolean(_enable_shot_correction_entry, false);
-    msg.enable_shot_probability = get_boolean(_enable_shot_probability_entry, false);
-    msg.enable_limelight_fine_tuning = get_boolean(_enable_limelight_fine_tuning_entry, false);
-    msg.enable_marauding = get_boolean(_enable_marauding_entry, false);
-    msg.enable_reset_to_limelight = get_boolean(_enable_reset_to_limelight_entry, false);
+    msg.enable_shot_correction = (int)get_double(_enable_shot_correction_entry, -1.0);
+    msg.enable_moving_shot_probability = (int)get_double(_enable_moving_shot_probability_entry, -1.0);
+    msg.enable_stationary_shot_probability = (int)get_double(_enable_stationary_shot_probability_entry, -1.0);
+    msg.enable_limelight_fine_tuning = (int)get_double(_enable_limelight_fine_tuning_entry, -1.0);
+    msg.enable_marauding = (int)get_double(_enable_marauding_entry, -1.0);
+    msg.enable_reset_to_limelight = (int)get_double(_enable_reset_to_limelight_entry, -1.0);
     _target_config_pub.publish(msg);
 }
 

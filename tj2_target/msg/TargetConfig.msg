@@ -1,5 +1,6 @@
-bool enable_shot_correction
-bool enable_shot_probability
-bool enable_limelight_fine_tuning
-bool enable_marauding
-bool enable_reset_to_limelight
+int8 enable_shot_correction
+int8 enable_moving_shot_probability
+int8 enable_stationary_shot_probability
+int8 enable_limelight_fine_tuning
+int8 enable_marauding
+int8 enable_reset_to_limelight

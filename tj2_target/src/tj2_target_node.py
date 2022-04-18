@@ -3,6 +3,9 @@ import os
 import csv
 import math
 
+import numpy as np
+import scipy.stats
+
 import rospy
 import tf2_ros
 import tf2_geometry_msgs
@@ -10,12 +13,17 @@ import tf2_geometry_msgs
 from std_msgs.msg import Bool
 from std_msgs.msg import String
 from std_msgs.msg import Float64
+from std_msgs.msg import ColorRGBA
 
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import Vector3
 
 from nav_msgs.msg import Odometry
 from nav_msgs.msg import OccupancyGrid
+
+from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
 
 from tj2_tools.occupancy_grid import OccupancyGridManager
 
@@ -31,6 +39,7 @@ from std_srvs.srv import Trigger, TriggerResponse
 
 from tj2_tools.transforms import lookup_transform
 from tj2_tools.robot_state import Pose2d, Velocity
+from tj2_tools.particle_filter.state import SimpleFilter
 
 
 def meters_to_in(meters):
@@ -48,6 +57,7 @@ class TJ2Target(object):
             # disable_signals=True
             # log_level=rospy.DEBUG
         )
+        self.update_rate = rospy.get_param("~update_rate", 30.0)
         self.map_frame = rospy.get_param("~map", "map")
         self.odom_frame = rospy.get_param("~odom", "odom")
         self.base_frame = rospy.get_param("~base_link", "base_link")
@@ -67,10 +77,12 @@ class TJ2Target(object):
         self.velocity_filter_k = rospy.get_param("~velocity_filter_k", 0.9)
 
         self.enable_shot_correction = rospy.get_param("~enable_shot_correction", True)
-        self.enable_shot_probability = rospy.get_param("~enable_shot_probability", False)
+        self.enable_stationary_shot_probability = rospy.get_param("~enable_stationary_shot_probability", False)
+        self.enable_moving_shot_probability = rospy.get_param("~enable_moving_shot_probability", False)
         self.enable_limelight_fine_tuning = rospy.get_param("~enable_limelight_fine_tuning", False)
         self.enable_marauding = rospy.get_param("~enable_marauding", False)
         self.enable_reset_to_limelight = rospy.get_param("~enable_reset_to_limelight", False)
+        self.enable_target_marker_pub = rospy.get_param("~enable_target_marker_pub", False)
 
         # a constant to fix weird unknown target issues
         self.target_cosmic_ray_compensation = math.radians(rospy.get_param("~target_cosmic_ray_compensation_degrees", 0.0))
@@ -102,7 +114,17 @@ class TJ2Target(object):
 
         self.amcl_pose = None
         self.robot_velocity = Velocity()
+        self.v_filter_k = rospy.get_param("~v_filter_k", None)
+        self.vx_filter = SimpleFilter(self.v_filter_k)
+        self.vy_filter = SimpleFilter(self.v_filter_k)
+        self.vt_filter = SimpleFilter(self.v_filter_k)
+        self.moving_probability_x_scale = rospy.get_param("~moving_probability_x_scale", 1.0)
+        self.moving_probability_fn = self.get_moving_probability_dist(self.moving_probability_x_scale)
         
+        self.prev_target_len = int(self.update_rate * self.cargo_egress_timeout.to_sec())
+        self.prev_targets = np.zeros((self.prev_target_len, 2))
+        self.prev_target_index = 0
+
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
@@ -114,7 +136,8 @@ class TJ2Target(object):
         self.team_color = ""
 
         self.nt_pub = rospy.Publisher("nt_passthrough", NTEntry, queue_size=10)
-        self.target_pub = rospy.Publisher("target", PoseStamped, queue_size=10)
+        self.target_pub = rospy.Publisher("target", PoseWithCovarianceStamped, queue_size=10)
+        self.target_probability_marker_pub = rospy.Publisher("target_probability_marker", MarkerArray, queue_size=10)
         self.probability_hood_up_pub = rospy.Publisher("shot_probability_hood_up_map", OccupancyGrid, queue_size=10)
         self.probability_hood_down_pub = rospy.Publisher("shot_probability_hood_down_map", OccupancyGrid, queue_size=10)
         self.target_angle_pub = rospy.Publisher("target_angle", Float64, queue_size=15)
@@ -133,7 +156,7 @@ class TJ2Target(object):
         self.reset_pose_sub = rospy.Subscriber("reset_pose", PoseWithCovarianceStamped, self.reset_pose_callback)
         self.target_config_sub = rospy.Subscriber("target_config", TargetConfig, self.target_config_callback)
 
-        if self.enable_shot_probability:
+        if self.enable_stationary_shot_probability:
             self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
             self.ogm_down = OccupancyGridManager.from_cost_file(self.probability_hood_down_map_path)
             self.map_pub_timer = rospy.Timer(rospy.Duration(1.0), self.map_publish_callback)
@@ -259,9 +282,9 @@ class TJ2Target(object):
         self.amcl_pose = msg
 
     def odom_callback(self, msg):
-        self.robot_velocity.x = msg.twist.twist.linear.x
-        self.robot_velocity.y = msg.twist.twist.linear.y
-        self.robot_velocity.theta = msg.twist.twist.angular.z
+        self.robot_velocity.x = self.vx_filter.update(msg.twist.twist.linear.x)
+        self.robot_velocity.y = self.vy_filter.update(msg.twist.twist.linear.y)
+        self.robot_velocity.theta = self.vt_filter.update(msg.twist.twist.angular.z)
     
     def hood_callback(self, msg):
         self.hood_state = msg.data
@@ -319,63 +342,70 @@ class TJ2Target(object):
             rospy.loginfo("Got reset transform: %s" % self.map_to_odom_tf_at_reset)
 
     def target_config_callback(self, msg):
-        self.enable_shot_correction = msg.enable_shot_correction
-        self.enable_shot_probability = msg.enable_shot_probability
-        self.enable_limelight_fine_tuning = msg.enable_limelight_fine_tuning
-        self.enable_marauding = msg.enable_marauding
-        self.enable_reset_to_limelight = msg.enable_reset_to_limelight
-        config = {
-            "enable_shot_correction": self.enable_shot_correction,
-            "enable_shot_probability": self.enable_shot_probability,
-            "enable_limelight_fine_tuning": self.enable_limelight_fine_tuning,
-            "enable_marauding": self.enable_marauding,
-            "enable_reset_to_limelight": self.enable_reset_to_limelight
-        }
-        config_strs = []
-        for key, value in config.items():
-            config_strs.append("%s: %s" % (key, value))
-        rospy.loginfo("Updating target config: %s" % ", ".join(config_strs))
+        if msg.enable_shot_correction >= 0:
+            self.enable_shot_correction = msg.enable_shot_correction > 0
+            rospy.loginfo("Updating enable_shot_correction to %s" % (self.enable_shot_correction))
+        if msg.enable_moving_shot_probability >= 0:
+            self.enable_moving_shot_probability = msg.enable_moving_shot_probability > 0
+            rospy.loginfo("Updating enable_moving_shot_probability to %s" % (self.enable_moving_shot_probability))
+        if msg.enable_stationary_shot_probability >= 0:
+            self.enable_stationary_shot_probability = msg.enable_stationary_shot_probability > 0
+            rospy.loginfo("Updating enable_stationary_shot_probability to %s" % (self.enable_stationary_shot_probability))
+        if msg.enable_limelight_fine_tuning >= 0:
+            self.enable_limelight_fine_tuning = msg.enable_limelight_fine_tuning > 0
+            rospy.loginfo("Updating enable_limelight_fine_tuning to %s" % (self.enable_limelight_fine_tuning))
+        if msg.enable_marauding >= 0:
+            self.enable_marauding = msg.enable_marauding > 0
+            rospy.loginfo("Updating enable_marauding to %s" % (self.enable_marauding))
+        if msg.enable_reset_to_limelight >= 0:
+            self.enable_reset_to_limelight = msg.enable_reset_to_limelight > 0
+            rospy.loginfo("Updating enable_reset_to_limelight to %s" % (self.enable_reset_to_limelight))
 
     def run(self):
         rospy.sleep(1.0)  # wait for waypoints to populate
-        clock = rospy.Rate(30.0)
+        clock = rospy.Rate(self.update_rate)
         
         zero_pose_base = PoseStamped()
         zero_pose_base.header.frame_id = self.base_frame
         zero_pose_base.pose.orientation.w = 1.0
         
         while not rospy.is_shutdown():
-            shot_probability = 1.0
+            stationary_shot_probability = 1.0
+            moving_shot_probability = 1.0
+            is_marauding = False
             if not self.is_global_pose_valid(self.amcl_pose):
-                shot_probability = 0.0
+                stationary_shot_probability = 0.0
 
             target_waypoint_name = self.target_waypoint
             if self.enable_marauding:
                 target_pose_map = self.get_target_waypoint(Pose2d.from_ros_pose(self.robot_pose.pose))
-                if target_pose_map is None and target_waypoint_name in self.waypoints:
-                    target_pose_map = self.waypoints[target_waypoint_name]
+                if target_pose_map is None:
+                    if target_waypoint_name in self.waypoints:
+                        target_pose_map = self.waypoints[target_waypoint_name]
+                else:
+                    is_marauding = True
             else:
                 if target_waypoint_name in self.waypoints:
                     target_pose_map = self.waypoints[target_waypoint_name]
                 else:
                     target_pose_map = None
             if target_pose_map is None:
-                shot_probability = 0.0
-                self.publish_target(self.target_distance, self.target_heading, shot_probability)
+                stationary_shot_probability = 0.0
+                self.publish_target(self.target_distance, self.target_heading, stationary_shot_probability)
                 rospy.logwarn_throttle(1.0, "%s is not an available waypoint" % target_waypoint_name)
                 continue
             map_to_target_tf = lookup_transform(self.tf_buffer, self.target_base_frame, self.map_frame)
             if map_to_target_tf is None:
-                shot_probability = 0.0
-                self.publish_target(self.target_distance, self.target_heading, shot_probability)
+                stationary_shot_probability = 0.0
+                self.publish_target(self.target_distance, self.target_heading, stationary_shot_probability)
                 rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.target_base_frame, self.map_frame))
                 continue
             target_pose = tf2_geometry_msgs.do_transform_pose(target_pose_map, map_to_target_tf)
 
             base_to_map_tf = lookup_transform(self.tf_buffer, self.map_frame, self.base_frame)
             if base_to_map_tf is None:
-                shot_probability = 0.0
-                self.publish_target(self.target_distance, self.target_heading, shot_probability)
+                stationary_shot_probability = 0.0
+                self.publish_target(self.target_distance, self.target_heading, stationary_shot_probability)
                 rospy.logwarn_throttle(1.0, "Unable to transfrom from %s -> %s" % (self.map_frame, self.base_frame))
                 continue
             self.robot_pose = tf2_geometry_msgs.do_transform_pose(zero_pose_base, base_to_map_tf)
@@ -383,21 +413,34 @@ class TJ2Target(object):
             target = Pose2d.from_ros_pose(target_pose.pose)
             target = self.compensate_for_robot_velocity(target)
 
-            if self.enable_shot_probability:
-                shot_probability = self.get_shot_probability(target)
+            if self.enable_stationary_shot_probability:
+                stationary_shot_probability = self.get_stationary_shot_probability(target)
+            
+            if self.enable_moving_shot_probability and not is_marauding:
+                moving_shot_probability, shot_x_covariance, shot_y_covariance = self.get_moving_shot_probability(target)
+            else:
+                shot_x_covariance = 0.0
+                shot_y_covariance = 0.0
             
             if self.enable_limelight_fine_tuning:
                 target_pose = self.get_fine_tuned_limelight_target(self.limelight_target_pose, target_pose, self.stale_limelight_timeout, self.limelight_waypoint_agreement_threshold)
+
+            shot_probability = moving_shot_probability * stationary_shot_probability
 
             self.target_heading = target.heading() + self.target_cosmic_ray_compensation
             self.target_heading = Pose2d.normalize_theta(self.target_heading + math.pi)
             self.target_distance = target.distance() + self.target_dark_energy_compensation
             self.publish_target(self.target_distance, self.target_heading, shot_probability)
 
-            target_pose_stamped = PoseStamped()
+            target_pose_stamped = PoseWithCovarianceStamped()
             target_pose_stamped.header.frame_id = self.target_base_frame
-            target_pose_stamped.pose = target.to_ros_pose()
+            target_pose_stamped.pose.pose = target.to_ros_pose()
+            target_pose_stamped.pose.covariance[0] = shot_x_covariance
+            target_pose_stamped.pose.covariance[7] = shot_y_covariance
             self.target_pub.publish(target_pose_stamped)
+
+            if self.enable_target_marker_pub:
+                self.publish_target_marker(shot_probability)
 
             clock.sleep()
     
@@ -415,7 +458,7 @@ class TJ2Target(object):
                 target.x = initial_target.x - self.robot_velocity.x * tof
         return target
 
-    def get_shot_probability(self, pose2d: Pose2d):
+    def get_stationary_shot_probability(self, pose2d: Pose2d):
         # see OccupancyGrid message docs
         # cost is -1 for unknown. Otherwise, 0..100
         # I remap this to 1.0..0.0 for probability (0 == 100% probability, 100 == 0% probability)
@@ -435,6 +478,24 @@ class TJ2Target(object):
             return 0.0
         else:
             return 1.0 - (cost / 100.0)
+    
+    def get_moving_shot_probability(self, target: Pose2d):
+        # returns probability of the shot based on how much the target has changed in the past (cargo_egress_timeout) seconds
+        # also returns the covariance of the X and Y components for display
+        self.prev_targets[self.prev_target_index, 0] = target.x
+        self.prev_targets[self.prev_target_index, 1] = target.y
+        self.prev_target_index = (self.prev_target_index + 1) % self.prev_target_len
+        axis_std_dev = np.std(self.prev_targets, axis=0)
+        x_std_dev = axis_std_dev[0]
+        y_std_dev = axis_std_dev[1]
+        x_prob = self.moving_probability_fn(x_std_dev)
+        y_prob = self.moving_probability_fn(y_std_dev)
+
+        return x_prob * y_prob, x_std_dev * x_std_dev, y_std_dev * y_std_dev
+    
+    def get_moving_probability_dist(self, x_scale):
+        y_normal_center = scipy.stats.norm.pdf(0.0, loc=0.0, scale=1.0)
+        return lambda x: scipy.stats.norm.pdf(x * x_scale, loc=0.0, scale=y_normal_center)
     
     def get_fine_tuned_limelight_target(self, limelight_pose, waypoint_pose, stale_limelight_s=0.5, agreement_threshold_m=1.0):
         dt = rospy.Time.now() - limelight_pose.header.stamp
@@ -498,6 +559,30 @@ class TJ2Target(object):
         self.target_angle_pub.publish(Float64(heading))
         self.target_distance_pub.publish(Float64(distance))
         self.target_probability_pub.publish(Float64(probability))
+
+    def publish_target_marker(self, shot_probability):
+        marker_pose = self.waypoints[self.target_waypoint]
+
+        marker = Marker()
+        marker.action = Marker.ADD
+        marker.pose = marker_pose.pose
+        marker.header.frame_id = marker_pose.header.frame_id
+        marker.lifetime = rospy.Duration(1.0)  # seconds
+        marker.ns = "probability"
+        marker.text = "%0.3f" % shot_probability
+        marker.id = 0
+        marker.type = Marker.TEXT_VIEW_FACING
+
+        scale_vector = Vector3()
+        scale_vector.x = 0.0
+        scale_vector.y = 0.0
+        scale_vector.z = 1.0
+        marker.scale = scale_vector
+        marker.color = ColorRGBA(1.0, 0.0, 0.0, 1.0)
+
+        msg = MarkerArray()
+        msg.markers.append(marker)
+        self.target_probability_marker_pub.publish(msg)
 
     def is_global_pose_valid(self, amcl_pose):
         if amcl_pose is None or len(amcl_pose.pose.covariance) != 36:

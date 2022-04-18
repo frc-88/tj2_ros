@@ -207,7 +207,8 @@ private:
 
     // Target config
     NT_Entry _enable_shot_correction_entry;
-    NT_Entry _enable_shot_probability_entry;
+    NT_Entry _enable_moving_shot_probability_entry;
+    NT_Entry _enable_stationary_shot_probability_entry;
     NT_Entry _enable_limelight_fine_tuning_entry;
     NT_Entry _enable_marauding_entry;
     NT_Entry _enable_reset_to_limelight_entry;

@@ -46,6 +46,7 @@
         /tj2/target_distance
         /tj2/target_probability
         /tj2/shooter
+        /tj2/hood
         /tj2/is_obstacle_in_view
 
         --duration=300 --lz4
