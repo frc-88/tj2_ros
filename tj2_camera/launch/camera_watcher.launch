@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <node pkg="tj2_camera" type="tj2_camera_watcher_node.py" name="tj2_camera_watcher" output="screen">
-        <param name="expected_camera_rate" value="60" />
+        <param name="expected_camera_rate" value="30" />
         <param name="expected_depth_rate" value="30" />
         <rosparam param="l500_depth_config" file="$(find tj2_camera)/config/l500_depth_sensor.yaml" command="load"/>
         <rosparam param="motion_module_config" file="$(find tj2_camera)/config/motion_module.yaml" command="load"/>

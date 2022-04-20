@@ -32,7 +32,7 @@ def draw_field_shape(ogm, field_pts, probability, robot_radius_px, is_closed, is
         cv2.fillPoly(ogm.grid_data, [polylines_pts], (probability * 100,))
 
 
-def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_state=None, robot_radius=0.5):
+def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_state=None, robot_radius=0.5, compensate_radius=True):
     turret_base_link_x_offset = -0.050456
 
     # in_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", practice_map_name + ".yaml")
@@ -80,7 +80,10 @@ def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_sta
     ogm.grid_data[:] = 100
     probabilities.sort(key=lambda x: x["distance"], reverse=True)
 
-    robot_radius_px = int(robot_radius / ogm.resolution)
+    if compensate_radius:
+        robot_radius_px = int(robot_radius / ogm.resolution)
+    else:
+        robot_radius_px = 0
 
     for row in probabilities:
         # calculate field position using distance
@@ -205,8 +208,8 @@ def main():
         lines.append({"pts": ["hub_pt1_r", "hub_pt2_r", "hub_pt3_r", "hub_pt4_r", "hub_pt5_r", "hub_pt6_r"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
 
     data_path = os.path.join(rospack.get_path("tj2_target"), "config", args.data)
-    results_up = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="up")
-    results_down = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="down")
+    results_up = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="up", compensate_radius=False)
+    results_down = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="down", compensate_radius=False)
     results = {
         "mode": "up",
         "up": results_up,
