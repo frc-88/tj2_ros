@@ -149,6 +149,11 @@ class Tj2Waypoints:
         self.save_robot_pose_srv = self.create_service("save_robot_pose", SaveRobotPose, self.save_robot_pose_callback)
 
         self.move_base_start_timer = rospy.Timer(rospy.Duration(0.1), self.start_move_base, oneshot=True)
+
+        self.follow_path_server = actionlib.SimpleActionServer("follow_path", FollowPathAction, self.follow_path_callback, auto_start=False)
+        self.follow_path_server.start()
+        rospy.loginfo("Started follow path action server")
+
         rospy.loginfo("%s is ready" % self.node_name)
 
     # ---
@@ -156,18 +161,25 @@ class Tj2Waypoints:
     # ---
 
     def start_move_base(self, timer):
+        self.move_base = None
+        self.local_obstacle_layer_toggle = None
+        self.global_obstacle_layer_toggle = None
+        self.local_static_layer_toggle = None
+        self.global_static_layer_toggle = None
+        self.pursuit_action = None
+
         if self.enable_waypoint_navigation:
-            self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
-
-            rospy.loginfo("Connecting to move_base...")
-            self.move_base.wait_for_server()
-            rospy.loginfo("move_base connected")
-
             self.pursuit_action = actionlib.SimpleActionClient(self.pursuit_namespace, PursueObjectAction)
 
             rospy.loginfo("Connecting to pursuit...")
             self.pursuit_action.wait_for_server()
             rospy.loginfo("pursuit connected")
+
+            self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
+
+            rospy.loginfo("Connecting to move_base...")
+            self.move_base.wait_for_server()
+            rospy.loginfo("move_base connected")
 
             self.local_obstacle_layer_toggle = SimpleDynamicToggle(self.local_obstacle_layer_topic, timeout=5)
             self.global_obstacle_layer_toggle = SimpleDynamicToggle(self.global_obstacle_layer_topic, timeout=5)
@@ -175,13 +187,7 @@ class Tj2Waypoints:
             self.global_static_layer_toggle = SimpleDynamicToggle(self.global_static_layer_topic, timeout=5)
             rospy.loginfo("obstacle layer configs connected")
         else:
-            self.move_base = None
-            self.local_obstacle_layer_dyn_client = None
-            self.global_obstacle_layer_dyn_client = None
-
-        self.follow_path_server = actionlib.SimpleActionServer("follow_path", FollowPathAction, self.follow_path_callback, auto_start=False)
-        self.follow_path_server.start()
-
+            rospy.loginfo("enable_waypoint_navigation is False. Not initializing move base objects")
 
     def follow_path_callback(self, goal):
         rospy.loginfo("Received waypoint plan")
@@ -316,6 +322,9 @@ class Tj2Waypoints:
     def toggle_obstacles(self, state):
         state = bool(state)
         rospy.loginfo(("Enabling" if state else "Disabling") + " obstacle layer")
+        if self.local_obstacle_layer_toggle is None or self.global_obstacle_layer_toggle is None:
+            rospy.logwarn("Failed to set obstacle layer to %s. Move base not initialized" % (state))
+            return False
         local_changed = self.local_obstacle_layer_toggle.set_state(state)
         global_changed = self.global_obstacle_layer_toggle.set_state(state)
         return local_changed or global_changed
@@ -323,6 +332,9 @@ class Tj2Waypoints:
     def toggle_walls(self, state):
         state = bool(state)
         rospy.loginfo(("Enabling" if state else "Disabling") + " static layer")
+        if self.local_static_layer_toggle is None or self.global_static_layer_toggle is None:
+            rospy.logwarn("Failed to set static layer to %s. Move base not initialized" % (state))
+            return False
         local_changed = self.local_static_layer_toggle.set_state(state)
         global_changed = self.global_static_layer_toggle.set_state(state)
         return local_changed or global_changed

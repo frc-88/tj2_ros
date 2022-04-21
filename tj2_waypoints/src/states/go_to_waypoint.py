@@ -103,6 +103,10 @@ class GoToWaypointState(State):
         
         rospy.loginfo("Going to position (%s, %s)" % (self.goal_pose_stamped.pose.position.x, self.goal_pose_stamped.pose.position.y))
 
+        if self.move_base is None:
+            rospy.logwarn("Move base not initialized! Not going to waypoint")
+            return "failure"
+
         self.move_base.send_goal(goal, feedback_cb=self.move_base_feedback, done_cb=self.move_base_done)
         wait_result = self.wait_for_move_base()
         if wait_result == "object":
@@ -126,13 +130,15 @@ class GoToWaypointState(State):
             if rospy.is_shutdown():
                 rospy.loginfo("Received abort. Cancelling waypoint goal")
                 self.action_result = "failure"
-                self.move_base.cancel_goal()
+                if self.move_base is not None:
+                    self.move_base.cancel_goal()
                 break
 
             if self.action_server.is_preempt_requested():
                 rospy.loginfo("Received preempt. Cancelling waypoint goal")
                 self.action_result = "preempted"
-                self.move_base.cancel_goal()
+                if self.move_base is not None:
+                    self.move_base.cancel_goal()
                 break
 
             # if ignore_orientation is True
@@ -180,7 +186,8 @@ class GoToWaypointState(State):
 
     def close_enough_to_goal(self):
         rospy.loginfo("Robot is close enough to goal: %s. Moving on" % self.distance_to_goal)
-        self.move_base.cancel_goal()
+        if self.move_base is not None:
+            self.move_base.cancel_goal()
         self.action_result = "success"
     
     def move_base_done(self, goal_status, result):
