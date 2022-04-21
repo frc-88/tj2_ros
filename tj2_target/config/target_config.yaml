@@ -31,6 +31,6 @@ tof_up_b_const: 0.23155699  # y intercept of hood up distance to TOF function
 tof_down_a_const: 0.13807447  # slope of hood down distance to TOF function
 tof_down_b_const: 0.81575534  # y intercept of hood down distance to TOF function
 
-v_filter_k: 0.4  # k value to apply to robot velocity. This smoothes out sharp velocity changes. Set to null to disable.
+v_filter_k: 0.8  # k value to apply to robot velocity. This smoothes out sharp velocity changes. Set to null to disable.
 
 moving_probability_x_scale: 0.5  # how much to scale the moving shot probability function. Decreasing this value causes changing targets to get a lower probability score

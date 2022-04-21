@@ -528,10 +528,7 @@ Visualization Manager:
       Marker Topic: /tj2/markers
       Name: Cargo Markers
       Namespaces:
-        sphere_cargo_blue: true
-        sphere_cargo_red: true
-        text_sphere_cargo_blue: true
-        text_sphere_cargo_red: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -923,8 +920,7 @@ Visualization Manager:
       Marker Topic: /color_sensor/marker
       Name: MarkerArray
       Namespaces:
-        spherecolor_sensor: true
-        textcolor_sensor: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -1019,9 +1015,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3497965335845947
+      Pitch: 1.029796838760376
       Target Frame: <Fixed Frame>
-      Yaw: 1.6354022026062012
+      Yaw: 1.7504020929336548
     Saved: ~
 Window Geometry:
   Bar Debug:
