@@ -46,6 +46,8 @@
 #include "tj2_networktables/OdomReset.h"
 #include "tj2_networktables/NTEntry.h"
 
+#include "tj2_target/TargetConfig.h"
+
 #include "networktables/EntryListenerFlags.h"
 
 using namespace std;
@@ -191,10 +193,6 @@ private:
     NT_Entry _cmd_vel_t_entry;
     NT_Entry _cmd_vel_update_entry;
 
-    // hood entries
-    NT_Entry _hood_state_entry;
-    NT_Entry _hood_update_entry;
-
     // Members
     ros::Timer _ping_timer;
     ros::Duration _cmd_vel_timeout;
@@ -203,6 +201,7 @@ private:
 
     ros::Time _prev_twist_timestamp;
     double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
+    ros::Time _prev_odom_timestamp;
 
     tj2_waypoints::WaypointArray _waypoints;
     actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction> *_waypoints_action_client;
@@ -223,7 +222,7 @@ private:
     vector<ros::Publisher>* _raw_joint_pubs;
     ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
     ros::Publisher _pose_estimate_pub;
-    ros::Publisher _hood_pub;
+    ros::Publisher _pose_reset_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
@@ -264,7 +263,6 @@ private:
     void exec_waypoint_plan_callback(const nt::EntryNotification& event);
     void reset_waypoint_plan_callback(const nt::EntryNotification& event);
     void cancel_waypoint_plan_callback(const nt::EntryNotification& event);
-    void hood_state_callback(const nt::EntryNotification& event);
 
     // Timer callbacks
     void ping_timer_callback(const ros::TimerEvent& event);
@@ -282,6 +280,7 @@ private:
     string get_label(int obj_id);
     int get_index(int obj_id);
     std::vector<std::string> load_label_names(const string& path);
+    void publish_odom();
 
     // Waypoint control
     void set_goal_status(GoalStatus status);

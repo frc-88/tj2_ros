@@ -21,26 +21,39 @@
             <remap from="points" to="depth_filtered/points" />
         </node>
 
-        <node pkg="tj2_depth_converter" type="tj2_depth_converter" name="tj2_depth_converter" output="screen" respawn="false">
+        <node pkg="tj2_camera" type="tj2_depth_converter" name="tj2_depth_converter" output="screen" respawn="false">
             <param name="rescale" value="1.0" />
             <param name="erosion_size" value="3" />
             <param name="connected_components_size_threshold" value="500.0" />
-            <!-- <param name="rescale" value="0.5" /> -->
-            <!-- <param name="erosion_size" value="2" /> -->
-            <!-- <param name="connected_components_size_threshold" value="25.0" /> -->
             <param name="throttle_frame_rate" value="10.0" />
             <remap from="depth/image_raw" to="depth/image_rect_raw" />
             <remap from="depth_filtered" to="depth_filtered/image_raw" />
             <remap from="camera_info" to="depth_filtered/camera_info" />
         </node>
 
-        <node pkg="nodelet" type="nodelet" name="downsample_rgb"
+        <node name="realsense_cloud_to_scan" pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" output="screen">
+            <remap from="cloud_in" to="depth_filtered/points" />
+
+            <param name="min_height" value="0.5" />
+            <param name="max_height" value="1.0" />
+            <param name="angle_min" value="-1.5707" />
+            <param name="angle_max" value="1.5707" />
+            <param name="angle_increment" value="0.01" />
+            <param name="scan_time" value="0.1428" />
+            <param name="range_min" value="0.7" />
+            <param name="range_max" value="9.0" />
+            <param name="target_frame" value="base_link" />
+            <param name="concurrency_level" value="" />
+            <param name="use_inf" value="true" />
+        </node>
+
+        <!-- <node pkg="nodelet" type="nodelet" name="downsample_rgb"
                 args="load image_proc/crop_decimate $(arg post_processing_manager_name)">
             <param name="decimation_x" value="2"/>
             <param name="decimation_y" value="2"/>
             <remap from="camera" to="color"/>
             <remap from="camera_out" to="color_decimate"/>
-        </node>
+        </node> -->
 
         <!-- <node pkg="nodelet" type="nodelet" name="rotate_rgb"
                 args="load image_rotate/image_rotate $(arg post_processing_manager_name)">
@@ -86,9 +99,9 @@
         <arg name="enable_depth"             value="true"/>
         <arg name="depth_fps"                value="30"/>
 
-        <arg name="color_width"              value="960"/>
-        <arg name="color_height"             value="540"/>
-        <arg name="color_fps"                value="60"/>
+        <arg name="color_width"              value="640"/>
+        <arg name="color_height"             value="480"/>
+        <arg name="color_fps"                value="30"/>
 
         <arg name="infra_width"              value="640"/>
         <arg name="infra_height"             value="480"/>
@@ -112,7 +125,7 @@
 
         <arg name="clip_distance"            value="-1"/>
         <arg name="linear_accel_cov"         value="0.01"/>
-        <arg name="initial_reset"            value="false"/>
+        <arg name="initial_reset"            value="true"/>
         <arg name="unite_imu_method"         value=""/>
         <arg name="topic_odom_in"            value="odom_in"/>
         <arg name="calib_odom_file"          value=""/>

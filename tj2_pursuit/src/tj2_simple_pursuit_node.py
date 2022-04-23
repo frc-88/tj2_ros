@@ -10,10 +10,13 @@ import tf2_geometry_msgs
 
 from nav_msgs.msg import Odometry
 
+from sensor_msgs.msg import LaserScan
+
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist
 
 from std_msgs.msg import Float64
+from std_msgs.msg import Bool
 
 from vision_msgs.msg import Detection3DArray
 
@@ -55,6 +58,10 @@ class Tj2SimplePursuit:
         self.object_reached_threshold = rospy.get_param("~object_reached_threshold", 0.1)
         self.command_rate = rospy.get_param("~command_rate", 15.0)
         self.no_object_timeout = rospy.Duration(rospy.get_param("~no_object_timeout", 2.0))
+
+        self.laser_obstacle_lower_angle = rospy.get_param("~laser_obstacle_lower_angle", 0.0)
+        self.laser_obstacle_upper_angle = rospy.get_param("~laser_obstacle_upper_angle", 2.0 * math.pi)
+        self.laser_obstacle_threshold = rospy.get_param("~laser_obstacle_threshold", 0.0)
 
         self.enable_linear_vel = rospy.get_param("~enable_linear_vel", True)
         self.enable_prediction = rospy.get_param("~enable_prediction", False)
@@ -107,9 +114,12 @@ class Tj2SimplePursuit:
             vy_std_dev_threshold=1.0
         )
 
+        self.is_obstacle_in_view = False
+
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
         self.camera_tilt_pub = rospy.Publisher("joint_command/camera_joint", Float64, queue_size=10)
         self.follow_object_goal_pub = rospy.Publisher("follow_object_goal", PoseStamped, queue_size=10)
+        self.is_obstacle_in_view_pub = rospy.Publisher("is_obstacle_in_view", Bool, queue_size=15)
 
         self.tracking_object_name = ""
         self.tracking_state = None
@@ -124,6 +134,7 @@ class Tj2SimplePursuit:
 
         self.detections_sub = rospy.Subscriber("detections", Detection3DArray, self.obj_callback, queue_size=15)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback, queue_size=15)
+        self.laser_sub = rospy.Subscriber("scan", LaserScan, self.laser_callback, queue_size=15)
 
         self.pursue_object_server = actionlib.SimpleActionServer("pursue_object", PursueObjectAction, self.pursue_object_callback, auto_start=False)
         self.pursue_object_server.start()
@@ -183,6 +194,17 @@ class Tj2SimplePursuit:
         elif len(self.tracking_object_name) > 0:
             self.object_is_in_view = False
             rospy.logwarn("No object is available to pursue!")
+
+    def laser_callback(self, msg):
+        is_obstacle_in_view = False
+        angle = msg.angle_min
+        for distance in msg.ranges:
+            if self.laser_obstacle_lower_angle <= angle <= self.laser_obstacle_upper_angle:
+                if not math.isinf(distance) and distance < self.laser_obstacle_threshold:
+                    is_obstacle_in_view = True
+            angle += msg.angle_increment
+        self.is_obstacle_in_view = is_obstacle_in_view
+        self.is_obstacle_in_view_pub.publish(Bool(self.is_obstacle_in_view))
 
     def get_nearest_detection(self, object_name, detections_msg):
         nearest_pose = None
@@ -327,10 +349,10 @@ class Tj2SimplePursuit:
         # if now - self.no_object_timer > self.no_object_timeout:
         #     distance = 0.0
         # self.linear_vel_controller.reset_position(distance)
-        if rospy.Time.now() - self.no_object_timer < self.no_object_timeout:
-            target_dist = distance
-        else:
+        if self.is_obstacle_in_view or (rospy.Time.now() - self.no_object_timer > self.no_object_timeout):
             target_dist = 0.0
+        else:
+            target_dist = distance
         # self.linear_vel_controller.set_target_velocity(0.0)
         # self.linear_vel_controller.set_target_position(target_dist)
         

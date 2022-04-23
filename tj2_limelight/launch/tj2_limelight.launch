@@ -13,8 +13,7 @@
             <param name="max_frame_rate" value="15.0" />
             <remap from="camera/image" to="color/image_raw" />
             <param name="publish_video" value="false" />
-            <param name="field_vision_target_height_m" value="2.59" />
-            <param name="field_vision_target_distance_m" value="0.508" />
+            <rosparam command="load" file="$(find tj2_limelight)/config/limelight.yaml" />
         </node>
 
         <node pkg="nodelet" type="nodelet" args="manager" name="$(arg post_processing_manager_name)" output="screen"/>

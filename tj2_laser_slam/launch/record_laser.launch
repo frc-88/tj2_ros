@@ -17,6 +17,5 @@
             /tj2/ping
             /tj2/robot_status
             /tj2/cmd_vel
-            /tj2/ping
             " />
 </launch>

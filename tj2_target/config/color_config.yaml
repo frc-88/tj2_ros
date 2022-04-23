@@ -1,7 +1,9 @@
 loop_rate: 15.0
 color_match_table:
-  red: [1.0, 0.0, 0.0]
-  blue: [0.0, 0.0, 1.0]
-color_confidence_threshold: 0.5
-marker_frame_location: base_link
-marker_size: 0.5
+  red: [0.4, 0.4, 0.2]
+  blue: [0.2, 0.4, 0.4]
+color_confidence_threshold: 0.1
+marker_frame_location: turret_tilt_link
+marker_size: 0.25
+proximity_min: 225
+proximity_max: 2047

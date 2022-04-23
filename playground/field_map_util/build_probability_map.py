@@ -32,7 +32,7 @@ def draw_field_shape(ogm, field_pts, probability, robot_radius_px, is_closed, is
         cv2.fillPoly(ogm.grid_data, [polylines_pts], (probability * 100,))
 
 
-def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_state=None, robot_radius=0.5):
+def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_state=None, robot_radius=0.5, compensate_radius=True):
     turret_base_link_x_offset = -0.050456
 
     # in_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", practice_map_name + ".yaml")
@@ -80,7 +80,10 @@ def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_sta
     ogm.grid_data[:] = 100
     probabilities.sort(key=lambda x: x["distance"], reverse=True)
 
-    robot_radius_px = int(robot_radius / ogm.resolution)
+    if compensate_radius:
+        robot_radius_px = int(robot_radius / ogm.resolution)
+    else:
+        robot_radius_px = 0
 
     for row in probabilities:
         # calculate field position using distance
@@ -156,15 +159,22 @@ def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_sta
 
 def mouse_callback(event, x, y, flags, param):
     if (event == cv2.EVENT_LBUTTONDOWN):
-        ogm = param["ogm"]
-        practice_center = param["practice_center"]
-        field_center = param["field_center"]
+        mode = param["mode"]
+        results = param[mode]
+        ogm = results["ogm"]
+        practice_center = results["practice_center"]
+        field_center = results["field_center"]
         field_pose = Pose2d(*ogm.get_world_x_y(x, y))
         practice_pose = field_pose.relative_to_reverse(field_center).relative_to(practice_center)
 
+        cost = ogm.get_cost_from_costmap_x_y(x, y)
+        probability = 1.0 - (cost / 100.0)
+
+        print("mode:", mode)
         print("practice:", practice_pose.to_list())
         print("field:", field_pose.to_list())
         print("pixel:", x, y)
+        print("probability:", probability)
 
 
 def main():
@@ -173,6 +183,7 @@ def main():
     parser.add_argument("field_map_name", help="name of map to generate probability map for")
     parser.add_argument("-d", "--data", default="recorded_data.csv", help="name of csv to generate probability distributions from")
     parser.add_argument("-s", "--show", action="store_true", help="Show image")
+    parser.add_argument("-b", "--draw-field-elements", action="store_true", help="Draw field elements like the hub and hangar")
     args = parser.parse_args()
 
     # practice_map_name = "br-114-03-26-2022"
@@ -181,28 +192,34 @@ def main():
     # field_map_name = "rapid-react-2022-02-19T07-55-53--407688-edited"
 
     lines = []
-    hangar_radius = 0.2
-    lines.append({"pts": ["hanger_se", "hanger_sw"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hangar_radius})
-    lines.append({"pts": ["hanger_ne", "hanger_nw"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hangar_radius})
+    if args.draw_field_elements:
+        hangar_radius = 0.2
+        lines.append({"pts": ["hanger_se", "hanger_sw"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hangar_radius})
+        lines.append({"pts": ["hanger_ne", "hanger_nw"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hangar_radius})
 
-    bar_width = 0.3
-    lines.append({"pts": ["lower_bar_n", "lower_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
-    lines.append({"pts": ["mid_bar_n", "mid_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
-    lines.append({"pts": ["high_bar_n", "high_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
-    lines.append({"pts": ["trav_bar_n", "trav_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+        bar_width = 0.3
+        lines.append({"pts": ["lower_bar_n", "lower_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+        lines.append({"pts": ["mid_bar_n", "mid_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+        lines.append({"pts": ["high_bar_n", "high_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
+        lines.append({"pts": ["trav_bar_n", "trav_bar_s"], "probability": 0.0, "mirror": True, "use_field": True, "radius": bar_width})
 
-    hub_radius = 0.2
-    lines.append({"pts": ["hub_pt1", "hub_pt2", "hub_pt3", "hub_pt4", "hub_pt5", "hub_pt6"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
-    lines.append({"pts": ["hub_pt1_r", "hub_pt2_r", "hub_pt3_r", "hub_pt4_r", "hub_pt5_r", "hub_pt6_r"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
+        hub_radius = 0.2
+        lines.append({"pts": ["hub_pt1", "hub_pt2", "hub_pt3", "hub_pt4", "hub_pt5", "hub_pt6"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
+        lines.append({"pts": ["hub_pt1_r", "hub_pt2_r", "hub_pt3_r", "hub_pt4_r", "hub_pt5_r", "hub_pt6_r"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
 
     data_path = os.path.join(rospack.get_path("tj2_target"), "config", args.data)
-    results_up = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="up")
-    results_down = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="down")
+    results_up = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="up", compensate_radius=False)
+    results_down = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="down", compensate_radius=False)
+    results = {
+        "mode": "up",
+        "up": results_up,
+        "down": results_down,
+    }
 
     if args.show:
         window_name = "map"
         cv2.namedWindow(window_name)
-        cv2.setMouseCallback(window_name, mouse_callback, param=results_up)
+        cv2.setMouseCallback(window_name, mouse_callback, param=results)
 
         show_image_up = cv2.addWeighted(results_up["field_map"], 0.5, results_up["ogm"].get_image(), 0.5, 0.0)
         show_image_down = cv2.addWeighted(results_up["field_map"], 0.5, results_down["ogm"].get_image(), 0.5, 0.0)
@@ -212,8 +229,10 @@ def main():
             key = chr(cv2.waitKey(-1) & 0xff)
             if key == 'u':
                 cv2.imshow(window_name, show_image_up)
+                results["mode"] = "up"
             elif key == 'd':
                 cv2.imshow(window_name, show_image_down)
+                results["mode"] = "down"
 
             if key == 'q':
                 break

@@ -82,9 +82,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
     _team_color_pub = nh.advertise<std_msgs::String>("team_color", 10);
 
-    _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 1);
-
-    _hood_pub = nh.advertise<std_msgs::Bool>("hood", 1);
+    _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 10);
+    _pose_reset_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("reset_pose", 10);  // for distiguishing between ROS and RIO requested resets
 
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
@@ -149,9 +148,9 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _imu_gx_entry = nt::GetEntry(_nt, _base_key + "imu/gyro/x");
     _imu_gy_entry = nt::GetEntry(_nt, _base_key + "imu/gyro/y");
     _imu_gz_entry = nt::GetEntry(_nt, _base_key + "imu/gyro/z");
-    _imu_r_entry = nt::GetEntry(_nt, _base_key + "imu/angle/roll");
-    _imu_p_entry = nt::GetEntry(_nt, _base_key + "imu/angle/pitch");
-    _imu_y_entry = nt::GetEntry(_nt, _base_key + "imu/angle/yaw");
+    _imu_r_entry = nt::GetEntry(_nt, _base_key + "imu/angle/x");
+    _imu_p_entry = nt::GetEntry(_nt, _base_key + "imu/angle/y");
+    _imu_y_entry = nt::GetEntry(_nt, _base_key + "imu/angle/z");
     _imu_update_entry = nt::GetEntry(_nt, _base_key + "imu/update");
     nt::AddEntryListener(_imu_update_entry, boost::bind(&TJ2NetworkTables::imu_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
@@ -187,10 +186,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::AddEntryListener(_exec_waypoint_plan_update_entry, boost::bind(&TJ2NetworkTables::exec_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
     nt::AddEntryListener(_reset_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::reset_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
     nt::AddEntryListener(_cancel_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::cancel_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
-
-    _hood_state_entry = nt::GetEntry(_nt, _base_key + "hood/state");
-    _hood_update_entry = nt::GetEntry(_nt, _base_key + "hood/update");
-    nt::AddEntryListener(_hood_update_entry, boost::bind(&TJ2NetworkTables::hood_state_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -417,48 +412,8 @@ bool TJ2NetworkTables::odom_reset_callback(tj2_networktables::OdomReset::Request
 
 void TJ2NetworkTables::odom_callback(const nt::EntryNotification& event)
 {
-    ros::Time recv_time = ros::Time::now();
-    double x = get_double(_odom_x_entry, NAN);
-    double y = get_double(_odom_y_entry, NAN);
-    double t = get_double(_odom_t_entry, NAN);
-    double vx = get_double(_odom_vx_entry, NAN);
-    double vy = get_double(_odom_vy_entry, NAN);
-    double vt = get_double(_odom_vt_entry, NAN);
-    if (!(std::isfinite(x) && std::isfinite(y) && std::isfinite(t) && std::isfinite(vx) && std::isfinite(vy) && std::isfinite(vt))) {
-        ROS_WARN_THROTTLE(1.0, "Odometry values are nan or inf");
-        return;
-    }
-
-    tf2::Quaternion quat;
-    quat.setRPY(0, 0, t);
-
-    geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
-
-    _odom_msg.header.stamp = recv_time;
-    _odom_msg.pose.pose.position.x = x;
-    _odom_msg.pose.pose.position.y = y;
-    _odom_msg.pose.pose.position.z = 0.0;
-    _odom_msg.pose.pose.orientation = msg_quat;
-
-    _odom_msg.twist.twist.linear.x = vx;
-    _odom_msg.twist.twist.linear.y = vy;
-    _odom_msg.twist.twist.angular.z = vt;
-
-    if (_publish_odom_tf)
-    {
-        geometry_msgs::TransformStamped tf_stamped;
-        tf_stamped.header.stamp = recv_time;
-        tf_stamped.header.frame_id = _odom_frame;
-        tf_stamped.child_frame_id = _base_frame;
-        tf_stamped.transform.translation.x = x;
-        tf_stamped.transform.translation.y = y;
-        tf_stamped.transform.translation.z = 0.0;
-        tf_stamped.transform.rotation = msg_quat;
-
-        _tf_broadcaster.sendTransform(tf_stamped);
-    }
-    
-    _odom_pub.publish(_odom_msg);
+    // publish_odom();
+    _prev_odom_timestamp = ros::Time::now();
 }
 
 void TJ2NetworkTables::ping_callback(const nt::EntryNotification& event)
@@ -591,6 +546,7 @@ void TJ2NetworkTables::pose_estimate_callback(const nt::EntryNotification& event
     pose_est.pose.covariance[35] = theta_std_rad * theta_std_rad;
 
     _pose_estimate_pub.publish(pose_est);
+    _pose_reset_pub.publish(pose_est);
 }
 
 void TJ2NetworkTables::create_waypoint(size_t index)
@@ -643,14 +599,6 @@ void TJ2NetworkTables::cancel_waypoint_plan_callback(const nt::EntryNotification
 {
     ROS_INFO("Received cancel plan command");
     cancel_waypoint_goal();
-}
-
-void TJ2NetworkTables::hood_state_callback(const nt::EntryNotification& event)
-{
-    bool hood_state = get_boolean(_hood_state_entry, false);
-    std_msgs::Bool msg;
-    msg.data = hood_state;
-    _hood_pub.publish(msg);
 }
 
 // ---
@@ -784,6 +732,52 @@ std::vector<std::string> TJ2NetworkTables::load_label_names(const std::string& p
 }
 
 
+void TJ2NetworkTables::publish_odom()
+{
+    ros::Time recv_time = ros::Time::now();
+    double x = get_double(_odom_x_entry, NAN);
+    double y = get_double(_odom_y_entry, NAN);
+    double t = get_double(_odom_t_entry, NAN);
+    double vx = get_double(_odom_vx_entry, NAN);
+    double vy = get_double(_odom_vy_entry, NAN);
+    double vt = get_double(_odom_vt_entry, NAN);
+    if (!(std::isfinite(x) && std::isfinite(y) && std::isfinite(t) && std::isfinite(vx) && std::isfinite(vy) && std::isfinite(vt))) {
+        ROS_WARN_THROTTLE(1.0, "Odometry values are nan or inf");
+        return;
+    }
+
+    tf2::Quaternion quat;
+    quat.setRPY(0, 0, t);
+
+    geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
+
+    _odom_msg.header.stamp = recv_time;
+    _odom_msg.pose.pose.position.x = x;
+    _odom_msg.pose.pose.position.y = y;
+    _odom_msg.pose.pose.position.z = 0.0;
+    _odom_msg.pose.pose.orientation = msg_quat;
+
+    _odom_msg.twist.twist.linear.x = vx;
+    _odom_msg.twist.twist.linear.y = vy;
+    _odom_msg.twist.twist.angular.z = vt;
+
+    if (_publish_odom_tf)
+    {
+        geometry_msgs::TransformStamped tf_stamped;
+        tf_stamped.header.stamp = recv_time;
+        tf_stamped.header.frame_id = _odom_frame;
+        tf_stamped.child_frame_id = _base_frame;
+        tf_stamped.transform.translation.x = x;
+        tf_stamped.transform.translation.y = y;
+        tf_stamped.transform.translation.z = 0.0;
+        tf_stamped.transform.rotation = msg_quat;
+
+        _tf_broadcaster.sendTransform(tf_stamped);
+    }
+    
+    _odom_pub.publish(_odom_msg);
+}
+
 // ---
 // Waypoint control
 // ---
@@ -856,10 +850,11 @@ string TJ2NetworkTables::get_string(NT_Entry entry, string default_value)
 
 void TJ2NetworkTables::loop()
 {
+    publish_odom();
     publish_cmd_vel();
     publish_goal_status();
     publish_robot_global_pose();
-    ros::Duration odom_duration = ros::Time::now() - _odom_msg.header.stamp;
+    ros::Duration odom_duration = ros::Time::now() - _prev_odom_timestamp;
     if (odom_duration > _odom_timeout) {
         ROS_WARN_THROTTLE(1.0, "No odom received for %f seconds", odom_duration.toSec());
     }

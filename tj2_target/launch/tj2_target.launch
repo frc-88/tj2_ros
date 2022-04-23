@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <group ns="tj2">
-        <node pkg="tj2_target" type="tj2_target_node.py" name="tj2_target" output="screen" required="false">
+        <node pkg="tj2_target" type="tj2_target_node.py" name="tj2_target" output="screen" required="false" respawn="true">
             <remap from="amcl_pose" to="/amcl_pose"/>
             <param name="time_of_flight_file_path" value="$(find tj2_target)/config/time_of_flight.csv"/>
             <param name="recorded_data_file_path" value="$(find tj2_target)/config/recorded_data.csv"/>

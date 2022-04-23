@@ -12,16 +12,17 @@
         </node>
 
         <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables" output="screen" required="false">
-            <!-- <rosparam file="$(find tj2_networktables)/config/2022_robot_networktables.yaml" command="load"/> -->
-            <!-- <rosparam param="joint_names" file="$(find tj2_description)/config/2022_robot_joints.yaml" command="load"/> -->
-            <rosparam file="$(find tj2_networktables)/config/diffyjr_networktables.yaml" command="load"/>
-            <rosparam param="joint_names" file="$(find tj2_description)/config/diffyjr_joints.yaml" command="load"/>
+            <rosparam file="$(find tj2_networktables)/config/2022_robot_networktables.yaml" command="load"/>
+            <rosparam param="joint_names" file="$(find tj2_description)/config/2022_robot_joints.yaml" command="load"/>
+            <!-- <rosparam file="$(find tj2_networktables)/config/diffyjr_networktables.yaml" command="load"/> -->
+            <!-- <rosparam param="joint_names" file="$(find tj2_description)/config/diffyjr_joints.yaml" command="load"/> -->
             <param name="nt_port" value="5800"/>
             <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
             <param name="update_interval" value="0.033"/>
-            <param name="min_angular_z_cmd" value="0.5"/>
-            <param name="min_linear_cmd" value="0.1"/>
+            <param name="min_angular_z_cmd" value="0.01"/>
+            <param name="min_linear_cmd" value="0.01"/>
             <param name="classes_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
+            <remap from="camera_joint" to="camera_joint_nt"/>
         </node>
     </group>
 

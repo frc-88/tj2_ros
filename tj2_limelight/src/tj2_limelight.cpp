@@ -12,11 +12,16 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~video_url", _video_url, "");
     ros::param::param<string>("~camera_info_url", _camera_info_url, "");
     ros::param::param<string>("~frame_id", _frame_id, "camera_link");
-    ros::param::param<string>("~base_frame_id", _base_frame, "turret_link");
+    ros::param::param<string>("~target_frame_id", _target_frame, "turret_link");
     ros::param::param<double>("~max_frame_rate", _max_frame_rate, 30.0);
     ros::param::param<bool>("~publish_video", _publish_video, true);
     ros::param::param<double>("~field_vision_target_height_m", _field_vision_target_height, 0.0);
     ros::param::param<double>("~field_vision_target_distance_m", _field_vision_target_distance, 0.0);
+    ros::param::param<string>("~odom_frame_id", _odom_frame, "odom");
+    ros::param::param<string>("~odom_child_frame_id", _odom_child_frame, "limelight_base_link");
+
+    _odom_covariance = get_double_list_param("odom_covariance", 36);
+    _twist_covariance = get_double_list_param("twist_covariance", 36);
 
     _nt = nt::GetDefaultInstance();
     nt::AddLogger(_nt,
@@ -47,6 +52,23 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
 
     _limelight_raw_target_pub = nh.advertise<tj2_limelight::LimelightTargetArray>("raw_targets", 15);
     _limelight_target_pub = nh.advertise<geometry_msgs::PoseStamped>("target", 15);
+    _limelight_target_angle_pub = nh.advertise<std_msgs::Float64>("target_angle", 15);
+    _limelight_target_distance_pub = nh.advertise<std_msgs::Float64>("target_distance", 15);
+
+    _odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 50);
+    _odom_msg.header.frame_id = _odom_frame;
+    _odom_msg.child_frame_id = _odom_child_frame;
+    /* [
+         0,  1,  2,  3,  4,  5,
+         6,  7,  8,  9, 10, 11,
+        12, 13, 14, 15, 16, 17,
+        18, 19, 20, 21, 22, 23,
+        24, 25, 26, 27, 28, 29,
+        30, 31, 32, 33, 34, 35
+    ] */
+    _odom_msg.pose.covariance = as_array<36>(_odom_covariance);
+    _odom_msg.twist.covariance = as_array<36>(_twist_covariance);
+
     _limelight_led_mode_sub = nh.subscribe<std_msgs::Bool>("led_mode", 5, &TJ2Limelight::led_mode_callback, this);
     _limelight_cam_mode_sub = nh.subscribe<std_msgs::Bool>("cam_mode", 5, &TJ2Limelight::cam_mode_callback, this);
 
@@ -88,6 +110,23 @@ TJ2Limelight::TJ2Limelight(ros::NodeHandle* nodehandle) :
     ROS_INFO("tj2_limelight init complete");
 }
 
+vector<double> TJ2Limelight::get_double_list_param(string name, size_t length)
+{
+    string key;
+    vector<double> double_list;
+    if (!ros::param::search(name, key)) {
+        ROS_ERROR("Failed to find odom_covariance parameter");
+        std::exit(EXIT_FAILURE);
+    }
+    ROS_DEBUG("Found %s: %s", name.c_str(), key.c_str());
+    nh.getParam(key, double_list);
+    if (double_list.size() != length) {
+        ROS_ERROR("%s is not length %ld", name.c_str(), length);
+        std::exit(EXIT_FAILURE);
+    }
+    return double_list;
+}
+
 void TJ2Limelight::watchVideoCapture()
 {
     ros::Rate clock_rate(_max_frame_rate);  // Hz
@@ -120,6 +159,7 @@ void TJ2Limelight::publish_limelight_targets()
     if (getDouble(_has_targets_entry, 0.0) != 1.0) {
         return;
     }
+    ros::Time now = ros::Time::now();
     tj2_limelight::LimelightTargetArray array_msg;
 
     int width = _camera_info.width;
@@ -154,18 +194,38 @@ void TJ2Limelight::publish_limelight_targets()
     double target_angle = to_radians(getDouble(_limelight_target_angle_entry, 0.0));
     double target_dist = inches_to_meters(getDouble(_limelight_target_distance_entry, 0.0));
 
+    target_angle += M_PI;  // turret ROS coordinate frame is 180 off from RIO coordinate frame
+
     tf2::Quaternion quat;
     quat.setRPY(0, 0, target_angle);
     geometry_msgs::Quaternion msg_quat = tf2::toMsg(quat);
 
+    double target_x = target_dist * cos(target_angle);
+    double target_y = target_dist * sin(target_angle);
+
     geometry_msgs::PoseStamped pose;
-    pose.header.stamp = ros::Time::now();
-    pose.header.frame_id = _base_frame;
-    pose.pose.position.x = target_dist * cos(target_angle);
-    pose.pose.position.y = target_dist * sin(target_angle);
+    pose.header.stamp = now;
+    pose.header.frame_id = _target_frame;
+    pose.pose.position.x = target_x;
+    pose.pose.position.y = target_y;
     pose.pose.orientation = msg_quat;
 
+    std_msgs::Float64 angle_msg;
+    angle_msg.data = target_angle;
+    std_msgs::Float64 dist_msg;
+    dist_msg.data = target_dist;
+
     _limelight_target_pub.publish(pose);
+    _limelight_target_angle_pub.publish(angle_msg);
+    _limelight_target_distance_pub.publish(dist_msg);
+
+    _odom_msg.header.stamp = now;
+    _odom_msg.pose.pose.position.x = target_x;
+    _odom_msg.pose.pose.position.y = target_y;
+    _odom_msg.pose.pose.position.z = 0.0;
+    _odom_msg.pose.pose.orientation = msg_quat;
+
+    _odom_pub.publish(_odom_msg);
 }
 void TJ2Limelight::set_led_mode(bool mode)
 {

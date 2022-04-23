@@ -6,6 +6,8 @@ from std_srvs.srv import Empty, EmptyResponse
 from std_msgs.msg import Float64
 from std_msgs.msg import Bool
 
+from geometry_msgs.msg import PoseWithCovarianceStamped
+
 from tj2_match_watcher.srv import TriggerBag
 
 from tj2_tools.launch_manager import LaunchManager
@@ -44,7 +46,9 @@ class Tj2MatchWatcher(object):
         self.end_game_period_s = 30.0
         self.full_match_s = self.autonomous_period_s + self.teleop_period_s + self.timeout_period_s
 
-        self.match_definitely_over_duration = rospy.Duration(self.full_match_s + 45.0)
+        self.bag_time_buffer = 90.0
+
+        self.match_definitely_over_duration = rospy.Duration(self.full_match_s + self.bag_time_buffer)
 
         self.game_start_time = rospy.Time(0)
 
@@ -63,6 +67,7 @@ class Tj2MatchWatcher(object):
 
         self.match_time_sub = rospy.Subscriber("match_time", Float64, self.match_time_callback, queue_size=10)
         self.is_autonomous_sub = rospy.Subscriber("is_autonomous", Bool, self.is_autonomous_callback, queue_size=10)
+        self.initial_pose_sub = rospy.Subscriber("/tj2/reset_pose", PoseWithCovarianceStamped, self.initialpose_callback, queue_size=10)
         rospy.loginfo("%s init complete" % self.node_name)
 
     def make_service_client(self, name, srv_type, timeout=None, wait=True):
@@ -90,6 +95,10 @@ class Tj2MatchWatcher(object):
     
     def match_time_callback(self, msg):
         self.match_time = msg.data
+    
+    def initialpose_callback(self, msg):
+        rospy.loginfo("Initial pose set! Resuming match bag")
+        self.resume_bag()
     
     def start_bag(self):
         rospy.loginfo("Starting match bag")

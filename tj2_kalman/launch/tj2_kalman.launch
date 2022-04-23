@@ -1,0 +1,7 @@
+<launch>
+    <node pkg="robot_localization" type="ukf_localization_node" name="ukf_se" clear_params="true">
+        <rosparam command="load" file="$(find tj2_kalman)/config/ukf.yaml" />
+        <remap from="odometry/filtered" to="/tj2/odom/filtered"/>
+        <remap from="accel/filtered" to="/tj2/accel/filtered"/>
+    </node>
+</launch>

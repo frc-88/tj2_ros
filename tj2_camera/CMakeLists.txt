@@ -10,7 +10,20 @@ project(tj2_camera)
 
 find_package(catkin REQUIRED COMPONENTS
     rospy
+    camera_info_manager
+    roscpp
+    std_msgs
+    sensor_msgs
+    roslaunch
+    message_filters
+    visualization_msgs
+    vision_msgs
+    image_transport
+    image_geometry
+    cv_bridge
+    tf2_ros
 )
+find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -102,10 +115,20 @@ catkin_python_setup()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES tj2_camera
-    CATKIN_DEPENDS rospy std_msgs message_runtime
-#  DEPENDS system_lib
+    INCLUDE_DIRS include
+    LIBRARIES tj2_depth_converter tj2_imu_merger
+    CATKIN_DEPENDS
+        camera_info_manager
+        roscpp
+        std_msgs
+        sensor_msgs
+        visualization_msgs
+        vision_msgs
+        image_transport
+        image_geometry
+        cv_bridge
+        tf2_ros
+    DEPENDS OpenCV
 )
 
 ###########
@@ -114,15 +137,23 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
-# )
+include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+)
+link_directories(${catkin_LIBRARY_DIRS})
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/tj2_camera.cpp
-# )
+add_executable(tj2_depth_converter
+    include/tj2_depth_converter.h
+    src/tj2_depth_converter.cpp
+)
+
+add_executable(tj2_imu_merger
+    include/tj2_imu_merger.h
+    src/tj2_imu_merger.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -140,14 +171,21 @@ catkin_package(
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
+## Specify libraries to link a library or executable target against
+target_link_libraries(tj2_depth_converter
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+)
+
+target_link_libraries(tj2_imu_merger
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+)
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+add_dependencies(tj2_depth_converter ${tj2_depth_converter_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(tj2_imu_merger ${tj2_imu_merger_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -171,11 +209,17 @@ catkin_package(
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-# install(TARGETS ${PROJECT_NAME}
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-# )
+install(TARGETS tj2_depth_converter
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
+install(TARGETS tj2_imu_merger
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
