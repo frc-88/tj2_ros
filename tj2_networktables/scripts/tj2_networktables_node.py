@@ -3,7 +3,6 @@ import os
 import rospy
 import rosnode
 
-from std_msgs.msg import Int32
 from std_msgs.msg import Float64
 from std_msgs.msg import String
 
@@ -11,10 +10,9 @@ from networktables import NetworkTables
 
 import pynmcli
 
-from tj2_waypoints.msg import WaypointArray
+from tj2_networktables.msg import NTEntry
 
 from tj2_tools.launch_manager import TopicListener
-from tj2_tools.robot_state import State
 
 
 def get_key_recurse(tree, key, index):
@@ -83,6 +81,7 @@ class TJ2NetworkTables:
         self.watch_topic_mapping = {x: ros_to_nt_path(x) for x in self.watch_topics}
         self.watch_topic_entries = {x: 0.0 for x in self.watch_topics}
 
+        self.smart_dashboard_key = "SmartDashboard"
         self.clock_rate = rospy.Rate(2.0)  # networktable servers update at 10 Hz by default
         self.path_defaults = {
             "ROS": {
@@ -104,6 +103,13 @@ class TJ2NetworkTables:
                         "status": True,
                     },
                 }
+            },
+            self.smart_dashboard_key: {
+                "L Drive Speed": 0.0,
+                "R Drive Speed": 0.0,
+                "L Drive Command Speed": 0.0,
+                "R Drive Command Speed": 0.0,
+                "Max Drive Speed": 0.0,
             }
         }
         self.flat_path_defaults = flatten_paths(self.path_defaults)
@@ -114,12 +120,15 @@ class TJ2NetworkTables:
         self.bag_status_sub = rospy.Subscriber("bag_status", String, self.bag_status_callback, queue_size=10)
         self.bag_name_sub = rospy.Subscriber("bag_name", String, self.bag_name_callback, queue_size=10)
 
+        self.smart_dashboard_pub = rospy.Publisher("smart_dashboard", NTEntry, queue_size=10)
+
         self.topic_listeners = {}
         for topic in self.watch_topics:
             self.topic_listeners[topic] = TopicListener(topic, 0.0)
 
         # self.topic_timer = rospy.Timer(rospy.Duration(2.0), self.topic_poll_callback)
         self.node_timer = rospy.Timer(rospy.Duration(2.0), self.node_poll_callback)
+        self.smart_dasboard_timer = rospy.Timer(rospy.Duration(1.0 / 10.0), self.smart_dashboard_callback)
 
         rospy.loginfo("%s_py init complete" % self.node_name)
 
@@ -171,6 +180,11 @@ class TJ2NetworkTables:
             self.set_entry("ROS/status/nodes/" + ros_to_nt_path(node), True)
 
         self.set_entry("ROS/status/all_nodes_ok", all_nodes_ok)
+    
+    def smart_dashboard_callback(self, timer):
+        for subtable_name in self.path_defaults[self.smart_dashboard_key]:
+            path = self.smart_dashboard_key + "/" + subtable_name
+            self.smart_dashboard_pub.publish(NTEntry(path, self.get_entry(path)))
 
     def bag_status_callback(self, msg):
         self.set_entry("ROS/status/recording/status", msg.data)

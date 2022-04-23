@@ -48,6 +48,7 @@
         /tj2/shooter
         /tj2/hood
         /tj2/is_obstacle_in_view
+        /tj2/smart_dashboard
 
         --duration=300 --lz4
         " />

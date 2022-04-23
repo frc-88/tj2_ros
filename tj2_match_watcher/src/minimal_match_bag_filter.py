@@ -131,7 +131,8 @@ if __name__ == '__main__':
         # "2022_robot_2022-04-10-16-43-33.bag": 0,
         # "2022_robot_2022-04-10-16-22-54.bag": 0,
         # "2022_robot_2022-04-10-16-03-57.bag": 0,
-        "2022_robot_2022-04-21-09-33-21.bag": 0,
+        # "2022_robot_2022-04-21-09-33-21.bag": 0,
+        "2022_robot_2022-04-21-15-05-39.bag": 0,
     }
     for bag, start_time in bags.items():
         main(directory, bag, time_start=start_time)
