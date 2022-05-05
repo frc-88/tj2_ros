@@ -68,7 +68,7 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
                     msg.header.frame_id = "dextra_laser_link"
                 if topic.startswith("/camera"):
                     continue
-                    # if topic != "/camera/color/image_raw":
+                    # if not topic.startswith("/camera/color"):
                     #     continue
                     # if camera_timer is None:
                     #     camera_timer = timestamp
@@ -79,7 +79,12 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
                     # camera_timer = timestamp
                 if topic.startswith("/move_base"):
                     continue
+                if topic.startswith("/tj2/cargo/markers"):
+                    continue
                 if topic.startswith("/pursuit"):
+                    continue
+                if topic.startswith("/tj2/cargo/detections"):
+                    bag_out.write("/tj2/detections", msg, timestamp, connection_header=conn_header)
                     continue
                 if topic == "/tj2/target":
                     continue
@@ -108,24 +113,24 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
         bag_out.close()
 
 if __name__ == '__main__':
-    # directory = "week3"
-    # bags = {
-    #     # "2022_robot_2022-03-19-09-18-32.bag": 660,
-    #     # "2022_robot_2022-03-19-10-12-13.bag": 275,
-    #     # "2022_robot_2022-03-19-11-47-53.bag": 595,
-    #     # "2022_robot_2022-03-19-14-03-24.bag": 290,
-    #     # "2022_robot_2022-03-19-14-51-16.bag": 100,
-    #     # "2022_robot_2022-03-19-15-23-57.bag": 132,
-    #     # "2022_robot_2022-03-19-15-54-11.bag": 186,
-    # }
-    directory = ""
+    directory = "week3"
     bags = {
-        # "2022_robot_2022-04-09-09-59-29.bag": 0, 
-        # "2022_robot_2022-04-09-11-44-20.bag": 0, 
-        # "2022_robot_2022-04-14-15-24-23.bag.active": 0, 
-        # "2022_robot_2022-04-14-15-53-39.bag": 0, 
-        # "2022_robot_2022-04-15-14-09-03.bag": 0,
-        "2022_robot_2022-04-15-17-18-12.bag": 10
+        # "2022_robot_2022-03-19-09-18-32.bag": 660,
+        # "2022_robot_2022-03-19-10-12-13.bag": 275,
+        # "2022_robot_2022-03-19-11-47-53.bag": 595,
+        # "2022_robot_2022-03-19-14-03-24.bag": 290,
+        # "2022_robot_2022-03-19-14-51-16.bag": 100,
+        "2022_robot_2022-03-19-15-23-57.bag": 132,
+        # "2022_robot_2022-03-19-15-54-11.bag": 186,
     }
+    # directory = ""
+    # bags = {
+    #     # "2022_robot_2022-04-09-09-59-29.bag": 0, 
+    #     # "2022_robot_2022-04-09-11-44-20.bag": 0, 
+    #     # "2022_robot_2022-04-14-15-24-23.bag.active": 0, 
+    #     # "2022_robot_2022-04-14-15-53-39.bag": 0, 
+    #     # "2022_robot_2022-04-15-14-09-03.bag": 0,
+    #     "2022_robot_2022-04-15-17-18-12.bag": 10
+    # }
     for bag, start_time in bags.items():
         main(directory, bag, time_start=start_time)

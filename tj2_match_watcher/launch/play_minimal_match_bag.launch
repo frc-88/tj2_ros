@@ -30,4 +30,11 @@
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
     </include>
+
+    <node pkg="tf" type="static_transform_publisher" name="depth_to_camera" args="0 0 0  -0.500 0.500 -0.500 0.500 camera_link camera_depth_optical_frame 100" />
+    <node pkg="tf" type="static_transform_publisher" name="color_to_camera" args="0 0 0  -0.500 0.500 -0.500 0.500 camera_link camera_color_optical_frame 100" />
+
+    <node name="match_info" pkg="tj2_match_watcher" type="publish_match_info.py" output="screen">
+        <param name="class_names_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
+    </node>
 </launch>

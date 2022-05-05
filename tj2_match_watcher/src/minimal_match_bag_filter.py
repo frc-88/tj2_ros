@@ -76,15 +76,19 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
                 if topic == "/initialpose":
                     bag_out.write(topic, msg, timestamp, connection_header=conn_header)
                     initial_pose_count = 10000
+                # if topic.startswith("/camera/color"):
+                #     bag_out.write(topic, msg, timestamp, connection_header=conn_header)
+                if topic.startswith("/tj2/cargo/detections"):
+                    bag_out.write("/tj2/detections", msg, timestamp, connection_header=conn_header)
+                if "joint" in topic:
+                    bag_out.write(topic, msg, timestamp, connection_header=conn_header)
                 if topic == "/tf":
-                    if timestamp - time_start < rospy.Duration(3.0):
+                    if timestamp - time_start < rospy.Duration(0.25):
                         continue
                     if initial_pose_count > 10:
                         continue
                     for transform in msg.transforms:
                         parent_frame = transform.header.frame_id.lstrip('/')
-                        # child_frame = transform.child_frame_id.lstrip('/')
-                        # print("%s -> %s" % (parent_frame, child_frame))
                         if parent_frame == "map":
                             odom_to_map = transform_to_pose(transform)
                         if parent_frame == "odom":
@@ -111,28 +115,28 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
         bag_out.close()
 
 if __name__ == '__main__':
-    # directory = "week3"
-    # bags = {
-    #     # "2022_robot_2022-03-19-09-18-32.bag": 660,
-    #     # "2022_robot_2022-03-19-10-12-13.bag": 275,
-    #     "2022_robot_2022-03-19-11-47-53.bag": 595,
-    #     # "2022_robot_2022-03-19-14-03-24.bag": 290,
-    #     # "2022_robot_2022-03-19-14-51-16.bag": 100,
-    #     # "2022_robot_2022-03-19-15-23-57.bag": 132,
-    #     # "2022_robot_2022-03-19-15-54-11.bag": 186,
-    # }
-    directory = ""
+    directory = "week3"
     bags = {
-        # "2022_robot_2022-04-09-17-19-55.bag": 0
-        # "2022_robot_2022-04-10-11-43-55.bag": 30
-        # "2022_robot_2022-04-10-12-28-01.bag": 25
-        # "2022_robot_2022-04-15-17-18-12.bag": 15,
-        # "2022_robot_2022-04-10-16-59-54.bag": 0,
-        # "2022_robot_2022-04-10-16-43-33.bag": 0,
-        # "2022_robot_2022-04-10-16-22-54.bag": 0,
-        # "2022_robot_2022-04-10-16-03-57.bag": 0,
-        # "2022_robot_2022-04-21-09-33-21.bag": 0,
-        "2022_robot_2022-04-21-15-05-39.bag": 0,
+        # "2022_robot_2022-03-19-09-18-32.bag": 660,
+        # "2022_robot_2022-03-19-10-12-13.bag": 275,
+        # "2022_robot_2022-03-19-11-47-53.bag": 595,
+        # "2022_robot_2022-03-19-14-03-24.bag": 290,
+        # "2022_robot_2022-03-19-14-51-16.bag": 100,
+        "2022_robot_2022-03-19-15-23-57.bag": 132,
+        # "2022_robot_2022-03-19-15-54-11.bag": 186,
     }
+    # directory = ""
+    # bags = {
+    #     # "2022_robot_2022-04-09-17-19-55.bag": 0
+    #     # "2022_robot_2022-04-10-11-43-55.bag": 30
+    #     # "2022_robot_2022-04-10-12-28-01.bag": 25
+    #     # "2022_robot_2022-04-15-17-18-12.bag": 15,
+    #     # "2022_robot_2022-04-10-16-59-54.bag": 0,
+    #     # "2022_robot_2022-04-10-16-43-33.bag": 0,
+    #     # "2022_robot_2022-04-10-16-22-54.bag": 0,
+    #     # "2022_robot_2022-04-10-16-03-57.bag": 0,
+    #     # "2022_robot_2022-04-21-09-33-21.bag": 0,
+    #     "2022_robot_2022-04-21-15-05-39.bag": 0,
+    # }
     for bag, start_time in bags.items():
         main(directory, bag, time_start=start_time)
