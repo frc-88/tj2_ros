@@ -1,4 +1,4 @@
-from tj2_tools.particle_filter.state import FilterState
+from tj2_tools.robot_state import Simple3DState
 from tj2_tools.rosbag_to_file.json_loader import iter_bag, get_key, header_to_stamp, yaw_from_quat, read_pkl
 
 CLASS_NAMES = [
@@ -20,7 +20,7 @@ def read_states(path):
 
     for timestamp, topic, msg in iter_bag(path):
         if topic == "/tj2/cmd_vel":
-            state = FilterState()
+            state = Simple3DState()
             state.type = "cmd_vel"
             state.stamp = timestamp
             state.vx = get_key(msg, "linear.x")
@@ -29,7 +29,7 @@ def read_states(path):
             states.append(state)
 
         elif topic == "/tj2/odom":
-            state = FilterState()
+            state = Simple3DState()
             state.type = "odom"
             state.stamp = header_to_stamp(get_key(msg, "header.stamp"))
             state.x = get_key(msg, "pose.pose.position.x")
@@ -51,7 +51,7 @@ def read_states(path):
                 object_id = get_key(detection, "results.0.id")
                 label, count = get_label(object_id)
 
-                state = FilterState()
+                state = Simple3DState()
                 state.type = label
                 state.stamp = stamp
                 state.x = get_key(detection, "results.0.pose.pose.position.x")

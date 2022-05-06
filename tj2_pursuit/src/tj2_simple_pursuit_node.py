@@ -22,7 +22,7 @@ from vision_msgs.msg import Detection3DArray
 
 from tj2_pursuit.msg import PursueObjectAction, PursueObjectGoal, PursueObjectResult
 
-from tj2_tools.particle_filter.state import FilterState, SimpleFilter, DeltaTimer
+from tj2_tools.robot_state import Simple3DState, SimpleFilter, DeltaTimer
 from tj2_tools.yolo.utils import get_label, read_class_names
 from tj2_tools.transforms import lookup_transform
 # from tj2_tools.motion_profile import TrapezoidalProfileLive
@@ -127,7 +127,7 @@ class Tj2SimplePursuit:
         self.object_is_in_view = False
         self.no_object_timer = rospy.Time.now()
 
-        self.odom_state = FilterState()
+        self.odom_state = Simple3DState()
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -142,7 +142,7 @@ class Tj2SimplePursuit:
         rospy.loginfo("%s is ready" % self.name)
 
     def odom_callback(self, msg):
-        self.odom_state = FilterState.from_odom(msg)
+        self.odom_state = Simple3DState.from_odom(msg)
 
     def pursue_object_callback(self, goal):
         rate = rospy.Rate(self.command_rate)
@@ -224,11 +224,11 @@ class Tj2SimplePursuit:
         
         target_state = None
         if nearest_pose is not None:
-            tracking_state_base = FilterState.from_ros_pose(nearest_pose.pose)
+            tracking_state_base = Simple3DState.from_ros_pose(nearest_pose.pose)
             if self.object_kF > 0.0:
                 dt = self.detection_loop_timer.dt(rospy.Time.now().to_sec())
                 if dt > 0.0:
-                    motion_compensate = FilterState(theta=-self.object_kF * self.odom_state.vt * dt)
+                    motion_compensate = Simple3DState(theta=-self.object_kF * self.odom_state.vt * dt)
                     tracking_state_base = tracking_state_base.relative_to(motion_compensate)
             odom_state = self.get_odom_state()
             if odom_state is not None:
@@ -243,8 +243,8 @@ class Tj2SimplePursuit:
             target_pose.pose = target_state.to_ros_pose()
             self.follow_object_goal_pub.publish(target_pose)
 
-            # nearest_state = FilterState.from_ros_pose(target_pose.pose)
-            target_tilt_state = FilterState.from_ros_pose(target_tilt_pose.pose)
+            # nearest_state = Simple3DState.from_ros_pose(target_pose.pose)
+            target_tilt_state = Simple3DState.from_ros_pose(target_tilt_pose.pose)
             target_tilt_state.stamp = target_tilt_pose.header.stamp.to_sec()
             return target_state, target_tilt_state
         else:
@@ -292,7 +292,7 @@ class Tj2SimplePursuit:
             rospy.logwarn_throttle(1.0, "Failed to get odom transform!")
             return None
         else:
-            return FilterState.from_ros_pose(odom_pose.pose)
+            return Simple3DState.from_ros_pose(odom_pose.pose)
 
     def cancel_goal(self):
         self.tracking_object_name = ""

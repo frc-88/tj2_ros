@@ -1,5 +1,5 @@
 import numpy as np
-from tj2_tools.particle_filter.state import FilterState
+from tj2_tools.robot_state import Simple3DState
 
 
 def iter_pairs(l, reverse=False):
@@ -22,7 +22,7 @@ class BouncePredictor:
         self.odom_buffer = []
         self.obj_buffer = []
 
-    def update_buffers(self, obj_state: FilterState, odom_state: FilterState):
+    def update_buffers(self, obj_state: Simple3DState, odom_state: Simple3DState):
         self.odom_buffer.append(odom_state)
         while len(self.odom_buffer) > self.past_window_size:
             self.odom_buffer.pop(0)
@@ -67,7 +67,7 @@ class BouncePredictor:
 
         return vx, vy
 
-    def get_robot_intersection(self, obj_state: FilterState, odom_state: FilterState):
+    def get_robot_intersection(self, obj_state: Simple3DState, odom_state: Simple3DState):
         # plot a course to where the object will head
         # given robot parameters, find where the robot and object intersect
 
@@ -99,7 +99,7 @@ class BouncePredictor:
         obj_dist = obj_state.distance()
         future_time_window = obj_dist / self.v_max_robot
 
-        future_obj_state = FilterState.from_state(self.obj_buffer[-1])
+        future_obj_state = Simple3DState.from_state(self.obj_buffer[-1])
         future_obj_state.stamp += future_time_window
         future_obj_state.x += proj_vx * future_time_window
         future_obj_state.y += proj_vy * future_time_window

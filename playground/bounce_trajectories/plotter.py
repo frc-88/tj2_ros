@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
 
-from tj2_tools.particle_filter.state import FilterState
+from tj2_tools.robot_state import Simple3DState
 
 
 class LivePlotterBase:
@@ -130,7 +130,7 @@ class LivePlotter2D(LivePlotterBase):
         self.ax_y.legend(loc=2)
         self.ax_z.legend(loc=2)
 
-    def update_future_state(self, state: FilterState):
+    def update_future_state(self, state: Simple3DState):
         if state is None:
             return
         self.future_times.append(state.stamp)
@@ -155,7 +155,7 @@ class LivePlotter2D(LivePlotterBase):
         #     return
         #
         # x, y, z, vx, vy, vz = mu
-        # state = FilterState(x, y, z, 0.0, vx, vy, vz, 0.0)
+        # state = Simple3DState(x, y, z, 0.0, vx, vy, vz, 0.0)
         object_state = kwargs["object"]
         odom_state = kwargs["odom"]
         predicted_state = kwargs["prediction"]

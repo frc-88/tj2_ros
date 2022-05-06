@@ -25,7 +25,7 @@ def read_states(path):
         if topic == "/tj2/cmd_vel":
             None
             #print(msg)
-            # state = FilterState()
+            # state = Simple3DState()
             # state.type = "cmd_vel"
             # state.stamp = timestamp
             # state.vx = get_key(msg, "linear.x")
@@ -57,7 +57,7 @@ def read_states(path):
             tst = get_key(msg, 'twist.twist')
 
 
-            # state = FilterState()
+            # state = Simple3DState()
             # state.type = "odom"
             # state.stamp = header_to_stamp(get_key(msg, "header.stamp"))
             # state.x = get_key(msg, "pose.pose.position.x")
@@ -104,7 +104,7 @@ def read_states(path):
                 object_id = get_key(detection, "results.0.id")
                 label, count = get_label(object_id)
 
-                state = FilterState()
+                state = Simple3DState()
                 state.type = label
                 state.stamp = stamp
                 state.x = get_key(detection, "results.0.pose.pose.position.x")

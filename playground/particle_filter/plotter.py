@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
 
-from tj2_tools.particle_filter.state import FilterState
+from tj2_tools.robot_state import Simple3DState
 
 
 class ParticleFilterPlotterBase:
@@ -12,7 +12,7 @@ class ParticleFilterPlotterBase:
         self.tf_to_odom = tf_to_odom
         self.fig = None
         self.ax = None
-        self.odom_state = FilterState()
+        self.odom_state = Simple3DState()
         self.meas_states = {}
         self.is_paused = False
 
@@ -174,7 +174,7 @@ class ParticleFilterPlotter2D(ParticleFilterPlotterBase):
         #     return
         #
         # x, y, z, vx, vy, vz = mu
-        # state = FilterState(x, y, z, 0.0, vx, vy, vz, 0.0)
+        # state = Simple3DState(x, y, z, 0.0, vx, vy, vz, 0.0)
         if state is None:
             state = pf.get_state()
         state_at_odom = state.relative_to(self.odom_state)
@@ -299,7 +299,7 @@ class ParticleFilterPredictionPlotter2D(ParticleFilterPlotterBase):
         self.ax_y.legend(loc=2)
         self.ax_z.legend(loc=2)
 
-    def update_future_state(self, timestamp, state: FilterState):
+    def update_future_state(self, timestamp, state: Simple3DState):
         self.future_times.append(timestamp)
         self.future_x.append(state.x)
         self.future_y.append(state.y)
@@ -322,7 +322,7 @@ class ParticleFilterPredictionPlotter2D(ParticleFilterPlotterBase):
         #     return
         #
         # x, y, z, vx, vy, vz = mu
-        # state = FilterState(x, y, z, 0.0, vx, vy, vz, 0.0)
+        # state = Simple3DState(x, y, z, 0.0, vx, vy, vz, 0.0)
         if state is None:
             state = pf.get_state()
         state_at_odom = state.relative_to(self.odom_state)

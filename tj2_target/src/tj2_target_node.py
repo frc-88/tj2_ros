@@ -39,7 +39,7 @@ from std_srvs.srv import Trigger, TriggerResponse
 
 from tj2_tools.transforms import lookup_transform
 from tj2_tools.robot_state import Pose2d, Velocity
-from tj2_tools.particle_filter.state import SimpleFilter
+from tj2_tools.robot_state import SimpleFilter
 
 
 def meters_to_in(meters):

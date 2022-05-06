@@ -19,7 +19,7 @@ from geometry_msgs.msg import PoseStamped
 from tj2_tools.particle_filter import FilterSerial
 from tj2_tools.particle_filter import JitParticleFilter as ParticleFilter
 # from tj2_tools.particle_filter import ParticleFilter
-from tj2_tools.particle_filter.state import InputVector, FilterState
+from tj2_tools.particle_filter.state import InputVector, Simple3DState
 from tj2_tools.particle_filter.predictor import BouncePredictor
 
 from tj2_gameobjects.cfg import ParticleFilterConfig
@@ -193,7 +193,7 @@ class Tj2GameobjectsNode:
         for detection in msg.detections:
             if detection.header.frame_id != self.filter_frame:
                 rospy.logwarn_throttle(1.0, "Detection frame does not match filter's frame: %s != %s" % (detection.header.frame_id, self.filter_frame))
-            state = FilterState.from_detect(detection)
+            state = Simple3DState.from_detect(detection)
 
             label = self.to_label(detection.results[0].id)
             if label not in measurements:
@@ -223,7 +223,7 @@ class Tj2GameobjectsNode:
             pf.update(meas_z)
 
     def odom_callback(self, msg):
-        state = FilterState.from_odom(msg)
+        state = Simple3DState.from_odom(msg)
         for serial, pf in self.iter_pfs():
             if not pf.is_initialized():  #  or pf.is_stale():
                 continue

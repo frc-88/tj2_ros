@@ -26,7 +26,7 @@ from actionlib_msgs.msg import GoalStatus
 
 from tj2_pursuit.msg import PursueObjectAction, PursueObjectGoal, PursueObjectResult
 
-from tj2_tools.particle_filter.state import FilterState
+from tj2_tools.robot_state import Simple3DState
 from tj2_tools.predictions.predictor import BouncePredictor
 from tj2_tools.transforms import lookup_transform
 from tj2_tools.yolo.utils import get_label, read_class_names
@@ -165,7 +165,7 @@ class Tj2Pursuit:
             self.future_pose_stamped = None
             if nearest_obj is None:
                 return
-            odom_state = FilterState.from_odom(odom_msg)
+            odom_state = Simple3DState.from_odom(odom_msg)
             object_state = nearest_obj.relative_to(odom_state)
             # predicted_state = self.predictor.get_robot_intersection(object_state, odom_state)
             predicted_state = object_state
@@ -196,7 +196,7 @@ class Tj2Pursuit:
                 nearest_dist = detection_dist
         
         if nearest_pose is not None:
-            nearest_state = FilterState.from_ros_pose(nearest_pose.pose)
+            nearest_state = Simple3DState.from_ros_pose(nearest_pose.pose)
             nearest_state.stamp = nearest_pose.header.stamp.to_sec()
             return nearest_state
         else:

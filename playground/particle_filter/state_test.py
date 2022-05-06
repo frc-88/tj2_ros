@@ -4,7 +4,7 @@ sys.path.insert(0, "../../tj2_tools")
 
 import math
 import random
-from tj2_tools.particle_filter.state import FilterState
+from tj2_tools.robot_state import Simple3DState
 
 
 def assert_equal(state1, state2):
@@ -12,14 +12,14 @@ def assert_equal(state1, state2):
 
 
 def test_relative_to():
-    state = FilterState()
+    state = Simple3DState()
     state.x = 10.0
     state.vx = 6.0
 
-    odom = FilterState()
+    odom = Simple3DState()
     odom.theta = math.pi / 2
 
-    expected_state = FilterState()
+    expected_state = Simple3DState()
     expected_state.y = 10.0
     expected_state.theta = math.pi / 2
     expected_state.vy = 6.0
@@ -27,16 +27,16 @@ def test_relative_to():
     new_state = state.relative_to(odom)
     assert_equal(new_state, expected_state)
 
-    state = FilterState()
+    state = Simple3DState()
     state.x = 10.0
     state.y = 10.0
     state.vx = 6.0
     state.vy = 6.0
 
-    odom = FilterState()
+    odom = Simple3DState()
     odom.theta = math.pi / 2
 
-    expected_state = FilterState()
+    expected_state = Simple3DState()
     expected_state.x = -10.0
     expected_state.y = 10.0
     expected_state.vx = -6.0
@@ -46,7 +46,7 @@ def test_relative_to():
     new_state = state.relative_to(odom)
     assert_equal(new_state, expected_state)
 
-    state = FilterState()
+    state = Simple3DState()
     state.x = 10.0
     state.y = 9.0
     state.z = 8.0
@@ -54,13 +54,13 @@ def test_relative_to():
     state.vy = 6.0
     state.vz = 5.0
 
-    odom = FilterState()
+    odom = Simple3DState()
     odom.x = 3.0
     odom.y = 2.0
     odom.z = 1.0
     odom.theta = math.pi / 2
 
-    expected_state = FilterState()
+    expected_state = Simple3DState()
     expected_state.x = -6.0
     expected_state.y = 12.0
     expected_state.z = 9.0
@@ -77,7 +77,7 @@ def main():
     test_relative_to()
 
     # random.seed(8888)
-    state = FilterState()
+    state = Simple3DState()
     state.x = random.random() * 10.0
     state.y = random.random() * 10.0
     state.z = random.random() * 10.0
@@ -90,7 +90,7 @@ def main():
     # state.y = 5.0
     # state.theta = 0.1
 
-    odom = FilterState()
+    odom = Simple3DState()
     odom.x = random.random() * 10.0
     odom.y = random.random() * 10.0
     odom.z = random.random() * 10.0

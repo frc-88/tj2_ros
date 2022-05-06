@@ -4,7 +4,7 @@ from numpy.random import randn, random, uniform, normal
 import scipy.stats
 import collections
 from threading import Lock
-from .state import FilterState
+from .state import Simple3DState
 
 
 FilterSerial = collections.namedtuple("FilterSerial", "label index")
@@ -201,9 +201,9 @@ class ParticleFilter:
         with self.lock:
             return np.average(self.particles, weights=self.weights, axis=0)
 
-    def get_state(self) -> FilterState:
+    def get_state(self) -> Simple3DState:
         mu = self.mean()
-        return FilterState(mu[0], mu[1], mu[2], 0.0, mu[3], mu[4], mu[5], 0.0)
+        return Simple3DState(mu[0], mu[1], mu[2], 0.0, mu[3], mu[4], mu[5], 0.0)
 
     def check_resample(self):
         neff = self.neff()

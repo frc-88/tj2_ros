@@ -1,17 +1,16 @@
-import time
 import math
 import numpy as np
 from geometry_msgs.msg import Pose
 from nav_msgs.msg import Odometry
 from vision_msgs.msg import Detection2D
 from vision_msgs.msg import Detection3D
-from ..robot_state import State
+from .robot_state import State
 from scipy.spatial.transform import Rotation
 
 
-class FilterState(State):
+class Simple3DState(State):
     def __init__(self, x=0.0, y=0.0, z=0.0, theta=0.0, vx=0.0, vy=0.0, vz=0.0, vt=0.0):
-        super(FilterState, self).__init__(x, y, theta)
+        super(Simple3DState, self).__init__(x, y, theta)
         self.type = ""
         self.stamp = 0.0
         self.z = z
@@ -373,104 +372,3 @@ class FilterState(State):
                     self.vt == other
             )
 
-
-class DeltaTimer:
-    def __init__(self):
-        self.prev_stamp = None
-
-    def dt(self, timestamp):
-        if self.prev_stamp is None:
-            self.prev_stamp = timestamp
-        dt = timestamp - self.prev_stamp
-        self.prev_stamp = timestamp
-        return dt
-
-
-
-class SimpleFilter:
-    def __init__(self, k):
-        self.k = k
-        self.value = None
-
-    def update(self, value):
-        if self.value is None:
-            self.value = value
-        if self.k is None or self.k == 0.0:
-            self.value = value
-        else:
-            self.value += self.k * (value - self.value)
-        return self.value
-
-class VelocityFilter:
-    def __init__(self, k):
-        self.filter = SimpleFilter(k)
-        self.prev_value = None
-
-    def update(self, dt, value):
-        if self.prev_value is None:
-            self.prev_value = value
-        raw_delta = (value - self.prev_value) / dt
-        self.prev_value = value
-        self.speed = self.filter.update(raw_delta)
-        return self.speed
-
-
-class DeltaMeasurement:
-    def __init__(self, k=None):
-        smooth_k = k
-        self.vx_filter = VelocityFilter(smooth_k)
-        self.vy_filter = VelocityFilter(smooth_k)
-        self.vz_filter = VelocityFilter(smooth_k)
-        self.timer = DeltaTimer()
-        self.state = FilterState()
-    
-    def set_smooth_k(self, smooth_k):
-        self.vx_filter.k = smooth_k
-        self.vy_filter.k = smooth_k
-        self.vz_filter.k = smooth_k
-
-    def update(self, state: FilterState):
-        dt = self.timer.dt(state.stamp)
-        if dt == 0.0:
-            self.state = state
-            return state
-        new_state = FilterState.from_state(state)
-        new_state.vx = self.vx_filter.update(dt, state.x)
-        new_state.vy = self.vy_filter.update(dt, state.y)
-        new_state.vz = self.vz_filter.update(dt, state.z)
-        self.state = new_state
-        return new_state
-
-
-class InputVector:
-    def __init__(self, stale_filter_time, smooth_k=None):
-        self.odom_timer = DeltaTimer()
-        self.stale_meas_timer = time.time()
-        self.stale_filter_time = stale_filter_time
-        self.meas = DeltaMeasurement(smooth_k)
-        self.meas_input = np.array([0.0, 0.0, 0.0, 0.0])
-        self.vector = np.array([0.0, 0.0, 0.0, 0.0])
-        self.odom_state = FilterState()
-        self.meas_state = FilterState()
-    
-    def set_smooth_k(self, smooth_k):
-        self.meas.set_smooth_k(smooth_k)
-
-    def odom_update(self, odom_state: FilterState):
-        dt = self.odom_timer.dt(odom_state.stamp)
-        self.vector = np.array([odom_state.vx, odom_state.vy, odom_state.vz, odom_state.vt])
-        self.odom_state = odom_state
-        self.vector -= self.meas_input
-        if time.time() - self.stale_meas_timer > self.stale_filter_time:
-            self.meas_input = np.array([0.0, 0.0, 0.0, 0.0])
-        return dt
-
-    def meas_update(self, meas_state: FilterState):
-        new_state = self.meas.update(meas_state)
-        self.meas_state = new_state
-        self.meas_input = np.array([new_state.vx, new_state.vy, new_state.vz, new_state.vt])
-        self.stale_meas_timer = time.time()
-        return new_state
-
-    def get_vector(self):
-        return self.vector

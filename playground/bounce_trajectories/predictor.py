@@ -1,5 +1,5 @@
 import math
-from tj2_tools.particle_filter.state import FilterState
+from tj2_tools.robot_state import Simple3DState
 from fitting_trajectory import predict
 
 def get_next_state(t0, x0, v0, a, t_step):
@@ -93,7 +93,7 @@ class BouncePredictor:
         self.v_max_robot = v_max_robot
         self.t_limit = t_limit
 
-    def get_prediction(self, state: FilterState, t_window):
+    def get_prediction(self, state: Simple3DState, t_window):
         x0 = state.x
         vx0 = state.vx
         x1, vx1 = roll_object(x0, vx0, self.a_friction, t_window, self.t_step)
@@ -107,7 +107,7 @@ class BouncePredictor:
         z1, vz1 = get_bounces(z0, vz0, self.rho, self.tau, self.g, t_window, self.t_step)
         z1 += self.ground_plane
 
-        future_state = FilterState(x1, y1, z1, state.theta, vx1, vy1, vz1, state.vt)
+        future_state = Simple3DState(x1, y1, z1, state.theta, vx1, vy1, vz1, state.vt)
         future_state.stamp = state.stamp + t_window
         return future_state
 

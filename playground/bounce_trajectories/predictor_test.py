@@ -5,7 +5,7 @@ import numpy as np
 
 sys.path.insert(0, "../../tj2_tools")
 
-from tj2_tools.particle_filter.state import FilterState
+from tj2_tools.robot_state import Simple3DState
 from tj2_tools.predictions.predictor import BouncePredictor
 
 from state_loader import get_states, CLASS_NAMES
@@ -54,9 +54,9 @@ def main():
     # path = "data/prediction_data_2/detections_2022-02-09-11-00-08.json"  # robot chases down object 5
 
     states = get_states(path, repickle)
-    odom_state = FilterState()
-    object_state = FilterState()
-    predicted_state = FilterState()
+    odom_state = Simple3DState()
+    object_state = Simple3DState()
+    predicted_state = Simple3DState()
 
     sim_start_t = states[0].stamp
     real_start_t = time.time()
