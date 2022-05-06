@@ -90,7 +90,7 @@ private:
     double _tunnel_rate;  // Hz
 
     // Members
-    const int READ_BUFFER_LEN = 1024;
+    const int READ_BUFFER_LEN = 4096;
     char* _read_buffer;
     bool _initialized;
 

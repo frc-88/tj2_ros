@@ -647,7 +647,7 @@ void TJ2Tunnel::writePacket(string category, const char *formats, ...)
     va_start(args, formats);
     _write_lock.lock();
     int length = _protocol->makePacket(_write_buffer, category, formats, args);
-    ROS_DEBUG("Writing packet: %s", packetToString(_write_buffer, 0, length).c_str());
+    // ROS_DEBUG("Writing packet: %s", packetToString(_write_buffer, 0, length).c_str());
     if (length > 0) {
         _device.write((uint8_t*)_write_buffer, length);
     }
@@ -674,11 +674,10 @@ bool TJ2Tunnel::pollDevice()
         }
         return true;
     }
-    _device.read((uint8_t*)(_read_buffer + _unparsed_index), READ_BUFFER_LEN - _unparsed_index);
+    _device.read((uint8_t*)(_read_buffer + _unparsed_index), num_chars_read);
 
     _last_read_time = ros::Time::now();
     int read_stop_index = _unparsed_index + num_chars_read;
-    // ROS_INFO("_unparsed_index: %d, num_chars_read: %d", _unparsed_index, num_chars_read);
     int last_parsed_index = _protocol->parseBuffer(_read_buffer, 0, read_stop_index);
 
     PacketResult* result;
