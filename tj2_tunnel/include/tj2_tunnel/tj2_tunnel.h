@@ -88,6 +88,7 @@ private:
     string _pose_estimate_frame_id;
     std::vector<std::string> _joint_names;
     double _tunnel_rate;  // Hz
+    double _write_rate;  // Hz
 
     // Members
     const int READ_BUFFER_LEN = 4096;
@@ -99,6 +100,7 @@ private:
 
     std::mutex _write_lock;
     boost::thread* _poll_thread;
+    boost::thread* _write_thread;
     TunnelProtocol* _protocol;
     serial::Serial _device;
 
@@ -181,10 +183,8 @@ private:
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
 
     void pollDeviceTask();
+    void writeDeviceTask();
     bool pollDevice();
-
-    // Main loop methods
-    bool loop();
 
 public:
     TJ2Tunnel(ros::NodeHandle* nodehandle);

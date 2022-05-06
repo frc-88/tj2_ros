@@ -9,7 +9,8 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~remote_linear_units_conversion", _remote_linear_units_conversion, 0.3048);
     ros::param::param<double>("~remote_angular_units_conversion", _remote_angular_units_conversion, M_PI / 180.0);
 
-    ros::param::param<double>("~tunnel_rate", _tunnel_rate, 30.0);
+    ros::param::param<double>("~tunnel_rate", _tunnel_rate, 200.0);
+    ros::param::param<double>("~write_rate", _write_rate, 15.0);
 
     ros::param::param<bool>("~publish_odom_tf", _publish_odom_tf, true);
     ros::param::param<string>("~base_frame", _base_frame, "base_link");
@@ -149,6 +150,7 @@ TJ2Tunnel::TJ2Tunnel(ros::NodeHandle* nodehandle) :
     _ping_timer = nh.createTimer(ros::Duration(0.5), &TJ2Tunnel::pingCallback, this);
 
     _poll_thread = new boost::thread(&TJ2Tunnel::pollDeviceTask, this);
+    _write_thread = new boost::thread(&TJ2Tunnel::writeDeviceTask, this);
 
     ROS_INFO("tj2_tunnel init complete");
 }
@@ -645,16 +647,16 @@ void TJ2Tunnel::writePacket(string category, const char *formats, ...)
     }
     va_list args;
     va_start(args, formats);
-    _write_lock.lock();
     int length = _protocol->makePacket(_write_buffer, category, formats, args);
     // ROS_DEBUG("Writing packet: %s", packetToString(_write_buffer, 0, length).c_str());
     if (length > 0) {
+        _write_lock.lock();
         _device.write((uint8_t*)_write_buffer, length);
+        _write_lock.unlock();
     }
     else {
         ROS_DEBUG("Skipping write for packet: %s. Length is %d", packetToString(_write_buffer, 0, length).c_str(), length);
     }
-    _write_lock.unlock();
     va_end(args);
 }
 
@@ -716,7 +718,7 @@ bool TJ2Tunnel::pollDevice()
 
 void TJ2Tunnel::pollDeviceTask()
 { 
-    ros::Rate clock_rate(200);  // Hz
+    ros::Rate clock_rate(_tunnel_rate);  // Hz
 
     while (ros::ok())
     {
@@ -727,6 +729,18 @@ void TJ2Tunnel::pollDeviceTask()
         clock_rate.sleep();
     }
     closeDevice();
+}
+
+void TJ2Tunnel::writeDeviceTask()
+{
+    ros::Rate clock_rate(_write_rate);  // Hz
+    while (ros::ok())
+    {
+        publishCmdVel();
+        publishGoalStatus();
+        publishRobotGlobalPose();
+        clock_rate.sleep();
+    }
 }
 
 void TJ2Tunnel::closeDevice()
@@ -743,36 +757,9 @@ bool TJ2Tunnel::odom_reset_callback(tj2_tunnel::OdomReset::Request &req, tj2_tun
     return true;
 }
 
-bool TJ2Tunnel::loop()
-{
-    publishCmdVel();
-    publishGoalStatus();
-    publishRobotGlobalPose();
-    return true;
-}
-
 int TJ2Tunnel::run()
 {
-    ros::Rate clock_rate(_tunnel_rate);  // Hz
-
-    int exit_code = 0;
-    while (ros::ok())
-    {
-        // let ROS process any events
-        ros::spinOnce();
-        clock_rate.sleep();
-
-        try {
-            if (!loop()) {
-                break;
-            }
-        }
-        catch (exception& e) {
-            ROS_ERROR_STREAM("Exception in main loop: " << e.what());
-            exit_code = 1;
-            break;
-        }
-    }
+    ros::spin();
     _poll_thread->join();
-    return exit_code;
+    return 0;
 }

@@ -6,9 +6,9 @@
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include> -->
-    <!-- <include file="$(find tj2_tunnel)/launch/tj2_tunnel.launch">
+    <include file="$(find tj2_tunnel)/launch/tj2_tunnel.launch">
         <arg name="publish_odom_tf" value="true"/>
-    </include> -->
+    </include>
     <include file="$(find tj2_description)/launch/tj2_description_diffyjr.launch"/>
     <include file="$(find tj2_camera)/launch/tj2_camera.launch"/>
     <include file="$(find tj2_camera)/launch/camera_watcher.launch"/>
