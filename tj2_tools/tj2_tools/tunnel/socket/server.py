@@ -1,15 +1,12 @@
-import time
 import rospy
 import queue
 import socket
 import select
-import logging
-import threading
 
-from .protocol import TunnelProtocol
+from ..protocol import TunnelProtocol
 
 
-class TunnelServer:
+class TunnelSocketServer:
     def __init__(self, address, port, categories):
         self.address = address
         self.port = port

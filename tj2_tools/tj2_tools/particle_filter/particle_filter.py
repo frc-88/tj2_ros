@@ -4,7 +4,7 @@ from numpy.random import randn, random, uniform, normal
 import scipy.stats
 import collections
 from threading import Lock
-from .state import Simple3DState
+from tj2_tools.robot_state import Simple3DState
 
 
 FilterSerial = collections.namedtuple("FilterSerial", "label index")
