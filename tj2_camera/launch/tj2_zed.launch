@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="camera_name"           default="zed" />
+    <!-- ROS URDF description of the ZED -->
+    <group ns="tj2_zed">
+        <param name="zed_description"
+               command="$(find xacro)/xacro '$(find zed_wrapper)/urdf/zed_descr.urdf.xacro'
+                        camera_name:=$(arg camera_name)
+                        camera_model:=zed
+                        base_frame:=camera_link
+                        cam_pos_x:=0
+                        cam_pos_y:=0
+                        cam_pos_z:=0
+                        cam_roll:=0
+                        cam_pitch:=0
+                        cam_yaw:=0"
+        />
+
+        <node name="$(arg camera_name)_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" required="true">
+            <remap from="robot_description" to="$(arg camera_name)_description" />
+        </node>
+    </group>
+    <node name="tj2_zed" pkg="zed_wrapper" type="zed_wrapper_node" output="screen" required="true">
+        <rosparam file="$(find tj2_camera)/config/zed1.yaml" command="load" />
+
+        <param name="general/camera_name"               value="$(arg camera_name)" />
+    </node>
+</launch>

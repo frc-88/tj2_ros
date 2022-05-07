@@ -15,5 +15,5 @@ inflation:
 plugins:
     - {name: static,                    type: "costmap_2d::StaticLayer"}
     # - {name: obstacle_layer,            type: "costmap_2d::VoxelLayer"}
-    # - {name: obstacle_layer,            type: "costmap_2d::ObstacleLayer"}
+    - {name: obstacle_layer,            type: "costmap_2d::ObstacleLayer"}
     - {name: inflation,                 type: "costmap_2d::InflationLayer"}
