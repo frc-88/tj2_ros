@@ -15,6 +15,7 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     ros::param::param<std::string>("~image_height_param", _image_height_param, "/camera/realsense2_camera/color_height");
     ros::param::param<int>(_image_width_param, _image_width, 960);
     ros::param::param<int>(_image_height_param, _image_height, 540);
+    ros::param::param<double>("~camera_z_unit_conversion", _camera_z_unit_conversion, 1.0);
 
     ros::param::param<int>("~circle_mask_border_offset_px", _circle_mask_border_offset_px, 0);
     ros::param::param<double>("~circle_mask_border_divisor", _circle_mask_border_divisor, 1.0);
@@ -59,8 +60,8 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     _color_sub.subscribe(nh, "color/image_raw", 1);
     _depth_sub.subscribe(nh, "depth/image_raw", 1);
 
-    _sync.reset(new Sync(ApproxSyncPolicy(10), _color_sub, _depth_sub));
-    // _sync.reset(new Sync(ExactSyncPolicy(10), _color_sub, _depth_sub));
+    // _sync.reset(new Sync(ApproxSyncPolicy(10), _color_sub, _depth_sub));
+    _sync.reset(new Sync(ExactSyncPolicy(10), _color_sub, _depth_sub));
     _sync->registerCallback(boost::bind(&TJ2Yolo::rgbd_callback, this, _1, _2));
 
     _color_info_sub = nh.subscribe<sensor_msgs::CameraInfo>("color/camera_info", 1, &TJ2Yolo::camera_info_callback, this);
@@ -257,9 +258,9 @@ double TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::De
     cv::Mat target_mask;
     cv::bitwise_and(circle_mask, nonzero_mask, target_mask);
 
-    double z_dist = cv::mean(depth_cv_image, target_mask)[0];  // depth values are in mm
+    double z_dist = cv::mean(depth_cv_image, target_mask)[0];
 
-    z_dist /= 1000.0;  // convert to meters
+    z_dist *= _camera_z_unit_conversion;
 
     return z_dist;
 }

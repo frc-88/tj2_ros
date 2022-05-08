@@ -9,12 +9,14 @@
 
             <param name="confidence_threshold" value="0.2"/>
             <param name="nms_iou_threshold" value="0.2"/>
+            <param name="nms_iou_threshold" value="0.2"/>
 
             <param name="publish_overlay" value="true"/>
             <param name="report_loop_times" value="false"/>
             <param name="marker_persistance" value="0.25"/>
             <param name="circle_mask_border_offset_px" value="0"/>
-            <param name="circle_mask_border_divisor" value="2"/>
+            <!-- <param name="camera_z_unit_conversion" value="0.001"/> -->
+            <param name="camera_z_unit_conversion" value="1.0"/>
 
             <remap from="color/image_raw" to="/tj2_zed/rgb/image_rect_color"/>
             <remap from="depth/image_raw" to="/tj2_zed/depth/depth_registered"/>

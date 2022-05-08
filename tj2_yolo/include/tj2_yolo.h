@@ -70,6 +70,7 @@ private:
     std::string _target_frame;
     double _marker_persistance_s;
     std::map<std::string, double> _z_depth_estimations;
+    double _camera_z_unit_conversion;
 
     // Members
     Detector* _detector;
@@ -84,11 +85,11 @@ private:
     message_filters::Subscriber<sensor_msgs::Image> _color_sub;
     message_filters::Subscriber<sensor_msgs::Image> _depth_sub;
 
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproxSyncPolicy;
-    // typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> ExactSyncPolicy;
+    // typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproxSyncPolicy;
+    typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> ExactSyncPolicy;
 
-    typedef message_filters::Synchronizer<ApproxSyncPolicy> Sync;
-    // typedef message_filters::Synchronizer<ExactSyncPolicy> Sync;
+    // typedef message_filters::Synchronizer<ApproxSyncPolicy> Sync;
+    typedef message_filters::Synchronizer<ExactSyncPolicy> Sync;
     boost::shared_ptr<Sync> _sync;
 
     // Publishers
