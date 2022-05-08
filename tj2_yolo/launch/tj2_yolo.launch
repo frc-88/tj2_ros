@@ -7,13 +7,12 @@
             <!-- <rosparam param="z_depth_estimations" file="$(find tj2_yolo)/config/cargo_depth_estimations.yaml" command="load"/> -->
             <rosparam param="yolo_z_depth_estimations" file="$(find tj2_yolo)/config/power_cell_depth_estimations.yaml" command="load"/>
 
-            <param name="confidence_threshold" value="0.2"/>
-            <param name="nms_iou_threshold" value="0.2"/>
-            <param name="nms_iou_threshold" value="0.2"/>
+            <param name="confidence_threshold" value="0.5"/>
+            <param name="nms_iou_threshold" value="0.4"/>
 
             <param name="publish_overlay" value="true"/>
             <param name="report_loop_times" value="false"/>
-            <param name="marker_persistance" value="0.25"/>
+            <param name="marker_persistance" value="0.1"/>
             <param name="circle_mask_border_offset_px" value="0"/>
             <!-- <param name="camera_z_unit_conversion" value="0.001"/> -->
             <param name="camera_z_unit_conversion" value="1.0"/>

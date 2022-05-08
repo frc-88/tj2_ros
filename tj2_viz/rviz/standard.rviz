@@ -5,12 +5,10 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
         - /Object Markers1/Namespaces1
         - /DepthCloud1/Auto Size1
-        - /ZED Depth1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
         - /Overlay1/Visibility1
@@ -673,8 +671,8 @@ Visualization Manager:
         Value: true
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 1.1434197425842285
-        Min Value: -1.0627307891845703
+        Max Value: 1.1194067001342773
+        Min Value: -1.0295134782791138
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -748,7 +746,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -772,7 +770,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.5696547031402588
+      Distance: 6.004576683044434
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -780,17 +778,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.4929300844669342
-        Y: -0.5414389371871948
-        Z: -0.056356459856033325
+        X: 0.7797054052352905
+        Y: -0.2596573233604431
+        Z: 0.3273170292377472
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2752043604850769
+      Pitch: 1.0702024698257446
       Target Frame: <Fixed Frame>
-      Yaw: 2.153529167175293
+      Yaw: 1.2503926753997803
     Saved: ~
 Window Geometry:
   Displays:
