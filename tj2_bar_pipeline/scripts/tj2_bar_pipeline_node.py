@@ -234,13 +234,20 @@ class TJ2BarPipeline(object):
     
         min_dist = None
         min_index = -1
-        for index, ((x0, y0), (x1, y1)) in enumerate(valid_bars):
-            m = (y1 - y0) / (x1 - x0)
-            # calculation from: https://math.stackexchange.com/questions/1796400/estimate-line-in-theta-rho-space-given-2-points
-            rho = abs(m * x1 - y1) / math.sqrt(m * m + 1)
-            if min_dist is None or rho < min_dist:
-                min_dist = rho
-                min_index = index
+        try:
+            for index, points in enumerate(valid_bars):
+                x0 = points[0][0]
+                y0 = points[0][1]
+                x1 = points[1][0]
+                y1 = points[1][0]
+                m = (y1 - y0) / (x1 - x0)
+                # calculation from: https://math.stackexchange.com/questions/1796400/estimate-line-in-theta-rho-space-given-2-points
+                rho = abs(m * x1 - y1) / math.sqrt(m * m + 1)
+                if min_dist is None or rho < min_dist:
+                    min_dist = rho
+                    min_index = index
+        except ValueError:
+            print("value error:", valid_bars)
 
         if min_index >= 0:
             points = bars[min_index]

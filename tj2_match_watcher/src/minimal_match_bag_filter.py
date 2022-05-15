@@ -28,7 +28,7 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
     bag_in_path = os.path.join(rospack.get_path("tj2_match_watcher"), "bags", directory, bag_in_name)
     bag_out_path = os.path.join(
         os.path.dirname(bag_in_path),
-        os.path.splitext(os.path.basename(bag_in_path))[0] + "-minimal.bag"
+        os.path.splitext(os.path.basename(bag_in_path))[0] + "-bar.bag"
     )
     
     bag_in = Bag(bag_in_path)
@@ -53,8 +53,8 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
     initial_pose_count = 0
     base_to_odom = None
     odom_to_map = None
-    # center_offset = Pose2d(2.98145, 4.24575)  # center waypoint on old field map. New one has it at 0.0, 0.0
-    center_offset = Pose2d(0.0, 0.0)
+    center_offset = Pose2d(2.98145, 4.24575)  # center waypoint on old field map. New one has it at 0.0, 0.0
+    # center_offset = Pose2d(0.0, 0.0)
     try:
         with tqdm.tqdm(total=length) as pbar:
             for topic, msg, timestamp, conn_header in messages:
@@ -76,11 +76,15 @@ def main(directory, bag_in_name, time_start=None, time_stop=None):
                 if topic == "/initialpose":
                     bag_out.write(topic, msg, timestamp, connection_header=conn_header)
                     initial_pose_count = 10000
-                # if topic.startswith("/camera/color"):
-                #     bag_out.write(topic, msg, timestamp, connection_header=conn_header)
+                if topic.startswith("/camera"):
+                    bag_out.write(topic, msg, timestamp, connection_header=conn_header)
                 if topic.startswith("/tj2/cargo/detections"):
                     bag_out.write("/tj2/detections", msg, timestamp, connection_header=conn_header)
                 if "joint" in topic:
+                    if "climber_joint" in topic:
+                        msg.data = -msg.data + math.pi / 2.0
+                    elif "intake_joint" in topic:
+                        msg.data += math.pi / 2.0
                     bag_out.write(topic, msg, timestamp, connection_header=conn_header)
                 if topic == "/tf":
                     if timestamp - time_start < rospy.Duration(0.25):
@@ -122,8 +126,9 @@ if __name__ == '__main__':
         # "2022_robot_2022-03-19-11-47-53.bag": 595,
         # "2022_robot_2022-03-19-14-03-24.bag": 290,
         # "2022_robot_2022-03-19-14-51-16.bag": 100,
-        "2022_robot_2022-03-19-15-23-57.bag": 132,
+        # "2022_robot_2022-03-19-15-23-57.bag": 132,
         # "2022_robot_2022-03-19-15-54-11.bag": 186,
+        "2022_robot_2022-03-19-15-23-57.bag": 215,
     }
     # directory = ""
     # bags = {
