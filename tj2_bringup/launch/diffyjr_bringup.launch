@@ -11,7 +11,7 @@
     </include>
     <include file="$(find tj2_description)/launch/tj2_description_diffyjr.launch"/>
     <!-- <include file="$(find tj2_camera)/launch/tj2_realsense.launch"/> -->
-    <!-- <include file="$(find tj2_camera)/launch/tj2_zed.launch"/> -->
+    <include file="$(find tj2_camera)/launch/tj2_zed.launch"/>
     <!-- <include file="$(find tj2_camera)/launch/camera_watcher.launch"/> -->
     <!-- <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/> -->
     <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
@@ -21,7 +21,7 @@
     <include if="$(arg enable_driver_station)" file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/>
 
     <!-- <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/> -->
-    <!-- <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/> -->
+    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
     <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
     <include file="$(find tj2_launcher)/launch/tj2_launcher.launch"/>

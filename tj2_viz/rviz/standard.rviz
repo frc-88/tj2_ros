@@ -9,6 +9,7 @@ Panels:
         - /TF1/Tree1
         - /Object Markers1/Namespaces1
         - /DepthCloud1/Auto Size1
+        - /ZED1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
         - /Overlay1/Visibility1
@@ -746,7 +747,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_link
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -786,9 +787,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0702024698257446
+      Pitch: 0.4802025556564331
       Target Frame: <Fixed Frame>
-      Yaw: 1.2503926753997803
+      Yaw: 2.6054024696350098
     Saved: ~
 Window Geometry:
   Displays:
