@@ -8,6 +8,7 @@ tj2_match_watcher/bags
 .git
 playground/swerve-kinematics/data
 playground/bounce_trajectories/data
+playground/calicam/cpp/build
 tj2_tools/build/
 tj2_tools/dist/
 tj2_tools/tj2_tools.egg-info/

@@ -20,6 +20,7 @@ int main(int argc, char** argv) {
   vcapture.set(cv::CAP_PROP_FRAME_WIDTH,  1280);
   vcapture.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
   vcapture.set(cv::CAP_PROP_FPS, 30);
+  int frame_count = 0;
 
   std::string param_win_name("calicam");
   cv::namedWindow(param_win_name);
@@ -27,6 +28,8 @@ int main(int argc, char** argv) {
   cv::Mat image;
   while (true) {
     vcapture >> image;
+    frame_count++;
+    std::cout << "frame #" << frame_count << std::endl;
 
     if (image.total() == 0) {
       std::cout << "Image capture error" << std::endl;
