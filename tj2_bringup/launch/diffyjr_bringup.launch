@@ -2,16 +2,16 @@
 <launch>
     <arg name="robot_address" default="10.0.88.2"/>
     <arg name="enable_driver_station" value="$(env ENABLE_DRIVER_STATION)"/>
-    <!-- <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
+    <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
-    </include> -->
-    <include file="$(find tj2_tunnel)/launch/tj2_tunnel.launch">
-        <arg name="publish_odom_tf" value="true"/>
     </include>
+    <!-- <include file="$(find tj2_tunnel)/launch/tj2_tunnel.launch">
+        <arg name="publish_odom_tf" value="true"/>
+    </include> -->
     <include file="$(find tj2_description)/launch/tj2_description_diffyjr.launch"/>
     <!-- <include file="$(find tj2_camera)/launch/tj2_realsense.launch"/> -->
-    <include file="$(find tj2_camera)/launch/tj2_zed.launch"/>
+    <include file="$(find tj2_camera)/launch/tj2_zed2.launch"/>
     <!-- <include file="$(find tj2_camera)/launch/camera_watcher.launch"/> -->
     <!-- <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/> -->
     <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
@@ -21,9 +21,9 @@
     <include if="$(arg enable_driver_station)" file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/>
 
     <!-- <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/> -->
-    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/>
+    <!-- <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/> -->
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
-    <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
+    <!-- <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/> -->
     <include file="$(find tj2_launcher)/launch/tj2_launcher.launch"/>
     <!-- <include file="$(find tj2_target)/launch/tj2_target.launch"/> -->
 

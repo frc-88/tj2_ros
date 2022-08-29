@@ -14,6 +14,7 @@ dataset_builder/cargo_2022/resources
 dataset_builder/cargo_2022/wandb/
 playground/particle_filter/data
 playground/bounce_trajectories/data
+playground/swerve/swerve_bag_plotter/data
 
 .OutlineViewer/
 .idea/

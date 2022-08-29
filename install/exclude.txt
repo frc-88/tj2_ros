@@ -9,6 +9,10 @@ tj2_match_watcher/bags
 playground/swerve-kinematics/data
 playground/bounce_trajectories/data
 playground/calicam/cpp/build
+playground/cv_pipe_detection/
+playground/particle_filter/data/
+playground/swerve/swerve_bag_plotter/data
+tj2_tunnel/bags/
 tj2_tools/build/
 tj2_tools/dist/
 tj2_tools/tj2_tools.egg-info/

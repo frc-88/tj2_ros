@@ -16,12 +16,12 @@
                         cam_yaw:=0"
         />
 
-        <node name="$(arg camera_name)_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" required="true">
+        <node name="$(arg camera_name)_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" required="false">
             <remap from="robot_description" to="$(arg camera_name)_description" />
             <remap from="joint_states" to="zed_joint_states"/>
         </node>
     </group>
-    <node name="tj2_zed" pkg="zed_wrapper" type="zed_wrapper_node" output="screen" required="true">
+    <node name="tj2_zed" pkg="zed_wrapper" type="zed_wrapper_node" output="screen" required="false">
         <rosparam file="$(find tj2_camera)/config/zed1.yaml" command="load" />
 
         <param name="general/camera_name"               value="$(arg camera_name)" />
