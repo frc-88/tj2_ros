@@ -25,5 +25,8 @@
         <rosparam file="$(find tj2_camera)/config/zed2.yaml" command="load" />
 
         <param name="general/camera_name"               value="$(arg camera_name)" />
+        <param name="general/base_frame"                value="camera_link" />
+        <param name="yolo_object_detection/model_path"        value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript" />
+        <param name="yolo_object_detection/class_names_path"  value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)" />
     </node>
 </launch>

@@ -13,6 +13,7 @@ Panels:
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
         - /Overlay1/Visibility1
+        - /ZedOdDisplay1
       Splitter Ratio: 0.6094890236854553
     Tree Height: 777
   - Class: rviz/Selection
@@ -33,7 +34,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ZED
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -64,29 +65,7 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_footprint:
-          Value: true
-        base_link:
-          Value: true
         camera_link:
-          Value: true
-        imu:
-          Value: true
-        laser:
-          Value: true
-        limelight_link:
-          Value: true
-        map:
-          Value: true
-        odom:
-          Value: true
-        swerve_wheel_0:
-          Value: true
-        swerve_wheel_1:
-          Value: true
-        swerve_wheel_2:
-          Value: true
-        swerve_wheel_3:
           Value: true
         zed2_baro_link:
           Value: true
@@ -117,42 +96,24 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        map:
-          odom:
-            base_link:
-              base_footprint:
-                camera_link:
-                  zed2_base_link:
-                    zed2_camera_center:
-                      zed2_baro_link:
-                        {}
-                      zed2_left_camera_frame:
-                        zed2_imu_link:
-                          {}
-                        zed2_left_camera_optical_frame:
-                          {}
-                        zed2_temp_left_link:
-                          {}
-                      zed2_mag_link:
-                        {}
-                      zed2_right_camera_frame:
-                        zed2_right_camera_optical_frame:
-                          {}
-                        zed2_temp_right_link:
-                          {}
-                imu:
+        camera_link:
+          zed2_base_link:
+            zed2_camera_center:
+              zed2_baro_link:
+                {}
+              zed2_left_camera_frame:
+                zed2_imu_link:
                   {}
-                laser:
+                zed2_left_camera_optical_frame:
                   {}
-                limelight_link:
+                zed2_temp_left_link:
                   {}
-                swerve_wheel_0:
+              zed2_mag_link:
+                {}
+              zed2_right_camera_frame:
+                zed2_right_camera_optical_frame:
                   {}
-                swerve_wheel_1:
-                  {}
-                swerve_wheel_2:
-                  {}
-                swerve_wheel_3:
+                zed2_temp_right_link:
                   {}
       Update Interval: 0
       Value: true
@@ -166,35 +127,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        swerve_wheel_0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        swerve_wheel_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        swerve_wheel_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        swerve_wheel_3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -244,8 +176,7 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        poscenter: true
-        textcenter: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -276,6 +207,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         AMCL Pose: true
         Bar Markers: true
         DepthCloud: true
@@ -684,6 +616,7 @@ Visualization Manager:
         Value: true
         Waypoints: true
         ZED Depth: true
+        ZedOdDisplay: true
       Zoom Factor: 1
     - Alpha: 1
       Auto Size:
@@ -732,6 +665,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         AMCL Pose: false
         Bar Markers: true
         DepthCloud: true
@@ -762,11 +696,25 @@ Visualization Manager:
         ZED: true
         ZED Depth: true
       Zoom Factor: 1
+    - Class: rviz_plugin_zed_od/ZedOdDisplay
+      Enabled: true
+      Joint Radius: 0.10000000149011612
+      Label Scale: 5
+      Link Size: 0.05000000074505806
+      Name: ZedOdDisplay
+      Queue Size: 10
+      Show Bounding Boxes: true
+      Show Labels: true
+      Show Skeletons: true
+      Topic: /tj2_zed/obj_det/yolo_objects
+      Transparency: 0.25
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: zed2_camera_center
     Frame Rate: 30
   Name: root
   Tools:

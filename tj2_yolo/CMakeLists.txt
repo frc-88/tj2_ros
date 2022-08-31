@@ -1,8 +1,22 @@
 cmake_minimum_required(VERSION 3.12)
 project(tj2_yolo)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+# Set to C++14
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# check c++14 / c++0x
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX14)
+    set(CMAKE_CXX_FLAGS "-std=c++14")
+elseif(COMPILER_SUPPORTS_CXX0X)
+    set(CMAKE_CXX_FLAGS "-std=c++0x")
+else()
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
+endif()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -30,6 +44,7 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV REQUIRED)
 find_package(Python COMPONENTS Interpreter Development)
+find_package(CUDA REQUIRED)
 
 if (EXISTS /etc/nv_tegra_release)
   message(STATUS "Detecting jetson device. Using python torch path")
@@ -164,6 +179,7 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${TORCH_INCLUDE_DIRS}
+    ${CUDA_INCLUDE_DIRS}
 )
 link_directories(${catkin_LIBRARY_DIRS})
 
