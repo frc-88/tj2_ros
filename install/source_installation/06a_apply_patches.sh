@@ -14,5 +14,4 @@ sed -i -e 's/${G2O_INCREMENTAL_LIB}/#${G2O_INCREMENTAL_LIB}/g'  ${DEPENDENCIES_W
 cd ${DEPENDENCIES_WS_SRC}/image_pipeline/
 git apply ${BASE_DIR}/fix-image-pipeline.patch --reject --whitespace=fix 
 
-cd ${DEPENDENCIES_WS_SRC}/rtabmap_ros/
-git apply ${BASE_DIR}/skip-rtabmaprviz.patch --reject --whitespace=fix 
+echo "Patches applied"

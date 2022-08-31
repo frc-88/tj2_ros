@@ -19,7 +19,6 @@ packages=(
     https://github.com/ros/geometry2.git
     git@github.com:frc-88/navigation.git
     https://github.com/rst-tu-dortmund/teb_local_planner
-    https://github.com/introlab/rtabmap_ros.git
     https://github.com/IntelRealSense/realsense-ros.git
     https://github.com/ros-perception/vision_opencv.git
     https://github.com/ros-perception/vision_msgs.git
@@ -45,8 +44,7 @@ packages=(
     https://github.com/ros-drivers/usb_cam.git
     https://github.com/ros-perception/image_transport_plugins
     https://github.com/ros/rosbag_snapshot.git
-    https://github.com/stereolabs/zed-ros-wrapper
-    https://github.com/stereolabs/zed-ros-examples
+    git@github.com:frc-88/zed-ros-wrapper.git
     https://github.com/alireza-hosseini/ipcamera_driver
     https://github.com/ros-teleop/twist_mux.git
     https://github.com/ros-teleop/twist_mux_msgs.git
@@ -61,7 +59,6 @@ branches=(
     noetic-devel    # https://github.com/ros/geometry2.git
     noetic-devel    # git@github.com:frc-88/navigation.git
     noetic-devel    # https://github.com/rst-tu-dortmund/teb_local_planner
-    noetic-devel    # https://github.com/introlab/rtabmap_ros.git
     development     # https://github.com/IntelRealSense/realsense-ros.git
     noetic      # https://github.com/ros-perception/vision_opencv.git
     noetic-devel    # https://github.com/ros-perception/vision_msgs.git
@@ -87,8 +84,7 @@ branches=(
     develop     # https://github.com/ros-drivers/usb_cam.git
     noetic-devel    # https://github.com/ros-perception/image_transport_plugins
     main  # https://github.com/ros/rosbag_snapshot.git
-    master  # https://github.com/stereolabs/zed-ros-wrapper
-    master  # https://github.com/stereolabs/zed-ros-examples
+    tj2_detections  # git@github.com:frc-88/zed-ros-wrapper.git
     master  # https://github.com/alireza-hosseini/ipcamera_driver
     melodic-devel  # https://github.com/ros-teleop/twist_mux.git
     melodic-devel  # https://github.com/ros-teleop/twist_mux_msgs.git
