@@ -24,7 +24,7 @@
     <!-- <include file="$(find tj2_yolo)/launch/tj2_yolo.launch"/> -->
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
     <!-- <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/> -->
-    <include file="$(find tj2_launcher)/launch/tj2_launcher.launch"/>
+    <!-- <include file="$(find tj2_launcher)/launch/tj2_launcher.launch"/> -->
     <!-- <include file="$(find tj2_target)/launch/tj2_target.launch"/> -->
 
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>

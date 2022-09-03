@@ -59,16 +59,16 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _odom_msg.pose.covariance = as_array<36>(_odom_covariance);
     _odom_msg.twist.covariance = as_array<36>(_twist_covariance);
 
-    _imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 50);
+    _imu_pub = nh.advertise<tj2_networktables::NavX>("imu", 50);
     _imu_msg.header.frame_id = _imu_frame;
     /* [
         0, 1, 2,
         3, 4, 5,
         6, 7, 8
     ] */
-    _imu_msg.orientation_covariance = as_array<9>(_imu_orientation_covariance);
-    _imu_msg.angular_velocity_covariance = as_array<9>(_imu_angular_velocity_covariance);
-    _imu_msg.linear_acceleration_covariance = as_array<9>(_imu_linear_acceleration_covariance);
+    // _imu_msg.orientation_covariance = as_array<9>(_imu_orientation_covariance);
+    // _imu_msg.angular_velocity_covariance = as_array<9>(_imu_angular_velocity_covariance);
+    // _imu_msg.linear_acceleration_covariance = as_array<9>(_imu_linear_acceleration_covariance);
 
     _raw_joint_pubs = new vector<ros::Publisher>();
     _raw_joint_subs = new vector<ros::Subscriber>();
@@ -142,15 +142,14 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _set_odom_t_entry = nt::GetEntry(_nt, _base_key + "reset_odom/t");
     _set_odom_update_entry = nt::GetEntry(_nt, _base_key + "reset_odom/update");
 
-    _imu_ax_entry = nt::GetEntry(_nt, _base_key + "imu/accel/x");
-    _imu_ay_entry = nt::GetEntry(_nt, _base_key + "imu/accel/y");
-    _imu_az_entry = nt::GetEntry(_nt, _base_key + "imu/accel/z");
-    _imu_gx_entry = nt::GetEntry(_nt, _base_key + "imu/gyro/x");
-    _imu_gy_entry = nt::GetEntry(_nt, _base_key + "imu/gyro/y");
-    _imu_gz_entry = nt::GetEntry(_nt, _base_key + "imu/gyro/z");
-    _imu_r_entry = nt::GetEntry(_nt, _base_key + "imu/angle/x");
-    _imu_p_entry = nt::GetEntry(_nt, _base_key + "imu/angle/y");
-    _imu_y_entry = nt::GetEntry(_nt, _base_key + "imu/angle/z");
+    _imu_tx_entry = nt::GetEntry(_nt, _base_key + "imu/tx");
+    _imu_ty_entry = nt::GetEntry(_nt, _base_key + "imu/ty");
+    _imu_tz_entry = nt::GetEntry(_nt, _base_key + "imu/tz");
+    _imu_vx_entry = nt::GetEntry(_nt, _base_key + "imu/vx");
+    _imu_vy_entry = nt::GetEntry(_nt, _base_key + "imu/vy");
+    _imu_vz_entry = nt::GetEntry(_nt, _base_key + "imu/vz");
+    _imu_ax_entry = nt::GetEntry(_nt, _base_key + "imu/ax");
+    _imu_ay_entry = nt::GetEntry(_nt, _base_key + "imu/ay");
     _imu_update_entry = nt::GetEntry(_nt, _base_key + "imu/update");
     nt::AddEntryListener(_imu_update_entry, boost::bind(&TJ2NetworkTables::imu_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
@@ -431,42 +430,8 @@ void TJ2NetworkTables::ping_callback(const nt::EntryNotification& event)
 
 void TJ2NetworkTables::imu_callback(const nt::EntryNotification& event)
 {
-    ros::Time recv_time = ros::Time::now();
-    double ax = get_double(_imu_ax_entry, NAN);
-    double ay = get_double(_imu_ay_entry, NAN);
-    double az = get_double(_imu_az_entry, NAN);
-    double gx = get_double(_imu_gx_entry, NAN);
-    double gy = get_double(_imu_gy_entry, NAN);
-    double gz = get_double(_imu_gz_entry, NAN);
-    double r = get_double(_imu_r_entry, NAN);
-    double p = get_double(_imu_p_entry, NAN);
-    double y = get_double(_imu_y_entry, NAN);
-
-    if (!(std::isfinite(ax) &&
-          std::isfinite(ay) &&
-          std::isfinite(az) &&
-          std::isfinite(gx) &&
-          std::isfinite(gy) &&
-          std::isfinite(gz) &&
-          std::isfinite(r) &&
-          std::isfinite(p) &&
-          std::isfinite(y)
-        )) {
-        ROS_WARN_THROTTLE(1.0, "A value for the IMU is nan or inf");
-    }
-
-    _imu_msg.header.stamp = recv_time;
-
-    tf2::Quaternion quat;
-    quat.setRPY(r, p, y);
-    _imu_msg.orientation = tf2::toMsg(quat);
-    _imu_msg.linear_acceleration.x = ax;
-    _imu_msg.linear_acceleration.y = ay;
-    _imu_msg.linear_acceleration.z = az;
-    _imu_msg.angular_velocity.x = gx;
-    _imu_msg.angular_velocity.y = gy;
-    _imu_msg.angular_velocity.z = gz;
-    _imu_pub.publish(_imu_msg);
+    // publish_imu();
+    _prev_imu_timestamp = ros::Time::now();
 }
 
 void TJ2NetworkTables::joint_callback(size_t joint_index)
@@ -778,6 +743,45 @@ void TJ2NetworkTables::publish_odom()
     _odom_pub.publish(_odom_msg);
 }
 
+void TJ2NetworkTables::publish_imu()
+{
+    ros::Time recv_time = ros::Time::now();
+    double tx = get_double(_imu_tx_entry, NAN);
+    double ty = get_double(_imu_ty_entry, NAN);
+    double tz = get_double(_imu_tz_entry, NAN);
+    double vx = get_double(_imu_vx_entry, NAN);
+    double vy = get_double(_imu_vy_entry, NAN);
+    double vz = get_double(_imu_vz_entry, NAN);
+    double ax = get_double(_imu_ax_entry, NAN);
+    double ay = get_double(_imu_ay_entry, NAN);
+
+    if (!(std::isfinite(tx) &&
+          std::isfinite(ty) &&
+          std::isfinite(tz) &&
+          std::isfinite(vx) &&
+          std::isfinite(vy) &&
+          std::isfinite(vz) &&
+          std::isfinite(ax) &&
+          std::isfinite(ay)
+        )) {
+        ROS_WARN_THROTTLE(1.0, "A value for the IMU is nan or inf");
+    }
+
+    _imu_msg.header.stamp = recv_time;
+
+    tf2::Quaternion quat;
+    quat.setRPY(tx, ty, tz);
+    _imu_msg.orientation = tf2::toMsg(quat);
+    _imu_msg.linear_acceleration.x = ax;
+    _imu_msg.linear_acceleration.y = ay;
+    _imu_msg.linear_acceleration.z = 0.0;
+    _imu_msg.linear_velocity.x = vx;
+    _imu_msg.linear_velocity.y = vy;
+    _imu_msg.angular_velocity.z = vz;  
+
+    _imu_pub.publish(_imu_msg);
+}
+
 // ---
 // Waypoint control
 // ---
@@ -851,6 +855,7 @@ string TJ2NetworkTables::get_string(NT_Entry entry, string default_value)
 void TJ2NetworkTables::loop()
 {
     publish_odom();
+    // publish_imu();
     publish_cmd_vel();
     publish_goal_status();
     publish_robot_global_pose();

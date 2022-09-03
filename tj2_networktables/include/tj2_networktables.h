@@ -32,7 +32,6 @@
 #include "std_msgs/Int32.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/String.h"
-#include "sensor_msgs/Imu.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "geometry_msgs/Pose.h"
 #include "vision_msgs/Detection3DArray.h"
@@ -45,6 +44,7 @@
 
 #include "tj2_networktables/OdomReset.h"
 #include "tj2_networktables/NTEntry.h"
+#include "tj2_networktables/NavX.h"
 
 #include "tj2_target/TargetConfig.h"
 
@@ -145,15 +145,14 @@ private:
     NT_Entry _global_update_entry;
 
     // imu entries
+    NT_Entry _imu_tx_entry;
+    NT_Entry _imu_ty_entry;
+    NT_Entry _imu_tz_entry;
+    NT_Entry _imu_vx_entry;
+    NT_Entry _imu_vy_entry;
+    NT_Entry _imu_vz_entry;
     NT_Entry _imu_ax_entry;
     NT_Entry _imu_ay_entry;
-    NT_Entry _imu_az_entry;
-    NT_Entry _imu_gx_entry;
-    NT_Entry _imu_gy_entry;
-    NT_Entry _imu_gz_entry;
-    NT_Entry _imu_r_entry;
-    NT_Entry _imu_p_entry;
-    NT_Entry _imu_y_entry;
     NT_Entry _imu_update_entry;
 
     // match entries
@@ -202,6 +201,7 @@ private:
     ros::Time _prev_twist_timestamp;
     double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
     ros::Time _prev_odom_timestamp;
+    ros::Time _prev_imu_timestamp;
 
     tj2_waypoints::WaypointArray _waypoints;
     actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction> *_waypoints_action_client;
@@ -211,7 +211,7 @@ private:
 
     // Messages
     nav_msgs::Odometry _odom_msg;
-    sensor_msgs::Imu _imu_msg;
+    tj2_networktables::NavX _imu_msg;
     vector<std_msgs::Float64*>* _raw_joint_msgs;
 
     // Publishers
@@ -281,6 +281,7 @@ private:
     int get_index(int obj_id);
     std::vector<std::string> load_label_names(const string& path);
     void publish_odom();
+    void publish_imu();
 
     // Waypoint control
     void set_goal_status(GoalStatus status);

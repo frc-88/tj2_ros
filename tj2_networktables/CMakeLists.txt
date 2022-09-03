@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   sensor_msgs
+  geometry_msgs
   message_generation
   genmsg
   dynamic_reconfigure
@@ -63,6 +64,7 @@ add_message_files(
   SwerveModule.msg
   SwerveMotor.msg
   NTEntry.msg
+  NavX.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -82,6 +84,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
 )
 
 ################################################
@@ -115,7 +118,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES tj2_networktables
-  CATKIN_DEPENDS rospy std_msgs sensor_msgs message_runtime dynamic_reconfigure tf2 nav_msgs 
+  CATKIN_DEPENDS rospy std_msgs sensor_msgs message_runtime dynamic_reconfigure tf2 nav_msgs geometry_msgs
 #  DEPENDS system_lib
 )
 
