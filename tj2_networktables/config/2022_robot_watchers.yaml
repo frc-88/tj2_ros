@@ -14,10 +14,10 @@ watch_topics:
   - /tj2/team_color
   - /tj2/waypoint_markers
 watch_nodes:
-  - /base_footprint_to_camera
-  - /base_footprint_to_imu
-  - /base_footprint_to_laser
-  - /base_footprint_to_limelight
+  - /base_tilt_link_to_camera
+  - /base_tilt_link_to_imu
+  - /base_tilt_link_to_laser
+  - /base_tilt_link_to_limelight
   - /camera/camera_post_processing_manager
   - /camera/points_xyzrgb_sw_registered
   - /camera/realsense2_camera

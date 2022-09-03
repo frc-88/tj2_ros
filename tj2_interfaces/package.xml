@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>tj2_description</name>
+  <name>tj2_interfaces</name>
   <version>0.0.0</version>
-  <description>The tj2_description package</description>
+  <description>The tj2_interfaces package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/tj2_description</url> -->
+  <!-- <url type="website">http://wiki.ros.org/tj2_interfaces</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -49,16 +49,10 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <exec_depend>xacro</exec_depend>
 
-  <depend>roscpp</depend>
   <depend>std_msgs</depend>
-  <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>tf2_ros</depend>
-  <depend>tf2_geometry_msgs</depend>
-  <depend>tj2_interfaces</depend>
-
+  <depend>message_generation</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -290,7 +290,6 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         double intermediate_tolerance = result->getDouble();
         bool ignore_obstacles = result->getInt();
         bool ignore_walls = result->getInt();
-        string interruptable_by = result->getString();
         
         tj2_waypoints::Waypoint waypoint;
         waypoint.name = waypoint_name;
@@ -300,17 +299,15 @@ void TJ2Tunnel::packetCallback(PacketResult* result)
         waypoint.intermediate_tolerance = intermediate_tolerance;
         waypoint.ignore_obstacles = ignore_obstacles;
         waypoint.ignore_walls = ignore_walls;
-        waypoint.interruptable_by = interruptable_by;
         _waypoints.waypoints.insert(_waypoints.waypoints.end(), waypoint);
-        ROS_INFO("Received a waypoint: %s. pose: x=%0.4f, y=%0.4f. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d, interruptable_by: %s",
+        ROS_INFO("Received a waypoint: %s. pose: x=%0.4f, y=%0.4f. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d",
             waypoint_name.c_str(),
             pose.position.x,
             pose.position.y,
             is_continuous,
             ignore_orientation,
             ignore_obstacles,
-            ignore_walls,
-            interruptable_by.c_str()
+            ignore_walls
         );
     }
     else if (category.compare("exec") == 0) {

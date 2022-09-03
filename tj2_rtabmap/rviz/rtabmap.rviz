@@ -62,7 +62,7 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_footprint:
+        base_tilt_link:
           Value: false
         base_link:
           Value: true
@@ -114,7 +114,7 @@ Visualization Manager:
         map:
           odom:
             base_link:
-              base_footprint:
+              base_tilt_link:
                 camera_link:
                   camera_accel_frame:
                     camera_accel_optical_frame:

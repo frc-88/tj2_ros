@@ -1,5 +1,0 @@
-string module_index
-float64 azimuth_position
-float64 wheel_velocity
-tj2_networktables/SwerveMotor motor_lo_0
-tj2_networktables/SwerveMotor motor_hi_1

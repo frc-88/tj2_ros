@@ -28,8 +28,6 @@ from visualization_msgs.msg import Marker
 
 from move_base_msgs.msg import MoveBaseAction
 
-from vision_msgs.msg import Detection3DArray
-
 from tj2_waypoints.srv import GetAllWaypoints, GetAllWaypointsResponse
 from tj2_waypoints.srv import GetWaypoint, GetWaypointResponse
 from tj2_waypoints.srv import DeleteWaypoint, DeleteWaypointResponse
@@ -43,9 +41,6 @@ from tj2_waypoints.msg import Waypoint, WaypointArray
 from tj2_pursuit.msg import PursueObjectAction
 
 from state_machine import WaypointStateMachine
-
-from tj2_tools.yolo.utils import get_label, read_class_names
-
 
 
 class SimpleDynamicToggle:
@@ -98,7 +93,6 @@ class Tj2Waypoints:
         waypoints_path_param = rospy.get_param("~waypoints_path", "~/.ros/waypoints")
         waypoints_path_param = os.path.expanduser(waypoints_path_param)
         waypoints_path_param += ".yaml"
-        self.class_names_path = rospy.get_param("~class_names_path", "objects.names")
 
         self.map_frame = rospy.get_param("~map", "map")
         self.base_frame = rospy.get_param("~base_link", "base_link")
@@ -117,10 +111,6 @@ class Tj2Waypoints:
         self.waypoints_path = self.process_path(waypoints_path_param)
         self.waypoint_config = OrderedDict()
 
-        self.class_names = read_class_names(self.class_names_path)
-
-        self.nearest_objects = {}  # keys: object class names. values: [nearest PoseStamped, nearest distance (meters)]
-
         self.markers = MarkerArray()
         self.marker_poses = OrderedDict()
 
@@ -136,9 +126,6 @@ class Tj2Waypoints:
 
         self.marker_pub = rospy.Publisher("waypoint_markers", MarkerArray, queue_size=25)
         self.waypoints_pub = rospy.Publisher("waypoints", WaypointArray, queue_size=25)
-
-        # self.detections_sub = rospy.Subscriber("detections", Detection3DArray, self.detection_callback)
-        # self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
 
         self.reload_waypoints_srv = self.create_service("reload_waypoints", Trigger, self.reload_waypoints_callback)
         self.get_all_waypoints_srv = self.create_service("get_all_waypoints", GetAllWaypoints, self.get_all_waypoints_callback)
@@ -204,42 +191,6 @@ class Tj2Waypoints:
         rospy.loginfo("Waypoint plan complete")
 
     # ---
-    # Detection callback
-    # ---
-
-    def detection_callback(self, msg):
-        self.nearest_objects = self.get_nearest_detections(msg)
-
-    def get_nearest_detections(self, detections_msg):
-        nearest_objs = {}
-        for detection in detections_msg.detections:
-            label, index = get_label(self.class_names, detection.results[0].id)
-            detection_pose = detection.results[0].pose.pose
-            detection_dist = self.get_distance(detection_pose)
-            if label not in nearest_objs:
-                nearest_objs[label] = [None, None]
-            if nearest_objs[label][1] is None or detection_dist < nearest_objs[label][1]:
-                nearest_pose = PoseStamped()
-                nearest_pose.pose = detection_pose
-                nearest_pose.header = detection.header
-                nearest_objs[label][0] = nearest_pose
-                nearest_objs[label][1] = detection_dist
-        return nearest_objs
-
-    def get_distance(self, pose1, pose2=None):
-        if pose2 is None:
-            x = pose1.position.x
-            y = pose1.position.y
-        else:
-            x1 = pose1.position.x
-            y1 = pose1.position.y
-            x2 = pose2.position.x
-            y2 = pose2.position.y
-            x = x2 - x1
-            y = y2 - y1
-        return math.sqrt(x * x + y * y)
-
-    # ---
     # Waypoint getters
     # ---
 
@@ -257,7 +208,7 @@ class Tj2Waypoints:
 
         def append_to_sub_plan(waypoint):
             nonlocal sub_plan
-            if not self.is_waypoint_valid(waypoint.name):
+            if not self.is_waypoint(waypoint.name):
                 rospy.logwarn("Waypoint is not valid: %s" % waypoint)
                 return
 
@@ -311,9 +262,6 @@ class Tj2Waypoints:
             pose_array.header = pose_stamped.header
             pose_array.poses.append(pose_stamped.pose)
         return pose_array
-
-    def is_waypoint_valid(self, name):
-        return self.is_waypoint(name) or self.is_object(name)
 
     # ---
     # set move_base parameters
@@ -469,9 +417,6 @@ class Tj2Waypoints:
             pose = self.waypoint_to_pose(self.get_waypoint(name))
             self.add_marker(name, pose)
         return True
-    
-    def is_object(self, name):
-        return name in self.class_names
 
     def save_from_pose(self, name, pose):
         # name: str, name of waypoint
@@ -501,10 +446,6 @@ class Tj2Waypoints:
         pose.pose.orientation = current_tf.transform.rotation
         
         return self.save_from_pose(name, pose)
-
-    def save_from_object(self, name):
-        # name: str, name of waypoint
-        return False
 
     def get_waypoint(self, name):
         # name: str, name of waypoint

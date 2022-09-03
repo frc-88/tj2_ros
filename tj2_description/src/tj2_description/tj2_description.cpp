@@ -22,7 +22,7 @@ TJ2Description::TJ2Description(ros::NodeHandle* nodehandle):nh(*nodehandle)
 
         raw_joint_subs->push_back(
             nh.subscribe<std_msgs::Float64>(
-                joints_msg.name.at(index), 50,
+                "joint/" + joints_msg.name.at(index), 50,
                 boost::bind(&TJ2Description::joint_callback, this, _1, index)
             )
         );

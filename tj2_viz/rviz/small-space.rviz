@@ -68,7 +68,7 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_footprint:
+        base_tilt_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -108,7 +108,7 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_footprint:
+        base_tilt_link:
           Value: true
         base_link:
           Value: true
@@ -157,7 +157,7 @@ Visualization Manager:
       Tree:
         odom:
           base_link:
-            base_footprint:
+            base_tilt_link:
               camera_link:
                 camera_accel_frame:
                   camera_accel_optical_frame:

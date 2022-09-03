@@ -5,10 +5,9 @@ from smach import StateMachine
 from states.go_to_waypoint import GoToWaypointState
 from states.check_waypoint import CheckWaypointState
 from states.next_waypoint import NextWaypointState
-from states.pursue_object import PursueObjectState
 
 
-class WaypointStateMachine(object):
+class WaypointStateMachine:
     def __init__(self):
         self.sm = StateMachine(outcomes=["success", "failure", "preempted"])
         self.outcome = None
@@ -20,7 +19,6 @@ class WaypointStateMachine(object):
                 "CHECK_WAYPOINT", CheckWaypointState(self),
                 transitions={
                     "waypoint": "GOTO_WAYPOINT",
-                    "object": "PURSUE_OBJECT",
                     "finished": "success",
                     "failure": "failure",
                     "preempted": "preempted"
@@ -32,19 +30,6 @@ class WaypointStateMachine(object):
             )
             StateMachine.add(
                 "GOTO_WAYPOINT", GoToWaypointState(self),
-                transitions={
-                    "object": "PURSUE_OBJECT",
-                    "success": "NEXT_WAYPOINT",
-                    "failure": "failure",
-                    "preempted": "preempted"
-                },
-                remapping={
-                    "waypoints_plan": "sm_waypoints_plan",
-                    "waypoint_index": "sm_waypoint_index",
-                }
-            )
-            StateMachine.add(
-                "PURSUE_OBJECT", PursueObjectState(self),
                 transitions={
                     "success": "NEXT_WAYPOINT",
                     "failure": "failure",

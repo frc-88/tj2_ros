@@ -59,7 +59,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _odom_msg.pose.covariance = as_array<36>(_odom_covariance);
     _odom_msg.twist.covariance = as_array<36>(_twist_covariance);
 
-    _imu_pub = nh.advertise<tj2_networktables::NavX>("imu", 50);
+    _imu_pub = nh.advertise<tj2_interfaces::NavX>("imu", 50);
     _imu_msg.header.frame_id = _imu_frame;
     /* [
         0, 1, 2,
@@ -88,7 +88,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
-    _nt_passthrough_sub = nh.subscribe<tj2_networktables::NTEntry>("nt_passthrough", 50, &TJ2NetworkTables::nt_passthrough_callback, this);
+    _nt_passthrough_sub = nh.subscribe<tj2_interfaces::NTEntry>("nt_passthrough", 50, &TJ2NetworkTables::nt_passthrough_callback, this);
     _waypoints_sub = nh.subscribe<tj2_waypoints::WaypointArray>("waypoints", 50, &TJ2NetworkTables::waypoints_callback, this);
     if (_class_names.empty()) {
         ROS_ERROR("Error loading class names! Not broadcasting detections");
@@ -145,8 +145,6 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _imu_tx_entry = nt::GetEntry(_nt, _base_key + "imu/tx");
     _imu_ty_entry = nt::GetEntry(_nt, _base_key + "imu/ty");
     _imu_tz_entry = nt::GetEntry(_nt, _base_key + "imu/tz");
-    _imu_vx_entry = nt::GetEntry(_nt, _base_key + "imu/vx");
-    _imu_vy_entry = nt::GetEntry(_nt, _base_key + "imu/vy");
     _imu_vz_entry = nt::GetEntry(_nt, _base_key + "imu/vz");
     _imu_ax_entry = nt::GetEntry(_nt, _base_key + "imu/ax");
     _imu_ay_entry = nt::GetEntry(_nt, _base_key + "imu/ay");
@@ -304,7 +302,7 @@ void TJ2NetworkTables::twist_callback(const geometry_msgs::TwistConstPtr& msg)
     _twist_cmd_vt = vt;
 }
 
-void TJ2NetworkTables::nt_passthrough_callback(const tj2_networktables::NTEntryConstPtr& msg)
+void TJ2NetworkTables::nt_passthrough_callback(const tj2_interfaces::NTEntryConstPtr& msg)
 {
     NT_Entry entry = nt::GetEntry(_nt, _base_key + msg->path);
     nt::SetEntryValue(entry, nt::Value::MakeDouble(msg->value));
@@ -394,7 +392,7 @@ void TJ2NetworkTables::joint_command_callback(const std_msgs::Float64ConstPtr& m
 // ---
 // Service callbacks
 // ---
-bool TJ2NetworkTables::odom_reset_callback(tj2_networktables::OdomReset::Request &req, tj2_networktables::OdomReset::Response &resp)
+bool TJ2NetworkTables::odom_reset_callback(tj2_interfaces::OdomReset::Request &req, tj2_interfaces::OdomReset::Response &resp)
 {
     nt::SetEntryValue(_set_odom_x_entry, nt::Value::MakeDouble(req.x));
     nt::SetEntryValue(_set_odom_y_entry, nt::Value::MakeDouble(req.y));
@@ -588,12 +586,12 @@ void TJ2NetworkTables::add_joint(string name)
 {
     size_t joint_index = _raw_joint_pubs->size();
     ROS_INFO("Publishing to joint topic: %s. Index: %ld", name.c_str(), joint_index);
-    _raw_joint_pubs->push_back(nh.advertise<std_msgs::Float64>(name, 50));
+    _raw_joint_pubs->push_back(nh.advertise<std_msgs::Float64>("joint/" + name, 50));
     _raw_joint_msgs->push_back(new std_msgs::Float64);
 
     _raw_joint_subs->push_back(
         nh.subscribe<std_msgs::Float64>(
-            "joint_command/" + name, 50,
+            "joint/command/" + name, 50,
             boost::bind(&TJ2NetworkTables::joint_command_callback, this, _1, name, joint_index)
         )
     );
@@ -623,7 +621,7 @@ vector<double> TJ2NetworkTables::get_double_list_param(string name, size_t lengt
 void TJ2NetworkTables::add_waypoint(tj2_waypoints::Waypoint waypoint)
 {
     _waypoints.waypoints.insert(_waypoints.waypoints.end(), waypoint);
-    ROS_INFO("Received a waypoint: %s. pose: x=%0.4f, y=%0.4f. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d, interruptable_by: %s, timeout: %f",
+    ROS_INFO("Received a waypoint: %s. pose: x=%0.4f, y=%0.4f. is_continuous: %d, ignore_orientation: %d, ignore_obstacles: %d, ignore_walls: %d, timeout: %f",
         waypoint.name.c_str(),
         waypoint.pose.position.x,
         waypoint.pose.position.y,
@@ -631,7 +629,6 @@ void TJ2NetworkTables::add_waypoint(tj2_waypoints::Waypoint waypoint)
         waypoint.ignore_orientation,
         waypoint.ignore_obstacles,
         waypoint.ignore_walls,
-        waypoint.interruptable_by.c_str(),
         waypoint.timeout.toSec()
     );
 }
@@ -644,7 +641,6 @@ tj2_waypoints::Waypoint TJ2NetworkTables::make_waypoint_from_nt(size_t index)
     _waypoint_intermediate_tolerance_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/intermediate_tolerance");
     _waypoint_ignore_obstacles_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/ignore_obstacles");
     _waypoint_ignore_walls_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/ignore_walls");
-    _waypoint_interruptable_by_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/interruptable_by");
     _waypoint_timeout_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/timeout");
     _waypoint_goal_x_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/x");
     _waypoint_goal_y_entry = nt::GetEntry(_nt, _base_key + "goal/" + str_index + "/y");
@@ -657,7 +653,6 @@ tj2_waypoints::Waypoint TJ2NetworkTables::make_waypoint_from_nt(size_t index)
     waypoint.intermediate_tolerance = get_double(_waypoint_intermediate_tolerance_entry, 0.1);
     waypoint.ignore_obstacles = get_boolean(_waypoint_ignore_obstacles_entry, false);
     waypoint.ignore_walls = get_boolean(_waypoint_ignore_walls_entry, false);
-    waypoint.interruptable_by = get_string(_waypoint_interruptable_by_entry, "");
     waypoint.timeout = ros::Duration(get_double(_waypoint_timeout_entry, 0.0));
     return waypoint;
 }
@@ -749,8 +744,6 @@ void TJ2NetworkTables::publish_imu()
     double tx = get_double(_imu_tx_entry, NAN);
     double ty = get_double(_imu_ty_entry, NAN);
     double tz = get_double(_imu_tz_entry, NAN);
-    double vx = get_double(_imu_vx_entry, NAN);
-    double vy = get_double(_imu_vy_entry, NAN);
     double vz = get_double(_imu_vz_entry, NAN);
     double ax = get_double(_imu_ax_entry, NAN);
     double ay = get_double(_imu_ay_entry, NAN);
@@ -758,13 +751,12 @@ void TJ2NetworkTables::publish_imu()
     if (!(std::isfinite(tx) &&
           std::isfinite(ty) &&
           std::isfinite(tz) &&
-          std::isfinite(vx) &&
-          std::isfinite(vy) &&
           std::isfinite(vz) &&
           std::isfinite(ax) &&
           std::isfinite(ay)
         )) {
         ROS_WARN_THROTTLE(1.0, "A value for the IMU is nan or inf");
+        return;
     }
 
     _imu_msg.header.stamp = recv_time;
@@ -774,9 +766,6 @@ void TJ2NetworkTables::publish_imu()
     _imu_msg.orientation = tf2::toMsg(quat);
     _imu_msg.linear_acceleration.x = ax;
     _imu_msg.linear_acceleration.y = ay;
-    _imu_msg.linear_acceleration.z = 0.0;
-    _imu_msg.linear_velocity.x = vx;
-    _imu_msg.linear_velocity.y = vy;
     _imu_msg.angular_velocity.z = vz;  
 
     _imu_pub.publish(_imu_msg);
@@ -855,7 +844,7 @@ string TJ2NetworkTables::get_string(NT_Entry entry, string default_value)
 void TJ2NetworkTables::loop()
 {
     publish_odom();
-    // publish_imu();
+    publish_imu();
     publish_cmd_vel();
     publish_goal_status();
     publish_robot_global_pose();

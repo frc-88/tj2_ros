@@ -11,5 +11,5 @@
             <rosparam command="load" file="$(find tj2_rplidar)/config/laser_filter.yaml" />
         </node>
     </group>
-    <node pkg="tf" type="static_transform_publisher" name="base_footprint_to_test_laser" args="0 0 0   0 0 1 0 base_footprint test_laser 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_test_laser" args="0 0 0   0 0 1 0 base_tilt_link test_laser 20" />
 </launch>

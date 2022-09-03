@@ -42,11 +42,9 @@
 #include "tj2_waypoints/Waypoint.h"
 #include "tj2_waypoints/WaypointArray.h"
 
-#include "tj2_networktables/OdomReset.h"
-#include "tj2_networktables/NTEntry.h"
-#include "tj2_networktables/NavX.h"
-
-#include "tj2_target/TargetConfig.h"
+#include "tj2_interfaces/OdomReset.h"
+#include "tj2_interfaces/NTEntry.h"
+#include "tj2_interfaces/NavX.h"
 
 #include "networktables/EntryListenerFlags.h"
 
@@ -148,8 +146,6 @@ private:
     NT_Entry _imu_tx_entry;
     NT_Entry _imu_ty_entry;
     NT_Entry _imu_tz_entry;
-    NT_Entry _imu_vx_entry;
-    NT_Entry _imu_vy_entry;
     NT_Entry _imu_vz_entry;
     NT_Entry _imu_ax_entry;
     NT_Entry _imu_ay_entry;
@@ -173,7 +169,6 @@ private:
     NT_Entry _waypoint_intermediate_tolerance_entry;
     NT_Entry _waypoint_ignore_obstacles_entry;
     NT_Entry _waypoint_ignore_walls_entry;
-    NT_Entry _waypoint_interruptable_by_entry;
     NT_Entry _waypoint_timeout_entry;
     NT_Entry _waypoint_goal_x_entry;
     NT_Entry _waypoint_goal_y_entry;
@@ -211,7 +206,7 @@ private:
 
     // Messages
     nav_msgs::Odometry _odom_msg;
-    tj2_networktables::NavX _imu_msg;
+    tj2_interfaces::NavX _imu_msg;
     vector<std_msgs::Float64*>* _raw_joint_msgs;
 
     // Publishers
@@ -243,13 +238,13 @@ private:
 
     // Subscription callbacks
     void twist_callback(const geometry_msgs::TwistConstPtr& msg);
-    void nt_passthrough_callback(const tj2_networktables::NTEntryConstPtr& msg);
+    void nt_passthrough_callback(const tj2_interfaces::NTEntryConstPtr& msg);
     void waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg);
     void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
     void joint_command_callback(const std_msgs::Float64ConstPtr& msg, string joint_name, int joint_index);
 
     // Service callbacks
-    bool odom_reset_callback(tj2_networktables::OdomReset::Request &req, tj2_networktables::OdomReset::Response &resp);
+    bool odom_reset_callback(tj2_interfaces::OdomReset::Request &req, tj2_interfaces::OdomReset::Response &resp);
 
     // NT callbacks
     void odom_callback(const nt::EntryNotification& event);
