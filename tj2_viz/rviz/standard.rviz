@@ -292,6 +292,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        AMCL Particles: true
         AMCL Pose: true
         Bar Markers: true
         DepthCloud: true
@@ -477,22 +478,22 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: true
-      Enabled: false
+      Enabled: true
       Name: Global Costmap
       Topic: /move_base/global_costmap/costmap
       Unreliable: false
       Use Timestamp: false
-      Value: false
+      Value: true
     - Alpha: 0.699999988079071
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: true
-      Enabled: false
+      Enabled: true
       Name: Local Costmap
       Topic: /move_base/local_costmap/costmap
       Unreliable: false
       Use Timestamp: false
-      Value: false
+      Value: true
     - Alpha: 1
       Class: rviz/Map
       Color Scheme: costmap
@@ -751,6 +752,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        AMCL Particles: true
         AMCL Pose: false
         Bar Markers: true
         DepthCloud: true
@@ -838,7 +840,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.1225409507751465
+      Distance: 5.5670294761657715
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -846,17 +848,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.16147245466709137
-        Y: 0.341835081577301
-        Z: 0.06479134410619736
+        X: 0.27727314829826355
+        Y: 0.4462408423423767
+        Z: 0.2995412051677704
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8503984212875366
+      Pitch: 0.7347971796989441
       Target Frame: <Fixed Frame>
-      Yaw: 4.535426139831543
+      Yaw: 5.015467166900635
     Saved: ~
 Window Geometry:
   Displays:
