@@ -20,6 +20,8 @@ TJ2ImuJoint::TJ2ImuJoint(ros::NodeHandle* nodehandle) :
     else {
         _base_imu_sub = nh.subscribe<sensor_msgs::Imu>("base_imu", 10, &TJ2ImuJoint::base_imu_callback, this);
     }
+    base_quat_msg.w = 1.0;
+    camera_quat_msg.w = 1.0;
 }
 
 void TJ2ImuJoint::camera_imu_callback(const sensor_msgs::ImuConstPtr& imu)

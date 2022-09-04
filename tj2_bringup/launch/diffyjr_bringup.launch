@@ -2,7 +2,7 @@
 <launch>
     <arg name="robot_address" default="10.0.88.2"/>
     <arg name="enable_driver_station" value="$(env ENABLE_DRIVER_STATION)"/>
-    <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
+    <include file="$(find tj2_networktables)/launch/tj2_networktables_diffyjr.launch">
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>

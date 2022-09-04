@@ -6,36 +6,33 @@
         /initialpose
         /sinistra_laser/scan
         /dextra_laser/scan
-        /limelight/raw_targets
-        /limelight/target
-        /limelight/target_angle
-        /limelight/target_distance
         /map
         /map_metadata
         /tf
         /tf_static
-        /tj2/left_outer_climber_joint
-        /tj2/left_inner_climber_joint
-        /tj2/right_outer_climber_joint
-        /tj2/right_inner_climber_joint
-        /tj2/left_outer_climber_hook_joint
-        /tj2/left_inner_climber_hook_joint
-        /tj2/right_outer_climber_hook_joint
-        /tj2/right_inner_climber_hook_joint
-        /tj2/intake_joint
-        /tj2/turret_joint
-        /tj2/camera_joint
+        /tj2/joint/base_link_to_wheel_0_joint
+        /tj2/joint/base_link_to_wheel_1_joint
+        /tj2/joint/base_link_to_wheel_2_joint
+        /tj2/joint/base_link_to_wheel_3_joint
+        /tj2/joint/left_outer_climber_joint
+        /tj2/joint/left_inner_climber_joint
+        /tj2/joint/right_outer_climber_joint
+        /tj2/joint/right_inner_climber_joint
+        /tj2/joint/left_outer_climber_hook_joint
+        /tj2/joint/left_inner_climber_hook_joint
+        /tj2/joint/right_outer_climber_hook_joint
+        /tj2/joint/right_inner_climber_hook_joint
+        /tj2/joint/intake_joint
+        /tj2/joint/turret_joint
         /tj2/cmd_vel
-        /tj2/cmd_vel_follow
         /tj2/cmd_vel_nav
         /tj2/cmd_vel_teleop
-        /tj2/follow_object_goal
         /tj2/imu
         /tj2/is_autonomous
         /tj2/match_time
         /tj2/odom
         /tj2/ping
-        /tj2/detections
+        /tj2_zed/obj_det/detections
         /tj2/cargo/markers
         /tj2/team_color
         /color_sensor/raw
@@ -47,7 +44,6 @@
         /tj2/target_probability
         /tj2/shooter
         /tj2/hood
-        /tj2/is_obstacle_in_view
         /tj2/smart_dashboard
 
         --duration=300 --lz4
