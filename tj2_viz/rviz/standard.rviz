@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
         - /Object Markers1/Namespaces1
@@ -35,7 +36,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: ZED
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -72,41 +73,19 @@ Visualization Manager:
           Value: true
         camera_armature_link:
           Value: false
-        camera_tilt_link:
+        camera_link:
           Value: true
-        dextra_laser_link:
+        camera_tilt_link:
           Value: true
         imu:
           Value: true
-        intake_link:
+        laser:
           Value: true
-        intake_tilt_link:
+        limelight_link:
           Value: true
-        left_inner_climber_link:
+        map:
           Value: true
-        left_inner_climber_tilt_link:
-          Value: true
-        left_inner_hook_link:
-          Value: true
-        left_outer_climber_link:
-          Value: true
-        left_outer_climber_tilt_link:
-          Value: true
-        left_outer_hook_link:
-          Value: true
-        right_inner_climber_link:
-          Value: true
-        right_inner_climber_tilt_link:
-          Value: true
-        right_inner_hook_link:
-          Value: true
-        right_outer_climber_link:
-          Value: true
-        right_outer_climber_tilt_link:
-          Value: true
-        right_outer_hook_link:
-          Value: true
-        sinistra_laser_link:
+        odom:
           Value: true
         swerve_wheel_0:
           Value: true
@@ -116,10 +95,28 @@ Visualization Manager:
           Value: true
         swerve_wheel_3:
           Value: true
-        turret_link:
+        zed2_baro_link:
+          Value: false
+        zed2_base_link:
+          Value: false
+        zed2_camera_center:
           Value: true
-        turret_tilt_link:
-          Value: true
+        zed2_imu_link:
+          Value: false
+        zed2_left_camera_frame:
+          Value: false
+        zed2_left_camera_optical_frame:
+          Value: false
+        zed2_mag_link:
+          Value: false
+        zed2_right_camera_frame:
+          Value: false
+        zed2_right_camera_optical_frame:
+          Value: false
+        zed2_temp_left_link:
+          Value: false
+        zed2_temp_right_link:
+          Value: false
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -127,47 +124,45 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        base_link:
-          base_tilt_link:
-            camera_tilt_link:
-              camera_armature_link:
-                {}
-            dextra_laser_link:
-              {}
-            imu:
-              {}
-            intake_tilt_link:
-              intake_link:
-                {}
-            left_inner_climber_tilt_link:
-              left_inner_climber_link:
-                left_inner_hook_link:
+        map:
+          odom:
+            base_link:
+              base_tilt_link:
+                camera_tilt_link:
+                  camera_armature_link:
+                    camera_link:
+                      zed2_base_link:
+                        zed2_camera_center:
+                          zed2_baro_link:
+                            {}
+                          zed2_left_camera_frame:
+                            zed2_imu_link:
+                              {}
+                            zed2_left_camera_optical_frame:
+                              {}
+                            zed2_temp_left_link:
+                              {}
+                          zed2_mag_link:
+                            {}
+                          zed2_right_camera_frame:
+                            zed2_right_camera_optical_frame:
+                              {}
+                            zed2_temp_right_link:
+                              {}
+                imu:
                   {}
-            left_outer_climber_tilt_link:
-              left_outer_climber_link:
-                left_outer_hook_link:
+                laser:
                   {}
-            right_inner_climber_tilt_link:
-              right_inner_climber_link:
-                right_inner_hook_link:
+                limelight_link:
                   {}
-            right_outer_climber_tilt_link:
-              right_outer_climber_link:
-                right_outer_hook_link:
+                swerve_wheel_0:
                   {}
-            sinistra_laser_link:
-              {}
-            swerve_wheel_0:
-              {}
-            swerve_wheel_1:
-              {}
-            swerve_wheel_2:
-              {}
-            swerve_wheel_3:
-              {}
-            turret_tilt_link:
-              turret_link:
-                {}
+                swerve_wheel_1:
+                  {}
+                swerve_wheel_2:
+                  {}
+                swerve_wheel_3:
+                  {}
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988079071
@@ -185,71 +180,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        intake_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        intake_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        left_inner_climber_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        left_inner_climber_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        left_inner_hook_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        left_outer_climber_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        left_outer_climber_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        left_outer_hook_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        right_inner_climber_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        right_inner_climber_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        right_inner_hook_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        right_outer_climber_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        right_outer_climber_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        right_outer_hook_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         swerve_wheel_0:
           Alpha: 1
           Show Axes: false
@@ -270,15 +200,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        turret_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        turret_tilt_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -328,7 +249,14 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        {}
+        poscenter: true
+        posred_end: true
+        posred_point_a: true
+        posred_point_b: true
+        textcenter: true
+        textred_end: true
+        textred_point_a: true
+        textred_point_b: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -883,7 +811,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_link
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -907,7 +835,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.373758316040039
+      Distance: 9.248104095458984
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -915,17 +843,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.08173400163650513
-        Y: 0.09624874591827393
-        Z: 0.3316909372806549
+        X: -0.454115629196167
+        Y: 2.1792640686035156
+        Z: 0.4309493601322174
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3997977674007416
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 5.037313938140869
+      Yaw: 5.082315444946289
     Saved: ~
 Window Geometry:
   Displays:

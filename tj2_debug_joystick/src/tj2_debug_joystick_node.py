@@ -69,7 +69,8 @@ class TJ2DebugJoystick:
         self.global_frame = rospy.get_param("~global_frame", "map")
 
         self.speed_mode = 0
-        self.speed_multipliers = [0.1, 0.25, 0.5, 0.9, 1.0]
+        self.linear_multipliers = [0.1, 0.25, 0.5, 0.9, 1.0]
+        self.angular_multipliers = [0.075, 0.2, 0.4, 0.6, 1.0]
         self.set_speed_mode(0)
 
         self.is_field_relative = False
@@ -108,18 +109,12 @@ class TJ2DebugJoystick:
 
         self.joystick.update(msg)
         
-        if all(self.joystick.check_list(self.joystick.is_button_down, ("triggers", "L1"), ("menu", "Start"))):
+        if all(self.joystick.check_list(self.joystick.is_button_down, "triggers/L1", "menu/Start")):
             self.set_mode(RobotStatus.TELEOP)
-        elif all(self.joystick.check_list(self.joystick.is_button_down, ("menu", "Select"), ("menu", "Start"))):
+        elif all(self.joystick.check_list(self.joystick.is_button_down, "menu/Select", "menu/Start")):
             self.set_mode(RobotStatus.AUTONOMOUS)
-        elif any(self.joystick.check_list(self.joystick.did_button_down, ("triggers", "L1"), ("triggers", "R1"))):
+        elif any(self.joystick.check_list(self.joystick.did_button_down, "triggers/L1", "triggers/R1")):
             self.set_mode(RobotStatus.DISABLED)
-        # elif self.joystick.did_button_down(("main", "B")):
-        #     self.set_field_relative(not self.is_field_relative)
-        # elif self.joystick.did_button_down(("main", "A")):
-        #     self.limelight_led_mode = not self.limelight_led_mode
-        #     rospy.loginfo("Setting limelight led mode to %s" % self.limelight_led_mode)
-        #     self.limelight_led_pub.publish(self.limelight_led_mode)
 
         if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis)):
             self.disable_timer = rospy.Time.now()
@@ -135,6 +130,9 @@ class TJ2DebugJoystick:
                 self.twist_command.angular.z != 0.0):
             self.cmd_vel_timer = rospy.Time.now()
         
+        if self.joystick.did_button_down("main/B"):
+            self.set_field_relative(not self.is_field_relative)
+
         if self.joystick.did_axis_change(self.speed_selector_axis):
             axis_value = self.joystick.get_axis(self.speed_selector_axis)
             if axis_value > 0:
@@ -162,13 +160,14 @@ class TJ2DebugJoystick:
         self.speed_mode = value
         if self.speed_mode < 0:
             self.speed_mode = 0
-        elif self.speed_mode >= len(self.speed_multipliers):
-            self.speed_mode = len(self.speed_multipliers) - 1
+        elif self.speed_mode >= len(self.linear_multipliers):
+            self.speed_mode = len(self.linear_multipliers) - 1
         rospy.loginfo("Set speed mode to %s" % self.speed_mode)
-        multiplier = self.speed_multipliers[self.speed_mode]
-        self.linear_x_scale = multiplier * self.linear_x_scale_max
-        self.linear_y_scale = multiplier * self.linear_y_scale_max
-        self.angular_scale = multiplier * self.angular_scale_max
+        linear_multiplier = self.linear_multipliers[self.speed_mode]
+        angular_multiplier = self.angular_multipliers[self.speed_mode]
+        self.linear_x_scale = linear_multiplier * self.linear_x_scale_max
+        self.linear_y_scale = linear_multiplier * self.linear_y_scale_max
+        self.angular_scale = angular_multiplier * self.angular_scale_max
 
     def set_twist(self, linear_x_val, linear_y_val, angular_val):
         if (self.twist_command.linear.x != linear_x_val or 
