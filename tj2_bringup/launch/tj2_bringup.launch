@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <include file="$(find tj2_bringup)/launch/diffyjr_bringup.launch"/>
+    <!-- <include file="$(find tj2_bringup)/launch/diffyjr_bringup.launch"/> -->
     <!-- <include file="$(find tj2_bringup)/launch/2022_robot_bringup.launch"/> -->
-    <!-- <include file="$(find tj2_bringup)/launch/2022_swervy_bringup.launch"/> -->
+    <include file="$(find tj2_bringup)/launch/2022_swervy_bringup.launch"/>
 </launch>
