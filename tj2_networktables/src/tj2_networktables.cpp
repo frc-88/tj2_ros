@@ -1,7 +1,7 @@
 #include "tj2_networktables.h"
 
 TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
-    nh(*nodehandle)
+    nh(*nodehandle), _tf_listener(_tf_buffer)
 {
     ros::param::param<int>("~nt_port", _nt_port, 5800);
     ros::param::param<double>("~update_interval", _update_interval, 0.01);
@@ -236,21 +236,27 @@ void TJ2NetworkTables::publish_goal_status()
 
 void TJ2NetworkTables::publish_robot_global_pose()
 {
-    tf::StampedTransform transform;
+    geometry_msgs::TransformStamped transform;
     try {
-        _tf_listener.lookupTransform(_map_frame, _base_frame, ros::Time(0), transform);
+        transform = _tf_buffer.lookupTransform(_map_frame, _base_frame, ros::Time(0));
     }
-    catch (tf::TransformException ex) {
+    catch (tf2::TransformException &ex) {
+        ROS_WARN_THROTTLE(1.0, "Failed to publish robot's global pose: %s", ex.what());
         return;
     }
 
-    double x = transform.getOrigin().x();
-    double y = transform.getOrigin().y();
-    double theta = tf::getYaw(transform.getRotation()); 
+    double x = transform.transform.translation.x;
+    double y = transform.transform.translation.y;
+
+    tf2::Quaternion quat;
+    tf2::convert(transform.transform.rotation, quat);
+    tf2::Matrix3x3 m1(quat);
+    double roll, pitch, yaw;
+    m1.getRPY(roll, pitch, yaw);
     
     nt::SetEntryValue(_global_x_entry, nt::Value::MakeDouble(x));
     nt::SetEntryValue(_global_y_entry, nt::Value::MakeDouble(y));
-    nt::SetEntryValue(_global_t_entry, nt::Value::MakeDouble(theta));
+    nt::SetEntryValue(_global_t_entry, nt::Value::MakeDouble(yaw));
     nt::SetEntryValue(_global_update_entry, nt::Value::MakeDouble(get_time()));
 }
 
@@ -321,14 +327,14 @@ void TJ2NetworkTables::waypoints_callback(const tj2_waypoints::WaypointArrayCons
         double x = pose.position.x;
         double y = pose.position.y;
 
-        tf::Quaternion q(
+        tf2::Quaternion quat(
             pose.orientation.x,
             pose.orientation.y,
             pose.orientation.z,
             pose.orientation.w);
-        tf::Matrix3x3 m(q);
+        tf2::Matrix3x3 m1(quat);
         double roll, pitch, yaw;
-        m.getRPY(roll, pitch, yaw);
+        m1.getRPY(roll, pitch, yaw);
         
         nt::SetEntryValue(x_entry, nt::Value::MakeDouble(x));
         nt::SetEntryValue(y_entry, nt::Value::MakeDouble(y));
@@ -346,7 +352,7 @@ void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayCo
     for (size_t name_index = 0; name_index < _class_names.size(); name_index++) {
         double min_dist = NAN;
         string label = _class_names.at(name_index);
-        geometry_msgs::Pose nearest_pose;
+        geometry_msgs::PoseStamped nearest_pose;
         int num_detections = 0;
         for (size_t index = 0; index < msg->detections.size(); index++) {
             vision_msgs::ObjectHypothesisWithPose hyp = msg->detections.at(index).results[0];
@@ -357,7 +363,7 @@ void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayCo
                 double dist = sqrt(pose.position.x * pose.position.x + pose.position.y * pose.position.y + pose.position.z * pose.position.z);
                 if (!std::isfinite(min_dist) || dist < min_dist) {
                     min_dist = dist;
-                    nearest_pose = hyp.pose.pose;
+                    nearest_pose.pose = hyp.pose.pose;
                 }
             }
         }
@@ -368,9 +374,22 @@ void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayCo
             continue;
         }
 
-        double nearest_x = nearest_pose.position.x;
-        double nearest_y = nearest_pose.position.y;
-        double nearest_z = nearest_pose.position.z;
+        nearest_pose.header = msg->header;
+
+        geometry_msgs::TransformStamped transform;
+        try {
+            transform = _tf_buffer.lookupTransform(_base_frame, nearest_pose.header.frame_id, ros::Time(0));
+        }
+        catch (tf2::TransformException &ex) {
+            ROS_WARN_THROTTLE(1.0, "Failed to transform object to base frame: %s", ex.what());
+            return;
+        }
+
+        tf2::doTransform(nearest_pose, nearest_pose, transform);
+
+        double nearest_x = nearest_pose.pose.position.x;
+        double nearest_y = nearest_pose.pose.position.y;
+        double nearest_z = nearest_pose.pose.position.z;
 
         nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/x"), nt::Value::MakeDouble(nearest_x));
         nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/y"), nt::Value::MakeDouble(nearest_y));

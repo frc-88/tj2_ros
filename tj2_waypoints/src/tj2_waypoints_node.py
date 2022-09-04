@@ -38,8 +38,6 @@ from tj2_waypoints.srv import SaveTF, SaveTFResponse
 from tj2_waypoints.msg import FollowPathAction, FollowPathGoal, FollowPathResult
 from tj2_waypoints.msg import Waypoint, WaypointArray
 
-from tj2_pursuit.msg import PursueObjectAction
-
 from state_machine import WaypointStateMachine
 
 
@@ -100,7 +98,6 @@ class Tj2Waypoints:
         self.marker_color = rospy.get_param("~marker_color", (0.0, 0.0, 1.0, 1.0))
         self.enable_waypoint_navigation = rospy.get_param("~enable_waypoint_navigation", False)
         self.move_base_namespace = rospy.get_param("~move_base_namespace", "/move_base")
-        self.pursuit_namespace = rospy.get_param("~pursuit_namespace", "/tj2/pursue_object")
         self.local_obstacle_layer_topic = rospy.get_param("~local_obstacle_layer_topic", "/move_base/local_costmap/obstacle_layer")
         self.global_obstacle_layer_topic = rospy.get_param("~global_obstacle_layer_topic", "/move_base/global_costmap/obstacle_layer")
         self.local_static_layer_topic = rospy.get_param("~local_static_layer_topic", "/move_base/local_costmap/static")
@@ -153,15 +150,8 @@ class Tj2Waypoints:
         self.global_obstacle_layer_toggle = None
         self.local_static_layer_toggle = None
         self.global_static_layer_toggle = None
-        self.pursuit_action = None
 
         if self.enable_waypoint_navigation:
-            self.pursuit_action = actionlib.SimpleActionClient(self.pursuit_namespace, PursueObjectAction)
-
-            rospy.loginfo("Connecting to pursuit...")
-            self.pursuit_action.wait_for_server()
-            rospy.loginfo("pursuit connected")
-
             self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
 
             rospy.loginfo("Connecting to move_base...")

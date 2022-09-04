@@ -20,11 +20,10 @@
 #include "actionlib/client/terminal_state.h"
 #include "actionlib/client/simple_client_goal_state.h"
 
-#include "tf/transform_listener.h"
-
 #include "tf2/LinearMath/Quaternion.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
 
 #include "nav_msgs/Odometry.h"
 #include "geometry_msgs/Twist.h"
@@ -224,7 +223,8 @@ private:
     ros::Subscriber _nt_passthrough_sub;
     ros::Subscriber _waypoints_sub;
     ros::Subscriber _detections_sub;
-    tf::TransformListener _tf_listener;
+    tf2_ros::Buffer _tf_buffer;
+    tf2_ros::TransformListener _tf_listener;
     vector<ros::Subscriber>* _raw_joint_subs;
 
     // Service Servers
