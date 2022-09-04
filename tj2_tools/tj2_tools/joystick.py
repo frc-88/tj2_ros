@@ -1,5 +1,5 @@
 import math
-import rospy
+import warnings
 from sensor_msgs.msg import Joy
 from tj2_tools.recursive_namespace import RecursiveNamespace
 
@@ -24,20 +24,24 @@ class Joystick:
     def get_index(self, namespace, value):
         if isinstance(value, int):
             index = value
-        else:
+        elif isinstance(value, str):
+            index = namespace.get_nested(value.split("/"))
+        elif isinstance(value, tuple) or isinstance(value, list):
             index = namespace.get_nested(value)
+        else:
+            raise ValueError("Invalid index value type: %s<%s>" % (type(value), repr(value)))
         return index
     
     def is_valid_button(self, index):
         if index >= len(self.curr_msg.buttons):
-            rospy.logwarn("Button '%s' does not map to a valid index: %s" % (index, self.curr_msg))
+            warnings.warn("Button '%s' does not map to a valid index: %s" % (index, self.curr_msg))
             return False
         else:
             return True
     
     def is_valid_axis(self, index):
         if index >= len(self.curr_msg.axes):
-            rospy.logwarn("Axis '%s' does not map to a valid index: %s" % (index, self.curr_msg))
+            warnings.warn("Axis '%s' does not map to a valid index: %s" % (index, self.curr_msg))
             return False
         else:
             return True
@@ -45,13 +49,13 @@ class Joystick:
     def is_button_down(self, button):
         index = self.get_index(self.button_mapping, button)
         if not self.is_valid_button(index):
-            return False
+            raise ValueError("Invalid button: %s" % button)
         return self.curr_msg.buttons[index]
 
     def is_button_up(self, button):
         index = self.get_index(self.button_mapping, button)
         if not self.is_valid_button(index):
-            return False
+            raise ValueError("Invalid button: %s" % button)
         return not self.curr_msg.buttons[index]
     
     def did_button_down(self, button):
@@ -63,14 +67,26 @@ class Joystick:
     def did_button_change(self, button):
         index = self.get_index(self.button_mapping, button)
         if not self.is_valid_button(index):
-            return False
+            raise ValueError("Invalid button: %s" % button)
         return self.prev_msg.buttons[index] != self.curr_msg.buttons[index]
     
     def did_axis_change(self, axis):
         index = self.get_index(self.axis_mapping, axis)
         if not self.is_valid_axis(index):
-            return False
+            raise ValueError("Invalid axis: %s" % axis)
         return self.prev_msg.axes[index] != self.curr_msg.axes[index]
+    
+    def did_axis_less_than(self, axis, threshold):
+        index = self.get_index(self.axis_mapping, axis)
+        if not self.is_valid_axis(index):
+            raise ValueError("Invalid axis: %s" % axis)
+        return self.curr_msg.axes[index] < threshold and self.prev_msg.axes[index] >= threshold
+    
+    def did_axis_greater_than(self, axis, threshold):
+        index = self.get_index(self.axis_mapping, axis)
+        if not self.is_valid_axis(index):
+            raise ValueError("Invalid axis: %s" % axis)
+        return self.curr_msg.axes[index] > threshold and self.prev_msg.axes[index] <= threshold
     
     def check_list(self, fn, *keys):
         results = []
@@ -84,7 +100,7 @@ class Joystick:
     def get_axis(self, axis):
         index = self.get_index(self.axis_mapping, axis)
         if not self.is_valid_axis(index):
-            return None
+            raise ValueError("Invalid axis: %s" % axis)
         value = self.curr_msg.axes[index]
         return value
 
