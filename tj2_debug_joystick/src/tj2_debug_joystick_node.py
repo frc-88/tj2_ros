@@ -35,6 +35,8 @@ class TJ2DebugJoystick:
         self.cmd_vel_timer = rospy.Time.now()
 
         self.cmd_vel_timeout_distance = 2.0  # meters
+        self.min_cmd_vel_timeout = 0.25
+        self.max_cmd_vel_timeout = 10.0
 
         # parameters from launch file
         self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
@@ -196,7 +198,7 @@ class TJ2DebugJoystick:
         if speed == 0.0:
             return rospy.Duration(5.0)
         timeout = self.cmd_vel_timeout_distance / speed
-        rospy.loginfo("timeout: %s" % timeout)
+        timeout = max(self.min_cmd_vel_timeout, min(self.max_cmd_vel_timeout, timeout))
         return rospy.Duration(timeout)
 
     def run(self):
