@@ -7,6 +7,7 @@ echo "Installing dependencies via apt"
 echo "---"
 
 packages=(
+joy
 geometry2
 teb-local-planner
 rtabmap-ros
