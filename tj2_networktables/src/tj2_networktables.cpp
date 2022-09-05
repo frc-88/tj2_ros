@@ -90,6 +90,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
     _nt_passthrough_sub = nh.subscribe<tj2_interfaces::NTEntry>("nt_passthrough", 50, &TJ2NetworkTables::nt_passthrough_callback, this);
     _waypoints_sub = nh.subscribe<tj2_waypoints::WaypointArray>("waypoints", 50, &TJ2NetworkTables::waypoints_callback, this);
+    _field_relative_sub = nh.subscribe<std_msgs::Bool>("field_relative", 10, &TJ2NetworkTables::field_relative_callback, this);
     if (_class_names.empty()) {
         ROS_ERROR("Error loading class names! Not broadcasting detections");
     }
@@ -155,6 +156,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _cmd_vel_y_entry = nt::GetEntry(_nt, _base_key + "cmd_vel/y");
     _cmd_vel_t_entry = nt::GetEntry(_nt, _base_key + "cmd_vel/t");
     _cmd_vel_update_entry = nt::GetEntry(_nt, _base_key + "cmd_vel/update");
+    _field_relative_entry = nt::GetEntry(_nt, _base_key + "field_relative");
 
     _goal_status_entry = nt::GetEntry(_nt, _base_key + "goal_status/status");
     _goal_status_update_entry = nt::GetEntry(_nt, _base_key + "goal_status/update");
@@ -341,6 +343,12 @@ void TJ2NetworkTables::waypoints_callback(const tj2_waypoints::WaypointArrayCons
         nt::SetEntryValue(theta_entry, nt::Value::MakeDouble(yaw));
     }
 }
+
+void TJ2NetworkTables::field_relative_callback(const std_msgs::BoolConstPtr& msg)
+{
+    nt::SetEntryValue(_field_relative_entry, nt::Value::MakeBoolean(msg->data));
+}
+
 
 void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg)
 {

@@ -6,7 +6,6 @@ from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
 
 from std_msgs.msg import Bool
-from std_msgs.msg import Int32
 
 from tj2_tools.joystick import Joystick
 
@@ -89,6 +88,7 @@ class TJ2DebugJoystick:
 
         # publishing topics
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=100)
+        self.set_field_relative_pub = rospy.Publisher("field_relative", Bool, queue_size=10)
 
         # subscription topics
         self.joy_sub = rospy.Subscriber(self.joystick_topic, Joy, self.joystick_msg_callback, queue_size=5)

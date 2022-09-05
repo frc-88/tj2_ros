@@ -185,6 +185,7 @@ private:
     NT_Entry _cmd_vel_y_entry;
     NT_Entry _cmd_vel_t_entry;
     NT_Entry _cmd_vel_update_entry;
+    NT_Entry _field_relative_entry;
 
     // Members
     ros::Timer _ping_timer;
@@ -223,6 +224,7 @@ private:
     ros::Subscriber _nt_passthrough_sub;
     ros::Subscriber _waypoints_sub;
     ros::Subscriber _detections_sub;
+    ros::Subscriber _field_relative_sub;
     tf2_ros::Buffer _tf_buffer;
     tf2_ros::TransformListener _tf_listener;
     vector<ros::Subscriber>* _raw_joint_subs;
@@ -242,6 +244,7 @@ private:
     void waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg);
     void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
     void joint_command_callback(const std_msgs::Float64ConstPtr& msg, string joint_name, int joint_index);
+    void field_relative_callback(const std_msgs::BoolConstPtr& msg);
 
     // Service callbacks
     bool odom_reset_callback(tj2_interfaces::OdomReset::Request &req, tj2_interfaces::OdomReset::Response &resp);
