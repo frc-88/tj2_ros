@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import rospy
+import math
 
 from sensor_msgs.msg import Joy
 
@@ -32,10 +33,8 @@ class TJ2DebugJoystick:
         self.twist_command.angular.z = 0.0
 
         self.cmd_vel_timer = rospy.Time.now()
-        self.disable_timer = rospy.Time.now()
 
-        self.cmd_vel_timeout = rospy.Duration(0.5)
-        self.disable_timeout = rospy.Duration(30.0)
+        self.cmd_vel_timeout_distance = 2.0  # meters
 
         # parameters from launch file
         self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
@@ -119,7 +118,6 @@ class TJ2DebugJoystick:
 
             self.set_twist(linear_x_val, linear_y_val, angular_val)
 
-            self.disable_timer = rospy.Time.now()
             self.cmd_vel_timer = rospy.Time.now()
         
         if self.joystick.did_button_down("main/B"):
@@ -190,11 +188,22 @@ class TJ2DebugJoystick:
             self.nt.getEntry("joystick/axis/y").setValue(self.twist_command.linear.y)
             self.nt.getEntry("joystick/axis/theta").setValue(self.twist_command.angular.z)
 
+    def get_cmd_vel_timeout(self):
+        speed = math.sqrt(
+            self.twist_command.linear.x * self.twist_command.linear.x + 
+            self.twist_command.linear.y * self.twist_command.linear.y
+        )
+        if speed == 0.0:
+            return rospy.Duration(5.0)
+        timeout = self.cmd_vel_timeout_distance / speed
+        rospy.loginfo("timeout: %s" % timeout)
+        return rospy.Duration(timeout)
+
     def run(self):
         clock_rate = rospy.Rate(20.0)
         while not rospy.is_shutdown():
             dt = rospy.Time.now() - self.cmd_vel_timer
-            if dt > self.cmd_vel_timeout:
+            if dt > self.get_cmd_vel_timeout():
                 self.set_twist_zero()
             if self.command_with_topic:
                 self.cmd_vel_pub.publish(self.twist_command)
