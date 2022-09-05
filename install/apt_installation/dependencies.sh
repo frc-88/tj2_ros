@@ -1,38 +1,15 @@
 #!/usr/bin/env bash
+echo "Make sure you install ROS noetic first: https://wiki.ros.org/noetic/Installation/Ubuntu"
+echo "and run: sudo rosdep init && rosdep update"
 
-packages=(
-geometry2
-navigation
-teb-local-planner
-rtabmap-ros
-realsense2-camera
-vision-msgs
-move-base-flex
-perception-pcl
-octomap-msgs
-pcl-msgs
-apriltag-ros
-costmap-converter
-image-geometry
-image-pipeline
-image-common
-laser-filters
-robot-localization
-gmapping
-amcl
-usb-cam
-image-transport-plugins
-rosbag-snapshot
-twist-mux
-)
+BASE_DIR=$(realpath "$(dirname $0)")
 
-package_list=""
-for p in "${packages[@]}"; do
-    package_list+="ros-noetic-$p "
-done
+ROS_WS=$HOME/ros_ws
+ROS_WS_SRC=${ROS_WS}/src
+BUILD_WS=$HOME/build_ws
 
-sudo apt-get install -y $package_list
+bash ${BASE_DIR}/install_apt_packages.sh ${BASE_DIR}
 
-sudo apt install -y python3-pip
-sudo pip3 install -r requirements.txt
+bash ${BASE_DIR}/install_git_dependencies.sh ${BASE_DIR}
 
+bash ${BASE_DIR}/install_ros_git_packages.sh ${BASE_DIR}
