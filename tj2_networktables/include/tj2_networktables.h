@@ -34,6 +34,7 @@
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "geometry_msgs/Pose.h"
 #include "vision_msgs/Detection3DArray.h"
+#include "sensor_msgs/LaserScan.h"
 
 #include "tj2_waypoints/FollowPathGoal.h"
 #include "tj2_waypoints/FollowPathAction.h"
@@ -94,6 +95,8 @@ private:
     double _min_linear_cmd;
     double _min_angular_z_cmd;
     double _zero_epsilon;
+    
+    double _laser_angle_interval_rad;
 
     double _pose_estimate_x_std, _pose_estimate_y_std, _pose_estimate_theta_std_deg;
     string _pose_estimate_frame_id;
@@ -187,6 +190,10 @@ private:
     NT_Entry _cmd_vel_update_entry;
     NT_Entry _field_relative_entry;
 
+    // laser scan entries
+    NT_Entry _laser_entry_xs;
+    NT_Entry _laser_entry_ys;
+
     // Members
     ros::Timer _ping_timer;
     ros::Duration _cmd_vel_timeout;
@@ -203,6 +210,9 @@ private:
     GoalStatus _currentGoalStatus;
     GoalStatus _prevPollStatus;
     std::vector<std::string> _class_names;
+
+    std::vector<double> _laser_scan_xs;
+    std::vector<double> _laser_scan_ys;
 
     // Messages
     nav_msgs::Odometry _odom_msg;
@@ -225,6 +235,7 @@ private:
     ros::Subscriber _waypoints_sub;
     ros::Subscriber _detections_sub;
     ros::Subscriber _field_relative_sub;
+    ros::Subscriber _laser_sub;
     tf2_ros::Buffer _tf_buffer;
     tf2_ros::TransformListener _tf_listener;
     vector<ros::Subscriber>* _raw_joint_subs;
@@ -245,6 +256,7 @@ private:
     void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
     void joint_command_callback(const std_msgs::Float64ConstPtr& msg, string joint_name, int joint_index);
     void field_relative_callback(const std_msgs::BoolConstPtr& msg);
+    void scan_callback(const sensor_msgs::LaserScanConstPtr& msg);
 
     // Service callbacks
     bool odom_reset_callback(tj2_interfaces::OdomReset::Request &req, tj2_interfaces::OdomReset::Response &resp);
