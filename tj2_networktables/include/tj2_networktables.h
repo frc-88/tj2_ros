@@ -97,6 +97,7 @@ private:
     double _zero_epsilon;
     
     double _laser_angle_interval_rad;
+    double _laser_angle_fan_rad;
 
     double _pose_estimate_x_std, _pose_estimate_y_std, _pose_estimate_theta_std_deg;
     string _pose_estimate_frame_id;
@@ -211,6 +212,7 @@ private:
     GoalStatus _prevPollStatus;
     std::vector<std::string> _class_names;
 
+    std::vector<double> _laser_scan_ranges;
     std::vector<double> _laser_scan_xs;
     std::vector<double> _laser_scan_ys;
 

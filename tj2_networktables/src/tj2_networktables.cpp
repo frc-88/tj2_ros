@@ -19,10 +19,14 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~min_angular_z_cmd", _min_angular_z_cmd, 0.1);
     ros::param::param<double>("~zero_epsilon", _zero_epsilon, 0.001);
 
-    double laser_angle_interval_deg;
-    ros::param::param<double>("~laser_angle_interval_degrees", laser_angle_interval_deg, 45.0);
-    _laser_angle_interval_rad = laser_angle_interval_deg * M_PI / 180.0;
+    double laser_angle_interval_degrees;
+    ros::param::param<double>("~laser_angle_interval_degrees", laser_angle_interval_degrees, 45.0);
+    _laser_angle_interval_rad = laser_angle_interval_degrees * M_PI / 180.0;
 
+    double laser_angle_fan_degrees;
+    ros::param::param<double>("~laser_angle_fan_degrees", laser_angle_fan_degrees, 10.0);
+    _laser_angle_fan_rad = laser_angle_fan_degrees * M_PI / 180.0;
+    
     ros::param::param<double>("~pose_estimate_x_std", _pose_estimate_x_std, 0.5);
     ros::param::param<double>("~pose_estimate_y_std", _pose_estimate_y_std, 0.5);
     ros::param::param<double>("~pose_estimate_theta_std_deg", _pose_estimate_theta_std_deg, 15.0);
@@ -118,6 +122,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     else {
         _laser_scan_xs.resize(scan_size);
         _laser_scan_ys.resize(scan_size);
+        _laser_scan_ranges.resize(scan_size);
     }
 
     _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2NetworkTables::odom_reset_callback, this);
@@ -373,11 +378,6 @@ void TJ2NetworkTables::scan_callback(const sensor_msgs::LaserScanConstPtr& msg)
         ROS_WARN_THROTTLE(1.0, "NT Laser x size is zero! Check your laser_angle_interval_degrees parmeter. %lu", _laser_scan_xs.size());
         return;
     }
-    if (_laser_scan_ys.size() == 0) {
-        ROS_WARN_THROTTLE(1.0, "NT Laser y size is zero! Check your laser_angle_interval_degrees parmeter. %lu", _laser_scan_ys.size());
-        return;
-    }
-
 
     geometry_msgs::TransformStamped transform;
     try {
@@ -388,33 +388,58 @@ void TJ2NetworkTables::scan_callback(const sensor_msgs::LaserScanConstPtr& msg)
         return;
     }
 
-    
-    double lower_angle, upper_angle, copy_angle;
-    
-    double distance;
+    for (size_t index = 0; index < _laser_scan_ranges.size(); index++) {
+        _laser_scan_ranges.at(index) = msg->range_max;
+    }
+
+    double wrap_angle = msg->angle_max - msg->angle_min + msg->angle_increment;
+
+    for (size_t index = 0; index < msg->ranges.size(); index++) {
+        double laser_angle = msg->angle_increment * index + msg->angle_min;
+        for (size_t copy_index = 0; copy_index < _laser_scan_ranges.size(); copy_index++) {
+            double lower_angle = _laser_angle_interval_rad * copy_index + msg->angle_min - _laser_angle_fan_rad;
+            double upper_angle = _laser_angle_interval_rad * copy_index + msg->angle_min + _laser_angle_fan_rad;
+            
+            bool is_within_angle = false;
+            if (lower_angle < msg->angle_min || upper_angle > msg->angle_max) {
+                if (lower_angle < msg->angle_min) {
+                    lower_angle += wrap_angle;
+                }
+                if (upper_angle > msg->angle_max) {
+                    upper_angle -= wrap_angle;
+                }
+                is_within_angle = !(upper_angle < laser_angle && laser_angle < lower_angle);
+            }
+            else {
+                is_within_angle = lower_angle <= laser_angle && laser_angle <= upper_angle;
+            }
+
+            if (is_within_angle) {
+                double distance = msg->ranges.at(index);
+                if (msg->range_min <= distance && distance <= _laser_scan_ranges.at(copy_index)) {
+                    _laser_scan_ranges.at(copy_index) = distance;
+                }
+            }
+        }
+    }
+
     geometry_msgs::PoseStamped laser_pose, base_pose;
     laser_pose.header.frame_id = msg->header.frame_id;
     laser_pose.pose.orientation.w = 1.0;
 
-    size_t copy_index = 0;
-    for (size_t index = 0; index < msg->ranges.size() - 1; index++) {
-        lower_angle = msg->angle_increment * index + msg->angle_min;
-        upper_angle = msg->angle_increment * (index + 1) + msg->angle_min;
-        copy_angle = _laser_angle_interval_rad * copy_index + msg->angle_min;
+    for (size_t index = 0; index < _laser_scan_ranges.size(); index++) {
+        double angle = _laser_angle_interval_rad * index + msg->angle_min;
+        double distance = _laser_scan_ranges.at(index);
 
-        if (lower_angle <= copy_angle && copy_angle < upper_angle) {
-            distance = msg->ranges.at(copy_index);
-            laser_pose.pose.position.x = distance * cos(copy_angle);
-            laser_pose.pose.position.y = distance * sin(copy_angle);
+        laser_pose.pose.position.x = distance * cos(angle);
+        laser_pose.pose.position.y = distance * sin(angle);
 
-            tf2::doTransform(laser_pose, base_pose, transform);
-            
-            _laser_scan_xs.at(copy_index) = base_pose.pose.position.x;
-            _laser_scan_ys.at(copy_index) = base_pose.pose.position.y;
-            copy_index++;
-        }
-    }
+        tf2::doTransform(laser_pose, base_pose, transform);
     
+        _laser_scan_xs.at(index) = base_pose.pose.position.x;
+        _laser_scan_ys.at(index) = base_pose.pose.position.y;
+    }
+
     nt::SetEntryValue(_laser_entry_xs, nt::Value::MakeDoubleArray(_laser_scan_xs));
     nt::SetEntryValue(_laser_entry_ys, nt::Value::MakeDoubleArray(_laser_scan_ys));
 }
