@@ -70,16 +70,16 @@ class GoToWaypointState(State):
         if len(pose_array.poses) == 0:
             return "success"
 
-        first_waypoint = waypoints[0]  # for some parameters, only the first waypoint's values matter
+        last_waypoint = waypoints[-1]  # for some parameters, only the last waypoint's values matter
 
         self.is_move_base_done = False
         self.distance_to_goal = None
         self.within_range_time = None
 
-        self.intermediate_tolerance = first_waypoint.intermediate_tolerance
-        self.ignore_orientation = first_waypoint.ignore_orientation
-        self.ignore_obstacles = first_waypoint.ignore_obstacles
-        self.ignore_walls = first_waypoint.ignore_walls
+        self.intermediate_tolerance = last_waypoint.intermediate_tolerance
+        self.ignore_orientation = self.any_false(waypoints, "ignore_orientation")
+        self.ignore_obstacles = self.any_false(waypoints, "ignore_obstacles")
+        self.ignore_walls = self.any_false(waypoints, "ignore_walls")
 
         if self.set_ignore_layers(userdata, self.ignore_walls, self.ignore_obstacles):
             time.sleep(self.costmap_toggle_delay)
@@ -117,6 +117,18 @@ class GoToWaypointState(State):
         else:
             rospy.loginfo("move_base result was not a success")
             return "failure"
+    
+    def any_false(self, waypoints, attribute):
+        for waypoint in waypoints:
+            if not bool(getattr(waypoint, attribute)):
+                return False
+        return True
+
+    def any_true(self, waypoints, attribute):
+        for waypoint in waypoints:
+            if bool(getattr(waypoint, attribute)):
+                return True
+        return False
 
     def wait_for_move_base(self):
         rate = rospy.Rate(10.0)
@@ -155,9 +167,6 @@ class GoToWaypointState(State):
                         if rospy.Time.now() - self.within_range_time > self.intermediate_settle_time:
                             self.close_enough_to_goal()
                     else:
-                        self.close_enough_to_goal()
-                else:
-                    if self.intermediate_tolerance > 0.0:
                         self.close_enough_to_goal()
             else:
                 self.within_range_time = None
