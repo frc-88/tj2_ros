@@ -33,6 +33,7 @@ class TJ2DebugJoystick:
         self.twist_command.angular.z = 0.0
 
         self.cmd_vel_timer = rospy.Time.now()
+        self.publish_timeout = rospy.Duration(1.0)
 
         self.cmd_vel_timeout_distance = 2.0  # meters
         self.min_cmd_vel_timeout = 0.25
@@ -205,9 +206,10 @@ class TJ2DebugJoystick:
         clock_rate = rospy.Rate(20.0)
         while not rospy.is_shutdown():
             dt = rospy.Time.now() - self.cmd_vel_timer
-            if dt > self.get_cmd_vel_timeout():
+            timeout = self.get_cmd_vel_timeout()
+            if dt > timeout:
                 self.set_twist_zero()
-            if self.command_with_topic:
+            if self.command_with_topic and dt < timeout + self.publish_timeout:
                 self.cmd_vel_pub.publish(self.twist_command)
             clock_rate.sleep()
 
