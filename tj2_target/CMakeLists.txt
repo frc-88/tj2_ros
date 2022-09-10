@@ -16,7 +16,6 @@ catkin_python_setup() # added if there is a setup.py. In this case for the node
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  RevColorSensor.msg
   TargetConfig.msg
 )
 

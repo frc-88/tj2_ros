@@ -31,7 +31,8 @@ from tj2_waypoints.msg import WaypointArray
 
 from tj2_networktables.msg import NTEntry
 
-from tj2_target.msg import RevColorSensor
+from rev_color_sensor_ros.msg import RevColorSensor
+
 from tj2_target.msg import TargetConfig
 
 from tj2_target.srv import RecordValue, RecordValueResponse

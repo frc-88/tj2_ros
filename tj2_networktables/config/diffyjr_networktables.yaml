@@ -45,3 +45,6 @@ imu_linear_acceleration_covariance: [
   0.0, 100e-2, 0.0,
   0.0, 0.0, 100e-2
 ]
+
+laser_angle_interval_degrees: 45
+laser_angle_fan_degrees: 2

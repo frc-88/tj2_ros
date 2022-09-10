@@ -14,7 +14,7 @@ class OdomListener(object):
             # log_level=rospy.DEBUG
         )
 
-        self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback, queue_size=50)
+        self.odom_sub = rospy.Subscriber("/tj2/odom", Odometry, self.odom_callback, queue_size=50)
 
         self.time_data = []
         self.x_data = []

@@ -19,6 +19,14 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~min_angular_z_cmd", _min_angular_z_cmd, 0.1);
     ros::param::param<double>("~zero_epsilon", _zero_epsilon, 0.001);
 
+    double laser_angle_interval_degrees;
+    ros::param::param<double>("~laser_angle_interval_degrees", laser_angle_interval_degrees, 45.0);
+    _laser_angle_interval_rad = laser_angle_interval_degrees * M_PI / 180.0;
+
+    double laser_angle_fan_degrees;
+    ros::param::param<double>("~laser_angle_fan_degrees", laser_angle_fan_degrees, 10.0);
+    _laser_angle_fan_rad = laser_angle_fan_degrees * M_PI / 180.0;
+    
     ros::param::param<double>("~pose_estimate_x_std", _pose_estimate_x_std, 0.5);
     ros::param::param<double>("~pose_estimate_y_std", _pose_estimate_y_std, 0.5);
     ros::param::param<double>("~pose_estimate_theta_std_deg", _pose_estimate_theta_std_deg, 15.0);
@@ -90,6 +98,9 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
     _nt_passthrough_sub = nh.subscribe<tj2_interfaces::NTEntry>("nt_passthrough", 50, &TJ2NetworkTables::nt_passthrough_callback, this);
     _waypoints_sub = nh.subscribe<tj2_waypoints::WaypointArray>("waypoints", 50, &TJ2NetworkTables::waypoints_callback, this);
+    _field_relative_sub = nh.subscribe<std_msgs::Bool>("field_relative", 10, &TJ2NetworkTables::field_relative_callback, this);
+    _laser_sub = nh.subscribe<sensor_msgs::LaserScan>("scan", 10, &TJ2NetworkTables::scan_callback, this);
+
     if (_class_names.empty()) {
         ROS_ERROR("Error loading class names! Not broadcasting detections");
     }
@@ -103,6 +114,16 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _twist_cmd_vt = 0.0;
 
     _currentGoalStatus = INVALID;
+
+    int scan_size = (int)(2.0 * M_PI / _laser_angle_interval_rad);
+    if (scan_size <= 0) {
+        ROS_ERROR("NT Scan size is less than or equal to zero! Check your laser_angle_interval_degrees parmeter. %d", scan_size);
+    }
+    else {
+        _laser_scan_xs.resize(scan_size);
+        _laser_scan_ys.resize(scan_size);
+        _laser_scan_ranges.resize(scan_size);
+    }
 
     _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2NetworkTables::odom_reset_callback, this);
 
@@ -155,6 +176,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _cmd_vel_y_entry = nt::GetEntry(_nt, _base_key + "cmd_vel/y");
     _cmd_vel_t_entry = nt::GetEntry(_nt, _base_key + "cmd_vel/t");
     _cmd_vel_update_entry = nt::GetEntry(_nt, _base_key + "cmd_vel/update");
+    _field_relative_entry = nt::GetEntry(_nt, _base_key + "field_relative");
 
     _goal_status_entry = nt::GetEntry(_nt, _base_key + "goal_status/status");
     _goal_status_update_entry = nt::GetEntry(_nt, _base_key + "goal_status/update");
@@ -183,6 +205,9 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::AddEntryListener(_exec_waypoint_plan_update_entry, boost::bind(&TJ2NetworkTables::exec_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
     nt::AddEntryListener(_reset_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::reset_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
     nt::AddEntryListener(_cancel_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::cancel_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _laser_entry_xs = nt::GetEntry(_nt, _base_key + "laser/xs");
+    _laser_entry_ys = nt::GetEntry(_nt, _base_key + "laser/ys");
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -340,6 +365,83 @@ void TJ2NetworkTables::waypoints_callback(const tj2_waypoints::WaypointArrayCons
         nt::SetEntryValue(y_entry, nt::Value::MakeDouble(y));
         nt::SetEntryValue(theta_entry, nt::Value::MakeDouble(yaw));
     }
+}
+
+void TJ2NetworkTables::field_relative_callback(const std_msgs::BoolConstPtr& msg)
+{
+    nt::SetEntryValue(_field_relative_entry, nt::Value::MakeBoolean(msg->data));
+}
+
+void TJ2NetworkTables::scan_callback(const sensor_msgs::LaserScanConstPtr& msg)
+{
+    if (_laser_scan_xs.size() == 0) {
+        ROS_WARN_THROTTLE(1.0, "NT Laser x size is zero! Check your laser_angle_interval_degrees parmeter. %lu", _laser_scan_xs.size());
+        return;
+    }
+
+    geometry_msgs::TransformStamped transform;
+    try {
+        transform = _tf_buffer.lookupTransform(_base_frame, msg->header.frame_id, ros::Time(0));
+    }
+    catch (tf2::TransformException &ex) {
+        ROS_WARN_THROTTLE(1.0, "Failed to transform laser to base frame: %s", ex.what());
+        return;
+    }
+
+    for (size_t index = 0; index < _laser_scan_ranges.size(); index++) {
+        _laser_scan_ranges.at(index) = msg->range_max;
+    }
+
+    double wrap_angle = msg->angle_max - msg->angle_min + msg->angle_increment;
+
+    for (size_t index = 0; index < msg->ranges.size(); index++) {
+        double laser_angle = msg->angle_increment * index + msg->angle_min;
+        for (size_t copy_index = 0; copy_index < _laser_scan_ranges.size(); copy_index++) {
+            double lower_angle = _laser_angle_interval_rad * copy_index + msg->angle_min - _laser_angle_fan_rad;
+            double upper_angle = _laser_angle_interval_rad * copy_index + msg->angle_min + _laser_angle_fan_rad;
+            
+            bool is_within_angle = false;
+            if (lower_angle < msg->angle_min || upper_angle > msg->angle_max) {
+                if (lower_angle < msg->angle_min) {
+                    lower_angle += wrap_angle;
+                }
+                if (upper_angle > msg->angle_max) {
+                    upper_angle -= wrap_angle;
+                }
+                is_within_angle = !(upper_angle < laser_angle && laser_angle < lower_angle);
+            }
+            else {
+                is_within_angle = lower_angle <= laser_angle && laser_angle <= upper_angle;
+            }
+
+            if (is_within_angle) {
+                double distance = msg->ranges.at(index);
+                if (msg->range_min <= distance && distance <= _laser_scan_ranges.at(copy_index)) {
+                    _laser_scan_ranges.at(copy_index) = distance;
+                }
+            }
+        }
+    }
+
+    geometry_msgs::PoseStamped laser_pose, base_pose;
+    laser_pose.header.frame_id = msg->header.frame_id;
+    laser_pose.pose.orientation.w = 1.0;
+
+    for (size_t index = 0; index < _laser_scan_ranges.size(); index++) {
+        double angle = _laser_angle_interval_rad * index + msg->angle_min;
+        double distance = _laser_scan_ranges.at(index);
+
+        laser_pose.pose.position.x = distance * cos(angle);
+        laser_pose.pose.position.y = distance * sin(angle);
+
+        tf2::doTransform(laser_pose, base_pose, transform);
+    
+        _laser_scan_xs.at(index) = base_pose.pose.position.x;
+        _laser_scan_ys.at(index) = base_pose.pose.position.y;
+    }
+
+    nt::SetEntryValue(_laser_entry_xs, nt::Value::MakeDoubleArray(_laser_scan_xs));
+    nt::SetEntryValue(_laser_entry_ys, nt::Value::MakeDoubleArray(_laser_scan_ys));
 }
 
 void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg)
