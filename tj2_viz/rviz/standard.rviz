@@ -252,16 +252,10 @@ Visualization Manager:
         posred_2: true
         posred_3: true
         posred_4: true
-        posred_a: true
-        posred_b: true
-        posred_c: true
         textred_1: true
         textred_2: true
         textred_3: true
         textred_4: true
-        textred_a: true
-        textred_b: true
-        textred_c: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -840,7 +834,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 19.420209884643555
+      Distance: 30.558076858520508
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -848,9 +842,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 4.660695552825928
-        Y: 0.34093835949897766
-        Z: 0.3361778259277344
+        X: 2.4697067737579346
+        Y: 0.7388014197349548
+        Z: 0.3355320394039154
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
