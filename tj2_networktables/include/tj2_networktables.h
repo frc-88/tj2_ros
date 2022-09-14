@@ -45,6 +45,8 @@
 #include "tj2_interfaces/OdomReset.h"
 #include "tj2_interfaces/NTEntry.h"
 #include "tj2_interfaces/NavX.h"
+#include "tj2_interfaces/SwerveModule.h"
+#include "tj2_interfaces/SwerveMotor.h"
 
 #include "networktables/EntryListenerFlags.h"
 
@@ -195,6 +197,9 @@ private:
     NT_Entry _laser_entry_xs;
     NT_Entry _laser_entry_ys;
 
+    // module entires
+    NT_Entry _module_num_entry;
+
     // Members
     ros::Timer _ping_timer;
     ros::Duration _cmd_vel_timeout;
@@ -216,6 +221,8 @@ private:
     std::vector<double> _laser_scan_xs;
     std::vector<double> _laser_scan_ys;
 
+    int _num_modules;
+
     // Messages
     nav_msgs::Odometry _odom_msg;
     tj2_interfaces::NavX _imu_msg;
@@ -230,6 +237,7 @@ private:
     ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
     ros::Publisher _pose_estimate_pub;
     ros::Publisher _pose_reset_pub;
+    ros::Publisher _modules_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
@@ -270,6 +278,7 @@ private:
     void joint_callback(size_t joint_index);
     void match_callback(const nt::EntryNotification& event);
     void pose_estimate_callback(const nt::EntryNotification& event);
+    void module_num_callback(const nt::EntryNotification& event);
 
     void create_waypoint(size_t index);
     void exec_waypoint_plan_callback(const nt::EntryNotification& event);
@@ -284,6 +293,7 @@ private:
     double get_double(NT_Entry entry, double default_value = 0.0);
     bool get_boolean(NT_Entry entry, bool default_value = false);
     string get_string(NT_Entry entry, string default_value = "");
+    NT_Entry get_entry(string path);
 
     // Other helpers
     void add_joint(string name);
@@ -294,6 +304,7 @@ private:
     std::vector<std::string> load_label_names(const string& path);
     void publish_odom();
     void publish_imu();
+    void publish_module();
 
     // Waypoint control
     void set_goal_status(GoalStatus status);
