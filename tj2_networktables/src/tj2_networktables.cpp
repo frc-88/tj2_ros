@@ -303,6 +303,9 @@ void TJ2NetworkTables::publish_module()
         module_msg.wheel_velocity = get_double(get_entry("modules/" + module_index + "/wheel_velocity"), 0.0);
         module_msg.azimuth_velocity = get_double(get_entry("modules/" + module_index + "/azimuth_velocity"), 0.0);
         module_msg.azimuth_position = get_double(get_entry("modules/" + module_index + "/azimuth"), 0.0);
+        module_msg.wheel_velocity_ref = get_double(get_entry("modules/" + module_index + "/wheel_velocity_ref"), 0.0);
+        module_msg.azimuth_velocity_ref = get_double(get_entry("modules/" + module_index + "/azimuth_velocity_ref"), 0.0);
+        module_msg.azimuth_position_ref = get_double(get_entry("modules/" + module_index + "/azimuth_ref"), 0.0);
         hi_motor_msg.voltage = get_double(get_entry("modules/" + module_index + "/hi_voltage"), 0.0);
         hi_motor_msg.voltage_ref = get_double(get_entry("modules/" + module_index + "/hi_voltage_ref"), 0.0);
         hi_motor_msg.velocity = get_double(get_entry("modules/" + module_index + "/hi_velocity"), 0.0);

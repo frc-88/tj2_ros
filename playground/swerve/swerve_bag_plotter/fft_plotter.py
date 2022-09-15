@@ -1,6 +1,13 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from state_loader import get_states
+# from ros2_state_loader import get_states
+from ros1_state_loader import get_states
+
+# --- ROS 1 ---
+
+data = get_states("data/diffyjr_2022-09-15-10-02-04.json")
+
+# --- ROS 2 ---
 
 # data = get_states("data/diffyjr_2022-06-08-23-52-28_0.json")
 # data = get_states("data/diffyjr_2022-06-09-22-42-13_0.json")  # perimeter
@@ -17,7 +24,8 @@ from state_loader import get_states
 # data = get_states("data/diffyjr_2022-06-11-12-54-00_0.json")
 # data = get_states("data/diffyjr_2022-06-11-14-31-53_0.json")
 # data = get_states("data/diffyjr_2022-06-11-14-34-45_0.json")
-data = get_states("data/diffyjr_2022-06-11-14-39-19_0.json")
+# data = get_states("data/diffyjr_2022-06-11-14-39-19_0.json")
+
 
 length = min([len(data[module_index]) for module_index in range(len(data))])
 
@@ -51,23 +59,23 @@ def plot_fft(signal, label):
 measured_azimuth_aligned = np.append(measured_azimuth[3:], [0, 0, 0])
 
 # reference_voltage_rms = np.sqrt(np.mean(reference_voltage**2))
-# measured_azimuth_rms = np.sqrt(np.mean(measured_azimuth**2))
+measured_azimuth_rms = np.sqrt(np.mean(measured_azimuth**2))
 
-# plt.figure(1)
+plt.figure(1)
 # plot_fft(reference_voltage / reference_voltage_rms, "reference_voltage")
-# plot_fft(measured_azimuth / measured_azimuth_rms, "azimuth")
+plot_fft(measured_azimuth / measured_azimuth_rms, "azimuth")
 
 # print(reference_azimuth)
-plt.figure(1)
+plt.figure(2)
 plt.plot(timestamps, reference_azimuth, label="reference_azimuth")
 plt.plot(timestamps, measured_azimuth, label="azimuth")
 plt.plot(timestamps, measured_azimuth_aligned, label="azimuth aligned")
 plt.legend()
-plt.figure(2)
+plt.figure(3)
 correlated = np.correlate(measured_azimuth, reference_azimuth, "full")
 plt.plot(correlated, label="correlated")
 
-plt.figure(3)
+plt.figure(4)
 ifft_corr = np.fft.ifftshift(correlated)
 plt.plot(ifft_corr, label="correlated")
 print(np.argmax(ifft_corr))

@@ -1,7 +1,7 @@
 import time
 import numpy as np
 from module_velocity_plotter import ModuleVelocityPlotter
-from state_loader import get_states
+from ros2_state_loader import get_states
 
 # data = get_states("data/diffyjr_2022-06-08-23-52-28_0.json")
 # data = get_states("data/diffyjr_2022-06-09-22-42-13_0.json")  # perimeter
