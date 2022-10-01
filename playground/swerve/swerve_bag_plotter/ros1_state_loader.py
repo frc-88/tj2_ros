@@ -12,8 +12,6 @@ def read_states(path):
             if index >= 4 or index < 0:
                 continue
 
-            timestamp *= 1E-9
-            
             row = {
                 "time": timestamp,
                 "wheel_velocity": get_key(msg, "wheel_velocity"),

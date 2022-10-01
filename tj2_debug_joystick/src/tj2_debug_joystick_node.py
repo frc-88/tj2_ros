@@ -67,7 +67,7 @@ class TJ2DebugJoystick:
 
         self.speed_mode = 0
         self.linear_multipliers = [0.1, 0.25, 0.5, 0.9, 1.0]
-        self.angular_multipliers = [0.1, 0.125, 0.15, 0.2, 0.25]
+        self.angular_multipliers = [0.1, 0.125, 0.15, 0.2, 1.0]
         self.set_speed_mode(0)
 
         self.is_field_relative = False

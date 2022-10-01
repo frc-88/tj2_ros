@@ -13,11 +13,18 @@ plotter.init()
 
 sim_start_t = data[0][0]["time"]
 
+time_range = None, None
+# time_range = 13.5, 17.0
+
 length = min([len(data[module_index]) for module_index in range(len(data))])
 
 for index in range(length):
     sim_time = data[0][index]["time"]
     sim_duration = sim_time - sim_start_t
+    if time_range[0] is not None and sim_duration < time_range[0]:
+        continue
+    if time_range[1] is not None and sim_duration > time_range[1]:
+        continue
     for module_index in range(len(data)):
         module_data = data[module_index][index]
         plotter.draw(sim_duration, module_index, module_data)
