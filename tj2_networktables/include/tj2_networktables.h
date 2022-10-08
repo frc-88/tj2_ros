@@ -46,6 +46,13 @@
 #include "tj2_interfaces/NTEntry.h"
 #include "tj2_interfaces/NavX.h"
 
+#include "tj2_interfaces/OdomReset.h"
+#include "tj2_interfaces/NTEntry.h"
+#include "tj2_interfaces/Shooter.h"
+#include "tj2_interfaces/Hood.h"
+
+#include "tj2_target/TargetConfig.h"
+
 #include "networktables/EntryListenerFlags.h"
 
 using namespace std;
@@ -195,6 +202,26 @@ private:
     NT_Entry _laser_entry_xs;
     NT_Entry _laser_entry_ys;
 
+    // shooter entries
+    NT_Entry _hood_state_entry;
+    NT_Entry _hood_update_entry;
+    NT_Entry _shoot_counter_entry;
+    NT_Entry _shoot_speed_entry;
+    NT_Entry _shoot_angle_entry;
+    NT_Entry _shoot_distance_entry;
+
+    // Reset localization entries
+    NT_Entry _reset_to_limelight_entry;
+
+    // Target config
+    NT_Entry _enable_shot_correction_entry;
+    NT_Entry _enable_moving_shot_probability_entry;
+    NT_Entry _enable_stationary_shot_probability_entry;
+    NT_Entry _enable_limelight_fine_tuning_entry;
+    NT_Entry _enable_marauding_entry;
+    NT_Entry _enable_reset_to_limelight_entry;
+    NT_Entry _target_config_update_entry;
+
     // Members
     ros::Timer _ping_timer;
     ros::Duration _cmd_vel_timeout;
@@ -230,6 +257,10 @@ private:
     ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
     ros::Publisher _pose_estimate_pub;
     ros::Publisher _pose_reset_pub;
+    ros::Publisher _hood_pub;
+    ros::Publisher _shooter_pub;
+    ros::Publisher _reset_to_limelight_pub;
+    ros::Publisher _target_config_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
@@ -270,11 +301,15 @@ private:
     void joint_callback(size_t joint_index);
     void match_callback(const nt::EntryNotification& event);
     void pose_estimate_callback(const nt::EntryNotification& event);
+    void reset_to_limelight_callback(const nt::EntryNotification& event);
+    void target_config_callback(const nt::EntryNotification& event);
 
     void create_waypoint(size_t index);
     void exec_waypoint_plan_callback(const nt::EntryNotification& event);
     void reset_waypoint_plan_callback(const nt::EntryNotification& event);
     void cancel_waypoint_plan_callback(const nt::EntryNotification& event);
+    void hood_state_callback(const nt::EntryNotification& event);
+    void shooter_callback(const nt::EntryNotification& event);
 
     // Timer callbacks
     void ping_timer_callback(const ros::TimerEvent& event);

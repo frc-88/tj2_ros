@@ -90,6 +90,11 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
     _team_color_pub = nh.advertise<std_msgs::String>("team_color", 10);
 
+    _hood_pub = nh.advertise<tj2_interfaces::Hood>("hood", 10);
+    _shooter_pub = nh.advertise<tj2_interfaces::Shooter>("shooter", 10);
+    _reset_to_limelight_pub = nh.advertise<std_msgs::Float64>("reset_to_limelight", 10);
+    _target_config_pub = nh.advertise<tj2_target::TargetConfig>("target_config", 10);
+
     _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 10);
     _pose_reset_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("reset_pose", 10);  // for distiguishing between ROS and RIO requested resets
 
@@ -208,6 +213,29 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
 
     _laser_entry_xs = nt::GetEntry(_nt, _base_key + "laser/xs");
     _laser_entry_ys = nt::GetEntry(_nt, _base_key + "laser/ys");
+
+
+    _hood_state_entry = nt::GetEntry(_nt, _base_key + "hood/state");
+    _hood_update_entry = nt::GetEntry(_nt, _base_key + "hood/update");
+    nt::AddEntryListener(_hood_update_entry, boost::bind(&TJ2NetworkTables::hood_state_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _shoot_counter_entry = nt::GetEntry(_nt, _base_key + "shooter/counter");
+    _shoot_speed_entry = nt::GetEntry(_nt, _base_key + "shooter/speed");
+    _shoot_angle_entry = nt::GetEntry(_nt, _base_key + "shooter/angle");
+    _shoot_distance_entry = nt::GetEntry(_nt, _base_key + "shooter/distance");
+    nt::AddEntryListener(_shoot_counter_entry, boost::bind(&TJ2NetworkTables::shooter_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _reset_to_limelight_entry = nt::GetEntry(_nt, _base_key + "resetToLimelight/update");
+    nt::AddEntryListener(_reset_to_limelight_entry, boost::bind(&TJ2NetworkTables::reset_to_limelight_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _enable_shot_correction_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_shot_correction");
+    _enable_moving_shot_probability_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_moving_shot_probability");
+    _enable_stationary_shot_probability_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_stationary_shot_probability");
+    _enable_limelight_fine_tuning_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_limelight_fine_tuning");
+    _enable_marauding_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_marauding");
+    _enable_reset_to_limelight_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_reset_to_limelight");
+    _target_config_update_entry = nt::GetEntry(_nt, _base_key + "target_config/update");
+    nt::AddEntryListener(_target_config_update_entry, boost::bind(&TJ2NetworkTables::target_config_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -683,6 +711,50 @@ void TJ2NetworkTables::cancel_waypoint_plan_callback(const nt::EntryNotification
 {
     ROS_INFO("Received cancel plan command");
     cancel_waypoint_goal();
+}
+
+void TJ2NetworkTables::hood_state_callback(const nt::EntryNotification& event)
+{
+    double hood_angle = get_double(_hood_state_entry, false);
+    tj2_interfaces::Hood msg;
+    msg.angle = hood_angle;
+    _hood_pub.publish(msg);
+}
+
+void TJ2NetworkTables::shooter_callback(const nt::EntryNotification& event)
+{
+    int counter = (int)get_double(_shoot_counter_entry, 0.0);
+    double speed = get_double(_shoot_speed_entry, 0.0);
+    double angle = get_double(_shoot_angle_entry, 0.0);
+    double distance = get_double(_shoot_distance_entry, 0.0);
+    tj2_interfaces::Shooter msg;
+    msg.counter = counter;
+    msg.speed = speed;
+    msg.angle = angle;
+    msg.distance = distance;
+    
+    msg.header.stamp = ros::Time::now();
+    _shooter_pub.publish(msg);
+}
+
+void TJ2NetworkTables::reset_to_limelight_callback(const nt::EntryNotification& event)
+{
+    std_msgs::Float64 msg;
+    msg.data = get_double(_reset_to_limelight_entry, 0.0);
+    _reset_to_limelight_pub.publish(msg);
+}
+
+
+void TJ2NetworkTables::target_config_callback(const nt::EntryNotification& event)
+{
+    tj2_target::TargetConfig msg;
+    msg.enable_shot_correction = (int)get_double(_enable_shot_correction_entry, -1.0);
+    msg.enable_moving_shot_probability = (int)get_double(_enable_moving_shot_probability_entry, -1.0);
+    msg.enable_stationary_shot_probability = (int)get_double(_enable_stationary_shot_probability_entry, -1.0);
+    msg.enable_limelight_fine_tuning = (int)get_double(_enable_limelight_fine_tuning_entry, -1.0);
+    msg.enable_marauding = (int)get_double(_enable_marauding_entry, -1.0);
+    msg.enable_reset_to_limelight = (int)get_double(_enable_reset_to_limelight_entry, -1.0);
+    _target_config_pub.publish(msg);
 }
 
 // ---

@@ -6,7 +6,7 @@
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
     <include file="$(find tj2_description)/launch/tj2_description_2022_swervy.launch"/>
-    <include file="$(find tj2_camera)/launch/tj2_zed2.launch"/>
+    <!-- <include file="$(find tj2_camera)/launch/tj2_zed2.launch"/> -->
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/>
 
     <include file="$(find tj2_rplidar)/launch/sinistra_laser.launch"/>
