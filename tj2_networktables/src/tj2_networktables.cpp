@@ -98,6 +98,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 10);
     _pose_reset_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("reset_pose", 10);  // for distiguishing between ROS and RIO requested resets
 
+    _modules_pub = nh.advertise<tj2_interfaces::SwerveModule>("swerve_modules", 10);
+
     _waypoints_action_client = new actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction>("follow_path", true);
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
@@ -130,6 +132,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
         _laser_scan_ys.resize(scan_size);
         _laser_scan_ranges.resize(scan_size);
     }
+
+    _num_modules = 0;
 
     _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2NetworkTables::odom_reset_callback, this);
 
@@ -237,6 +241,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _enable_reset_to_limelight_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_reset_to_limelight");
     _target_config_update_entry = nt::GetEntry(_nt, _base_key + "target_config/update");
     nt::AddEntryListener(_target_config_update_entry, boost::bind(&TJ2NetworkTables::target_config_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+    _module_num_entry = nt::GetEntry(_nt, _base_key + "modules/num");
+    nt::AddEntryListener(_module_num_entry, boost::bind(&TJ2NetworkTables::module_num_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -312,6 +318,32 @@ void TJ2NetworkTables::publish_robot_global_pose()
     nt::SetEntryValue(_global_y_entry, nt::Value::MakeDouble(y));
     nt::SetEntryValue(_global_t_entry, nt::Value::MakeDouble(yaw));
     nt::SetEntryValue(_global_update_entry, nt::Value::MakeDouble(get_time()));
+}
+
+void TJ2NetworkTables::publish_module()
+{
+    for (int index = 0; index < _num_modules; index++) {
+        string module_index = std::to_string(index);
+        tj2_interfaces::SwerveModule module_msg;
+        tj2_interfaces::SwerveMotor lo_motor_msg;
+        tj2_interfaces::SwerveMotor hi_motor_msg;
+        module_msg.module_index = module_index;
+        module_msg.wheel_velocity = get_double(get_entry("modules/" + module_index + "/wheel_velocity"), 0.0);
+        module_msg.azimuth_velocity = get_double(get_entry("modules/" + module_index + "/azimuth_velocity"), 0.0);
+        module_msg.azimuth_position = get_double(get_entry("modules/" + module_index + "/azimuth"), 0.0);
+        module_msg.wheel_velocity_ref = get_double(get_entry("modules/" + module_index + "/wheel_velocity_ref"), 0.0);
+        module_msg.azimuth_velocity_ref = get_double(get_entry("modules/" + module_index + "/azimuth_velocity_ref"), 0.0);
+        module_msg.azimuth_position_ref = get_double(get_entry("modules/" + module_index + "/azimuth_ref"), 0.0);
+        hi_motor_msg.voltage = get_double(get_entry("modules/" + module_index + "/hi_voltage"), 0.0);
+        hi_motor_msg.voltage_ref = get_double(get_entry("modules/" + module_index + "/hi_voltage_ref"), 0.0);
+        hi_motor_msg.velocity = get_double(get_entry("modules/" + module_index + "/hi_velocity"), 0.0);
+        lo_motor_msg.voltage = get_double(get_entry("modules/" + module_index + "/lo_voltage"), 0.0);
+        lo_motor_msg.voltage_ref = get_double(get_entry("modules/" + module_index + "/lo_voltage_ref"), 0.0);
+        lo_motor_msg.velocity = get_double(get_entry("modules/" + module_index + "/lo_velocity"), 0.0);
+        module_msg.motor_lo_0 = lo_motor_msg;
+        module_msg.motor_hi_1 = hi_motor_msg;
+        _modules_pub.publish(module_msg);
+    }
 }
 
 void TJ2NetworkTables::publish_joints()
@@ -667,6 +699,12 @@ void TJ2NetworkTables::pose_estimate_callback(const nt::EntryNotification& event
     _pose_estimate_pub.publish(pose_est);
     _pose_reset_pub.publish(pose_est);
 }
+
+void TJ2NetworkTables::module_num_callback(const nt::EntryNotification& event)
+{
+    _num_modules = (int)get_double(_module_num_entry, 0);
+}
+
 
 void TJ2NetworkTables::create_waypoint(size_t index)
 {
@@ -1037,6 +1075,11 @@ string TJ2NetworkTables::get_string(NT_Entry entry, string default_value)
     }
 }
 
+NT_Entry TJ2NetworkTables::get_entry(string path) {
+    return nt::GetEntry(_nt, _base_key + path);
+}
+
+
 // ---
 // Main loop methods
 // ---
@@ -1048,6 +1091,7 @@ void TJ2NetworkTables::loop()
     publish_cmd_vel();
     publish_goal_status();
     publish_robot_global_pose();
+    publish_module();
     ros::Duration odom_duration = ros::Time::now() - _prev_odom_timestamp;
     if (odom_duration > _odom_timeout) {
         ROS_WARN_THROTTLE(1.0, "No odom received for %f seconds", odom_duration.toSec());
