@@ -100,8 +100,7 @@ class TJ2Target(object):
 
         self.time_of_flight_file_path = rospy.get_param("~time_of_flight_file_path", "./time_of_flight.csv")
         self.recorded_data_file_path = rospy.get_param("~recorded_data_file_path", "./recorded_data.csv")
-        self.probability_hood_up_map_path = rospy.get_param("~probability_hood_up_map_path", "./probability.yaml")
-        self.probability_hood_down_map_path = rospy.get_param("~probability_hood_down_map_path", "./probability.yaml")
+        self.probability_map_path = rospy.get_param("~probability_map_path", "./probability.yaml")
 
         self.waypoints = {}
         self.waypoints_pose2d = {}
@@ -138,8 +137,7 @@ class TJ2Target(object):
         self.nt_pub = rospy.Publisher("nt_passthrough", NTEntry, queue_size=10)
         self.target_pub = rospy.Publisher("target", PoseWithCovarianceStamped, queue_size=10)
         self.target_probability_marker_pub = rospy.Publisher("target_probability_marker", MarkerArray, queue_size=10)
-        self.probability_hood_up_pub = rospy.Publisher("shot_probability_hood_up_map", OccupancyGrid, queue_size=10)
-        self.probability_hood_down_pub = rospy.Publisher("shot_probability_hood_down_map", OccupancyGrid, queue_size=10)
+        self.probability_pub = rospy.Publisher("shot_probability_map", OccupancyGrid, queue_size=10)
         self.target_angle_pub = rospy.Publisher("target_angle", Float64, queue_size=15)
         self.target_distance_pub = rospy.Publisher("target_distance", Float64, queue_size=15)
         self.target_probability_pub = rospy.Publisher("target_probability", Float64, queue_size=15)
@@ -157,12 +155,10 @@ class TJ2Target(object):
         self.target_config_sub = rospy.Subscriber("target_config", TargetConfig, self.target_config_callback)
 
         if self.enable_stationary_shot_probability:
-            self.ogm_up = OccupancyGridManager.from_cost_file(self.probability_hood_up_map_path)
-            self.ogm_down = OccupancyGridManager.from_cost_file(self.probability_hood_down_map_path)
+            self.ogm = OccupancyGridManager.from_cost_file(self.probability_map_path)
             self.map_pub_timer = rospy.Timer(rospy.Duration(1.0), self.map_publish_callback)
         else:
-            self.ogm_up = None
-            self.ogm_down = None
+            self.ogm = None
             self.map_pub_timer = None
         
         self.record_tof_srv = self.make_service("record_tof", RecordValue, self.record_tof)
@@ -267,8 +263,7 @@ class TJ2Target(object):
         return csv.DictWriter(file, fieldnames=("type", "hood", "distance", "heading", "value", "x", "y", "theta"))
 
     def map_publish_callback(self, timer):
-        self.probability_hood_up_pub.publish(self.ogm_up.to_msg())
-        self.probability_hood_down_pub.publish(self.ogm_down.to_msg())
+        self.probability_pub.publish(self.ogm.to_msg())
 
     def waypoints_callback(self, msg):
         for waypoint_msg in msg.waypoints:
@@ -462,15 +457,8 @@ class TJ2Target(object):
         # see OccupancyGrid message docs
         # cost is -1 for unknown. Otherwise, 0..100
         # I remap this to 1.0..0.0 for probability (0 == 100% probability, 100 == 0% probability)
-        if self.hood_state:
-            ogm = self.ogm_up
-        else:
-            ogm = self.ogm_down
-        if ogm is None:
-            return 1.0
-
         try:
-            cost = ogm.get_cost_from_world_x_y(pose2d.x, pose2d.y)
+            cost = self.ogm.get_cost_from_world_x_y(pose2d.x, pose2d.y)
         except BaseException as e:
             rospy.logerr_throttle(1.0, "Failed to get probability: %s" % str(e))
             return 0.0
