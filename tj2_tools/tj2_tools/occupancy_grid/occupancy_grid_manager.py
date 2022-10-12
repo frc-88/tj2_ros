@@ -6,9 +6,9 @@ import yaml
 from nav_msgs.msg import OccupancyGrid
 import numpy as np
 from itertools import product
-from geometry_msgs.msg import Pose
 
-from tj2_tools.robot_state import Pose2d, State
+from tj2_tools.robot_state import Pose2d
+from tj2_tools.robot_state.robot_state import State
 
 """
 Adapted from https://github.com/awesomebytes/occupancy_grid_python

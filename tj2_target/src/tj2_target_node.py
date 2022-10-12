@@ -29,9 +29,8 @@ from tj2_tools.occupancy_grid import OccupancyGridManager
 
 from tj2_waypoints.msg import WaypointArray
 
-from tj2_networktables.msg import NTEntry
-
-from rev_color_sensor_ros.msg import RevColorSensor
+from tj2_interfaces.msg import NTEntry
+from tj2_interfaces.msg import Hood
 
 from tj2_target.msg import TargetConfig
 
@@ -70,10 +69,8 @@ class TJ2Target(object):
         self.y_cov_threshold = rospy.get_param("~y_cov_threshold", 1.0)
         self.theta_cov_threshold = math.radians(rospy.get_param("~theta_cov_threshold_deg", 45.0))
 
-        self.tof_up_a_const = rospy.get_param("~tof_up_a_const", 1.0)
-        self.tof_up_b_const = rospy.get_param("~tof_up_b_const", 0.0)
-        self.tof_down_a_const = rospy.get_param("~tof_down_a_const", 1.0)
-        self.tof_down_b_const = rospy.get_param("~tof_down_b_const", 0.0)
+        self.tof_a_const = rospy.get_param("~tof_up_a_const", 1.0)
+        self.tof_b_const = rospy.get_param("~tof_up_b_const", 0.0)
 
         self.velocity_filter_k = rospy.get_param("~velocity_filter_k", 0.9)
 
@@ -85,13 +82,13 @@ class TJ2Target(object):
         self.enable_reset_to_limelight = rospy.get_param("~enable_reset_to_limelight", False)
         self.enable_target_marker_pub = rospy.get_param("~enable_target_marker_pub", False)
 
-        # a constant to fix weird unknown target issues
+        # constants to fix weird unknown target issues
         self.target_cosmic_ray_compensation = math.radians(rospy.get_param("~target_cosmic_ray_compensation_degrees", 0.0))
         self.target_dark_energy_compensation = rospy.get_param("~target_dark_energy_compensation_meters", 0.0)
 
-        self.color_message_timeout = rospy.Duration(rospy.get_param("~color_message_timeout", 0.5))
-        self.cargo_egress_timeout = rospy.Duration(rospy.get_param("~cargo_egress_timeout", 0.5))
-        self.cargo_egress_timer = rospy.Time.now()
+        self.cargo_egress_time = rospy.get_param("~cargo_egress_time", 0.5)
+
+        self.maraude_message_timeout = rospy.Duration(rospy.get_param("~maraude_message_timeout", 0.5))
 
         self.reset_x_cov = rospy.get_param("~reset_x_cov", 1.0)
         self.reset_y_cov = rospy.get_param("~reset_y_cov", 1.0)
@@ -108,7 +105,7 @@ class TJ2Target(object):
         self.target_heading = 0.0
         self.target_distance = 0.0
         self.robot_pose = PoseStamped()
-        self.hood_state = False  # False == down, True == up
+        self.hood_state = Hood()
         self.limelight_target_pose = PoseStamped()
         self.map_to_odom_tf_at_reset = None
 
@@ -121,19 +118,18 @@ class TJ2Target(object):
         self.moving_probability_x_scale = rospy.get_param("~moving_probability_x_scale", 1.0)
         self.moving_probability_fn = self.get_moving_probability_dist(self.moving_probability_x_scale)
         
-        self.prev_target_len = int(self.update_rate * self.cargo_egress_timeout.to_sec())
+        self.prev_target_len = max(1, int(self.update_rate * self.cargo_egress_time))
         self.prev_targets = np.zeros((self.prev_target_len, 2))
         self.prev_target_index = 0
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.loaded_object_color = ""
-        self.buffered_object_color = ""  # cargo takes time to leave the chamber. Hold the last object color here
-        self.color_timestamp = rospy.Time(0)
         self.team_timestamp = rospy.Time(0)
-
         self.team_color = ""
+
+        self.should_maraude_timestamp = rospy.Time(0)
+        self.should_maraude = False
 
         self.nt_pub = rospy.Publisher("nt_passthrough", NTEntry, queue_size=10)
         self.target_pub = rospy.Publisher("target", PoseWithCovarianceStamped, queue_size=10)
@@ -147,9 +143,9 @@ class TJ2Target(object):
         self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback)
         self.amcl_pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.amcl_pose_callback)
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback)
-        self.hood_sub = rospy.Subscriber("hood", Bool, self.hood_callback)
+        self.hood_sub = rospy.Subscriber("hood", Hood, self.hood_callback)
         self.limelight_sub = rospy.Subscriber("/limelight/target", PoseStamped, self.limelight_callback)
-        self.color_sensor_sub = rospy.Subscriber("/color_sensor/sensor", RevColorSensor, self.color_sensor_callback)
+        self.should_maraude_sub = rospy.Subscriber("should_maraude", Bool, self.should_maraude_callback)
         self.team_color_sub = rospy.Subscriber("team_color", String, self.team_color_callback)
         self.reset_to_limelight_sub = rospy.Subscriber("reset_to_limelight", Float64, self.reset_to_limelight_callback)
         self.reset_pose_sub = rospy.Subscriber("reset_pose", PoseWithCovarianceStamped, self.reset_pose_callback)
@@ -210,10 +206,10 @@ class TJ2Target(object):
                 row_type = row[header.index("type")]
                 if row_type != "tof":
                     continue
-                hood_state_str = row[header.index("hood")]
+                hood_state = float(row[header.index("hood")])
                 distance = float(row[header.index("distance")])
                 tof = float(row[header.index("value")])
-                data.append([hood_state_str, distance, tof])
+                data.append([hood_state, distance, tof])
         new_path = os.path.splitext(self.time_of_flight_file_path)[0]
         new_path += "-new.csv"
         rospy.loginfo("Writing table to %s" % str(new_path))
@@ -232,17 +228,17 @@ class TJ2Target(object):
                 row_type = row[header.index("type")]
                 if row_type != "flywheel":
                     continue
-                hood_state_str = row[header.index("hood")]
+                hood_state = float(row[header.index("hood")])
                 distance = float(row[header.index("distance")])
                 speed = float(row[header.index("value")])
-                print("%s\t%s\t%s" % (hood_state_str, distance, speed))
+                print("%s\t%s\t%s" % (hood_state, distance, speed))
         
         return TriggerResponse()
     
     def record_row(self, row_type, value, robot_pose):
         row = {
             "type": row_type,
-            "hood": "up" if self.hood_state else "down",
+            "hood": self.hood_state.angle,
             "distance": self.target_distance,
             "heading": self.target_heading,
             "value": value,
@@ -283,17 +279,17 @@ class TJ2Target(object):
         self.robot_velocity.theta = self.vt_filter.update(msg.twist.twist.angular.z)
     
     def hood_callback(self, msg):
-        self.hood_state = msg.data
+        self.hood_state = msg
     
     def limelight_callback(self, msg):
         self.limelight_target_pose = msg
 
-    def color_sensor_callback(self, msg):
-        self.color_timestamp = rospy.Time.now()
-        self.loaded_object_color = msg.match
+    def should_maraude_callback(self, msg):
+        self.should_maraude_timestamp = rospy.Time.now()
+        self.should_maraude = bool(msg.data)
 
     def team_color_callback(self, msg):
-        self.team_timestamp = rospy.Time.now()
+        self.team_timestamp
         self.team_color = msg.data
     
     def reset_to_limelight_callback(self, msg):
@@ -446,10 +442,7 @@ class TJ2Target(object):
         initial_target = Pose2d.from_state(target)
         target = Pose2d.from_state(target)
         for _ in range(iterations):
-            if self.hood_state:
-                tof = tof_fit_fn(target.distance(), self.tof_up_a_const, self.tof_up_b_const)
-            else:
-                tof = tof_fit_fn(target.distance(), self.tof_down_a_const, self.tof_down_b_const)
+            tof = tof_fit_fn(target.distance(), self.tof_a_const, self.tof_b_const)
             if tof > 0.0:
                 target.x = initial_target.x - self.robot_velocity.x * tof
         return target
@@ -499,27 +492,14 @@ class TJ2Target(object):
             return waypoint_pose
 
     def get_target_waypoint(self, robot_pose):
-        if rospy.Time.now() - self.color_timestamp > self.color_message_timeout:
-            rospy.logwarn_throttle(1.0, "No color sensor message received for at least %s s" % (self.color_message_timeout.to_sec()))
+        if rospy.Time.now() - self.should_maraude_timestamp > self.maraude_message_timeout:
+            rospy.logwarn_throttle(1.0, "No maraude sensor message received for at least %s s" % (self.maraude_message_timeout.to_sec()))
             return None
-        if rospy.Time.now() - self.team_timestamp > self.color_message_timeout:
-            rospy.logwarn_throttle(1.0, "No team color message received for at least %s s" % (self.color_message_timeout.to_sec()))
+        if rospy.Time.now() - self.team_timestamp > self.maraude_message_timeout:
+            rospy.logwarn_throttle(1.0, "No team color message received for at least %s s" % (self.maraude_message_timeout.to_sec()))
             return None
-        
-        if len(self.loaded_object_color) == 0:
-            # If the color sensor doesn't currently see a matching object,
-            if rospy.Time.now() - self.cargo_egress_timer > self.cargo_egress_timeout:
-                # If the egress timer has expired, assume we want to shoot at the goal
-                return None
-            # otherwise, use the last detected object name
-        else:
-            # else use the currently detected object name
-            self.cargo_egress_timer = rospy.Time.now()
-            self.buffered_object_color = self.loaded_object_color
-
-        if self.team_color == self.buffered_object_color:
-            return None
-        else:
+ 
+        if self.should_maraude:
             team_prefix = self.marauding_target_prefix.replace("<team>", self.team_color)
             closest_dist = None
             closest_point = None
@@ -536,6 +516,8 @@ class TJ2Target(object):
                 closest_pose.header.frame_id = self.map_frame
                 closest_pose.pose = closest_point.to_ros_pose()
                 return closest_pose
+        else:
+            return None
 
     def publish_target(self, distance, heading, probability):
         self.nt_pub.publish(self.make_entry("target/distance", distance))
