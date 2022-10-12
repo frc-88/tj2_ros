@@ -205,7 +205,6 @@ private:
     NT_Entry _laser_entry_xs;
     NT_Entry _laser_entry_ys;
 
-<<<<<<< HEAD
     // shooter entries
     NT_Entry _hood_state_entry;
     NT_Entry _hood_update_entry;
@@ -225,10 +224,8 @@ private:
     NT_Entry _enable_marauding_entry;
     NT_Entry _enable_reset_to_limelight_entry;
     NT_Entry _target_config_update_entry;
-=======
     // module entires
     NT_Entry _module_num_entry;
->>>>>>> main
 
     // Members
     ros::Timer _ping_timer;
@@ -314,12 +311,9 @@ private:
     void joint_callback(size_t joint_index);
     void match_callback(const nt::EntryNotification& event);
     void pose_estimate_callback(const nt::EntryNotification& event);
-<<<<<<< HEAD
     void reset_to_limelight_callback(const nt::EntryNotification& event);
     void target_config_callback(const nt::EntryNotification& event);
-=======
     void module_num_callback(const nt::EntryNotification& event);
->>>>>>> main
 
     void create_waypoint(size_t index);
     void exec_waypoint_plan_callback(const nt::EntryNotification& event);
