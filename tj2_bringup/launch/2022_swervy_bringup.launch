@@ -13,6 +13,9 @@
     <include file="$(find tj2_rplidar)/launch/dextra_laser.launch"/>
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
 
+    <include file="$(find tj2_color_sensor)/launch/lower_color_sensor.launch"/>
+    <include file="$(find tj2_color_sensor)/launch/upper_color_sensor.launch"/>
+
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
     
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>

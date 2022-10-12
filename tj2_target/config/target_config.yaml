@@ -2,8 +2,8 @@ enable_shot_correction: true  # compensate the shot for robot velocity
 enable_stationary_shot_probability: true  # calculate probability based on stationary measurements
 enable_moving_shot_probability: true  # calculate probability based on how much the target is changing
 enable_limelight_fine_tuning: false  # use the limelight's compensated target if within a threshold
-enable_marauding: true  # if an opposing team color object is encountered, select the nearest marauding waypoint instead of the main target
-enable_reset_to_limelight: true  # send initial pose estimate messages based on the limelight target if received
+enable_marauding: false  # if an opposing team color object is encountered, select the nearest marauding waypoint instead of the main target
+enable_reset_to_limelight: false  # send initial pose estimate messages based on the limelight target if received
 enable_target_marker_pub: true  # publish the probability percentage marker for RViz
 
 target_cosmic_ray_compensation_degrees: 3.0  # arbitrary offset to apply to the final target angle

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(tj2_interfaces)
+project(tj2_color_sensor)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -7,11 +7,7 @@ project(tj2_interfaces)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin  REQUIRED COMPONENTS
-  std_msgs
-  geometry_msgs
-  message_generation
-)
+find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -47,22 +43,18 @@ find_package(catkin  REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  NavX.msg
-  NTEntry.msg
-  NTEntryString.msg
-  SwerveModule.msg
-  SwerveMotor.msg
-  Hood.msg
-  Shooter.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  OdomReset.srv
-)
+# add_service_files(
+#   FILES
+#   Service1.srv
+#   Service2.srv
+# )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -72,11 +64,10 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
-  geometry_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -109,11 +100,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES tj2_interfaces
-  CATKIN_DEPENDS 
-    message_generation 
-    std_msgs 
-    geometry_msgs 
+#  LIBRARIES tj2_color_sensor
+#  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
 
@@ -123,17 +111,14 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
+# include_directories(
 # include
 # ${catkin_INCLUDE_DIRS}
-)
-
-FILE(GLOB_RECURSE all_files ${CMAKE_SOURCE_DIR}/*)
-add_custom_target(all_files_${PROJECT_NAME} SOURCES ${all_files})
+# )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/tj2_interfaces.cpp
+#   src/${PROJECT_NAME}/tj2_color_sensor.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -144,7 +129,7 @@ add_custom_target(all_files_${PROJECT_NAME} SOURCES ${all_files})
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/tj2_interfaces_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/tj2_color_sensor_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -208,7 +193,7 @@ add_custom_target(all_files_${PROJECT_NAME} SOURCES ${all_files})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_tj2_interfaces.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_tj2_color_sensor.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

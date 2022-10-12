@@ -48,6 +48,7 @@
 
 #include "tj2_interfaces/OdomReset.h"
 #include "tj2_interfaces/NTEntry.h"
+#include "tj2_interfaces/NTEntryString.h"
 #include "tj2_interfaces/Shooter.h"
 #include "tj2_interfaces/Hood.h"
 
@@ -265,6 +266,7 @@ private:
     // Subscribers
     ros::Subscriber _twist_sub;
     ros::Subscriber _nt_passthrough_sub;
+    ros::Subscriber _nt_passthrough_string_sub;
     ros::Subscriber _waypoints_sub;
     ros::Subscriber _detections_sub;
     ros::Subscriber _field_relative_sub;
@@ -285,6 +287,7 @@ private:
     // Subscription callbacks
     void twist_callback(const geometry_msgs::TwistConstPtr& msg);
     void nt_passthrough_callback(const tj2_interfaces::NTEntryConstPtr& msg);
+    void nt_passthrough_string_callback(const tj2_interfaces::NTEntryStringConstPtr& msg);
     void waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg);
     void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
     void joint_command_callback(const std_msgs::Float64ConstPtr& msg, string joint_name, int joint_index);

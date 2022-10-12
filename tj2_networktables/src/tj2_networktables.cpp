@@ -102,6 +102,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
     _nt_passthrough_sub = nh.subscribe<tj2_interfaces::NTEntry>("nt_passthrough", 50, &TJ2NetworkTables::nt_passthrough_callback, this);
+    _nt_passthrough_string_sub = nh.subscribe<tj2_interfaces::NTEntryString>("nt_passthrough_string", 50, &TJ2NetworkTables::nt_passthrough_string_callback, this);
     _waypoints_sub = nh.subscribe<tj2_waypoints::WaypointArray>("waypoints", 50, &TJ2NetworkTables::waypoints_callback, this);
     _field_relative_sub = nh.subscribe<std_msgs::Bool>("field_relative", 10, &TJ2NetworkTables::field_relative_callback, this);
     _laser_sub = nh.subscribe<sensor_msgs::LaserScan>("scan", 10, &TJ2NetworkTables::scan_callback, this);
@@ -365,6 +366,12 @@ void TJ2NetworkTables::nt_passthrough_callback(const tj2_interfaces::NTEntryCons
 {
     NT_Entry entry = nt::GetEntry(_nt, _base_key + msg->path);
     nt::SetEntryValue(entry, nt::Value::MakeDouble(msg->value));
+}
+
+void TJ2NetworkTables::nt_passthrough_string_callback(const tj2_interfaces::NTEntryStringConstPtr& msg)
+{
+    NT_Entry entry = nt::GetEntry(_nt, _base_key + msg->path);
+    nt::SetEntryValue(entry, nt::Value::MakeString(msg->value));
 }
 
 void TJ2NetworkTables::waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg)
