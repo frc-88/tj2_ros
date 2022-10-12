@@ -90,6 +90,10 @@ Visualization Manager:
           Value: true
         swerve_wheel_3:
           Value: true
+        turret_link:
+          Value: true
+        turret_tilt_link:
+          Value: true
         zed2_baro_link:
           Value: true
         zed2_base_link:
@@ -158,6 +162,9 @@ Visualization Manager:
                   {}
                 swerve_wheel_3:
                   {}
+                turret_tilt_link:
+                  turret_link:
+                    {}
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988079071
@@ -282,6 +289,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         AMCL Particles: true
         AMCL Pose: true
         Bar Markers: true
@@ -674,7 +682,7 @@ Visualization Manager:
         LaserScan: true
         Local Costmap: false
         Local Plan: true
-        Map: false
+        Map: true
         MarkerArray: true
         Move Base Goal: true
         Move Base Waypoints: true
@@ -742,6 +750,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         AMCL Particles: true
         AMCL Pose: false
         Bar Markers: true
@@ -802,6 +811,24 @@ Visualization Manager:
       Transparency: 0.25
       Unreliable: false
       Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic: /tj2/shot_probability_map
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /tj2/target_probability_marker
+      Name: MarkerArray
+      Namespaces:
+        probability: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -830,7 +857,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 12.973280906677246
+      Distance: 18.17721939086914
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -838,17 +865,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.24872227013111115
-        Y: 1.1066735982894897
-        Z: 0.36009061336517334
+        X: 0.2489386796951294
+        Y: 1.1134408712387085
+        Z: 0.3601989448070526
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5547963380813599
+      Pitch: 1.4797964096069336
       Target Frame: <Fixed Frame>
-      Yaw: 4.680420875549316
+      Yaw: 4.675421714782715
     Saved: ~
 Window Geometry:
   Displays:
