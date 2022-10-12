@@ -34,6 +34,7 @@
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "geometry_msgs/Pose.h"
 #include "vision_msgs/Detection3DArray.h"
+#include "sensor_msgs/LaserScan.h"
 
 #include "tj2_waypoints/FollowPathGoal.h"
 #include "tj2_waypoints/FollowPathAction.h"
@@ -44,6 +45,13 @@
 #include "tj2_interfaces/OdomReset.h"
 #include "tj2_interfaces/NTEntry.h"
 #include "tj2_interfaces/NavX.h"
+
+#include "tj2_interfaces/OdomReset.h"
+#include "tj2_interfaces/NTEntry.h"
+#include "tj2_interfaces/Shooter.h"
+#include "tj2_interfaces/Hood.h"
+
+#include "tj2_target/TargetConfig.h"
 
 #include "networktables/EntryListenerFlags.h"
 
@@ -94,6 +102,9 @@ private:
     double _min_linear_cmd;
     double _min_angular_z_cmd;
     double _zero_epsilon;
+    
+    double _laser_angle_interval_rad;
+    double _laser_angle_fan_rad;
 
     double _pose_estimate_x_std, _pose_estimate_y_std, _pose_estimate_theta_std_deg;
     string _pose_estimate_frame_id;
@@ -185,6 +196,31 @@ private:
     NT_Entry _cmd_vel_y_entry;
     NT_Entry _cmd_vel_t_entry;
     NT_Entry _cmd_vel_update_entry;
+    NT_Entry _field_relative_entry;
+
+    // laser scan entries
+    NT_Entry _laser_entry_xs;
+    NT_Entry _laser_entry_ys;
+
+    // shooter entries
+    NT_Entry _hood_state_entry;
+    NT_Entry _hood_update_entry;
+    NT_Entry _shoot_counter_entry;
+    NT_Entry _shoot_speed_entry;
+    NT_Entry _shoot_angle_entry;
+    NT_Entry _shoot_distance_entry;
+
+    // Reset localization entries
+    NT_Entry _reset_to_limelight_entry;
+
+    // Target config
+    NT_Entry _enable_shot_correction_entry;
+    NT_Entry _enable_moving_shot_probability_entry;
+    NT_Entry _enable_stationary_shot_probability_entry;
+    NT_Entry _enable_limelight_fine_tuning_entry;
+    NT_Entry _enable_marauding_entry;
+    NT_Entry _enable_reset_to_limelight_entry;
+    NT_Entry _target_config_update_entry;
 
     // Members
     ros::Timer _ping_timer;
@@ -203,6 +239,10 @@ private:
     GoalStatus _prevPollStatus;
     std::vector<std::string> _class_names;
 
+    std::vector<double> _laser_scan_ranges;
+    std::vector<double> _laser_scan_xs;
+    std::vector<double> _laser_scan_ys;
+
     // Messages
     nav_msgs::Odometry _odom_msg;
     tj2_interfaces::NavX _imu_msg;
@@ -217,12 +257,18 @@ private:
     ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
     ros::Publisher _pose_estimate_pub;
     ros::Publisher _pose_reset_pub;
+    ros::Publisher _hood_pub;
+    ros::Publisher _shooter_pub;
+    ros::Publisher _reset_to_limelight_pub;
+    ros::Publisher _target_config_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
     ros::Subscriber _nt_passthrough_sub;
     ros::Subscriber _waypoints_sub;
     ros::Subscriber _detections_sub;
+    ros::Subscriber _field_relative_sub;
+    ros::Subscriber _laser_sub;
     tf2_ros::Buffer _tf_buffer;
     tf2_ros::TransformListener _tf_listener;
     vector<ros::Subscriber>* _raw_joint_subs;
@@ -242,6 +288,8 @@ private:
     void waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg);
     void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
     void joint_command_callback(const std_msgs::Float64ConstPtr& msg, string joint_name, int joint_index);
+    void field_relative_callback(const std_msgs::BoolConstPtr& msg);
+    void scan_callback(const sensor_msgs::LaserScanConstPtr& msg);
 
     // Service callbacks
     bool odom_reset_callback(tj2_interfaces::OdomReset::Request &req, tj2_interfaces::OdomReset::Response &resp);
@@ -253,11 +301,15 @@ private:
     void joint_callback(size_t joint_index);
     void match_callback(const nt::EntryNotification& event);
     void pose_estimate_callback(const nt::EntryNotification& event);
+    void reset_to_limelight_callback(const nt::EntryNotification& event);
+    void target_config_callback(const nt::EntryNotification& event);
 
     void create_waypoint(size_t index);
     void exec_waypoint_plan_callback(const nt::EntryNotification& event);
     void reset_waypoint_plan_callback(const nt::EntryNotification& event);
     void cancel_waypoint_plan_callback(const nt::EntryNotification& event);
+    void hood_state_callback(const nt::EntryNotification& event);
+    void shooter_callback(const nt::EntryNotification& event);
 
     // Timer callbacks
     void ping_timer_callback(const ros::TimerEvent& event);

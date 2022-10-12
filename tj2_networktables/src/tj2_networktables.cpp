@@ -19,6 +19,14 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~min_angular_z_cmd", _min_angular_z_cmd, 0.1);
     ros::param::param<double>("~zero_epsilon", _zero_epsilon, 0.001);
 
+    double laser_angle_interval_degrees;
+    ros::param::param<double>("~laser_angle_interval_degrees", laser_angle_interval_degrees, 45.0);
+    _laser_angle_interval_rad = laser_angle_interval_degrees * M_PI / 180.0;
+
+    double laser_angle_fan_degrees;
+    ros::param::param<double>("~laser_angle_fan_degrees", laser_angle_fan_degrees, 10.0);
+    _laser_angle_fan_rad = laser_angle_fan_degrees * M_PI / 180.0;
+    
     ros::param::param<double>("~pose_estimate_x_std", _pose_estimate_x_std, 0.5);
     ros::param::param<double>("~pose_estimate_y_std", _pose_estimate_y_std, 0.5);
     ros::param::param<double>("~pose_estimate_theta_std_deg", _pose_estimate_theta_std_deg, 15.0);
@@ -82,6 +90,11 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
     _team_color_pub = nh.advertise<std_msgs::String>("team_color", 10);
 
+    _hood_pub = nh.advertise<tj2_interfaces::Hood>("hood", 10);
+    _shooter_pub = nh.advertise<tj2_interfaces::Shooter>("shooter", 10);
+    _reset_to_limelight_pub = nh.advertise<std_msgs::Float64>("reset_to_limelight", 10);
+    _target_config_pub = nh.advertise<tj2_target::TargetConfig>("target_config", 10);
+
     _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 10);
     _pose_reset_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("reset_pose", 10);  // for distiguishing between ROS and RIO requested resets
 
@@ -90,6 +103,9 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
     _nt_passthrough_sub = nh.subscribe<tj2_interfaces::NTEntry>("nt_passthrough", 50, &TJ2NetworkTables::nt_passthrough_callback, this);
     _waypoints_sub = nh.subscribe<tj2_waypoints::WaypointArray>("waypoints", 50, &TJ2NetworkTables::waypoints_callback, this);
+    _field_relative_sub = nh.subscribe<std_msgs::Bool>("field_relative", 10, &TJ2NetworkTables::field_relative_callback, this);
+    _laser_sub = nh.subscribe<sensor_msgs::LaserScan>("scan", 10, &TJ2NetworkTables::scan_callback, this);
+
     if (_class_names.empty()) {
         ROS_ERROR("Error loading class names! Not broadcasting detections");
     }
@@ -103,6 +119,16 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _twist_cmd_vt = 0.0;
 
     _currentGoalStatus = INVALID;
+
+    int scan_size = (int)(2.0 * M_PI / _laser_angle_interval_rad);
+    if (scan_size <= 0) {
+        ROS_ERROR("NT Scan size is less than or equal to zero! Check your laser_angle_interval_degrees parmeter. %d", scan_size);
+    }
+    else {
+        _laser_scan_xs.resize(scan_size);
+        _laser_scan_ys.resize(scan_size);
+        _laser_scan_ranges.resize(scan_size);
+    }
 
     _odom_reset_srv = nh.advertiseService("odom_reset_service", &TJ2NetworkTables::odom_reset_callback, this);
 
@@ -155,6 +181,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _cmd_vel_y_entry = nt::GetEntry(_nt, _base_key + "cmd_vel/y");
     _cmd_vel_t_entry = nt::GetEntry(_nt, _base_key + "cmd_vel/t");
     _cmd_vel_update_entry = nt::GetEntry(_nt, _base_key + "cmd_vel/update");
+    _field_relative_entry = nt::GetEntry(_nt, _base_key + "field_relative");
 
     _goal_status_entry = nt::GetEntry(_nt, _base_key + "goal_status/status");
     _goal_status_update_entry = nt::GetEntry(_nt, _base_key + "goal_status/update");
@@ -183,6 +210,32 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::AddEntryListener(_exec_waypoint_plan_update_entry, boost::bind(&TJ2NetworkTables::exec_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
     nt::AddEntryListener(_reset_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::reset_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
     nt::AddEntryListener(_cancel_waypoint_plan_entry, boost::bind(&TJ2NetworkTables::cancel_waypoint_plan_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _laser_entry_xs = nt::GetEntry(_nt, _base_key + "laser/xs");
+    _laser_entry_ys = nt::GetEntry(_nt, _base_key + "laser/ys");
+
+
+    _hood_state_entry = nt::GetEntry(_nt, _base_key + "hood/state");
+    _hood_update_entry = nt::GetEntry(_nt, _base_key + "hood/update");
+    nt::AddEntryListener(_hood_update_entry, boost::bind(&TJ2NetworkTables::hood_state_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _shoot_counter_entry = nt::GetEntry(_nt, _base_key + "shooter/counter");
+    _shoot_speed_entry = nt::GetEntry(_nt, _base_key + "shooter/speed");
+    _shoot_angle_entry = nt::GetEntry(_nt, _base_key + "shooter/angle");
+    _shoot_distance_entry = nt::GetEntry(_nt, _base_key + "shooter/distance");
+    nt::AddEntryListener(_shoot_counter_entry, boost::bind(&TJ2NetworkTables::shooter_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _reset_to_limelight_entry = nt::GetEntry(_nt, _base_key + "resetToLimelight/update");
+    nt::AddEntryListener(_reset_to_limelight_entry, boost::bind(&TJ2NetworkTables::reset_to_limelight_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+
+    _enable_shot_correction_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_shot_correction");
+    _enable_moving_shot_probability_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_moving_shot_probability");
+    _enable_stationary_shot_probability_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_stationary_shot_probability");
+    _enable_limelight_fine_tuning_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_limelight_fine_tuning");
+    _enable_marauding_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_marauding");
+    _enable_reset_to_limelight_entry = nt::GetEntry(_nt, _base_key + "target_config/enable_reset_to_limelight");
+    _target_config_update_entry = nt::GetEntry(_nt, _base_key + "target_config/update");
+    nt::AddEntryListener(_target_config_update_entry, boost::bind(&TJ2NetworkTables::target_config_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -340,6 +393,83 @@ void TJ2NetworkTables::waypoints_callback(const tj2_waypoints::WaypointArrayCons
         nt::SetEntryValue(y_entry, nt::Value::MakeDouble(y));
         nt::SetEntryValue(theta_entry, nt::Value::MakeDouble(yaw));
     }
+}
+
+void TJ2NetworkTables::field_relative_callback(const std_msgs::BoolConstPtr& msg)
+{
+    nt::SetEntryValue(_field_relative_entry, nt::Value::MakeBoolean(msg->data));
+}
+
+void TJ2NetworkTables::scan_callback(const sensor_msgs::LaserScanConstPtr& msg)
+{
+    if (_laser_scan_xs.size() == 0) {
+        ROS_WARN_THROTTLE(1.0, "NT Laser x size is zero! Check your laser_angle_interval_degrees parmeter. %lu", _laser_scan_xs.size());
+        return;
+    }
+
+    geometry_msgs::TransformStamped transform;
+    try {
+        transform = _tf_buffer.lookupTransform(_base_frame, msg->header.frame_id, ros::Time(0));
+    }
+    catch (tf2::TransformException &ex) {
+        ROS_WARN_THROTTLE(1.0, "Failed to transform laser to base frame: %s", ex.what());
+        return;
+    }
+
+    for (size_t index = 0; index < _laser_scan_ranges.size(); index++) {
+        _laser_scan_ranges.at(index) = msg->range_max;
+    }
+
+    double wrap_angle = msg->angle_max - msg->angle_min + msg->angle_increment;
+
+    for (size_t index = 0; index < msg->ranges.size(); index++) {
+        double laser_angle = msg->angle_increment * index + msg->angle_min;
+        for (size_t copy_index = 0; copy_index < _laser_scan_ranges.size(); copy_index++) {
+            double lower_angle = _laser_angle_interval_rad * copy_index + msg->angle_min - _laser_angle_fan_rad;
+            double upper_angle = _laser_angle_interval_rad * copy_index + msg->angle_min + _laser_angle_fan_rad;
+            
+            bool is_within_angle = false;
+            if (lower_angle < msg->angle_min || upper_angle > msg->angle_max) {
+                if (lower_angle < msg->angle_min) {
+                    lower_angle += wrap_angle;
+                }
+                if (upper_angle > msg->angle_max) {
+                    upper_angle -= wrap_angle;
+                }
+                is_within_angle = !(upper_angle < laser_angle && laser_angle < lower_angle);
+            }
+            else {
+                is_within_angle = lower_angle <= laser_angle && laser_angle <= upper_angle;
+            }
+
+            if (is_within_angle) {
+                double distance = msg->ranges.at(index);
+                if (msg->range_min <= distance && distance <= _laser_scan_ranges.at(copy_index)) {
+                    _laser_scan_ranges.at(copy_index) = distance;
+                }
+            }
+        }
+    }
+
+    geometry_msgs::PoseStamped laser_pose, base_pose;
+    laser_pose.header.frame_id = msg->header.frame_id;
+    laser_pose.pose.orientation.w = 1.0;
+
+    for (size_t index = 0; index < _laser_scan_ranges.size(); index++) {
+        double angle = _laser_angle_interval_rad * index + msg->angle_min;
+        double distance = _laser_scan_ranges.at(index);
+
+        laser_pose.pose.position.x = distance * cos(angle);
+        laser_pose.pose.position.y = distance * sin(angle);
+
+        tf2::doTransform(laser_pose, base_pose, transform);
+    
+        _laser_scan_xs.at(index) = base_pose.pose.position.x;
+        _laser_scan_ys.at(index) = base_pose.pose.position.y;
+    }
+
+    nt::SetEntryValue(_laser_entry_xs, nt::Value::MakeDoubleArray(_laser_scan_xs));
+    nt::SetEntryValue(_laser_entry_ys, nt::Value::MakeDoubleArray(_laser_scan_ys));
 }
 
 void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg)
@@ -581,6 +711,50 @@ void TJ2NetworkTables::cancel_waypoint_plan_callback(const nt::EntryNotification
 {
     ROS_INFO("Received cancel plan command");
     cancel_waypoint_goal();
+}
+
+void TJ2NetworkTables::hood_state_callback(const nt::EntryNotification& event)
+{
+    double hood_angle = get_double(_hood_state_entry, false);
+    tj2_interfaces::Hood msg;
+    msg.angle = hood_angle;
+    _hood_pub.publish(msg);
+}
+
+void TJ2NetworkTables::shooter_callback(const nt::EntryNotification& event)
+{
+    int counter = (int)get_double(_shoot_counter_entry, 0.0);
+    double speed = get_double(_shoot_speed_entry, 0.0);
+    double angle = get_double(_shoot_angle_entry, 0.0);
+    double distance = get_double(_shoot_distance_entry, 0.0);
+    tj2_interfaces::Shooter msg;
+    msg.counter = counter;
+    msg.speed = speed;
+    msg.angle = angle;
+    msg.distance = distance;
+    
+    msg.header.stamp = ros::Time::now();
+    _shooter_pub.publish(msg);
+}
+
+void TJ2NetworkTables::reset_to_limelight_callback(const nt::EntryNotification& event)
+{
+    std_msgs::Float64 msg;
+    msg.data = get_double(_reset_to_limelight_entry, 0.0);
+    _reset_to_limelight_pub.publish(msg);
+}
+
+
+void TJ2NetworkTables::target_config_callback(const nt::EntryNotification& event)
+{
+    tj2_target::TargetConfig msg;
+    msg.enable_shot_correction = (int)get_double(_enable_shot_correction_entry, -1.0);
+    msg.enable_moving_shot_probability = (int)get_double(_enable_moving_shot_probability_entry, -1.0);
+    msg.enable_stationary_shot_probability = (int)get_double(_enable_stationary_shot_probability_entry, -1.0);
+    msg.enable_limelight_fine_tuning = (int)get_double(_enable_limelight_fine_tuning_entry, -1.0);
+    msg.enable_marauding = (int)get_double(_enable_marauding_entry, -1.0);
+    msg.enable_reset_to_limelight = (int)get_double(_enable_reset_to_limelight_entry, -1.0);
+    _target_config_pub.publish(msg);
 }
 
 // ---
