@@ -33,12 +33,12 @@ def draw_field_shape(ogm, field_pts, probability, robot_radius_px, is_closed, is
 
 
 def build_map(practice_map_name, field_map_name, data_path, lines=None, robot_radius=0.5, compensate_radius=True):
-    turret_base_link_x_offset = -0.050456
+    # turret_base_link_x_offset = -0.050456
 
     # in_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", practice_map_name + ".yaml")
     field_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", field_map_name + ".yaml")
     field_map_name = os.path.splitext(os.path.basename(field_map_path))[0]
-    out_map_path = os.path.join(rospack.get_path("tj2_target"), "maps", field_map_name + ".yaml")
+    out_map_path = os.path.join(rospack.get_path("tj2_target"), "maps", field_map_name + "-probability.yaml")
 
     ogm = OccupancyGridManager.from_cost_file(field_map_path)
     practice_waypoints = load_waypoints(practice_map_name)

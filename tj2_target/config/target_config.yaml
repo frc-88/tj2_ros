@@ -27,8 +27,8 @@ cargo_egress_time: 0.5
 
 limelight_waypoint_agreement_threshold: 1.0  # if enable_limelight_fine_tuning is true and the limelight target minus waypoint target distance is less than this value, use the limelight target
 
-tof_a_const: 0.22700445  # slope of hood up distance to TOF function
-tof_b_const: 0.23155699  # y intercept of hood up distance to TOF function
+tof_a_const: -0.02614939  # slope of hood up distance to TOF function
+tof_b_const: 1.28455000  # y intercept of hood up distance to TOF function
 
 v_filter_k: 0.8  # k value to apply to robot velocity. This smoothes out sharp velocity changes. Set to null to disable.
 
