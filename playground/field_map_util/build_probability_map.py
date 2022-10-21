@@ -32,14 +32,13 @@ def draw_field_shape(ogm, field_pts, probability, robot_radius_px, is_closed, is
         cv2.fillPoly(ogm.grid_data, [polylines_pts], (probability * 100,))
 
 
-def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_state=None, robot_radius=0.5, compensate_radius=True):
+def build_map(practice_map_name, field_map_name, data_path, lines=None, robot_radius=0.5, compensate_radius=True):
     turret_base_link_x_offset = -0.050456
 
     # in_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", practice_map_name + ".yaml")
     field_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", field_map_name + ".yaml")
     field_map_name = os.path.splitext(os.path.basename(field_map_path))[0]
-    hood_suffix = "-%s" % hood_state if hood_state is not None else ""
-    out_map_path = os.path.join(rospack.get_path("tj2_target"), "maps", field_map_name + hood_suffix + ".yaml")
+    out_map_path = os.path.join(rospack.get_path("tj2_target"), "maps", field_map_name + ".yaml")
 
     ogm = OccupancyGridManager.from_cost_file(field_map_path)
     practice_waypoints = load_waypoints(practice_map_name)
@@ -70,8 +69,6 @@ def build_map(practice_map_name, field_map_name, data_path, lines=None, hood_sta
                 ),
                 "hood": row[header.index("hood")]
             }
-            if hood_state is not None and data["hood"] != hood_state:
-                continue
             print("%s\t%0.2f\t%0.3f" % (data["hood"], data["probability"], data["distance"]))
             probabilities.append(data)
 
@@ -208,31 +205,19 @@ def main():
         lines.append({"pts": ["hub_pt1_r", "hub_pt2_r", "hub_pt3_r", "hub_pt4_r", "hub_pt5_r", "hub_pt6_r"], "probability": 0.0, "mirror": True, "use_field": True, "radius": hub_radius})
 
     data_path = os.path.join(rospack.get_path("tj2_target"), "config", args.data)
-    results_up = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="up", compensate_radius=False)
-    results_down = build_map(args.practice_map_name, args.field_map_name, data_path, lines, hood_state="down", compensate_radius=False)
-    results = {
-        "mode": "up",
-        "up": results_up,
-        "down": results_down,
-    }
+    results = build_map(args.practice_map_name, args.field_map_name, data_path, lines, compensate_radius=False)
 
     if args.show:
         window_name = "map"
         cv2.namedWindow(window_name)
         cv2.setMouseCallback(window_name, mouse_callback, param=results)
 
-        show_image_up = cv2.addWeighted(results_up["field_map"], 0.5, results_up["ogm"].get_image(), 0.5, 0.0)
-        show_image_down = cv2.addWeighted(results_up["field_map"], 0.5, results_down["ogm"].get_image(), 0.5, 0.0)
+        show_image = cv2.addWeighted(results["field_map"], 0.5, results["ogm"].get_image(), 0.5, 0.0)
 
-        cv2.imshow(window_name, show_image_up)
+        cv2.imshow(window_name, show_image)
         while True:
             key = chr(cv2.waitKey(-1) & 0xff)
-            if key == 'u':
-                cv2.imshow(window_name, show_image_up)
-                results["mode"] = "up"
-            elif key == 'd':
-                cv2.imshow(window_name, show_image_down)
-                results["mode"] = "down"
+            cv2.imshow(window_name, show_image)
 
             if key == 'q':
                 break
