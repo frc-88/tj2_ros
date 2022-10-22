@@ -34,6 +34,6 @@ ${SSH_COMMAND} -t "sudo systemctl stop roslaunch.service"
 ${SSH_COMMAND} "cd ${DEST_FULL_PATH}/tj2_tools && python3 setup.py -q install --user"
 
 # build catkin ws
-${SSH_COMMAND} -t "cd ${CATKIN_WS_PATH} && source ${CATKIN_WS_PATH}/devel/setup.bash && catkin_make"
+${SSH_COMMAND} -t "export OPENBLAS_CORETYPE=ARMV8 && cd ${CATKIN_WS_PATH} && source ${CATKIN_WS_PATH}/devel/setup.bash && catkin_make"
 
 ${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_ROSLAUNCH}
