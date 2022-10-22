@@ -30,5 +30,5 @@
         <param name="yolo_object_detection/class_names_path"  value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)" />
     </node>
 
-    <include file="$(find tj2_camera)/launch/imu_joint.launch"/>
+    <include file="$(find tj2_description)/launch/imu_joint.launch"/>
 </launch>

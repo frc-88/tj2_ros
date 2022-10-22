@@ -6,15 +6,15 @@
         <arg name="robot_address" value="$(arg robot_address)"/>
     </include>
     <include file="$(find tj2_description)/launch/tj2_description_2022_swervy.launch"/>
-    <include file="$(find tj2_camera)/launch/tj2_zed2.launch"/>
+    <!-- <include file="$(find tj2_camera)/launch/tj2_zed2.launch"/> -->
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/>
 
     <include file="$(find tj2_rplidar)/launch/sinistra_laser.launch"/>
     <include file="$(find tj2_rplidar)/launch/dextra_laser.launch"/>
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
 
-    <include file="$(find tj2_color_sensor)/launch/lower_color_sensor.launch"/>
-    <include file="$(find tj2_color_sensor)/launch/upper_color_sensor.launch"/>
+    <!-- <include file="$(find tj2_color_sensor)/launch/lower_color_sensor.launch"/> -->
+    <!-- <include file="$(find tj2_color_sensor)/launch/upper_color_sensor.launch"/> -->
 
     <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
     <include file="$(find tj2_target)/launch/tj2_target.launch"/>
