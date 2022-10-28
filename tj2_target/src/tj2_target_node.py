@@ -293,7 +293,7 @@ class TJ2Target(object):
         self.team_color = msg.data
     
     def reset_to_limelight_callback(self, msg):
-        if self.enable_reset_to_limelight:
+        if not self.enable_reset_to_limelight:
             return
         turret_to_odom_tf = lookup_transform(self.tf_buffer, self.odom_frame, self.limelight_target_pose.header.frame_id)
         if turret_to_odom_tf is None:

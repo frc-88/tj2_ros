@@ -598,7 +598,7 @@ void TJ2NetworkTables::joint_callback(size_t joint_index)
     }
     if (!std::isfinite(joint_position)) {
         ROS_WARN_THROTTLE(1.0, "Joint position for index %ld is nan or inf", joint_index);
-        return;
+        joint_position = 0.0;
     }
     std_msgs::Float64* msg = _raw_joint_msgs->at(joint_index);
     msg->data = joint_position;
