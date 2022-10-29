@@ -33,6 +33,7 @@
         /tj2/odom
         /tj2/ping
         /tj2_zed/obj_det/detections
+        /tj2_zed/obj_det/yolo_objects
         /tj2/markers
         /tj2/team_color
         /color_sensor/raw

@@ -5,7 +5,7 @@
     <arg name="bag_dir" default="$(find tj2_match_watcher)/bags"/>
     <arg name="start_time" default="0"/>
     <node name="match_bag" pkg="rosbag" type="play" output="screen" args="$(arg bag_dir)/$(arg bag_name) --clock --pause -s $(arg start_time)"/>
-    <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
+    <include file="$(find tj2_description)/launch/tj2_description_2022_swervy.launch"/>
     
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
     <group ns="sinistra_laser">
