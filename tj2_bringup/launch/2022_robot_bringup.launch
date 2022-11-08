@@ -11,7 +11,6 @@
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
-        <arg name="robot_address" value="$(arg robot_address)"/>
         <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/>
         <arg name="scan_topic" value="$(arg laser_scan_topic)"/>
         <arg name="classes_path" default="$(arg yolo_class_names)"/>

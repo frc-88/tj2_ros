@@ -14,7 +14,7 @@
         <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables" output="screen" required="false">
             <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
             <param name="classes_path" value="$(arg classes_path)"/>
-            <remap from="detections" to="$(arg detections_topic)"/>
+            <remap from="detections" to="$(arg detection_topic)"/>
             <remap from="scan" to="$(arg scan_topic)"/>
         </node>
     </group>

@@ -2,7 +2,7 @@
     <group ns="tj2" >
         <node name="tj2_yolo" pkg="tj2_yolo" type="tj2_yolo" output="screen" required="false">
             <param name="model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/>
-            <param name="classes_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
+            <param name="classes_path" value="$(find tj2_yolo)/models/powercell_2021.names"/>
             <rosparam param="yolo_z_depth_estimations" file="$(find tj2_yolo)/config/power_cell_depth_estimations.yaml" command="load"/>
 
             <param name="confidence_threshold" value="0.5"/>

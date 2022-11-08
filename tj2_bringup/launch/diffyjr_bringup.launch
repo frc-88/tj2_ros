@@ -3,7 +3,7 @@
     <arg name="robot_address" default="10.0.88.2"/>
     <arg name="enable_driver_station" value="true"/>
     <arg name="yolo_class_names" value="$(find tj2_yolo)/models/powercell_2021.names"/>
-    <arg name="yolo_model_path" value="$(find tj2_yolo)/models/powercell_2021.torchscript"/>
+    <arg name="yolo_model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/>
     <arg name="laser_scan_topic" value="/laser/scan_filtered"/>
 
     <rosparam file="$(find tj2_bringup)/config/diffyjr/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
@@ -11,7 +11,6 @@
 
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="publish_odom_tf" value="true"/>
-        <arg name="robot_address" value="$(arg robot_address)"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
         <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/>
         <arg name="scan_topic" value="$(arg laser_scan_topic)"/>
@@ -85,5 +84,6 @@
     </include>
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
+        <arg name="class_names_path"     value="$(arg yolo_class_names)" />    
     </include>
 </launch>
