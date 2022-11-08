@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+    <arg name="record_launch_path" default=""/>
     <group ns="tj2">
-        <node pkg="tj2_match_watcher" type="tj2_match_watcher_node.py" name="tj2_match_watcher" output="screen" required="false"/>
+        <node pkg="tj2_match_watcher" type="tj2_match_watcher_node.py" name="tj2_match_watcher" output="screen" required="false">
+            <param name="record_match_launch_path" value="$(arg record_launch_path)"/>
+        </node>
     </group>
-    <!-- <include file="$(find tj2_match_watcher)/launch/controlled_rosbag_2022_robot.launch"/> -->
-    <!-- <include file="$(find tj2_match_watcher)/launch/controlled_rosbag_diffyjr.launch"/> -->
 </launch>

@@ -5,7 +5,7 @@
     <arg name="bag_dir" default="$(find tj2_match_watcher)/bags"/>
     <arg name="start_time" default="0"/>
     <node name="match_bag" pkg="rosbag" type="play" output="screen" args="$(arg bag_dir)/$(arg bag_name) --clock --pause -s $(arg start_time)"/>
-    <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
+    <include file="$(find tj2_description)/launch/tj2_description_2022_swervy.launch"/>
     
     <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
     <group ns="sinistra_laser">
@@ -29,7 +29,7 @@
         <param name="bag_name" value="$(arg bag_name)"/>
     </node>
     <node name="match_info" pkg="tj2_match_watcher" type="publish_match_info.py" output="screen">
-        <param name="class_names_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
+        <param name="class_names_path" value="$(find tj2_yolo)/models/powercell_2021.names"/>
     </node>
 
     <node pkg="tf" type="static_transform_publisher" name="depth_to_camera" args="0 0 0  -0.500 0.500 -0.500 0.500 camera_link camera_depth_optical_frame 100" />

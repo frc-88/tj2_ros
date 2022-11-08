@@ -1,31 +1,117 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <arg name="robot_address" default="10.0.88.2"/>
-    <include file="$(find tj2_networktables)/launch/tj2_networktables_2022_robot.launch">
+    <arg name="yolo_class_names" value="$(find tj2_yolo)/models/cargo_2022.names"/>
+    <arg name="yolo_model_path" value="$(find tj2_yolo)/models/cargo_2022-01-28.torchscript"/>
+    <arg name="laser_scan_topic" value="/laser/scan_filtered"/>
+
+    <rosparam file="$(find tj2_bringup)/config/2022-robot/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
+    <rosparam file="$(find tj2_bringup)/config/2022-robot/networktables.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
+
+    <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
+        <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/>
+        <arg name="scan_topic" value="$(arg laser_scan_topic)"/>
+        <arg name="classes_path" default="$(arg yolo_class_names)"/>
     </include>
-    <include file="$(find tj2_description)/launch/tj2_description_2022_robot.launch"/>
-    <include file="$(find tj2_camera)/launch/tj2_camera.launch"/>
-    <include file="$(find tj2_camera)/launch/camera_watcher.launch"/>
-    <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch"/>
-    <!-- <include file="$(find tj2_riolog)/launch/tj2_riolog.launch"/> -->
 
-    <include file="$(find tj2_rplidar)/launch/sinistra_laser.launch"/>
-    <include file="$(find tj2_rplidar)/launch/dextra_laser.launch"/>
-    <include file="$(find tj2_rplidar)/launch/laser_combiner.launch"/>
-
-    <!-- <include file="$(find tj2_limelight)/launch/tj2_limelight.launch"/> -->
-    <include file="$(find tj2_yolo)/launch/tj2_yolo_2022_robot.launch"/>
-    <include file="$(find tj2_pursuit)/launch/tj2_pursuit.launch"/>
-    <include file="$(find tj2_move_base)/launch/tj2_move_base.launch"/>
-    <include file="$(find tj2_move_base)/launch/pursuit_planning.launch"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.2032 0.0 0.254  0 0 0 1 base_tilt_link camera_tilt_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="camera_armature_to_link" args="0.0 0.0 0.0  0 0 0 1 camera_armature_link camera_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_to_imu" args="0.0634 0.0012 0.2039  0.0000  0.0000  0.7071  0.7071 base_tilt_link imu 33" />
+    <node pkg="tf" type="static_transform_publisher" name="base_to_sinistra_laser" args="-0.290143 0.294453 0.227728   -1 0 0 0 base_tilt_link sinistra_laser_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_to_dextra_laser" args="-0.290143 -0.294453 0.227728   -1 0 0 0 base_tilt_link dextra_laser_link 20" />
     
+    <include file="$(find tj2_description)/launch/imu_joint.launch">
+        <arg name="camera_imu_topic" value="/tj2_zed/imu/data"/>
+        <arg name="base_imu_topic" value="/tj2/imu"/>
+    </include>
+
+    <include file="$(find tj2_description)/launch/tj2_description.launch">
+        <arg name="model" value="$(find tj2_description)/urdf/2022-robot.urdf.xml"/>
+        <arg name="joint_names" value="$(find tj2_bringup)/config/2022-robot/joints.yaml"/>
+    </include>
+
+    <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
+        <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
+        <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
+    </include>
+
+    <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch">
+        <arg name="record_launch_path"     value="$(find tj2_bringup)/config/2022-robot/record_match.launch" />    
+    </include>
+
+    <!-- Right laser -->
+    <group ns="dextra_laser">
+        <include file="$(find tj2_rplidar)/launch/tj2_rplidar_a2.launch">
+            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.4:1.0-port0"/>
+            <arg name="lidar_node_name" value="dextra_rplidar"/>
+            <arg name="laser_frame_id" value="dextra_laser_link"/>
+        </include>
+
+        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="dextra_laser_filter">
+            <rosparam command="load" file="$(find tj2_bringup)/config/2022-robot/dextra_laser_filter.yaml" />
+        </node>
+    </group>
+    
+    <!-- Left laser -->
+    <group ns="sinistra_laser">
+        <include file="$(find tj2_rplidar)/launch/tj2_rplidar_a2.launch">
+            <arg name="serial_port" value="/dev/serial/by-path/platform-3610000.xhci-usb-0:2.2:1.0-port0"/>
+            <arg name="lidar_node_name" value="sinistra_rplidar"/>
+            <arg name="laser_frame_id" value="sinistra_laser_link"/>
+        </include>
+
+        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="sinistra_laser_filter">
+            <rosparam command="load" file="$(find tj2_rplidar)/config/sinistra_laser_filter.yaml" />
+        </node>
+    </group>
+
+    <node pkg="ira_laser_tools" name="laserscan_multi_merger" type="laserscan_multi_merger" output="screen">
+        <param name="destination_frame" value="base_link"/>
+        <param name="cloud_destination_topic" value="/laser/cloud"/>
+        <param name="scan_destination_topic" value="$(arg laser_scan_topic)"/>
+        <param name="laserscan_topics" value ="/sinistra_laser/scan_filtered /dextra_laser/scan_filtered" /> 
+    </node>
+
+    <node pkg="tj2_rplidar" type="tj2_lidar_watcher_node.py" name="tj2_lidar_watcher" output="screen">
+        <param name="expected_sinistra_rate" value="13.0" />
+        <param name="expected_dextra_rate" value="13.0" />
+        <param name="rate_band" value="3.0" />
+        <rosparam param="combiner_config" file="$(find tj2_rplidar)/config/combiner.yaml" command="load"/>
+    </node>
+
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+        <remap from="/cmd_vel" to="/tj2/cmd_vel_nav"/>
+        <remap from="/odom" to="/tj2/odom"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/move_base_global_params.yaml" command="load"/>
+
+        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/dwaplanner_params.yaml" command="load" ns="DWAPlannerROS"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/trajectory_planner_params.yaml" command="load" ns="TrajectoryPlannerROS"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/teb_planner_params.yaml" command="load" ns="TebLocalPlannerROS"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/global_planner_params.yaml" command="load" ns="GlobalPlanner"/>
+
+        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/costmap_local_params.yaml" command="load" ns="local_costmap"/>
+
+        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/costmap_global_params.yaml" command="load" ns="global_costmap"/>
+    </node>
+
+    <rosparam file="$(find tj2_bringup)/config/2022-robot/target_config.yaml" command="load" ns="/tj2/tj2_target" subst_value="true" />
+    <include file="$(find tj2_target)/launch/tj2_target.launch">
+        <arg name="time_of_flight_data" value="$(find tj2_bringup)/config/2022-robot/time_of_flight.csv"/>
+        <arg name="recorded_data" value="$(find tj2_bringup)/config/2022-robot/recorded_data.csv"/>
+    </include>
+
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="localize"/>
         <!-- <arg name="mode" value="idle"/> -->
         <arg name="map_name" value="$(arg map_name)"/>
+        <arg name="laser_scan_topic" value="$(arg laser_scan_topic)"/>
+        <arg name="gmapping_config" value="$(find tj2_bringup)/config/2022-robot/gmapping.yaml"/>
+        <arg name="amcl_config" value="$(find tj2_bringup)/config/2022-robot/amcl.yaml"/>
     </include>
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>

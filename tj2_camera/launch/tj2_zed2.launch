@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+    <arg name="yolo_model_path"           default="$(find tj2_yolo)/models/powercell_2021.torchscript" />
+    <arg name="yolo_class_names_path"     default="$(find tj2_yolo)/models/powercell_2021.names" />
     <arg name="camera_name"           default="zed2" />
     <!-- ROS URDF description of the ZED -->
     <group>
@@ -26,9 +28,7 @@
 
         <param name="general/camera_name"               value="$(arg camera_name)" />
         <param name="general/base_frame"                value="camera_link" />
-        <param name="yolo_object_detection/model_path"        value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript" />
-        <param name="yolo_object_detection/class_names_path"  value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)" />
+        <param name="yolo_object_detection/model_path"        value="$(arg yolo_model_path)" />
+        <param name="yolo_object_detection/class_names_path"  value="$(arg yolo_class_names_path)" />
     </node>
-
-    <include file="$(find tj2_camera)/launch/imu_joint.launch"/>
 </launch>

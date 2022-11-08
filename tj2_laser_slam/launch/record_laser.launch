@@ -6,16 +6,11 @@
        args="record -o /media/storage/bags/laser            
             /tj2/odom
 
-            /laser/scan
+            /sinistra_laser/scan
+            /dextra_laser/scan
             /tj2/imu
 
-            /tj2/swerve_modules/0
-            /tj2/swerve_modules/1
-            /tj2/swerve_modules/2
-            /tj2/swerve_modules/3
-
             /tj2/ping
-            /tj2/robot_status
             /tj2/cmd_vel
             " />
 </launch>

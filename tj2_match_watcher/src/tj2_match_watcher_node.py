@@ -1,14 +1,12 @@
 #!/usr/bin/python3
+import os
 import rospy
 import rospkg
 
-from std_srvs.srv import Empty, EmptyResponse
 from std_msgs.msg import Float64
 from std_msgs.msg import Bool
 
 from geometry_msgs.msg import PoseWithCovarianceStamped
-
-from tj2_match_watcher.srv import TriggerBag
 
 from tj2_tools.launch_manager import LaunchManager
 
@@ -55,15 +53,16 @@ class Tj2MatchWatcher(object):
         self.match_time = -1.0
         self.is_autonomous = False
 
-        # self.start_bag = self.make_service_client("/rosbag_controlled_recording/start", TriggerBag, wait=True)
-        # self.resume_bag = self.make_service_client("/rosbag_controlled_recording/resume", Empty, wait=True)
-        # self.stop_bag = self.make_service_client("/rosbag_controlled_recording/stop", TriggerBag, wait=True)
+        self.record_match_launch_path = rospy.get_param("~record_match_launch_path", "")
+        if len(self.record_match_launch_path) == 0:
+            self.rospack = rospkg.RosPack()
+            self.package_dir = self.rospack.get_path(self.node_name)
+            self.default_launches_dir = self.package_dir + "/launch"
+            self.record_match_launch_path = self.default_launches_dir + "/record_match.launch"
+        if not os.path.isfile(self.record_match_launch_path):
+            raise RuntimeError("Record launch path does not exist: %s" % self.record_match_launch_path)
 
-        self.rospack = rospkg.RosPack()
-        self.package_dir = self.rospack.get_path(self.node_name)
-        self.default_launches_dir = self.package_dir + "/launch"
-
-        self.bag_launcher = LaunchManager(self.default_launches_dir + "/record_match.launch")
+        self.bag_launcher = LaunchManager(self.record_match_launch_path)
 
         self.match_time_sub = rospy.Subscriber("match_time", Float64, self.match_time_callback, queue_size=10)
         self.is_autonomous_sub = rospy.Subscriber("is_autonomous", Bool, self.is_autonomous_callback, queue_size=10)
@@ -116,7 +115,6 @@ class Tj2MatchWatcher(object):
         self.is_autonomous = False
         clock = rospy.Rate(30)
         while not rospy.is_shutdown():
-            # rospy.loginfo_throttle(0.25, "is_autonomous: %s, match_time: %s" % (self.is_autonomous, self.match_time))
             if self.is_autonomous and (0.0 < self.match_time < 14.0):
                 if self.game_start_time <= rospy.Time(0):
                     self.game_start_time = rospy.Time.now()

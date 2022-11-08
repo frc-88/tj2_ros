@@ -2,7 +2,7 @@
 <launch>
     <group ns="tj2" >
         <node pkg="tj2_pursuit" type="tj2_pursuit_node.py" respawn="false" name="tj2_pursuit" output="screen">
-            <param name="class_names_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
+            <param name="class_names_path" value="$(find tj2_yolo)/models/powercell_2021.names"/>
             <remap from="cmd_vel" to="cmd_vel_follow"/>
             <param name="distance_offset" value="-0.0"/>
             <param name="distance_threshold" value="0.05"/>

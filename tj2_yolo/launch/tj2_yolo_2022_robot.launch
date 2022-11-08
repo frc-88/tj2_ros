@@ -2,7 +2,7 @@
     <group ns="tj2" >
         <node name="tj2_yolo" pkg="tj2_yolo" type="tj2_yolo" output="screen" required="false">
             <param name="model_path" value="$(find tj2_yolo)/models/cargo_2022-01-28.torchscript"/>
-            <param name="classes_path" value="$(find tj2_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
+            <param name="classes_path" value="$(find tj2_yolo)/models/powercell_2021.names"/>
             <rosparam param="z_depth_estimations" file="$(find tj2_yolo)/config/cargo_depth_estimations.yaml" command="load"/>
 
             <param name="confidence_threshold" value="0.5"/>
