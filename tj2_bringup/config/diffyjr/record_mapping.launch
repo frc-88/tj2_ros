@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_record_mapping" output="screen" 
+       args="record -o /media/storage/bags/2022_robot_mapping
+        /laser/scan
+        /tj2/cmd_vel
+        /tj2/cmd_vel_nav
+        /tj2/cmd_vel_teleop
+        /tj2/imu
+        /tj2/odom
+        /tj2/ping
+        " />
+</launch>
