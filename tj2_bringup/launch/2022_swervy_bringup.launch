@@ -5,8 +5,8 @@
     <arg name="yolo_model_path" value="$(find tj2_yolo)/models/cargo_2022-01-28.torchscript"/>
     <arg name="laser_scan_topic" value="/laser/scan_filtered"/>
 
-    <rosparam file="$(find tj2_bringup)/config/2022-robot/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
-    <rosparam file="$(find tj2_bringup)/config/2022-robot/networktables.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
+    <rosparam file="$(find tj2_bringup)/config/2022-swervy/networktables.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
+    <rosparam file="$(find tj2_bringup)/config/2022-swervy/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
 
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="publish_odom_tf" value="true"/>
@@ -14,6 +14,7 @@
         <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/>
         <arg name="scan_topic" value="$(arg laser_scan_topic)"/>
         <arg name="classes_path" default="$(arg yolo_class_names)"/>
+        <arg name="joint_names" value="$(find tj2_bringup)/config/2022-swervy/joints.yaml"/>
     </include>
 
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.2032 0.0 0.254  0 0 0 1 base_tilt_link camera_tilt_link 20" />
@@ -29,8 +30,8 @@
     </include>
 
     <include file="$(find tj2_description)/launch/tj2_description.launch">
-        <arg name="model" value="$(find tj2_description)/urdf/2022-robot.urdf.xml"/>
-        <arg name="joint_names" value="$(find tj2_bringup)/config/2022-robot/joints.yaml"/>
+        <arg name="model" value="$(find tj2_description)/urdf/2022-swervy.urdf.xml"/>
+        <arg name="joint_names" value="$(find tj2_bringup)/config/2022-swervy/joints.yaml"/>
     </include>
 
     <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
@@ -39,7 +40,7 @@
     </include>
 
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch">
-        <arg name="record_launch_path"     value="$(find tj2_bringup)/config/2022-robot/record_match.launch" />    
+        <arg name="record_launch_path"     value="$(find tj2_bringup)/config/2022-swervy/record_match.launch" />    
     </include>
 
     <!-- Right laser -->
@@ -51,7 +52,7 @@
         </include>
 
         <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="dextra_laser_filter">
-            <rosparam command="load" file="$(find tj2_bringup)/config/2022-robot/dextra_laser_filter.yaml" />
+            <rosparam command="load" file="$(find tj2_bringup)/config/2022-swervy/dextra_laser_filter.yaml" />
         </node>
     </group>
     
@@ -85,24 +86,24 @@
     <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
         <remap from="/cmd_vel" to="/tj2/cmd_vel_nav"/>
         <remap from="/odom" to="/tj2/odom"/>
-        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/move_base_global_params.yaml" command="load"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-swervy/move_base/move_base_global_params.yaml" command="load"/>
 
-        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/dwaplanner_params.yaml" command="load" ns="DWAPlannerROS"/>
-        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/trajectory_planner_params.yaml" command="load" ns="TrajectoryPlannerROS"/>
-        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/teb_planner_params.yaml" command="load" ns="TebLocalPlannerROS"/>
-        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/global_planner_params.yaml" command="load" ns="GlobalPlanner"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-swervy/move_base/dwaplanner_params.yaml" command="load" ns="DWAPlannerROS"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-swervy/move_base/trajectory_planner_params.yaml" command="load" ns="TrajectoryPlannerROS"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-swervy/move_base/teb_planner_params.yaml" command="load" ns="TebLocalPlannerROS"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-swervy/move_base/global_planner_params.yaml" command="load" ns="GlobalPlanner"/>
 
-        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/costmap_common_params.yaml" command="load" ns="local_costmap"/>
-        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/costmap_local_params.yaml" command="load" ns="local_costmap"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-swervy/move_base/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-swervy/move_base/costmap_local_params.yaml" command="load" ns="local_costmap"/>
 
-        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/costmap_common_params.yaml" command="load" ns="global_costmap"/>
-        <rosparam file="$(find tj2_bringup)/config/2022-robot/move_base/costmap_global_params.yaml" command="load" ns="global_costmap"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-swervy/move_base/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+        <rosparam file="$(find tj2_bringup)/config/2022-swervy/move_base/costmap_global_params.yaml" command="load" ns="global_costmap"/>
     </node>
 
-    <rosparam file="$(find tj2_bringup)/config/2022-robot/target_config.yaml" command="load" ns="/tj2/tj2_target" subst_value="true" />
+    <rosparam file="$(find tj2_bringup)/config/2022-swervy/target_config.yaml" command="load" ns="/tj2/tj2_target" subst_value="true" />
     <include file="$(find tj2_target)/launch/tj2_target.launch">
-        <arg name="time_of_flight_data" value="$(find tj2_bringup)/config/2022-robot/time_of_flight.csv"/>
-        <arg name="recorded_data" value="$(find tj2_bringup)/config/2022-robot/recorded_data.csv"/>
+        <arg name="time_of_flight_data" value="$(find tj2_bringup)/config/2022-swervy/time_of_flight.csv"/>
+        <arg name="recorded_data" value="$(find tj2_bringup)/config/2022-swervy/recorded_data.csv"/>
     </include>
 
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
@@ -111,8 +112,8 @@
         <!-- <arg name="mode" value="idle"/> -->
         <arg name="map_name" value="$(arg map_name)"/>
         <arg name="laser_scan_topic" value="$(arg laser_scan_topic)"/>
-        <arg name="gmapping_config" value="$(find tj2_bringup)/config/2022-robot/gmapping.yaml"/>
-        <arg name="amcl_config" value="$(find tj2_bringup)/config/2022-robot/amcl.yaml"/>
+        <arg name="gmapping_config" value="$(find tj2_bringup)/config/2022-swervy/gmapping.yaml"/>
+        <arg name="amcl_config" value="$(find tj2_bringup)/config/2022-swervy/amcl.yaml"/>
     </include>
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>

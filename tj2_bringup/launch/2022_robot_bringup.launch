@@ -5,8 +5,8 @@
     <arg name="yolo_model_path" value="$(find tj2_yolo)/models/cargo_2022-01-28.torchscript"/>
     <arg name="laser_scan_topic" value="/laser/scan_filtered"/>
 
-    <rosparam file="$(find tj2_bringup)/config/2022-robot/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
-    <rosparam file="$(find tj2_bringup)/config/2022-robot/networktables.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
+    <rosparam file="$(find tj2_bringup)/config/2022-robot/networktables.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
+    <rosparam file="$(find tj2_bringup)/config/2022-robot/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
 
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="publish_odom_tf" value="true"/>
@@ -14,6 +14,7 @@
         <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/>
         <arg name="scan_topic" value="$(arg laser_scan_topic)"/>
         <arg name="classes_path" default="$(arg yolo_class_names)"/>
+        <arg name="joint_names" value="$(find tj2_bringup)/config/2022-robot/joints.yaml"/>
     </include>
 
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.2032 0.0 0.254  0 0 0 1 base_tilt_link camera_tilt_link 20" />

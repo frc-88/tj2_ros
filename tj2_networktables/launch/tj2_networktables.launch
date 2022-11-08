@@ -5,6 +5,7 @@
     <arg name="classes_path" default="$(find tj2_yolo)/models/powercell_2021.names"/>
     <arg name="detection_topic" default="/tj2/detections"/>
     <arg name="scan_topic" default="/laser/scan"/>
+    <arg name="joint_names" default="$(find tj2_description)/config/diffyjr_joints.yaml"/>
 
     <group ns="tj2">
         <node name="tj2_networktables_watcher" pkg="tj2_networktables" type="tj2_networktables_node.py" output="screen" required="false">
@@ -16,6 +17,7 @@
             <param name="classes_path" value="$(arg classes_path)"/>
             <remap from="detections" to="$(arg detection_topic)"/>
             <remap from="scan" to="$(arg scan_topic)"/>
+            <rosparam param="joint_names" file="$(arg joint_names)" command="load"/>
         </node>
     </group>
 

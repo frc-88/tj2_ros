@@ -6,8 +6,8 @@
     <arg name="yolo_model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/>
     <arg name="laser_scan_topic" value="/laser/scan_filtered"/>
 
-    <rosparam file="$(find tj2_bringup)/config/diffyjr/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
-    <rosparam file="$(find tj2_bringup)/config/diffyjr/networktables.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
+    <rosparam file="$(find tj2_bringup)/config/diffyjr/networktables.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
+    <rosparam file="$(find tj2_bringup)/config/diffyjr/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
 
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="publish_odom_tf" value="true"/>
@@ -15,6 +15,7 @@
         <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/>
         <arg name="scan_topic" value="$(arg laser_scan_topic)"/>
         <arg name="classes_path" default="$(arg yolo_class_names)"/>
+        <arg name="joint_names" value="$(find tj2_bringup)/config/diffyjr/joints.yaml"/>
     </include>
 
 
