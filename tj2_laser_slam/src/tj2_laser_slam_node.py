@@ -44,6 +44,10 @@ class TJ2LaserSlam:
         self.min_localize_rate_threshold = rospy.get_param("~min_localize_rate_threshold", 1.0)
         self.min_mapping_rate_threshold = rospy.get_param("~min_mapping_rate_threshold", 1.0)
         
+        self.laser_scan_topic = rospy.get_param("~laser_scan_topic", "")
+        self.gmapping_config = rospy.get_param("~gmapping_config", "")
+        self.amcl_config = rospy.get_param("~amcl_config", "")
+        
         self.mode = self.NONE
         self.map_dir = rospy.get_param("~map_dir", self.default_maps_dir)
         self.map_name = rospy.get_param("~map_name", "map-{date}")
@@ -60,8 +64,8 @@ class TJ2LaserSlam:
         self.map_saver_launch_path = rospy.get_param("~map_saver_launch", self.default_launches_dir + "/map_saver.launch")
         self.fake_map_launch_path = rospy.get_param("~fake_map_launch", self.default_launches_dir + "/fake_map.launch")
 
-        self.gmapping_launcher = LaunchManager(self.gmapping_launch_path)
-        self.amcl_launcher = LaunchManager(self.amcl_launch_path, map_path=self.map_path + ".yaml")
+        self.gmapping_launcher = LaunchManager(self.gmapping_launch_path, laser_scan_topic=self.laser_scan_topic, gmapping_config=self.gmapping_config)
+        self.amcl_launcher = LaunchManager(self.amcl_launch_path, map_path=self.map_path + ".yaml", laser_scan_topic=self.laser_scan_topic, amcl_config=self.amcl_config)
         self.map_saver_launcher = LaunchManager(self.map_saver_launch_path, map_path=self.map_path)
         self.fake_map_launcher = LaunchManager(self.fake_map_launch_path)
 

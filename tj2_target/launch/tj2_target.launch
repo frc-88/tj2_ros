@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+    <arg name="time_of_flight_data" default="$(find tj2_target)/config/time_of_flight.csv"/>
+    <arg name="recorded_data" default="$(find tj2_target)/config/recorded_data.csv"/>
+
     <group ns="tj2">
         <node pkg="tj2_target" type="tj2_target_node.py" name="tj2_target" output="screen" required="false" respawn="true">
             <remap from="amcl_pose" to="/amcl_pose"/>
-            <param name="time_of_flight_file_path" value="$(find tj2_target)/config/time_of_flight.csv"/>
-            <param name="recorded_data_file_path" value="$(find tj2_target)/config/recorded_data.csv"/>
+            <param name="time_of_flight_file_path" value="$(arg time_of_flight_data)"/>
+            <param name="recorded_data_file_path" value="$(arg recorded_data)"/>
             <param name="probability_map_path" value="$(find tj2_target)/maps/$(env ROS_MAP_NAME)-probability.yaml"/>
-            <rosparam command="load" file="$(find tj2_target)/config/target_config.yaml" />
         </node>
     </group>
 </launch>
