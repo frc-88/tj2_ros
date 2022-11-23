@@ -6,6 +6,9 @@ RESTART_ROSLAUNCH=$3
 
 LOCAL_PATH=${PARENT_DIR}
 DESTINATION_PATH=/home/tj2
+LOCAL_NAME=$(basename $LOCAL_PATH)
+DESTINATION_PATH=/home/tj2
+DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
 
 if [ -z ${DESTINATION_NAME} ]; then
     echo "Please set a destination IP or hostname"
@@ -17,6 +20,13 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY} -p 5810"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}
+SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
+
+OUTPUT=$( rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY} -p 5810"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH} | tee /dev/tty)
+
+if echo "$OUTPUT" | grep -q 'tj2_tools/'; then
+    # build tj2_tools
+    ${SSH_COMMAND} "cd ${DEST_FULL_PATH}/tj2_tools && python3 setup.py -q install --user"
+fi
 
 ${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_ROSLAUNCH}

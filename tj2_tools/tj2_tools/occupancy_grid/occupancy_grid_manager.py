@@ -41,6 +41,7 @@ class OccupancyGridManager:
         self.map_config["height"] = msg.info.height
         self.map_config["origin"] = Pose2d.from_ros_pose(msg.info.origin)
         self._reference_frame = msg.header.frame_id
+        return self
 
     @classmethod
     def from_map_file(cls, config_path, reference_frame="map", image_path=None):
@@ -192,8 +193,13 @@ class OccupancyGridManager:
         image = image / 100.0 * max_value
         image = image.astype(np.uint8)
         image = cv2.bitwise_not(image)
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        image[np.where(self.grid_data < 0)] = np.array([128, 128, 0])
+        if image is None:
+            return np.array([])
+        if image.size > 0:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+            image[np.where(self.grid_data < 0)] = np.array([128, 128, 0])
+        else:
+            return np.array([])
         image = image.astype(np.uint8)
         return image
 
@@ -238,6 +244,14 @@ class OccupancyGridManager:
             return True
         else:
             return False
+
+    def set_scale(self, scale):
+        if scale == 1.0:
+            return
+        self.map_config["resolution"] /= scale
+        self.map_config["width"] = int(self.map_config["width"] * scale)
+        self.map_config["height"] = int(self.map_config["height"] * scale)
+        self.grid_data = cv2.resize(self.grid_data, dsize=(self.map_config["width"], self.map_config["height"]), interpolation=cv2.INTER_NEAREST)
 
     def get_closest_cell_under_cost(self, x, y, cost_threshold, max_radius):
         """

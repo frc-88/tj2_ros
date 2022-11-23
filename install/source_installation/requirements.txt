@@ -4,3 +4,7 @@ PyYAML
 pydub
 pynetworktables
 pynmcli
+
+flask
+gevent
+gunicorn

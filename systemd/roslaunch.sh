@@ -18,4 +18,6 @@ tmux send -t $SESSION ". /usr/local/bin/env.sh 0 roslaunch" ENTER
 
 tmux send -t $SESSION "export ROS_HOME=/home/${USER}/.ros" ENTER
 tmux send -t $SESSION "export DISPLAY=:0" ENTER
+tmux send -t $SESSION "export FLASK_ENV=development" ENTER
+
 tmux send -t $SESSION "roslaunch --wait tj2_bringup tj2_bringup.launch --screen" ENTER

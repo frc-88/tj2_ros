@@ -41,6 +41,6 @@ PACKAGE_LIST=`ls -d tj2_* | sed 's/\///g'`
 PACKAGE_LIST=`echo "$PACKAGE_LIST" | tr '\n' ';'`
 cd -
 
-${SSH_COMMAND} -t "export OPENBLAS_CORETYPE=ARMV8 && cd ${CATKIN_WS_PATH} && source /home/${USERNAME}/noetic_ws/install_isolated/setup.bash && source ${CATKIN_WS_PATH}/devel/setup.bash && catkin_make -DCATKIN_WHITELIST_PACKAGES='$PACKAGE_LIST'"
+${SSH_COMMAND} -t "export OPENBLAS_CORETYPE=ARMV8 && cd ${CATKIN_WS_PATH} && source /home/tj2/noetic_ws/install_isolated/setup.bash && source ${CATKIN_WS_PATH}/devel/setup.bash && catkin_make -DCATKIN_WHITELIST_PACKAGES='$PACKAGE_LIST'"
 
 ${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_ROSLAUNCH}

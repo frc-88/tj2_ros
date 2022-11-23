@@ -87,4 +87,8 @@
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
         <arg name="class_names_path"     value="$(arg yolo_class_names)" />    
     </include>
+
+    <include file="$(find tj2_webapp)/launch/tj2_webapp.launch">
+        <arg name="classes_path" value="$(arg yolo_class_names)"/>
+    </include>
 </launch>
