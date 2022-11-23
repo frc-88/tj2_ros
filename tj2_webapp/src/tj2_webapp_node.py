@@ -5,6 +5,7 @@ import sys
 import yaml
 import math
 import signal
+import datetime
 import threading
 import numpy as np
 
@@ -279,6 +280,10 @@ class WebappNode:
         map_height = map_image.shape[0]
         map_image = np.pad(map_image, [(0, 50), (0, 0), (0, 0)], mode='constant')
         
+        time_info = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+
+        map_image = cv2.putText(map_image, time_info, (10, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (0, 0, 0), 2)
+        map_image = cv2.putText(map_image, time_info, (10, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (255, 255, 255), 1)
         map_image = cv2.putText(map_image, self.nearest_waypoint_info, (10, map_height + 17), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1.0, (255, 255, 255), 1)
         map_image = cv2.putText(map_image, self.nearest_detection_info, (10, map_height + 38), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1.0, (255, 255, 255), 1)
         return map_image
