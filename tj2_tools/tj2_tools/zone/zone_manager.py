@@ -134,7 +134,7 @@ class ZoneManager:
         return info_array
 
     def to_polygons(self) -> List[Polygon]:
-        return [self.to_polygon(zone) for zone in self._zones]
+        return [self.to_polygon(zone) for zone in self._zones.zones]
 
     def to_msg(self) -> ZoneArray:
         return self._zones

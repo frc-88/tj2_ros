@@ -52,7 +52,7 @@ class TJ2Zones:
         return Pose2d.from_ros_pose(map_pose.pose)
 
     def nogo_callback(self, msg):
-        self.nogo_zones = msg.nogo
+        self.nogo_zones = [name.data for name in msg.nogo]
 
     def update_zones_callback(self, msg: ZoneArray):
         self.zone_manager.update_zones(msg)

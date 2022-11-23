@@ -105,7 +105,7 @@ class WebappNode:
             self.camera_sub = rospy.Subscriber("/tj2_zed/rgb/image_rect_color", Image, self.camera_callback, queue_size=1)
         self.waypoints_sub = rospy.Subscriber("/tj2/waypoints", WaypointArray, self.waypoints_callback, queue_size=5)
         self.detections_sub = rospy.Subscriber("/tj2_zed/obj_det/detections", Detection3DArray, self.detections_callback, queue_size=5)
-        self.zones_info_sub = rospy.Publisher("/tj2/zones_info", ZoneInfoArray, self.zones_callback, queue_size=10)
+        self.zones_info_sub = rospy.Subscriber("/tj2/zones_info", ZoneInfoArray, self.zones_callback, queue_size=10)
 
     def map_callback(self, msg):
         global lock
@@ -183,11 +183,11 @@ class WebappNode:
         if len(points) > 0:
             points = np.array(points, dtype=np.int32)
             points = points.reshape((-1, 1, 2))
-            map_image = cv2.polylines(map_image, [points], True, (0, 0, 255), 1)
-            map_image = cv2.arrowedLine(map_image, robot_center, robot_forward, (50, 0, 255), 2, tipLength=0.5)
+            map_image = cv2.polylines(map_image, [points], True, (255, 0, 0), 1)
+            map_image = cv2.arrowedLine(map_image, robot_center, robot_forward, (255, 0, 0), 2, tipLength=0.5)
         else:
             dot = self.ogm.get_costmap_x_y(0.0, 0.0)
-            map_image = cv2.circle(map_image, dot, 5, (0, 0, 255), -1)
+            map_image = cv2.circle(map_image, dot, 5, (255, 0, 0), -1)
         return map_image
 
     def render_camera(self, map_image):
@@ -302,16 +302,13 @@ class WebappNode:
         if not self.zones_msg.is_valid:
             self.zone_status_message = "No zone info"
             return map_image
-        zones_image = np.zeros_like(map_image)
         active_zones = []
         for zone_info in sorted(self.zones_msg.zones, key=lambda x: x.zone.priority, reverse=False):
-            if not zone_info.is_nogo:
-                continue
             if zone_info.is_inside:
                 active_zones.append(zone_info.zone.name)
                 color = (0, 0, 255)
             else:
-                color = (50, 50, 150)
+                color = (128, 128, 128)
 
             map_points = []
             for point in zone_info.zone.points:
@@ -322,20 +319,23 @@ class WebappNode:
                 for index, point in enumerate(map_points):
                     map_points[index] = self.get_point_in_global_frame(transform, point[0], point[1])
 
-            points = [self.ogm.get_costmap_x_y(x, y) for x, y in self.map_points]
+            points = [self.ogm.get_costmap_x_y(x, y) for x, y in map_points]
             points = np.array(points, dtype=np.int32)
             points = points.reshape((-1, 1, 2))
-            zones_image = cv2.polylines(zones_image, [points], True, color, -1)
+            if zone_info.is_nogo:
+                map_image = cv2.fillPoly(map_image, [points], color=color)
+            else:
+                map_image = cv2.polylines(map_image, [points], True, (200, 200, 0), 1)
         self.zone_status_message = "Active zones: " + ", ".join(active_zones)
-        return cv2.addWeighted(map_image, 0.5, zones_image, 0.5)
+        return map_image
 
     def render(self):
         # map renders
         map_image = self.ogm.get_image()
+        map_image = self.render_zones(map_image)
         map_image = self.render_waypoints(map_image)
         map_image = self.render_robot(map_image)
         map_image = self.render_detections(map_image)
-        map_image = self.render_zones(map_image)
 
         map_image = np.flipud(map_image).astype(np.uint8)
 

@@ -6,7 +6,7 @@ APPLY_PATCHES=${1:-}
 DEPENDENCIES_WS=$HOME/packages_ros_ws
 DEPENDENCIES_WS_SRC=${DEPENDENCIES_WS}/src
 
-sudo apt-get install -y portaudio19-dev python3-pyaudio gunicorn
+sudo apt-get install -y portaudio19-dev python3-pyaudio gunicorn python3-shapely
 sudo -H pip3 install -r requirements.txt
 
 
