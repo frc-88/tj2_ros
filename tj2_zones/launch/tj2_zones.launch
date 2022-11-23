@@ -1,9 +1,9 @@
 <launch>
     <arg name="global_frame" default="map"/>
     <arg name="robot_frame" default="base_link"/>
-    <arg name="zones_path" default="$(find tj2_zones)/zones/rapid-react-2022.yaml"/>
+    <arg name="zones_path" default="$(find tj2_zones)/zones/rapid-react-2022.bin"/>
     <group ns="tj2">
-        <node pkg="tj2_zones" type="tj2_zones_node.py" respawn="true" name="tj2_zones" output="screen">
+        <node pkg="tj2_zones" type="tj2_zones_node.py" required="false" name="tj2_zones" output="screen">
             <param name="global_frame" value="$(arg global_frame)"/>
             <param name="robot_frame" value="$(arg robot_frame)"/>
             <param name="zones_path" value="$(arg zones_path)"/>

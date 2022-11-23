@@ -34,6 +34,8 @@ from vision_msgs.msg import Detection3DArray
 
 from tj2_waypoints.msg import WaypointArray
 
+from tj2_interfaces.msg import ZoneInfoArray
+
 from tj2_tools.occupancy_grid import OccupancyGridManager
 from tj2_tools.robot_state import Pose2d
 
@@ -94,12 +96,16 @@ class WebappNode:
                 
         self.detections_msg = Detection3DArray()
         
+        self.zones_msg = ZoneInfoArray()
+        self.zone_status_message = ""
+
         self.rate = rospy.Rate(rate)
         self.map_sub = rospy.Subscriber("/map", OccupancyGrid, self.map_callback, queue_size=1)
         if self.enable_camera:
             self.camera_sub = rospy.Subscriber("/tj2_zed/rgb/image_rect_color", Image, self.camera_callback, queue_size=1)
         self.waypoints_sub = rospy.Subscriber("/tj2/waypoints", WaypointArray, self.waypoints_callback, queue_size=5)
         self.detections_sub = rospy.Subscriber("/tj2_zed/obj_det/detections", Detection3DArray, self.detections_callback, queue_size=5)
+        self.zones_info_sub = rospy.Publisher("/tj2/zones_info", ZoneInfoArray, self.zones_callback, queue_size=10)
 
     def map_callback(self, msg):
         global lock
@@ -135,6 +141,9 @@ class WebappNode:
     def detections_callback(self, msg):
         self.detections_msg = msg
 
+    def zones_callback(self, msg):
+        self.zones_msg = msg
+
     def get_point_in_global_frame(self, transform, x, y):
         robot_pose = PoseStamped()
         robot_pose.header.frame_id = self.robot_frame
@@ -152,13 +161,7 @@ class WebappNode:
             return f"?? ({index})"
 
     def render_robot(self, map_image):
-        try:
-            transform = self.tf_buffer.lookup_transform(self.global_frame, self.robot_frame, rospy.Time(0), rospy.Duration(0.1))
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            transform = TransformStamped()
-            transform.header.frame_id = self.global_frame
-            transform.child_frame_id = self.robot_frame
-            transform.transform.rotation.w = 1.0
+        transform = self.get_global_transform(self.robot_frame)
 
         points = []
         for point in self.footprint.polygon.points:
@@ -211,6 +214,8 @@ class WebappNode:
             if min_distance is None or distance < min_distance:
                 min_distance = distance
                 closest_waypoint = name
+        if min_distance is None:
+            min_distance = 0.0
         self.nearest_waypoint_info = f"{closest_waypoint}: {min_distance:0.3f}"
         for name, pose2d in self.waypoints.items():
             point1 = self.ogm.get_costmap_x_y(pose2d.x, pose2d.y)
@@ -228,17 +233,21 @@ class WebappNode:
 
         return map_image
 
-    def render_detections(self, map_image):
-        if len(self.detections_msg.header.frame_id) == 0 or len(self.detections_msg.detections) == 0:
-            self.nearest_detection_info = f"No detections available"
-            return map_image
+    def get_global_transform(self, child_frame):
         try:
-            transform = self.tf_buffer.lookup_transform(self.global_frame, self.detections_msg.header.frame_id, rospy.Time(0), rospy.Duration(0.1))
+            transform = self.tf_buffer.lookup_transform(self.global_frame, child_frame, rospy.Time(0), rospy.Duration(0.1))
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             transform = TransformStamped()
             transform.header.frame_id = self.global_frame
             transform.child_frame_id = self.detections_msg.header.frame_id
             transform.transform.rotation.w = 1.0
+        return transform
+
+    def render_detections(self, map_image):
+        if len(self.detections_msg.header.frame_id) == 0 or len(self.detections_msg.detections) == 0:
+            self.nearest_detection_info = f"No detections available"
+            return map_image
+        transform = self.get_global_transform(self.detections_msg.header.frame_id)
 
         min_info = {
             "dist": None,
@@ -278,15 +287,47 @@ class WebappNode:
 
     def render_nearest_points_of_interest(self, map_image):
         map_height = map_image.shape[0]
-        map_image = np.pad(map_image, [(0, 50), (0, 0), (0, 0)], mode='constant')
+        map_image = np.pad(map_image, [(0, 70), (0, 0), (0, 0)], mode='constant')
         
         time_info = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 
         map_image = cv2.putText(map_image, time_info, (10, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (0, 0, 0), 2)
         map_image = cv2.putText(map_image, time_info, (10, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (255, 255, 255), 1)
-        map_image = cv2.putText(map_image, self.nearest_waypoint_info, (10, map_height + 17), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1.0, (255, 255, 255), 1)
-        map_image = cv2.putText(map_image, self.nearest_detection_info, (10, map_height + 38), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1.0, (255, 255, 255), 1)
+        map_image = cv2.putText(map_image, self.nearest_waypoint_info, (10, map_height + 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1.0, (255, 255, 255), 1)
+        map_image = cv2.putText(map_image, self.nearest_detection_info, (10, map_height + 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1.0, (255, 255, 255), 1)
+        map_image = cv2.putText(map_image, self.zone_status_message, (10, map_height + 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1.0, (255, 255, 255), 1)
         return map_image
+
+    def render_zones(self, map_image):
+        if not self.zones_msg.is_valid:
+            self.zone_status_message = "No zone info"
+            return map_image
+        zones_image = np.zeros_like(map_image)
+        active_zones = []
+        for zone_info in sorted(self.zones_msg.zones, key=lambda x: x.zone.priority, reverse=False):
+            if not zone_info.is_nogo:
+                continue
+            if zone_info.is_inside:
+                active_zones.append(zone_info.zone.name)
+                color = (0, 0, 255)
+            else:
+                color = (50, 50, 150)
+
+            map_points = []
+            for point in zone_info.zone.points:
+                map_points.append((point.x, point.y))
+
+            if zone_info.zone.header.frame_id != self.global_frame:
+                transform = self.get_global_transform(zone_info.zone.header.frame_id)
+                for index, point in enumerate(map_points):
+                    map_points[index] = self.get_point_in_global_frame(transform, point[0], point[1])
+
+            points = [self.ogm.get_costmap_x_y(x, y) for x, y in self.map_points]
+            points = np.array(points, dtype=np.int32)
+            points = points.reshape((-1, 1, 2))
+            zones_image = cv2.polylines(zones_image, [points], True, color, -1)
+        self.zone_status_message = "Active zones: " + ", ".join(active_zones)
+        return cv2.addWeighted(map_image, 0.5, zones_image, 0.5)
 
     def render(self):
         # map renders
@@ -294,6 +335,7 @@ class WebappNode:
         map_image = self.render_waypoints(map_image)
         map_image = self.render_robot(map_image)
         map_image = self.render_detections(map_image)
+        map_image = self.render_zones(map_image)
 
         map_image = np.flipud(map_image).astype(np.uint8)
 

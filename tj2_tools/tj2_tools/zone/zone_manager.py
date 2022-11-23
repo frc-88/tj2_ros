@@ -1,6 +1,6 @@
 import os
 import math
-from typing import List
+from typing import List, Optional
 import rospy
 
 import shapely.geometry
@@ -24,25 +24,31 @@ class ZoneManager:
 
     def load_zones(self, path: str) -> ZoneArray:
         zones = ZoneArray()
-        if os.path.isdir(os.path.dirname(path)):
+        load_dir = os.path.dirname(path)
+        if os.path.isdir(load_dir) or len(load_dir) == 0:
             if not os.path.isfile(path):
                 rospy.loginfo(f"Zones path doesn't exist: {path}. Creating file.")
                 self.save_zones(path, zones)
             else:
                 with open(path, 'rb') as file:
-                    zones.deserialize(file)
+                    zones.deserialize(file.read())
         elif len(path) == 0:
             rospy.loginfo("No zone path specified. Not loading zones.")
         else:
-            raise FileNotFoundError(f"Zones directory doesn't exist: {path}")
+            raise FileNotFoundError(f"Zones directory doesn't exist: {load_dir}")
         return zones
 
-    def save_zones(self, path: str, zones: ZoneArray) -> None:
-        if os.path.isdir(os.path.dirname(path)):
+    def save_zones(self, path: str, zones: Optional[ZoneArray] = None) -> None:
+        if zones is None:
+            zones = self._zones
+        save_dir = os.path.dirname(path)
+        if os.path.isdir(save_dir) or len(save_dir) == 0:
             with open(path, 'wb') as file:
                 zones.serialize(file)
         elif len(path) == 0:
             rospy.loginfo("No zone path specified. Not saving zones.")
+        else:
+            raise FileNotFoundError(f"Zones directory doesn't exist: {save_dir}")
 
     def add_polygon(self, name: str, priority: float, polygon: Polygon) -> None:
         zone = self.to_zone(name, priority, self._zones.header.frame_id, polygon)

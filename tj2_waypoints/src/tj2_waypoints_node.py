@@ -80,7 +80,7 @@ class SimpleDynamicToggle:
         return self.state
 
 
-class Tj2Waypoints:
+class TJ2Waypoints:
     def __init__(self):
         self.node_name = "tj2_waypoints"
         rospy.init_node(
@@ -600,7 +600,7 @@ class Tj2Waypoints:
 
 
 def main():
-    node = Tj2Waypoints()
+    node = TJ2Waypoints()
     try:
         node.run()
     except rospy.ROSInterruptException:
