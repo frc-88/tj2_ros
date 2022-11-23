@@ -45,23 +45,18 @@
 #include "tj2_interfaces/OdomReset.h"
 #include "tj2_interfaces/NTEntry.h"
 #include "tj2_interfaces/NavX.h"
-#include "tj2_interfaces/SwerveModule.h"
-#include "tj2_interfaces/SwerveMotor.h"
 
 #include "tj2_interfaces/OdomReset.h"
 #include "tj2_interfaces/NTEntry.h"
 #include "tj2_interfaces/NTEntryString.h"
-#include "tj2_interfaces/Shooter.h"
-#include "tj2_interfaces/Hood.h"
 
-#include "tj2_target/TargetConfig.h"
+#include "tj2_interfaces/ZoneInfo.h"
+#include "tj2_interfaces/ZoneInfoArray.h"
+#include "tj2_interfaces/NoGoZones.h"
 
 #include "networktables/EntryListenerFlags.h"
 
 using namespace std;
-
-// NT callbacks
-void ping_callback(void* data, const NT_EntryNotification* event);
 
 
 typedef enum {
@@ -87,9 +82,25 @@ boost::array<typename Container::value_type, Size> as_array(const Container &con
 }
 
 class TJ2NetworkTables {
-private:
+public:
+    TJ2NetworkTables(ros::NodeHandle* nodehandle);
+    int run();
+protected:
     ros::NodeHandle nh;  // ROS node handle
 
+    // NT entries
+    NT_Inst _nt;
+    string _base_key;
+
+    // NT helpers
+    double get_double(NT_Entry entry, double default_value = 0.0);
+    bool get_boolean(NT_Entry entry, bool default_value = false);
+    string get_string(NT_Entry entry, string default_value = "");
+    NT_Entry get_entry(string path);
+
+    // Main loop methods
+    void loop();
+private:
     // Parameters
     int _nt_port;
     double _update_interval;
@@ -121,10 +132,6 @@ private:
     std::vector<double> _imu_linear_acceleration_covariance;
 
     string _classes_path;
-
-    // NT entries
-    NT_Inst _nt;
-    string _base_key;
 
     // odom entries
     NT_Entry _odom_x_entry;
@@ -205,27 +212,10 @@ private:
     NT_Entry _laser_entry_xs;
     NT_Entry _laser_entry_ys;
 
-    // shooter entries
-    NT_Entry _hood_state_entry;
-    NT_Entry _hood_update_entry;
-    NT_Entry _shoot_counter_entry;
-    NT_Entry _shoot_speed_entry;
-    NT_Entry _shoot_angle_entry;
-    NT_Entry _shoot_distance_entry;
-
-    // Reset localization entries
-    NT_Entry _reset_to_limelight_entry;
-
-    // Target config
-    NT_Entry _enable_shot_correction_entry;
-    NT_Entry _enable_moving_shot_probability_entry;
-    NT_Entry _enable_stationary_shot_probability_entry;
-    NT_Entry _enable_limelight_fine_tuning_entry;
-    NT_Entry _enable_marauding_entry;
-    NT_Entry _enable_reset_to_limelight_entry;
-    NT_Entry _target_config_update_entry;
-    // module entires
-    NT_Entry _module_num_entry;
+    // zone entries
+    NT_Entry _zones_valid_entry;
+    NT_Entry _nogo_zones_update_entry;
+    NT_Entry _nogo_zones_names_entry;
 
     // Members
     ros::Timer _ping_timer;
@@ -248,7 +238,7 @@ private:
     std::vector<double> _laser_scan_xs;
     std::vector<double> _laser_scan_ys;
 
-    int _num_modules;
+    string _zones_base_key;
 
     // Messages
     nav_msgs::Odometry _odom_msg;
@@ -264,11 +254,7 @@ private:
     ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
     ros::Publisher _pose_estimate_pub;
     ros::Publisher _pose_reset_pub;
-    ros::Publisher _hood_pub;
-    ros::Publisher _shooter_pub;
-    ros::Publisher _reset_to_limelight_pub;
-    ros::Publisher _target_config_pub;
-    ros::Publisher _modules_pub;
+    ros::Publisher _nogo_zone_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
@@ -278,6 +264,8 @@ private:
     ros::Subscriber _detections_sub;
     ros::Subscriber _field_relative_sub;
     ros::Subscriber _laser_sub;
+    ros::Subscriber _zones_sub;
+
     tf2_ros::Buffer _tf_buffer;
     tf2_ros::TransformListener _tf_listener;
     vector<ros::Subscriber>* _raw_joint_subs;
@@ -300,6 +288,7 @@ private:
     void joint_command_callback(const std_msgs::Float64ConstPtr& msg, string joint_name, int joint_index);
     void field_relative_callback(const std_msgs::BoolConstPtr& msg);
     void scan_callback(const sensor_msgs::LaserScanConstPtr& msg);
+    void zones_info_callback(const tj2_interfaces::ZoneInfoArrayConstPtr& msg);
 
     // Service callbacks
     bool odom_reset_callback(tj2_interfaces::OdomReset::Request &req, tj2_interfaces::OdomReset::Response &resp);
@@ -311,26 +300,17 @@ private:
     void joint_callback(size_t joint_index);
     void match_callback(const nt::EntryNotification& event);
     void pose_estimate_callback(const nt::EntryNotification& event);
-    void reset_to_limelight_callback(const nt::EntryNotification& event);
-    void target_config_callback(const nt::EntryNotification& event);
-    void module_num_callback(const nt::EntryNotification& event);
 
     void create_waypoint(size_t index);
     void exec_waypoint_plan_callback(const nt::EntryNotification& event);
     void reset_waypoint_plan_callback(const nt::EntryNotification& event);
     void cancel_waypoint_plan_callback(const nt::EntryNotification& event);
-    void hood_state_callback(const nt::EntryNotification& event);
-    void shooter_callback(const nt::EntryNotification& event);
+
+    void nogo_zones_callback(const nt::EntryNotification& event);
 
     // Timer callbacks
     void ping_timer_callback(const ros::TimerEvent& event);
     void joint_timer_callback(const ros::TimerEvent& event);
-
-    // NT helpers
-    double get_double(NT_Entry entry, double default_value = 0.0);
-    bool get_boolean(NT_Entry entry, bool default_value = false);
-    string get_string(NT_Entry entry, string default_value = "");
-    NT_Entry get_entry(string path);
 
     // Other helpers
     void add_joint(string name);
@@ -341,7 +321,6 @@ private:
     std::vector<std::string> load_label_names(const string& path);
     void publish_odom();
     void publish_imu();
-    void publish_module();
 
     // Waypoint control
     void set_goal_status(GoalStatus status);
@@ -350,11 +329,4 @@ private:
     void reset_waypoints();
     tj2_waypoints::Waypoint make_waypoint_from_nt(size_t index);
     void add_waypoint(tj2_waypoints::Waypoint waypoint);
-
-    // Main loop methods
-    void loop();
-
-public:
-    TJ2NetworkTables(ros::NodeHandle* nodehandle);
-    int run();
 };

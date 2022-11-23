@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+    <arg name="interface_type" default="diffyjr"/>
     <arg name="publish_odom_tf" default="true"/>
     <arg name="robot_address" default="10.0.88.2"/>
     <arg name="classes_path" default="$(find tj2_yolo)/models/powercell_2021.names"/>
@@ -13,6 +14,7 @@
         </node>
 
         <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables" output="screen" required="false">
+            <param name="interface" value="$(arg interface_type)"/>
             <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
             <param name="classes_path" value="$(arg classes_path)"/>
             <remap from="detections" to="$(arg detection_topic)"/>

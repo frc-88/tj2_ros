@@ -56,6 +56,11 @@ add_message_files(
   SwerveMotor.msg
   Hood.msg
   Shooter.msg
+  Zone.msg
+  ZoneArray.msg
+  ZoneInfo.msg
+  ZoneInfoArray.msg
+  NoGoZones.msg
 )
 
 ## Generate services in the 'srv' folder

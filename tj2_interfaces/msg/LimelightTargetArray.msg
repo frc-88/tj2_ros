@@ -1,2 +1,2 @@
 Header header
-tj2_limelight/LimelightTarget[] targets
+tj2_interfaces/LimelightTarget[] targets

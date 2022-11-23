@@ -118,7 +118,7 @@ catkin_python_setup()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES tj2_networktables
+  LIBRARIES tj2_networktables diffyjr_networktables robot_2022_networktables
   CATKIN_DEPENDS 
     rospy
     std_msgs
@@ -144,12 +144,24 @@ include_directories(
 )
 link_directories(${catkin_LIBRARY_DIRS})
 
+add_library(tj2_networktables
+  src/tj2_networktables.cpp
+)
+
+add_library(diffyjr_networktables
+  src/diffyjr_networktables.cpp
+)
+
+add_library(robot_2022_networktables
+  src/robot_2022_networktables.cpp
+)
+
+
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}
-  include/${PROJECT_NAME}.h
-  src/${PROJECT_NAME}.cpp
+add_executable(tj2_networktables_node
+  src/tj2_networktables_node.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -164,14 +176,32 @@ add_executable(${PROJECT_NAME}
 # set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME node PREFIX "")
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(tj2_networktables
     ${catkin_LIBRARIES}
     ntcore wpiutil
 )
 
+target_link_libraries(diffyjr_networktables
+    ${catkin_LIBRARIES}
+    ntcore wpiutil tj2_networktables
+)
+
+target_link_libraries(robot_2022_networktables
+    ${catkin_LIBRARIES}
+    ntcore wpiutil tj2_networktables
+)
+
+target_link_libraries(tj2_networktables_node
+    ${catkin_LIBRARIES}
+    ntcore wpiutil tj2_networktables robot_2022_networktables diffyjr_networktables
+)
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(tj2_networktables ${tj2_networktables_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(diffyjr_networktables ${diffyjr_networktables_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(robot_2022_networktables ${robot_2022_networktables_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(tj2_networktables_node ${tj2_networktables_node_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -195,7 +225,7 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS tj2_networktables_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}

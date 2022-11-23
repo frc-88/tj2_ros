@@ -10,6 +10,7 @@
     <rosparam file="$(find tj2_bringup)/config/diffyjr/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
 
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
+        <arg name="interface_type" value="diffyjr"/>
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
         <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/>
@@ -17,7 +18,6 @@
         <arg name="classes_path" default="$(arg yolo_class_names)"/>
         <arg name="joint_names" value="$(find tj2_bringup)/config/diffyjr/joints.yaml"/>
     </include>
-
 
     <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" /> -->
     <!-- <node pkg="tf" type="static_transform_publisher" name="camera_tilt_to_armature" args="0.0 0.0 0.0  0 0 0 1 camera_tilt_link camera_armature_link 20" /> -->

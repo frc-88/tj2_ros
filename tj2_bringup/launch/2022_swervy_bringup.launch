@@ -9,6 +9,7 @@
     <rosparam file="$(find tj2_bringup)/config/2022-swervy/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
 
     <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
+        <arg name="interface_type" value="robot_2022"/>
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
         <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/>
