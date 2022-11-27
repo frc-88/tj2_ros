@@ -11,7 +11,8 @@
             <param name="start_mode" value="$(arg start_mode)" />
             <param name="frc_robot_address" value="$(arg robot_address)" />
             <param name="disable_time_threshold" value="30.0" />
-            
+            <param name="alliance" value="red" />
+            <param name="position" value="1" />
         </node>
     </group>
 </launch>

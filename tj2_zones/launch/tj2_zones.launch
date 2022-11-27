@@ -7,6 +7,7 @@
             <param name="global_frame" value="$(arg global_frame)"/>
             <param name="robot_frame" value="$(arg robot_frame)"/>
             <param name="zones_path" value="$(arg zones_path)"/>
+            <remap from="map" to="/map"/>
         </node>
     </group>
 </launch>

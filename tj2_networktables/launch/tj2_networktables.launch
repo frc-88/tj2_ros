@@ -13,7 +13,7 @@
             <param name="nt_host" value="$(arg robot_address)"/>
         </node>
 
-        <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables" output="screen" required="false">
+        <node name="tj2_networktables" pkg="tj2_networktables" type="tj2_networktables_node" output="screen" required="false">
             <param name="interface" value="$(arg interface_type)"/>
             <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
             <param name="classes_path" value="$(arg classes_path)"/>

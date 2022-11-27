@@ -2,6 +2,7 @@
 
 import os
 import cv2
+import copy
 import yaml
 from nav_msgs.msg import OccupancyGrid
 import numpy as np
@@ -25,6 +26,14 @@ class OccupancyGridManager:
         self.map_config = {}
         self._reference_frame = ""
         self.grid_data = np.array([], dtype=np.int8)
+
+    @classmethod
+    def from_ogm(cls, other: "OccupancyGridManager"):
+        self = cls()
+        self.map_config = copy.copy(other.map_config)
+        self._reference_frame = other._reference_frame
+        self.grid_data = np.copy(other.grid_data)
+        return self
 
     @classmethod
     def from_msg(cls, msg: OccupancyGrid):
@@ -109,7 +118,7 @@ class OccupancyGridManager:
         msg.info.width = self.width
         msg.info.height = self.height
         msg.info.origin = self.origin.to_ros_pose()
-        msg.data = self.grid_data.tobytes()
+        msg.data = self.grid_data.astype(np.int8).flatten().tolist()
         return msg
     
     def to_file(self, path, occupied_thresh=0.9, free_thresh=0.1, negate=False):
@@ -138,24 +147,27 @@ class OccupancyGridManager:
 
     @property
     def resolution(self):
-        return self.map_config["resolution"]
+        return self.map_config.get("resolution", 0.0)
 
     @property
     def width(self):
-        return self.map_config["width"]
+        return self.map_config.get("width", 0)
 
     @property
     def height(self):
-        return self.map_config["height"]
+        return self.map_config.get("height", 0)
 
     @property
     def origin(self):
-        return self.map_config["origin"]
+        return self.map_config.get("origin", (0, 0))
 
     @property
     def reference_frame(self):
         return self._reference_frame
     
+    def is_set(self):
+        return len(self.map_config) != 0 and len(self._reference_frame) != 0 and len(self.grid_data) != 0
+
     def set_resolution(self, value):
         assert isinstance(value, float) or isinstance(value, int)
         self.map_config["resolution"] = value
@@ -184,7 +196,8 @@ class OccupancyGridManager:
     def set_reference_frame(self, value):
         self._reference_frame = value
     
-    def set_image(self, grid_data):
+    def set_grid_data(self, grid_data):
+        grid_data = grid_data.astype(np.int8)
         self.grid_data = grid_data
     
     def get_image(self):

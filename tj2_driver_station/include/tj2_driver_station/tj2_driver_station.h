@@ -11,6 +11,7 @@
 #include <libds/LibDS.h>
 
 #include "tj2_driver_station/SetRobotMode.h"
+#include "tj2_driver_station/SetAlliance.h"
 #include "tj2_driver_station/RobotStatus.h"
 
 #include "geometry_msgs/Twist.h"
@@ -36,6 +37,8 @@ private:
     int _start_mode;
     double _alive_time_threshold_param;
     double _disable_time_threshold_param;
+    string _alliance;
+    string _position;
 
     // Object properties
     bool _is_robot_connected;
@@ -58,9 +61,11 @@ private:
 
     // Services
     ros::ServiceServer robot_mode_srv;
+    ros::ServiceServer alliance_srv;
 
     // Callbacks
     bool robot_mode_callback(tj2_driver_station::SetRobotMode::Request &req, tj2_driver_station::SetRobotMode::Response &resp);
+    bool alliance_callback(tj2_driver_station::SetAlliance::Request &req, tj2_driver_station::SetAlliance::Response &resp);
     void twist_callback(const geometry_msgs::TwistConstPtr& msg);
 
     void init();
@@ -70,6 +75,8 @@ private:
     void wait_for_connection();
     void process_events();
     bool set_mode(RobotMode mode);
+    bool set_alliance(string alliance);
+    bool set_position(string position);
     void check_disable_timeout();
 
 public:

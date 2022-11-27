@@ -60,7 +60,7 @@ def main():
     ogm.set_height(height_px)
     ogm.set_origin((-width_meters / 2, -height_meters / 2))
     # ogm.set_origin((0.0, 0.0))
-    ogm.set_image(np.zeros((height_px, width_px), dtype=np.int8))
+    ogm.set_grid_data(np.zeros((height_px, width_px), dtype=np.int8))
 
     doc = ezdxf.readfile(args.dxf)
 

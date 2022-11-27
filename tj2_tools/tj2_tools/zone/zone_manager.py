@@ -1,6 +1,8 @@
 import os
+import cv2
 import math
-from typing import List, Optional
+import numpy as np
+from typing import Any, List, Optional
 import rospy
 
 import shapely.geometry
@@ -15,12 +17,14 @@ from tj2_interfaces.msg import ZoneInfo
 from tj2_interfaces.msg import ZoneInfoArray
 
 from tj2_tools.robot_state import Pose2d
+from tj2_tools.occupancy_grid import OccupancyGridManager
 
 
 class ZoneManager:
-    def __init__(self) -> None:
+    def __init__(self, nogo_names: Optional[List[str]] = None) -> None:
         self._zones = ZoneArray()
         self._name_mapping = {}
+        self.nogo_names = [] if nogo_names is None else nogo_names
 
     def load_zones(self, path: str) -> ZoneArray:
         zones = ZoneArray()
@@ -78,6 +82,14 @@ class ZoneManager:
             zone.header = zones.header
             self.add_zone(zone)
 
+    def update_nogos(self, arg: Any):
+        if type(arg) == list or type(arg) == tuple:
+            self.nogo_names = [str(name) for name in arg]
+        elif type(arg) == str:
+            self.nogo_names.append(arg)
+        else:
+            raise ValueError(f"Invalid argument for no-go zone: {arg}")
+
     def get_zone_named(self, name: str) -> Zone:
         return self.get_zone(self.get_zone_index(name))
 
@@ -90,7 +102,7 @@ class ZoneManager:
             rospy.logwarn(f"Zone frame id doesn't match this manager's frame. Overwriting zone's frame id: {zone}")
             zone.header.frame_id = self._zones.header.frame_id
         return zone
-    
+
     def __len__(self) -> int:
         return len(self._zones.zones)
 
@@ -98,6 +110,9 @@ class ZoneManager:
         robot_point = shapely.geometry.Point(robot_pose.x, robot_pose.y)
         polygon = self.to_polygon(self.get_zone(index))
         return polygon.contains(robot_point)
+
+    def is_nogo(self, index: int):
+        return self.get_zone(index).name in self.nogo_names
 
     def get_nearest_point(self, index: int, robot_pose: Pose2d) -> Pose2d:
         robot_point = shapely.geometry.Point(robot_pose.x, robot_pose.y)
@@ -124,6 +139,7 @@ class ZoneManager:
             info = ZoneInfo()
             info.zone = self.get_zone(index)
             info.is_inside = polygon.contains(robot_point)
+            info.is_nogo = self.is_nogo(index)
             pt1, pt2 = nearest_points(polygon, robot_point)
             info.nearest_point.x = pt1.coords.xy[0][0]
             info.nearest_point.y = pt1.coords.xy[1][0]
@@ -138,6 +154,29 @@ class ZoneManager:
 
     def to_msg(self) -> ZoneArray:
         return self._zones
+
+    def to_image(self, ogm: OccupancyGridManager, free=0, occupied=100, overlay_base=True) -> np.ndarray:
+        if overlay_base:
+            map_image = np.copy(ogm.grid_data)
+        else:
+            map_image = np.zeros((ogm.height, ogm.width), dtype=np.int8)
+            map_image[:] = free
+        for index, zone in enumerate(self._zones.zones):
+            map_points = []
+            for point in zone.points:
+                map_points.append((point.x, point.y))
+
+            if zone.header.frame_id != ogm.reference_frame:
+                raise RuntimeError(f"Map reference frame doesn't match zones: {zone.header.frame_id} != {ogm.reference_frame}")
+
+            points = [ogm.get_costmap_x_y(x, y) for x, y in map_points]
+            points = np.array(points, dtype=np.int32)
+            points = points.reshape((-1, 1, 2))
+            if self.is_nogo(index):
+                map_image = cv2.fillPoly(map_image, [points], color=(occupied,))
+            else:
+                map_image = cv2.polylines(map_image, [points], True, (free,), 1)
+        return map_image
 
     @classmethod
     def from_msg(cls, zone_array: ZoneArray) -> "ZoneManager":

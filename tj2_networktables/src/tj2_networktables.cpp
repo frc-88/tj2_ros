@@ -469,16 +469,18 @@ void TJ2NetworkTables::zones_info_callback(const tj2_interfaces::ZoneInfoArrayCo
     
     for (size_t index = 0; index < msg->zones.size(); index++) {
         tj2_interfaces::ZoneInfo zone = msg->zones.at(index);
-        NT_Entry nearest_point_entry_x = nt::GetEntry(_nt, _zones_base_key + "info/" + zone.zone.name + "/nearest_point/x");
-        NT_Entry nearest_point_entry_y = nt::GetEntry(_nt, _zones_base_key + "info/" + zone.zone.name + "/nearest_point/y");
+        NT_Entry nearest_point_entry_x = nt::GetEntry(_nt, _zones_base_key + "info/" + zone.zone.name + "/nearest_point_x");
+        NT_Entry nearest_point_entry_y = nt::GetEntry(_nt, _zones_base_key + "info/" + zone.zone.name + "/nearest_point_y");
         NT_Entry distance_entry = nt::GetEntry(_nt, _zones_base_key + "info/" + zone.zone.name + "/distance");
         NT_Entry is_inside_entry = nt::GetEntry(_nt, _zones_base_key + "info/" + zone.zone.name + "/is_inside");
         NT_Entry is_nogo_entry = nt::GetEntry(_nt, _zones_base_key + "info/" + zone.zone.name + "/is_nogo");
+        NT_Entry update_entry = nt::GetEntry(_nt, _zones_base_key + "info/" + zone.zone.name + "/update");
         nt::SetEntryValue(nearest_point_entry_x, nt::Value::MakeDouble(zone.nearest_point.x));
         nt::SetEntryValue(nearest_point_entry_y, nt::Value::MakeDouble(zone.nearest_point.y));
         nt::SetEntryValue(distance_entry, nt::Value::MakeDouble(zone.distance));
         nt::SetEntryValue(is_inside_entry, nt::Value::MakeBoolean(zone.is_inside));
         nt::SetEntryValue(is_nogo_entry, nt::Value::MakeBoolean(zone.is_nogo));
+        nt::SetEntryValue(update_entry, nt::Value::MakeDouble(get_time()));
     }
 }
 

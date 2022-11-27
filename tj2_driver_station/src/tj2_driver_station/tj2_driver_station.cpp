@@ -8,6 +8,9 @@ TJ2DriverStation::TJ2DriverStation(ros::NodeHandle* nodehandle) :
     ros::param::param<int>("~start_mode", _start_mode, 0);
     ros::param::param<double>("~alive_time_threshold", _alive_time_threshold_param, 5.0);
     ros::param::param<double>("~disable_time_threshold", _disable_time_threshold_param, 10.0);
+    ros::param::param<string>("~alliance", _alliance, "red");
+    ros::param::param<string>("~position", _position, "1");
+
     if (_start_mode == NOMODE) {
         _start_mode = DISABLED;
     }
@@ -21,6 +24,7 @@ TJ2DriverStation::TJ2DriverStation(ros::NodeHandle* nodehandle) :
     status_pub = nh.advertise<tj2_driver_station::RobotStatus>("robot_status", 20);
 
     robot_mode_srv = nh.advertiseService("robot_mode", &TJ2DriverStation::robot_mode_callback, this);
+    alliance_srv = nh.advertiseService("alliance", &TJ2DriverStation::alliance_callback, this);
 
     twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2DriverStation::twist_callback, this);
 
@@ -53,6 +57,21 @@ bool TJ2DriverStation::robot_mode_callback(tj2_driver_station::SetRobotMode::Req
     }
     return true;
 }
+
+bool TJ2DriverStation::alliance_callback(tj2_driver_station::SetAlliance::Request &req, tj2_driver_station::SetAlliance::Response &resp)
+{
+    if (!set_alliance(req.alliance)) {
+        resp.success = false;
+        return false;
+    }
+    if (!set_position(req.position)) {
+        resp.success = false;
+        return false;
+    }
+    resp.success = true;
+    return true;
+}
+
 
 void TJ2DriverStation::twist_callback(const geometry_msgs::TwistConstPtr& msg) {
     /*
@@ -110,6 +129,42 @@ bool TJ2DriverStation::set_mode(RobotMode mode)
     status_msg.mode = mode;
     return true;
 }
+
+bool TJ2DriverStation::set_alliance(string alliance)
+{
+    _alliance = alliance;
+    if (_alliance.compare("red") == 0) {
+        DS_SetAlliance(DS_ALLIANCE_RED);
+    }
+    else if (_alliance.compare("blue") == 0) {
+        DS_SetAlliance(DS_ALLIANCE_BLUE);
+    }
+    else {
+        ROS_ERROR_STREAM("Failed to set alliance color: " << _alliance);
+        return false;
+    }
+    return true;
+}
+
+bool TJ2DriverStation::set_position(string position)
+{
+    _position = position;
+    if (_position.compare("1") == 0) {
+        DS_SetPosition(DS_POSITION_1);
+    }
+    else if (_position.compare("2") == 0) {
+        DS_SetPosition(DS_POSITION_2);
+    }
+    else if (_position.compare("3") == 0) {
+        DS_SetPosition(DS_POSITION_3);
+    }
+    else {
+        ROS_ERROR_STREAM("Failed to set alliance position: " << _position);
+        return false;
+    }
+    return true;
+}
+
 
 void TJ2DriverStation::process_events()
 {
@@ -199,7 +254,9 @@ void TJ2DriverStation::init()
     DS_Init();
     DS_SetCustomRobotAddress(_frc_robot_address.c_str());
     DS_ConfigureProtocol(&_frc_protocol);
-
+    set_alliance(_alliance);
+    set_position(_position);
+    
     _requested_mode = (RobotMode)_start_mode;
     _current_mode = NOMODE;
 
