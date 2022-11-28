@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+"""
+Adapted from https://github.com/awesomebytes/occupancy_grid_python
+Class to deal with OccupancyGrid in Python
+as in local / global costmaps.
+
+Author: Sammy Pfeiffer <Sammy.Pfeiffer at student.uts.edu.au>
+"""
 
 import os
 import cv2
@@ -10,15 +17,6 @@ from itertools import product
 
 from tj2_tools.robot_state import Pose2d
 from tj2_tools.robot_state.robot_state import State
-
-"""
-Adapted from https://github.com/awesomebytes/occupancy_grid_python
-Class to deal with OccupancyGrid in Python
-as in local / global costmaps.
-
-Author: Sammy Pfeiffer <Sammy.Pfeiffer at student.uts.edu.au>
-"""
-
 
 class OccupancyGridManager:
     def __init__(self):
@@ -54,23 +52,56 @@ class OccupancyGridManager:
 
     @classmethod
     def from_map_file(cls, config_path, reference_frame="map", image_path=None):
+        """
+        This method creates an OccupancyGridManager using map file data.
+        
+        map files encode free, occupied, or unknown areas. When opening the image
+        in a normal image viewer, the +Y axis is down and +X axis is to the right.
+        To view map files, the image needs to be flipped along the X axis. This method
+        does not flip the image.
+        
+        grid_data schema:
+            free = 0
+            occupied = 100
+            unknown = -1
+        map file schema (default gmapping output):
+            free = [254, 254, 254] (occupied if negate is True)
+            occupied = [0, 0, 0] (free if negate is True)
+            unknown = [205, 205, 205]
+        map -> grid_data transform:
+            convert BGR to gray
+            bitwise not
+            scale from 0..255 to 0..1
+            label pixels < free_thresh as 0 (free)
+            label pixels < occupied_thresh as 100 (occupied)
+            label other pixels as -1 (unknown)
+        """
+        
         self = cls()
         with open(config_path) as file:
             map_file_config = yaml.safe_load(file)
         
         image = self._load_from_dict(map_file_config, reference_frame, config_path, image_path)
 
-        max_value = np.iinfo(image.dtype).max
-        occupied_thresh = int(map_file_config["occupied_thresh"] * max_value)
-        free_thresh = int(map_file_config["free_thresh"] * max_value)
+        occupied_thresh = map_file_config["occupied_thresh"]
+        free_thresh = map_file_config["free_thresh"]
         negate = map_file_config["negate"] != 0
         if negate:
-            image = cv2.bitwise_not(image)
+            swap = occupied_thresh
+            occupied_thresh = free_thresh
+            free_thresh = swap
 
-        self.grid_data = np.zeros_like(image)
-        self.grid_data = self.grid_data.astype(np.int8)
-        self.grid_data[np.where(image < free_thresh)] = 100
-        self.grid_data[np.where(image > occupied_thresh)] = 0
+        # print(np.unique(image.reshape(-1, image.shape[2]), axis=0))
+        # print(image.min(), image.max(), image.shape)
+        # print(np.unique(image.flatten()), free_thresh, occupied_thresh)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = np.bitwise_not(image)
+        image = image.astype(np.float32)
+        max_value = np.iinfo(np.uint8).max
+        image /= max_value
+        self.grid_data = np.zeros(image.shape, dtype=np.int8)
+        self.grid_data[np.where(image < free_thresh)] = 0
+        self.grid_data[np.where(image > occupied_thresh)] = 100
         self.grid_data[np.where((image > free_thresh) & (image < occupied_thresh))] = -1
 
         return self
@@ -82,13 +113,8 @@ class OccupancyGridManager:
             map_file_config = yaml.safe_load(file)
         
         image = self._load_from_dict(map_file_config, reference_frame, config_path, image_path)
-
-        max_value = np.iinfo(image.dtype).max
-
-        data = np.bitwise_not(image)
-        data = data.astype(np.float32)
-        data = 100 * data / max_value
-        self.grid_data = data.astype(np.int8)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        self.grid_data = image.astype(np.int8)
         return self
     
     def _load_from_dict(self, map_file_config, reference_frame, config_path, image_path):
@@ -102,11 +128,7 @@ class OccupancyGridManager:
             image_path = os.path.join(os.path.dirname(config_path), os.path.basename(image_path))
         if not os.path.isfile(image_path):
             raise FileNotFoundError("Map image file not found: %s" % str(image_path))
-        image = cv2.imread(image_path)
-        image = image.astype(np.uint8)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        image = np.flipud(image)
-        
+        image = cv2.imread(image_path)        
         self.map_config["width"] = image.shape[1]
         self.map_config["height"] = image.shape[0]
         return image
@@ -135,14 +157,7 @@ class OccupancyGridManager:
         with open(path, 'w') as file:
             yaml.dump(map_file_config, file)
         
-        max_value = np.iinfo(np.uint8).max
-        unknown_value = int(max_value * (occupied_thresh + free_thresh) / 2.0)
-        image = self.grid_data.astype(np.float32)
-        image = image / 100.0 * max_value
-        image = image.astype(np.uint8)
-        image = cv2.bitwise_not(image)
-        image[np.where(self.grid_data < 0)] = unknown_value
-        image = np.flipud(image)
+        image = self.grid_data.astype(np.uint8)
         cv2.imwrite(image_path, image)
 
     @property
@@ -205,7 +220,7 @@ class OccupancyGridManager:
         image = self.grid_data.astype(np.float32)
         image = image / 100.0 * max_value
         image = image.astype(np.uint8)
-        image = cv2.bitwise_not(image)
+        image = np.bitwise_not(image)
         if image is None:
             return np.array([])
         if image.size > 0:
@@ -214,7 +229,7 @@ class OccupancyGridManager:
         else:
             return np.array([])
         image = image.astype(np.uint8)
-        return image
+        return np.flipud(image)
 
     def get_world_x_y(self, costmap_x, costmap_y):
         world_x = costmap_x * self.resolution + self.origin.x
