@@ -89,11 +89,11 @@
         <arg name="class_names_path"     value="$(arg yolo_class_names)" />    
     </include>
 
-    <!-- <include file="$(find tj2_webapp)/launch/tj2_webapp.launch">
+    <include file="$(find tj2_webapp)/launch/tj2_webapp.launch">
         <arg name="classes_path" value="$(arg yolo_class_names)"/>
-    </include> -->
+    </include>
 
-    <!-- <include file="$(find tj2_zones)/launch/tj2_zones.launch">
+    <include file="$(find tj2_zones)/launch/tj2_zones.launch">
         <arg name="zones_path" value="$(find tj2_zones)/zones/$(arg map_name).bin"/>
-    </include> -->
+    </include>
 </launch>
