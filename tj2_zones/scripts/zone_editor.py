@@ -18,8 +18,8 @@ from tj2_tools.occupancy_grid import OccupancyGridManager
 rospack = rospkg.RosPack()
 
 frame_id = "map"
-field_map_name = "rapid-react-2022-02-19T07-55-53--407688"
-# field_map_name = "rapid-react-2022"
+# field_map_name = "rapid-react-2022-02-19T07-55-53--407688"
+field_map_name = "rapid-react-2022"
 
 zones = ZoneArray()
 zones.header.frame_id = frame_id
@@ -61,12 +61,7 @@ names = ["red", "blue"]
 manager = ZoneManager.from_msg(zones)
 
 field_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", field_map_name + ".yaml")
-# ogm = OccupancyGridManager.from_cost_file(field_map_path)
 ogm = OccupancyGridManager.from_map_file(field_map_path)
-
-# ogm.to_file("some-map.yaml")
-
-# print(np.min(ogm.grid_data), np.max(ogm.grid_data))
 
 current_nogo = 0
 
@@ -75,7 +70,7 @@ while True:
     grid_data = manager.to_image(ogm)
     new_ogm = OccupancyGridManager.from_ogm(ogm)
     new_ogm.set_grid_data(grid_data)
-    cv2.imshow(window_name, new_ogm.get_image())
+    cv2.imshow(window_name, new_ogm.to_debug_image())
     key = chr(cv2.waitKey(-1) & 0xff)
     if key == 'q':
         break
@@ -87,4 +82,4 @@ while True:
     if current_nogo >= len(names):
         current_nogo = -1
 
-manager.save_zones(field_map_name + ".bin")
+manager.save_zones("../zones/" + field_map_name + ".bin")

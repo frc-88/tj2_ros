@@ -5,6 +5,7 @@ Class to deal with OccupancyGrid in Python
 as in local / global costmaps.
 
 Author: Sammy Pfeiffer <Sammy.Pfeiffer at student.uts.edu.au>
+        Ben Warwick
 """
 
 import os
@@ -82,9 +83,9 @@ class OccupancyGridManager:
             occupied = 100
             unknown = -1
         map file schema (default gmapping output):
-            free = [254, 254, 254] (occupied if negate is True)
-            occupied = [0, 0, 0] (free if negate is True)
-            unknown = [205, 205, 205]
+            free = 254 (occupied if negate is True)
+            occupied = 0 (free if negate is True)
+            unknown = 205
         map -> grid_data transform:
             convert BGR to gray
             bitwise not
@@ -108,9 +109,6 @@ class OccupancyGridManager:
             occupied_thresh = free_thresh
             free_thresh = swap
 
-        # print(np.unique(image.reshape(-1, image.shape[2]), axis=0))
-        # print(image.min(), image.max(), image.shape)
-        # print(np.unique(image.flatten()), free_thresh, occupied_thresh)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         image = np.bitwise_not(image)
         image = image.astype(np.float32)
@@ -124,7 +122,7 @@ class OccupancyGridManager:
         return self
     
     @classmethod
-    def from_cost_file(cls, config_path, reference_frame="map", image_path=None):
+    def from_costmap_file(cls, config_path, reference_frame="map", image_path=None):
         """
         This method creates an OccupancyGridManager using map file data interpreted as a cost map.
         
@@ -138,9 +136,9 @@ class OccupancyGridManager:
             maximum cost = 100
             unknown cost = -1
         map file schema (convension defined here):
-            no cost = [0, 0, 0]
-            maximum cost = [100, 100, 100]
-            unknown = [101, 101, 101] (or higher)
+            no cost = 0
+            maximum cost = 100
+            unknown = 101 (or higher)
         map -> grid_data transform:
             convert BGR to gray (uint8)
             label all pixels greater than 100 as -1 (unknown)
@@ -152,7 +150,7 @@ class OccupancyGridManager:
         image = self._load_from_dict(map_file_config, reference_frame, config_path, image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         image = np.bitwise_not(image)
-        self.grid_data = image.astype(np.uint8)
+        self.grid_data = image.astype(np.int8)
         self.grid_data[np.where(image > 100)] = -1
         return self
     
@@ -182,35 +180,24 @@ class OccupancyGridManager:
         msg.data = self.grid_data.astype(np.int8).flatten().tolist()
         return msg
 
-    def to_image(self, unknown_value):
-        """
-        grid data -> map file friendly image
-            scale from 0..100 to 0..255
-            convert to uint8
-            bitwise not
-            any values in grid_data <= -1 set to unknown_value
-            any values in grid_data > 100 set to unknown_value
-            convert gray to BGR
-        """
-        max_value = np.iinfo(np.uint8).max
-        image = self.grid_data.astype(np.float32)
-        image = image * max_value / 100.0
-        image = image.astype(np.uint8)
-        image = np.bitwise_not(image)
-        image[self.grid_data <= -1] = unknown_value
-        image[self.grid_data > 100] = unknown_value
-        return cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-
-    def write_to_file(self, path, map_file_config, unknown_value):
+    def _write_files(self, path, map_file_config, image):
         image_path = os.path.join(os.path.splitext(path)[0] + ".pgm")
         map_file_config["image"] = os.path.basename(image_path)
 
         with open(path, 'w') as file:
             yaml.dump(map_file_config, file)
-
-        cv2.imwrite(image_path, self.to_image(unknown_value))
+        cv2.imwrite(image_path, image)
 
     def write_map(self, path, occupied_thresh=0.65, free_thresh=0.196, unknown=0.2, negate=False):
+        """
+        grid data -> map file friendly image
+            scale from 0..100 to 0..255
+            convert to uint8
+            bitwise not
+            any values in grid_data <= -1 set to 255 * (1 - unknown)
+            any values in grid_data > 100 set to 255 * (1 - unknown)
+        """
+        
         map_file_config = {}
         map_file_config["resolution"] = self.resolution
         map_file_config["origin"] = self.origin.to_list()
@@ -218,8 +205,18 @@ class OccupancyGridManager:
         map_file_config["free_thresh"] = free_thresh
         map_file_config["negate"] = int(negate)
         max_value = np.iinfo(np.uint8).max
-        mid_value = int((max_value - unknown) / max_value)
-        self.write_to_file(path, map_file_config, mid_value)
+        unknown_value = int(max_value * (1.0 - unknown))
+        
+        max_value = np.iinfo(np.uint8).max
+        image = self.grid_data
+        image = image.astype(np.float32)
+        image = image * max_value / 100.0
+        image = image.astype(np.uint8)
+        image = np.bitwise_not(image)
+        image[self.grid_data <= -1] = unknown_value
+        image[self.grid_data > 100] = unknown_value
+
+        self._write_files(path, map_file_config, image)
 
     def write_costmap(self, path):
         map_file_config = {}
@@ -228,7 +225,18 @@ class OccupancyGridManager:
         map_file_config["occupied_thresh"] = 0.65  # unused by costmap
         map_file_config["free_thresh"] = 0.196  # unused by costmap
         map_file_config["negate"] = 0  # unused by costmap
-        self.write_to_file(path, map_file_config, 255)
+
+        unknown_value = 0
+
+        image = self.grid_data
+
+        image = image.astype(np.uint8)
+        image = np.bitwise_not(image)
+        image[self.grid_data <= -1] = unknown_value
+        image[self.grid_data > 100] = unknown_value
+
+        self._write_files(path, map_file_config, image)
+
 
     @property
     def resolution(self):
@@ -284,22 +292,23 @@ class OccupancyGridManager:
     def set_grid_data(self, grid_data):
         grid_data = grid_data.astype(np.int8)
         self.grid_data = grid_data
-    
-    def to_debug_image(self):
+
+    def to_debug_image(self, unknown_color=(128, 128, 0)):
         max_value = np.iinfo(np.uint8).max
         image = self.grid_data.astype(np.float32)
         image = image / 100.0 * max_value
         image = image.astype(np.uint8)
         image = np.bitwise_not(image)
         if image is None:
-            return np.array([])
+            return np.array([], dtype=np.uint8)
         if image.size > 0:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-            image[np.where(self.grid_data < 0)] = np.array([128, 128, 0])
+            image[np.where(self.grid_data < 0)] = np.array(unknown_color, dtype=np.uint8)
         else:
-            return np.array([])
-        image = image.astype(np.uint8)
-        return np.flipud(image)
+            return np.array([], dtype=np.uint8)
+        image = np.flipud(image)
+        image = np.ascontiguousarray(image, dtype=np.uint8)
+        return image
 
     def get_world_x_y(self, costmap_x, costmap_y):
         world_x = costmap_x * self.resolution + self.origin.x

@@ -18,3 +18,4 @@ tj2_tools/dist/
 tj2_tools/tj2_tools.egg-info/
 .vscode/
 __pycache__
+.pytest_cache/

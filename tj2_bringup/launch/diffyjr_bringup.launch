@@ -60,6 +60,7 @@
     <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
         <remap from="/cmd_vel" to="/tj2/cmd_vel_nav"/>
         <remap from="/odom" to="/tj2/odom"/>
+        <remap from="/map" to="/tj2/zone_map"/>
         <rosparam file="$(find tj2_bringup)/config/diffyjr/move_base/move_base_global_params.yaml" command="load"/>
 
         <rosparam file="$(find tj2_bringup)/config/diffyjr/move_base/dwaplanner_params.yaml" command="load" ns="DWAPlannerROS"/>
@@ -88,9 +89,9 @@
         <arg name="class_names_path"     value="$(arg yolo_class_names)" />    
     </include>
 
-    <include file="$(find tj2_webapp)/launch/tj2_webapp.launch">
+    <!-- <include file="$(find tj2_webapp)/launch/tj2_webapp.launch">
         <arg name="classes_path" value="$(arg yolo_class_names)"/>
-    </include>
+    </include> -->
 
     <!-- <include file="$(find tj2_zones)/launch/tj2_zones.launch">
         <arg name="zones_path" value="$(find tj2_zones)/zones/$(arg map_name).bin"/>

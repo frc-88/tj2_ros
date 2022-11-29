@@ -90,6 +90,9 @@ class ZoneManager:
         else:
             raise ValueError(f"Invalid argument for no-go zone: {arg}")
 
+    def get_nogos(self):
+        return self.nogo_names
+
     def get_zone_named(self, name: str) -> Zone:
         return self.get_zone(self.get_zone_index(name))
 
@@ -155,7 +158,7 @@ class ZoneManager:
     def to_msg(self) -> ZoneArray:
         return self._zones
 
-    def to_image(self, ogm: OccupancyGridManager, free=0, occupied=100, overlay_base=True) -> np.ndarray:
+    def to_grid_data(self, ogm: OccupancyGridManager, free=0, occupied=100, overlay_base=True) -> np.ndarray:
         if overlay_base:
             map_image = np.copy(ogm.grid_data)
         else:
@@ -174,8 +177,6 @@ class ZoneManager:
             points = points.reshape((-1, 1, 2))
             if self.is_nogo(index):
                 map_image = cv2.fillPoly(map_image, [points], color=(occupied,))
-            else:
-                map_image = cv2.polylines(map_image, [points], True, (free,), 1)
         return map_image
 
     @classmethod

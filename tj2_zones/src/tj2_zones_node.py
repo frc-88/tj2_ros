@@ -13,6 +13,7 @@ from tj2_interfaces.msg import ZoneInfoArray
 from tj2_interfaces.msg import NoGoZones
 
 from nav_msgs.msg import OccupancyGrid
+from map_msgs.msg import OccupancyGridUpdate
 
 from tj2_tools.robot_state import Pose2d
 from tj2_tools.zone import ZoneManager
@@ -40,6 +41,7 @@ class TJ2Zones:
         self.zones_pub = rospy.Publisher("zones", ZoneArray, queue_size=10)
         self.zones_info_pub = rospy.Publisher("zones_info", ZoneInfoArray, queue_size=10)
         self.zone_map_pub = rospy.Publisher("zone_map", OccupancyGrid, queue_size=10)
+        self.zone_map_update_pub = rospy.Publisher("zone_map_updates", OccupancyGridUpdate, queue_size=10)
         self.zone_manager = ZoneManager.from_file(self.zones_path)
         self.zone_manager.update_nogos([name.data for name in self.nogo_zones_param])
     
@@ -67,9 +69,10 @@ class TJ2Zones:
 
     def nogo_callback(self, msg):
         nogo_zones = [name.data for name in msg.nogo]
-        rospy.loginfo(f"Setting no-go zones: {nogo_zones}")
-        self.zone_manager.update_nogos(nogo_zones)
-        self.zones_changed = True
+        if self.zone_manager.get_nogos() != nogo_zones:
+            rospy.loginfo(f"Setting no-go zones: {nogo_zones}")
+            self.zone_manager.update_nogos(nogo_zones)
+            self.zones_changed = True
 
     def map_callback(self, msg):
         rospy.loginfo(f"Setting base map: {msg.header}. {msg.info}.")
@@ -83,24 +86,38 @@ class TJ2Zones:
         self.zone_manager.add_zone(msg)
         self.zones_changed = True
 
-    def publish_as_map(self, publisher: rospy.Publisher):
+    def publish_as_map(self):
         rospy.loginfo("Publishing new zones map")
         if not self.ogm.is_set():
             rospy.loginfo("Occupancy grid manager isn't set!")
             return False
         zone_ogm = OccupancyGridManager.from_ogm(self.ogm)
-        zone_ogm.set_grid_data(self.zone_manager.to_image(self.ogm, self.free_value, self.occupied_value))
-        publisher.publish(zone_ogm.to_msg())
+        zone_ogm.set_grid_data(self.zone_manager.to_grid_data(self.ogm, self.free_value, self.occupied_value))
+        map_msg = zone_ogm.to_msg()
+        self.zone_map_pub.publish(map_msg)
+        
+        update_msg = OccupancyGridUpdate()
+        update_msg.x = 0
+        update_msg.y = 0
+        update_msg.width = map_msg.info.width
+        update_msg.height = map_msg.info.height
+        update_msg.data = map_msg.data
+        self.zone_map_update_pub.publish(update_msg)
+        
         return True
 
     def run(self):
         rate = rospy.Rate(5.0)
         num_map_subs = 0
         while not rospy.is_shutdown():
-            current_map_subs = self.map_sub.get_num_connections()
+            current_map_subs = \
+                self.map_sub.get_num_connections() + \
+                self.zone_map_pub.get_num_connections() + \
+                self.zone_map_update_pub.get_num_connections()
+            
             if self.zones_changed or (current_map_subs != num_map_subs and num_map_subs > 0):
                 num_map_subs = current_map_subs
-                if self.publish_as_map(self.zone_map_pub):
+                if self.publish_as_map():
                     self.zones_changed = False
             self.zones_pub.publish(self.zone_manager.to_msg())
             pose2d = self.get_robot_pose()

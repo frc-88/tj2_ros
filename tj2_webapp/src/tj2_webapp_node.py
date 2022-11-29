@@ -56,6 +56,7 @@ class WebappNode:
         self.map_scale = rospy.get_param("~map_scale", 1.0)
         self.post_scale = rospy.get_param("~post_scale", 1.0)
         self.enable_camera = rospy.get_param("~enable_camera", False)
+        self.stale_object_duration = rospy.Duration(rospy.get_param("~stale_object_duration", 1.0))
 
         self.ogm = OccupancyGridManager()
     
@@ -245,7 +246,10 @@ class WebappNode:
 
     def render_detections(self, map_image):
         if len(self.detections_msg.header.frame_id) == 0 or len(self.detections_msg.detections) == 0:
-            self.nearest_detection_info = f"No detections available"
+            if rospy.Time.now() - self.detections_msg.header.stamp > self.stale_object_duration:
+                self.nearest_detection_info = f"No detections available"
+            else:
+                self.nearest_detection_info = f"No detections visible"
             return map_image
         transform = self.get_global_transform(self.detections_msg.header.frame_id)
 
@@ -289,7 +293,7 @@ class WebappNode:
         map_height = map_image.shape[0]
         map_image = np.pad(map_image, [(0, 70), (0, 0), (0, 0)], mode='constant')
         
-        time_info = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+        time_info = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S,%f")
 
         map_image = cv2.putText(map_image, time_info, (10, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (0, 0, 0), 2)
         map_image = cv2.putText(map_image, time_info, (10, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (255, 255, 255), 1)
@@ -303,6 +307,7 @@ class WebappNode:
             self.zone_status_message = "No zone info"
             return map_image
         active_zones = []
+        zone_image = np.zeros_like(map_image)
         for zone_info in sorted(self.zones_msg.zones, key=lambda x: x.zone.priority, reverse=False):
             if zone_info.is_inside:
                 active_zones.append(zone_info.zone.name)
@@ -323,15 +328,21 @@ class WebappNode:
             points = np.array(points, dtype=np.int32)
             points = points.reshape((-1, 1, 2))
             if zone_info.is_nogo:
-                map_image = cv2.fillPoly(map_image, [points], color=color)
+                zone_image = cv2.fillPoly(zone_image, [points], color=color)
             else:
-                map_image = cv2.polylines(map_image, [points], True, (200, 200, 0), 1)
+                zone_image = cv2.polylines(zone_image, [points], True, (200, 200, 0), 1)
+                
+        overlay = cv2.addWeighted(map_image, 0.5, zone_image, 0.5, 0.0)
+        zero_indices = cv2.cvtColor(zone_image, cv2.COLOR_BGR2GRAY) == 0
+        overlay[zero_indices] = map_image[zero_indices]
         self.zone_status_message = "Active zones: " + ", ".join(active_zones)
-        return map_image
+        return overlay
 
     def render(self):
         # map renders
-        map_image = self.ogm.get_image()
+        map_image = self.ogm.to_debug_image()
+        map_image = np.flipud(map_image).astype(np.uint8)
+
         map_image = self.render_zones(map_image)
         map_image = self.render_waypoints(map_image)
         map_image = self.render_robot(map_image)

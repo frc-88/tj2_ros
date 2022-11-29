@@ -54,7 +54,8 @@ obstacle_layer:
 
 static:
     map_topic: "/tj2/zone_map"
-    subscribe_to_updates: false
+    subscribe_to_updates: true
+    first_map_only: false
 
 plugins:
     - {name: static,                    type: "costmap_2d::StaticLayer"}

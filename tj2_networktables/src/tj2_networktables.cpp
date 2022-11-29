@@ -741,10 +741,6 @@ void TJ2NetworkTables::nogo_zones_callback(const nt::EntryNotification& event)
         ROS_WARN_THROTTLE(1.0, "No go zone NT entry is not a string array!");
         return;
     }
-    ROS_INFO("Setting no go zones:");
-    for (size_t index = 0; index < msg.nogo.size(); index++) {
-        ROS_INFO_STREAM("\t" << msg.nogo.at(index));
-    }
     _nogo_zone_pub.publish(msg);
 }
 
