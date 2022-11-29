@@ -64,7 +64,7 @@ field_map_path = os.path.join(rospack.get_path("tj2_laser_slam"), "maps", field_
 # ogm = OccupancyGridManager.from_cost_file(field_map_path)
 ogm = OccupancyGridManager.from_map_file(field_map_path)
 
-ogm.to_file("some-map.yaml")
+# ogm.to_file("some-map.yaml")
 
 # print(np.min(ogm.grid_data), np.max(ogm.grid_data))
 
