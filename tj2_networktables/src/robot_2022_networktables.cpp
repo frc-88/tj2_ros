@@ -6,7 +6,7 @@ Robot2022NetworkTables::Robot2022NetworkTables(ros::NodeHandle* nodehandle) :
     _hood_pub = nh.advertise<tj2_interfaces::Hood>("hood", 10);
     _shooter_pub = nh.advertise<tj2_interfaces::Shooter>("shooter", 10);
     _reset_to_limelight_pub = nh.advertise<std_msgs::Float64>("reset_to_limelight", 10);
-    _target_config_pub = nh.advertise<tj2_target::TargetConfig>("target_config", 10);
+    // _target_config_pub = nh.advertise<tj2_target::TargetConfig>("target_config", 10);
 
     _modules_pub = nh.advertise<tj2_interfaces::SwerveModule>("swerve_modules", 10);
 
@@ -83,14 +83,14 @@ void Robot2022NetworkTables::reset_to_limelight_callback(const nt::EntryNotifica
 
 void Robot2022NetworkTables::target_config_callback(const nt::EntryNotification& event)
 {
-    tj2_target::TargetConfig msg;
-    msg.enable_shot_correction = (int)get_double(_enable_shot_correction_entry, -1.0);
-    msg.enable_moving_shot_probability = (int)get_double(_enable_moving_shot_probability_entry, -1.0);
-    msg.enable_stationary_shot_probability = (int)get_double(_enable_stationary_shot_probability_entry, -1.0);
-    msg.enable_limelight_fine_tuning = (int)get_double(_enable_limelight_fine_tuning_entry, -1.0);
-    msg.enable_marauding = (int)get_double(_enable_marauding_entry, -1.0);
-    msg.enable_reset_to_limelight = (int)get_double(_enable_reset_to_limelight_entry, -1.0);
-    _target_config_pub.publish(msg);
+    // tj2_target::TargetConfig msg;
+    // msg.enable_shot_correction = (int)get_double(_enable_shot_correction_entry, -1.0);
+    // msg.enable_moving_shot_probability = (int)get_double(_enable_moving_shot_probability_entry, -1.0);
+    // msg.enable_stationary_shot_probability = (int)get_double(_enable_stationary_shot_probability_entry, -1.0);
+    // msg.enable_limelight_fine_tuning = (int)get_double(_enable_limelight_fine_tuning_entry, -1.0);
+    // msg.enable_marauding = (int)get_double(_enable_marauding_entry, -1.0);
+    // msg.enable_reset_to_limelight = (int)get_double(_enable_reset_to_limelight_entry, -1.0);
+    // _target_config_pub.publish(msg);
 }
 
 

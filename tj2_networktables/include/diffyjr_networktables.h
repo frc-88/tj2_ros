@@ -11,8 +11,6 @@
 #include "tj2_interfaces/Shooter.h"
 #include "tj2_interfaces/Hood.h"
 
-#include "tj2_target/TargetConfig.h"
-
 #include "networktables/EntryListenerFlags.h"
 
 #include "tj2_networktables.h"

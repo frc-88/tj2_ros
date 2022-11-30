@@ -11,7 +11,7 @@
 #include "tj2_interfaces/Shooter.h"
 #include "tj2_interfaces/Hood.h"
 
-#include "tj2_target/TargetConfig.h"
+// #include "tj2_target/TargetConfig.h"
 
 #include "networktables/EntryListenerFlags.h"
 
@@ -53,7 +53,7 @@ private:
     ros::Publisher _hood_pub;
     ros::Publisher _shooter_pub;
     ros::Publisher _reset_to_limelight_pub;
-    ros::Publisher _target_config_pub;
+    // ros::Publisher _target_config_pub;
     ros::Publisher _modules_pub;
 
     // NT callbacks
