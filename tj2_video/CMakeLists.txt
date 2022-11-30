@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   tf2_ros
+  tj2_interfaces
 )
 
 ## System dependencies are found with CMake's conventions
@@ -111,7 +112,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES tj2_video
- CATKIN_DEPENDS cv_bridge image_geometry image_transport roscpp sensor_msgs std_msgs tf2_ros
+ CATKIN_DEPENDS cv_bridge image_geometry image_transport roscpp sensor_msgs std_msgs tf2_ros tj2_interfaces
 #  DEPENDS system_lib
 )
 

@@ -8,6 +8,9 @@ from std_msgs.msg import Bool
 
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
+from tj2_interfaces.srv import StartVideo
+from std_srvs.srv import Trigger
+
 from tj2_tools.launch_manager import LaunchManager
 
 PREGAME = -1
@@ -67,6 +70,11 @@ class Tj2MatchWatcher(object):
         self.match_time_sub = rospy.Subscriber("match_time", Float64, self.match_time_callback, queue_size=10)
         self.is_autonomous_sub = rospy.Subscriber("is_autonomous", Bool, self.is_autonomous_callback, queue_size=10)
         self.initial_pose_sub = rospy.Subscriber("/tj2/reset_pose", PoseWithCovarianceStamped, self.initialpose_callback, queue_size=10)
+        
+        self.color_start_video_srv = self.make_service_client("color/start_video", StartVideo, wait=False)
+        self.color_stop_video_srv = self.make_service_client("color/stop_video", Trigger, wait=False)
+        self.depth_start_video_srv = self.make_service_client("depth/start_video", StartVideo, wait=False)
+        self.depth_stop_video_srv = self.make_service_client("depth/stop_video", Trigger, wait=False)
         rospy.loginfo("%s init complete" % self.node_name)
 
     def make_service_client(self, name, srv_type, timeout=None, wait=True):
@@ -105,10 +113,26 @@ class Tj2MatchWatcher(object):
     def resume_bag(self):
         rospy.loginfo("Resuming match bag")
         self.bag_launcher.start()
+        self.start_video()
+    
+    def start_video(self):
+        try:
+            self.color_start_video_srv(path="", length=self.match_definitely_over_duration)
+            self.depth_start_video_srv(path="", length=self.match_definitely_over_duration)
+        except rospy.service.ServiceException as e:
+            rospy.logerr(f"Failed to start video: {e}")
 
     def stop_bag(self):
         rospy.loginfo("Stopping match bag")
         self.bag_launcher.stop()
+        self.stop_video()
+    
+    def stop_video(self):
+        try:
+            self.color_stop_video_srv()
+            self.depth_stop_video_srv()
+        except rospy.service.ServiceException as e:
+            rospy.logerr(f"Failed to stop video: {e}")
 
     def run(self):
         self.start_bag()

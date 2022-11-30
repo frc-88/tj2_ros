@@ -42,6 +42,10 @@
         <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
     </include>
 
+    <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch">
+        <arg name="record_launch_path" value="$(find tj2_bringup)/config/diffyjr/record_match.launch" />    
+    </include>
+
     <group ns="laser">
         <include file="$(find tj2_rplidar)/launch/tj2_rplidar_a2.launch">
             <arg name="serial_port" value="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>

@@ -67,6 +67,7 @@ add_message_files(
 add_service_files(
   FILES
   OdomReset.srv
+  StartVideo.srv
 )
 
 ## Generate actions in the 'action' folder

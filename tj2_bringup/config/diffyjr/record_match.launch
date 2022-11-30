@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_record_match" output="screen" 
+       args="record -o /media/storage/bags/diffyjr
+        /amcl_pose
+        /initialpose
+        /laser/scan
+        /map
+        /map_metadata
+        /tf
+        /tf_static
+        /tj2/joint/base_link_to_wheel_0_joint
+        /tj2/joint/base_link_to_wheel_1_joint
+        /tj2/joint/base_link_to_wheel_2_joint
+        /tj2/joint/base_link_to_wheel_3_joint
+        /tj2/cmd_vel
+        /tj2/cmd_vel_nav
+        /tj2/cmd_vel_teleop
+        /tj2/imu
+        /tj2/is_autonomous
+        /tj2/match_time
+        /tj2/odom
+        /tj2/ping
+        /tj2_zed/obj_det/detections
+        /tj2_zed/obj_det/yolo_objects
+        /tj2/markers
+        /tj2/team_color
+        /tj2/smart_dashboard
+        /tj2/color/recorded_frame
+        /tj2/depth/recorded_frame
+
+        --duration=300 --lz4
+        " />
+</launch>
