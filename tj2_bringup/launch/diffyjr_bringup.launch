@@ -100,4 +100,10 @@
     <include file="$(find tj2_zones)/launch/tj2_zones.launch">
         <arg name="zones_path" value="$(find tj2_zones)/zones/$(arg map_name).bin"/>
     </include>
+
+    <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml" ns="apriltag"/>
+    <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml" ns="apriltag"/>
+    <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltag" required="false" output="screen">
+        <param name="publish_tag_detections_image" type="bool" value="false" />
+    </node>
 </launch>

@@ -104,6 +104,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _field_relative_sub = nh.subscribe<std_msgs::Bool>("field_relative", 10, &TJ2NetworkTables::field_relative_callback, this);
     _laser_sub = nh.subscribe<sensor_msgs::LaserScan>("scan", 10, &TJ2NetworkTables::scan_callback, this);
     _zones_sub = nh.subscribe<tj2_interfaces::ZoneInfoArray>("zones_info", 10, &TJ2NetworkTables::zones_info_callback, this);
+    _tags_sub = nh.subscribe<apriltag_ros::AprilTagDetectionArray>("zones_info", 10, &TJ2NetworkTables::tags_callback, this);
 
     if (_class_names.empty()) {
         ROS_ERROR("Error loading class names! Not broadcasting detections");
@@ -490,55 +491,23 @@ void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayCo
         ROS_ERROR("No class names loaded! Not broadcasting detections");
         return;
     }
-
-    for (size_t name_index = 0; name_index < _class_names.size(); name_index++) {
-        double min_dist = NAN;
-        string label = _class_names.at(name_index);
-        geometry_msgs::PoseStamped nearest_pose;
-        int num_detections = 0;
-        for (size_t index = 0; index < msg->detections.size(); index++) {
-            vision_msgs::ObjectHypothesisWithPose hyp = msg->detections.at(index).results[0];
-            string name = get_label(hyp.id);
-            if (name == label) {
-                num_detections++;
-                geometry_msgs::Pose pose = hyp.pose.pose;
-                double dist = sqrt(pose.position.x * pose.position.x + pose.position.y * pose.position.y + pose.position.z * pose.position.z);
-                if (!std::isfinite(min_dist) || dist < min_dist) {
-                    min_dist = dist;
-                    nearest_pose.pose = hyp.pose.pose;
-                }
-            }
-        }
-        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/count"), nt::Value::MakeDouble(num_detections));
-        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/update"), nt::Value::MakeDouble(get_time()));
-        
-        if (!std::isfinite(min_dist)) {
-            continue;
-        }
-
-        nearest_pose.header = msg->header;
-
-        geometry_msgs::TransformStamped transform;
-        try {
-            transform = _tf_buffer.lookupTransform(_base_frame, nearest_pose.header.frame_id, ros::Time(0));
-        }
-        catch (tf2::TransformException &ex) {
-            ROS_WARN_THROTTLE(1.0, "Failed to transform object to base frame: %s", ex.what());
-            return;
-        }
-
-        tf2::doTransform(nearest_pose, nearest_pose, transform);
-
-        double nearest_x = nearest_pose.pose.position.x;
-        double nearest_y = nearest_pose.pose.position.y;
-        double nearest_z = nearest_pose.pose.position.z;
-
-        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/x"), nt::Value::MakeDouble(nearest_x));
-        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/y"), nt::Value::MakeDouble(nearest_y));
-        nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + label + "/z"), nt::Value::MakeDouble(nearest_z));
+    for (size_t index = 0; index < _class_names.size(); index++) {
+        _detection_counter[_class_names.at(index)] = 0;
+    }
+    for (size_t index = 0; index < msg->detections.size(); index++) {
+        vision_msgs::ObjectHypothesisWithPose hyp = msg->detections.at(index).results[0];
+        string name = get_label(hyp.id);
+        _detection_counter[name]++;
+        int obj_index = get_index(hyp.id);
+        geometry_msgs::PoseStamped pose;
+        pose.pose = hyp.pose.pose;
+        pose.header = msg->header;
+        publish_detection(name, obj_index, pose);
+    }
+    for (size_t index = 0; index < _class_names.size(); index++) {
+        publish_detection_count(_class_names.at(index), _detection_counter[_class_names.at(index)]);
     }
 }
-
 
 void TJ2NetworkTables::joint_command_callback(const std_msgs::Float64ConstPtr& msg, string joint_name, int joint_index)
 {
@@ -549,6 +518,33 @@ void TJ2NetworkTables::joint_command_callback(const std_msgs::Float64ConstPtr& m
     nt::SetEntryValue(update_entry, nt::Value::MakeDouble(get_time()));
 }
 
+void TJ2NetworkTables::tags_callback(const apriltag_ros::AprilTagDetectionArrayConstPtr& msg)
+{
+    std::set<string> found_ids;
+    for (size_t index = 0; index < msg->detections.size(); index++) {
+        apriltag_ros::AprilTagDetection detection = msg->detections.at(index);
+        string name = "";
+        for (size_t id_index = 0; id_index < detection.id.size(); id_index++) {
+            name += to_string(detection.id.at(id_index));
+            if (id_index != detection.id.size() - 1) {
+                name += "-";
+            }
+        }
+        found_ids.insert(name);
+        if (!_detection_counter.count(name)) {
+            _detection_counter[name] = 0;
+        }
+        geometry_msgs::PoseStamped pose;
+        pose.pose = detection.pose.pose.pose;
+        pose.header = detection.pose.header;
+        publish_detection(name, _detection_counter[name], pose);
+        _detection_counter[name]++;
+    }
+    for (string name : found_ids) {
+        publish_detection_count(name, _detection_counter[name]);
+        _detection_counter[name] = 0;
+    }
+}
 
 // ---
 // Service callbacks
@@ -949,6 +945,39 @@ void TJ2NetworkTables::publish_imu()
     _imu_msg.angular_velocity.z = vz;  
 
     _imu_pub.publish(_imu_msg);
+}
+
+void TJ2NetworkTables::publish_detection(string name, int index, geometry_msgs::PoseStamped pose)
+{
+    geometry_msgs::TransformStamped transform;
+    try {
+        transform = _tf_buffer.lookupTransform(_base_frame, pose.header.frame_id, ros::Time(0));
+    }
+    catch (tf2::TransformException &ex) {
+        ROS_WARN_THROTTLE(1.0, "Failed to transform object to base frame: %s", ex.what());
+        return;
+    }
+
+    geometry_msgs::PoseStamped base_pose;
+    tf2::doTransform(pose, base_pose, transform);
+
+    tf2::Quaternion quat;
+    tf2::convert(base_pose.orientation, quat);
+    tf2::Matrix3x3 m1(quat);
+    double roll, pitch, yaw;
+    m1.getRPY(roll, pitch, yaw);
+
+    string key = _base_key + "detections/" + name + "/" + to_string(index);
+    nt::SetEntryValue(nt::GetEntry(_nt, key + "/x"), nt::Value::MakeDouble(base_pose.pose.position.x));
+    nt::SetEntryValue(nt::GetEntry(_nt, key + "/y"), nt::Value::MakeDouble(base_pose.pose.position.y));
+    nt::SetEntryValue(nt::GetEntry(_nt, key + "/z"), nt::Value::MakeDouble(base_pose.pose.position.z));
+    nt::SetEntryValue(nt::GetEntry(_nt, key + "/yaw"), nt::Value::MakeDouble(yaw));
+}
+
+void TJ2NetworkTables::publish_detection_count(string name, int count)
+{
+    nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + name + "/count"), nt::Value::MakeDouble(count));
+    nt::SetEntryValue(nt::GetEntry(_nt, _base_key + "detections/" + name + "/update"), nt::Value::MakeDouble(get_time()));
 }
 
 // ---

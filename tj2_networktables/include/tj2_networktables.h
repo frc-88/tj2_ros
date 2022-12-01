@@ -35,6 +35,8 @@
 #include "geometry_msgs/Pose.h"
 #include "vision_msgs/Detection3DArray.h"
 #include "sensor_msgs/LaserScan.h"
+#include "apriltag_ros/AprilTagDetectionArray.h"
+#include "apriltag_ros/AprilTagDetection.h"
 
 #include "tj2_waypoints/FollowPathGoal.h"
 #include "tj2_waypoints/FollowPathAction.h"
@@ -240,6 +242,8 @@ private:
 
     string _zones_base_key;
 
+    std::map<std::string, int> _detection_counter;
+
     // Messages
     nav_msgs::Odometry _odom_msg;
     tj2_interfaces::NavX _imu_msg;
@@ -265,6 +269,7 @@ private:
     ros::Subscriber _field_relative_sub;
     ros::Subscriber _laser_sub;
     ros::Subscriber _zones_sub;
+    ros::Subscriber _tags_sub;
 
     tf2_ros::Buffer _tf_buffer;
     tf2_ros::TransformListener _tf_listener;
@@ -289,6 +294,7 @@ private:
     void field_relative_callback(const std_msgs::BoolConstPtr& msg);
     void scan_callback(const sensor_msgs::LaserScanConstPtr& msg);
     void zones_info_callback(const tj2_interfaces::ZoneInfoArrayConstPtr& msg);
+    void tags_callback(const apriltag_ros::AprilTagDetectionArrayConstPtr& msg);
 
     // Service callbacks
     bool odom_reset_callback(tj2_interfaces::OdomReset::Request &req, tj2_interfaces::OdomReset::Response &resp);
@@ -321,6 +327,8 @@ private:
     std::vector<std::string> load_label_names(const string& path);
     void publish_odom();
     void publish_imu();
+    void publish_detection_count(string name, int count);
+    void publish_detection(string name, int index, geometry_msgs::PoseStamped pose);
 
     // Waypoint control
     void set_goal_status(GoalStatus status);
