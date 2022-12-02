@@ -104,7 +104,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _field_relative_sub = nh.subscribe<std_msgs::Bool>("field_relative", 10, &TJ2NetworkTables::field_relative_callback, this);
     _laser_sub = nh.subscribe<sensor_msgs::LaserScan>("scan", 10, &TJ2NetworkTables::scan_callback, this);
     _zones_sub = nh.subscribe<tj2_interfaces::ZoneInfoArray>("zones_info", 10, &TJ2NetworkTables::zones_info_callback, this);
-    _tags_sub = nh.subscribe<apriltag_ros::AprilTagDetectionArray>("zones_info", 10, &TJ2NetworkTables::tags_callback, this);
+    _tags_sub = nh.subscribe<apriltag_ros::AprilTagDetectionArray>("tag_detections", 10, &TJ2NetworkTables::tags_callback, this);
 
     if (_class_names.empty()) {
         ROS_ERROR("Error loading class names! Not broadcasting detections");
@@ -498,11 +498,11 @@ void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayCo
         vision_msgs::ObjectHypothesisWithPose hyp = msg->detections.at(index).results[0];
         string name = get_label(hyp.id);
         _detection_counter[name]++;
-        int obj_index = get_index(hyp.id);
+        // int obj_index = get_index(hyp.id);
         geometry_msgs::PoseStamped pose;
         pose.pose = hyp.pose.pose;
         pose.header = msg->header;
-        publish_detection(name, obj_index, pose);
+        publish_detection(name, index, pose);
     }
     for (size_t index = 0; index < _class_names.size(); index++) {
         publish_detection_count(_class_names.at(index), _detection_counter[_class_names.at(index)]);
@@ -962,7 +962,7 @@ void TJ2NetworkTables::publish_detection(string name, int index, geometry_msgs::
     tf2::doTransform(pose, base_pose, transform);
 
     tf2::Quaternion quat;
-    tf2::convert(base_pose.orientation, quat);
+    tf2::convert(base_pose.pose.orientation, quat);
     tf2::Matrix3x3 m1(quat);
     double roll, pitch, yaw;
     m1.getRPY(roll, pitch, yaw);

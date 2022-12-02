@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import yaml
-import math
 from collections import OrderedDict 
 
 import rospy
@@ -9,11 +8,8 @@ import actionlib
 import dynamic_reconfigure.client
 
 import tf2_ros
-import tf_conversions
-import tf2_geometry_msgs
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
-from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import PoseArray
 from geometry_msgs.msg import Point
@@ -35,7 +31,7 @@ from tj2_waypoints.srv import SavePose, SavePoseResponse
 from tj2_waypoints.srv import SaveRobotPose, SaveRobotPoseResponse
 from tj2_waypoints.srv import SaveTF, SaveTFResponse
 
-from tj2_waypoints.msg import FollowPathAction, FollowPathGoal, FollowPathResult
+from tj2_waypoints.msg import FollowPathAction
 from tj2_waypoints.msg import Waypoint, WaypointArray
 
 from state_machine import WaypointStateMachine

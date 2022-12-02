@@ -15,6 +15,7 @@
         <arg name="robot_address" value="$(arg robot_address)"/>
         <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/>
         <arg name="scan_topic" value="$(arg laser_scan_topic)"/>
+        <arg name="tag_topic" value="/apriltag/rotated_detections"/>
         <arg name="classes_path" default="$(arg yolo_class_names)"/>
         <arg name="joint_names" value="$(find tj2_bringup)/config/diffyjr/joints.yaml"/>
     </include>
@@ -42,9 +43,9 @@
         <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
     </include>
 
-    <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch">
+    <!-- <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch">
         <arg name="record_launch_path" value="$(find tj2_bringup)/config/diffyjr/record_match.launch" />    
-    </include>
+    </include> -->
 
     <group ns="laser">
         <include file="$(find tj2_rplidar)/launch/tj2_rplidar_a2.launch">
@@ -101,9 +102,12 @@
         <arg name="zones_path" value="$(find tj2_zones)/zones/$(arg map_name).bin"/>
     </include>
 
-    <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml" ns="apriltag"/>
-    <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml" ns="apriltag"/>
-    <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltag" required="false" output="screen">
-        <param name="publish_tag_detections_image" type="bool" value="false" />
-    </node>
+    <include file="$(find tj2_camera)/launch/apriltags.launch">
+        <arg name="apriltag_settings" value="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
+        <arg name="apriltag_tags" value="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml"/>
+        <arg name="camera_info_topic" value="/tj2_zed/rgb/camera_info"/>
+        <arg name="image_rect_topic" value="/tj2_zed/rgb/image_rect_color"/>
+        <arg name="node_name" value="apriltag"/>
+        <arg name="namespace" value="apriltag"/>
+    </include>
 </launch>
