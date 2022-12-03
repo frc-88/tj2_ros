@@ -349,7 +349,6 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         AMCL Particles: true
         AMCL Pose: true
         Dextra LaserScan: true
@@ -374,6 +373,7 @@ Visualization Manager:
         RobotModel: true
         Sinistra LaserScan: true
         TF: false
+        Tags: true
         Value: true
         Waypoints: true
         ZED: true
@@ -856,7 +856,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 12.713587760925293
+      Distance: 14.079277038574219
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -864,17 +864,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.5932103395462036
-        Y: -0.4479394853115082
-        Z: -0.04062945023179054
+        X: 1.0580495595932007
+        Y: -0.27725058794021606
+        Z: -0.040442150086164474
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0147967338562012
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 4.758568286895752
+      Yaw: 4.743569374084473
     Saved: ~
 Window Geometry:
   Displays:

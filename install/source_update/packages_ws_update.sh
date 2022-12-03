@@ -2,7 +2,7 @@
 
 BASE_DIR=$(realpath "$(dirname $0)")
 
-DEPENDENCIES_WS=$HOME/packages_ros_ws
+DEPENDENCIES_WS=$HOME/ros_ws
 DEPENDENCIES_WS_SRC=${DEPENDENCIES_WS}/src
 
 

@@ -2,7 +2,6 @@
 
 
 SOURCE_COMMAND='source ${HOME}/ros_ws/devel/setup.bash
-source ${HOME}/packages_ros_ws/devel/setup.bash
 source ${HOME}/tj2_ros/systemd/env.sh'
 
 if ! grep -qz "$SOURCE_COMMAND" ~/.bashrc; then

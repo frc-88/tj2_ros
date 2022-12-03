@@ -3,7 +3,7 @@
 BASE_DIR=$(realpath "$(dirname $0)")
 APPLY_PATCHES=${1:-}
 
-DEPENDENCIES_WS=$HOME/packages_ros_ws
+DEPENDENCIES_WS=$HOME/ros_ws
 DEPENDENCIES_WS_SRC=${DEPENDENCIES_WS}/src
 
 sudo apt-get install -y portaudio19-dev python3-pyaudio gunicorn python3-shapely
@@ -107,7 +107,7 @@ if [ ! -z ${APPLY_PATCHES} ]; then
 fi
 
 cd ${DEPENDENCIES_WS}
-catkin_make -j5
+catkin_make -j5 -DCATKIN_WHITELIST_PACKAGES="" -DCATKIN_BLACKLIST_PACKAGES=""
 success=$?
 if [[ $success -eq 0 ]];
 then
