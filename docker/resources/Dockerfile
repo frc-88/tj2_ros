@@ -16,170 +16,157 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV SHELL /bin/bash
 SHELL ["/bin/bash", "-c"] 
 
-WORKDIR /
-
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get install -y nano tmux curl htop net-tools iproute2
 
 # ---
+# CMake
+# ---
+
+WORKDIR /tmp
+
+RUN apt-get install -y build-essential libtool autoconf zip unzip wget
+RUN wget -O cmake.sh https://cmake.org/files/v3.23/cmake-3.23.1-linux-aarch64.sh
+RUN mkdir /opt/cmake
+RUN sh cmake.sh --prefix=/opt/cmake --exclude-subdir --skip-license
+RUN mv /usr/bin/cmake /usr/bin/cmake-old
+RUN ln -s /opt/cmake/bin/cmake /usr/bin/cmake
+
+# ---
+# PyTorch CMake
+# ---
+
+ENV LD_LIBRARY_PATH=/usr/local/lib/python3.6/dist-packages/torch/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+ENV CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/lib/python3.6/dist-packages/torch/share/cmake/Torch
+
+# ---
 # ZED
 # ---
 
-#This environment variable is needed to use the streaming features on Jetson inside a container
+WORKDIR /
+
+# This environment variable is needed to use the streaming features on Jetson inside a container
 ENV LOGNAME root
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update || true
-RUN apt-get install --no-install-recommends lsb-release wget less udev sudo apt-transport-https build-essential cmake -y&& \
+RUN apt-get install --no-install-recommends lsb-release less udev sudo apt-transport-https -y && \
     echo "# R${L4T_MAJOR_VERSION} (release), REVISION: ${L4T_MINOR_VERSION}.${L4T_PATCH_VERSION}" > /etc/nv_tegra_release ; \
     wget -q --no-check-certificate -O ZED_SDK_Linux.run https://download.stereolabs.com/zedsdk/${ZED_SDK_MAJOR}.${ZED_SDK_MINOR}/l4t${L4T_MAJOR_VERSION}.${L4T_MINOR_VERSION}/jetsons && \
     chmod +x ZED_SDK_Linux.run ; ./ZED_SDK_Linux.run silent skip_tools && \
     rm -rf /usr/local/zed/resources/* \
-    rm -rf ZED_SDK_Linux.run && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf ZED_SDK_Linux.run
 
-#This symbolic link is needed to use the streaming features on Jetson inside a container
+# This symbolic link is needed to use the streaming features on Jetson inside a container
 RUN ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
 
 # ---
 # tj2_ros dependencies
 # ---
 
-WORKDIR /tmp
-
-RUN git clone https://github.com/AprilRobotics/apriltag.git && \
-    cd apriltag && \
-    mkdir build && \
-    cd build && \
-    cmake .. && \
-    make -j4 && \
-    make install && \
-    cd ../.. && \
-    rm -r apriltag
-
 RUN apt-get update && sudo apt-get install -y \
     libbullet-dev \
     libeigen3-dev \
     libsdl-image1.2-dev \
     libsdl-dev \
-    libyaml-cpp-dev
+    libyaml-cpp-dev \
+    libpcl-dev  \
+    libvtk6-qt-dev  \
+    libspnav-dev  \
+    joystick  \
+    liborocos-kdl-dev  \
+    liborocos-kdl1.3  \
+    libnetpbm10-dev  \
+    libogg-dev  \
+    libtheora-dev  \
+    graphviz  \
+    libgeographic-dev  \
+    python3-pyproj  \
+    ffmpeg  \
+    libavcodec-dev  \
+    libavformat-dev  \
+    libavutil-dev  \
+    libswscale-dev  \
+    v4l-utils  \
+    liburdfdom-headers-dev  \
+    libtinyxml-dev  \
+    liburdfdom-dev  \
+    hddtemp  \
+    lm-sensors  \
+    python3-psutil  \
+    libusb-1.0-0*  \
+    libswscale-dev
 
+WORKDIR /tmp
+RUN git clone https://github.com/AprilRobotics/apriltag.git && \
+    cd apriltag && \
+    mkdir build
+WORKDIR /tmp/apriltag/build
+RUN cmake ..
+RUN make -j4 && make install
+
+WORKDIR /tmp
 RUN git clone https://github.com/orocos/orocos_kinematics_dynamics.git && \
     cd orocos_kinematics_dynamics && \
     git submodule update --init && \
     cd orocos_kdl && \
-    mkdir build && cd build && \
-    cmake .. && make -j4 && \
-    sudo make install && \
-    python3 -m pip install psutil && \
-    cd ../../python_orocos_kdl && \
-    mkdir build && cd build && \
-    cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
+    mkdir build
+WORKDIR /tmp/orocos_kinematics_dynamics/orocos_kdl/build
+RUN cmake ..
+RUN make -j4 && make install
+RUN python3 -m pip install psutil
+RUN mkdir ../../python_orocos_kdl/build
+WORKDIR /tmp/orocos_kinematics_dynamics/python_orocos_kdl/build
+RUN cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
         -D PYTHON_INCLUDE_DIR=/usr/include/python3.6 \
         -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.6m.so \
-        -D PYBIND11_PYTHON_VERSION=3 .. && \
-    make -j4 && \
-    make install && \
-    python3 -m pip install psutil && \
-    ldconfig
+        -D PYBIND11_PYTHON_VERSION=3 ..
+RUN make -j4 && make install
 
+WORKDIR /tmp
+RUN git clone https://github.com/FRC-Utilities/LibDS.git
+WORKDIR /tmp/LibDS
+RUN qmake -qt=qt5
+RUN make -j4 && make install
 
-RUN cd /tmp && \
-    git clone https://github.com/FRC-Utilities/LibDS.git && \
-    cd LibDS && \
-    qmake -qt=qt5 && \
-    make -j5 && \
-    make install && \
-    cd ../ && \
-    rm -r LibDS
-
-
-RUN cd /tmp && \
-    git clone --recursive https://github.com/ThadHouse/CmakeWpilib.git && \
+WORKDIR /tmp
+RUN git clone --recursive https://github.com/ThadHouse/CmakeWpilib.git && \
     cd CmakeWpilib && \
-    mkdir build && cd build && \
-    cmake .. -DWITHOUT_CSCORE=ON -DWITHOUT_JAVA=ON && \
-    make -j4 && \
-    make install && \
-    cd ../.. && \
-    rm -r CmakeWpilib
+    mkdir build
+WORKDIR /tmp/CmakeWpilib/build
+RUN cmake .. -DWITHOUT_CSCORE=ON -DWITHOUT_JAVA=ON
+RUN make -j4 && make install
 
-RUN apt-get install -y libpcl-dev \
-    libvtk6-qt-dev \
-    libspnav-dev \
-    joystick \
-    liborocos-kdl-dev \
-    liborocos-kdl1.3 \
-    libnetpbm10-dev \
-    libogg-dev \
-    libtheora-dev \
-    graphviz \
-    libgeographic-dev \
-    python3-pyproj \
-    ffmpeg \
-    libavcodec-dev \
-    libavformat-dev \
-    libavutil-dev \
-    libswscale-dev \
-    v4l-utils \
-    liburdfdom-headers-dev \
-    libtinyxml-dev \
-    liburdfdom-dev \
-    hddtemp \
-    lm-sensors \
-    python3-psutil \
-    libusb-1.0-0*
+WORKDIR /
+RUN ldconfig
+RUN rm -r /tmp/*
 
 # ---
-# tj2_ros ROS dependencies
+# tj2_ros
 # ---
 
 ENV USER=root
 ENV HOME=/${USER}
+WORKDIR ${HOME}
 
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${HOME}/ros_ws/src
+ENV SHARED_TOOLS_INSTALL=${HOME}/ros_ws/shared_tools/
 
-RUN mkdir -p ${ROS_WS_SRC}
-WORKDIR ${ROS_WS_SRC}
+COPY ./scripts ${HOME}/scripts
 
-RUN mkdir /tmp/scripts
-COPY ./scripts/clone_ros_packages.sh /tmp/scripts
-RUN /tmp/scripts/clone_ros_packages.sh ${ROS_WS_SRC}
-COPY ./scripts/fix-image-pipeline.patch /tmp/scripts
-COPY ./scripts/fix-imu-tools.patch /tmp/scripts
-COPY ./scripts/fix-geometry2.patch /tmp/scripts
-COPY ./scripts/apply_patches.sh /tmp/scripts
-RUN /tmp/scripts/apply_patches.sh ${ROS_WS_SRC}
-RUN rm -r /tmp/scripts
+RUN sudo mv ${HOME}/scripts/preferences /etc/apt/preferences
 
-COPY ./scripts/preferences /tmp
-RUN sudo mv /tmp/preferences /etc/apt/preferences
-
-# ---
-# build dependencies
-# ---
-
-WORKDIR ${ROS_WS_ROOT}
-
-RUN source /opt/ros/${ROS_DISTRO}/setup.bash && rosdep install --from-paths src --ignore-src --rosdistro=noetic -y -r; exit 0
-
-ENV LD_LIBRARY_PATH=/usr/local/lib/python3.6/dist-packages/torch/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-ENV CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/lib/python3.6/dist-packages/torch/share/cmake/Torch
-
-RUN source /opt/ros/${ROS_DISTRO}/setup.bash && catkin_make
-
-# ---
-# setup entry point
-# ---
+RUN cat ${HOME}/scripts/bashrc >> ${HOME}/.bashrc
+RUN rm ${HOME}/scripts/bashrc
 
 ENV FLASK_ENV=development
 
-RUN rm /ros_entrypoint.sh
-COPY ./scripts/ros_entrypoint.sh /ros_entrypoint.sh
+ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_ROOT}/shared_tools"
+
+COPY ./scripts/entrypoint.sh /entrypoint.sh
 COPY ./scripts/launch.sh /launch.sh
+COPY ./scripts/roscore.sh /roscore.sh
 
-WORKDIR ${ROS_WS_ROOT}
-
-ENTRYPOINT ["/ros_entrypoint.sh"]
-CMD ["/launch.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["source ${HOME}/.bashrc"]

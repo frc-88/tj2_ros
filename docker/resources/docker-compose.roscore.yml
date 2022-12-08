@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  roscore:
+    image: tj2_ros:latest
+    container_name: roscore
+    restart: "no"
+    network_mode: "host"
+    privileged: true
+    entrypoint: ["/roscore.sh"]

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-BASE_DIR=$(realpath "$(dirname $1)")
+BASE_DIR=$(realpath "$(dirname $0)")
 
 packages=(
     https://github.com/wjwwood/serial
@@ -47,6 +47,7 @@ packages=(
     https://github.com/ros/kdl_parser.git
     https://github.com/ros/xacro.git
     https://github.com/ros/urdf_parser_py.git
+    https://github.com/ros/xacro.git
 )
 
 branches=(
@@ -95,6 +96,7 @@ branches=(
     noetic-devel  # https://github.com/ros/kdl_parser.git
     noetic-devel  # https://github.com/ros/xacro.git
     melodic-devel  # https://github.com/ros/urdf_parser_py.git
+    noetic-devel  # https://github.com/ros/xacro.git
 )
 
 len=${#packages[@]}

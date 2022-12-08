@@ -1,0 +1,15 @@
+[Unit]
+After=NetworkManager.service time-sync.target
+Description=TJ2 ROS
+
+[Service]
+Type=oneshot
+User=tj2
+Group=tj2
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/run_containers
+ExecStop=/usr/local/bin/stop_tj2_ros_container
+
+[Install]
+WantedBy=multi-user.target
+
