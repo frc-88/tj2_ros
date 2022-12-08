@@ -18,7 +18,7 @@ SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
-RUN apt-get install -y nano tmux curl htop net-tools iproute2
+RUN apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping
 
 # ---
 # CMake
@@ -141,6 +141,13 @@ WORKDIR /
 RUN ldconfig
 RUN rm -r /tmp/*
 
+RUN python3 -m pip install scipy==1.5.4
+RUN python3 -m pip install PyYAML==5.4.1
+RUN python3 -m pip install pynetworktables==2021.0.0
+RUN python3 -m pip install pynmcli==1.0.5
+RUN python3 -m pip install flask==2.0.3
+RUN python3 -m pip install gevent==22.10.2
+
 # ---
 # tj2_ros
 # ---
@@ -153,8 +160,6 @@ ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${HOME}/ros_ws/src
 
 COPY ./scripts ${HOME}/scripts
-
-RUN cd ${HOME}/scripts && python3 -m pip install -r requirements.txt
 
 RUN sudo mv ${HOME}/scripts/preferences /etc/apt/preferences
 
