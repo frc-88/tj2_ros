@@ -5,5 +5,5 @@ if [ "$EUID" -ne 0 ]
     exit
 fi
 
-cd ../resources
+cd ${BASE_DIR}/../resources
 docker build -f ./Dockerfile -t tj2_ros:latest .

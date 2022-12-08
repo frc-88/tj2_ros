@@ -1,4 +1,12 @@
-cd ..
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+if [ "$EUID" -ne 0 ]
+    then echo "Please run as root"
+    exit
+fi
+
+cd ${BASE_DIR}/../resources
 
 apt-get install -y qemu binfmt-support qemu-user-static  # Install the qemu packages
 docker run --rm --privileged multiarch/qemu-user-static --reset -p yes  # This step will execute the registering scripts
