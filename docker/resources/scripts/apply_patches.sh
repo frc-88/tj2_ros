@@ -10,3 +10,6 @@ git apply /tmp/scripts/fix-image-pipeline.patch --reject --whitespace=fix
 
 cd ${BASE_DIR}/src/imu_tools/
 git apply /tmp/scripts/fix-imu-tools.patch --reject --whitespace=fix 
+
+cd ${BASE_DIR}/src/geometry2/
+git apply /tmp/scripts/fix-geometry2.patch --reject --whitespace=fix 

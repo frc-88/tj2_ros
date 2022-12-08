@@ -127,7 +127,8 @@ RUN apt-get install -y libpcl-dev \
     liburdfdom-dev \
     hddtemp \
     lm-sensors \
-    python3-psutil
+    python3-psutil \
+    libusb-1.0-0*
 
 # ---
 # tj2_ros ROS dependencies
@@ -147,6 +148,7 @@ COPY ./scripts/clone_ros_packages.sh /tmp/scripts
 RUN /tmp/scripts/clone_ros_packages.sh ${ROS_WS_SRC}
 COPY ./scripts/fix-image-pipeline.patch /tmp/scripts
 COPY ./scripts/fix-imu-tools.patch /tmp/scripts
+COPY ./scripts/fix-geometry2.patch /tmp/scripts
 COPY ./scripts/apply_patches.sh /tmp/scripts
 RUN /tmp/scripts/apply_patches.sh ${ROS_WS_SRC}
 RUN rm -r /tmp/scripts
