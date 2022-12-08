@@ -11,8 +11,8 @@ services:
     group_add:
       - dialout
     volumes:
-      - /home/${USER}/tj2_ros_ws:/root/tj2_ros_ws:rw
-      - /home/${USER}/tj2_ros:/root/tj2_ros_ws/src/tj2_ros:rw
+      - /home/${USER}/docker_ros_ws:/root/ros_ws:rw
+      - /home/${USER}/tj2_ros:/root/ros_ws/src/tj2_ros:rw
       - /run/systemd:/run/systemd:rw
       - /dev:/dev:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
@@ -22,8 +22,6 @@ services:
       - /home/${USER}/.docker:/home/${USER}/.docker:rw # but we need to satisfy spice-lib.sh
       - /var/run/docker.sock:/var/run/docker.sock
     entrypoint: ["/launch.sh"]
-    depends_on:
-      - roscore
     deploy:
       resources:
         reservations:

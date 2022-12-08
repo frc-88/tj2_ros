@@ -2,7 +2,7 @@ BASE_DIR=$(realpath "$(dirname $0)")
 PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
-RESTART_ROSLAUNCH=$3
+RESTART_SERVICE=$3
 
 LOCAL_PATH=${PARENT_DIR}
 DESTINATION_PATH=/home/tj2
@@ -34,4 +34,4 @@ ${SSH_COMMAND} -t "sudo systemctl stop tj2_ros.service"
 # build tj2_ros
 ${SSH_COMMAND} "cd ${DEST_FULL_PATH}/docker/native/build_tj2_ros.sh"
 
-${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_ROSLAUNCH}
+${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} tj2_ros

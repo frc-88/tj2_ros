@@ -151,9 +151,10 @@ WORKDIR ${HOME}
 
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${HOME}/ros_ws/src
-ENV SHARED_TOOLS_INSTALL=${HOME}/ros_ws/shared_tools/
 
 COPY ./scripts ${HOME}/scripts
+
+RUN cd ${HOME}/scripts && python3 -m pip install -r requirements.txt
 
 RUN sudo mv ${HOME}/scripts/preferences /etc/apt/preferences
 
@@ -162,7 +163,7 @@ RUN rm ${HOME}/scripts/bashrc
 
 ENV FLASK_ENV=development
 
-ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_ROOT}/shared_tools"
+ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools"
 
 COPY ./scripts/entrypoint.sh /entrypoint.sh
 COPY ./scripts/launch.sh /launch.sh

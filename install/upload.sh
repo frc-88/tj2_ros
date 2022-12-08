@@ -2,7 +2,8 @@ BASE_DIR=$(realpath "$(dirname $0)")
 PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
-RESTART_ROSLAUNCH=$3
+RESTART_SERVICE=$3
+SERVICE_NAME={$4:-roslaunch}
 
 LOCAL_PATH=${PARENT_DIR}
 DESTINATION_PATH=/home/tj2
@@ -24,9 +25,11 @@ SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
 
 OUTPUT=$( rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY} -p 5810"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH} | tee /dev/tty)
 
-if echo "$OUTPUT" | grep -q 'tj2_tools/'; then
-    # build tj2_tools
-    ${SSH_COMMAND} "cd ${DEST_FULL_PATH}/tj2_tools && python3 setup.py -q install --user"
+if [ "${SERVICE_NAME}" == "roslaunch" ]; then
+    if echo "$OUTPUT" | grep -q 'tj2_tools/'; then
+        # build tj2_tools
+        ${SSH_COMMAND} "cd ${DEST_FULL_PATH}/tj2_tools && python3 setup.py -q install --user"
+    fi
 fi
 
-${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_ROSLAUNCH}
+${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} ${SERVICE_NAME}
