@@ -409,17 +409,15 @@ def run_ros():
     global node
     rospy.init_node(node_name, disable_signals=True)
     node = WebappNode()
-    rospy.loginfo("ROS node started")
+    rospy.loginfo(f"{node_name} started")
     rospy.spin()
 
-if all([node_name not in name for name in rosnode.get_node_names()]):
+
+if __name__ == '__main__':    
     ros_thread = threading.Thread(target=run_ros)
     ros_thread.start()
     signal.signal(signal.SIGINT, signal_handler)
-else:
-    rospy.logwarn("Running with multiple workers is not compatible with this server!")
 
-if __name__ == '__main__':
     ip_address = rospy.get_param("~host", "0.0.0.0")
     port = rospy.get_param("~port", 5802)
     app.run(ip_address, port, use_reloader=False, threaded=False, debug=False)
