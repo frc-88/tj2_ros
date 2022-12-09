@@ -87,10 +87,10 @@ class TJ2Zones:
         self.zones_changed = True
 
     def publish_as_map(self):
-        rospy.loginfo("Publishing new zones map")
         if not self.ogm.is_set():
-            rospy.loginfo("Occupancy grid manager isn't set!")
+            rospy.logwarn_throttle(3.0, "Occupancy grid manager isn't set!")
             return False
+        rospy.loginfo("Publishing new zones map")
         zone_ogm = OccupancyGridManager.from_ogm(self.ogm)
         zone_ogm.set_grid_data(self.zone_manager.to_grid_data(self.ogm, self.free_value, self.occupied_value))
         map_msg = zone_ogm.to_msg()

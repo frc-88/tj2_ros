@@ -161,8 +161,10 @@ ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${HOME}/ros_ws/src
 
 COPY ./scripts ${HOME}/scripts
+COPY ./configs ${HOME}/configs
 
 RUN sudo mv ${HOME}/scripts/preferences /etc/apt/preferences
+RUN sudo mv ${HOME}/configs/zed/* /usr/local/zed/settings/
 
 RUN cat ${HOME}/scripts/bashrc >> ${HOME}/.bashrc
 RUN rm ${HOME}/scripts/bashrc

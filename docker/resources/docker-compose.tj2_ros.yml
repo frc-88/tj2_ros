@@ -8,11 +8,13 @@ services:
     network_mode: "host"
     runtime: "nvidia"
     privileged: true
+    stop_signal: SIGINT
     group_add:
       - dialout
     volumes:
       - /home/${USER}/docker_ros_ws:/root/ros_ws:rw
       - /home/${USER}/tj2_ros:/root/ros_ws/src/tj2_ros:rw
+      - /media/storage:/media/storage:rw
       - /run/systemd:/run/systemd:rw
       - /dev:/dev:rw
       - /tmp/.X11-unix:/tmp/.X11-unix

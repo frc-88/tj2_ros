@@ -58,14 +58,20 @@ class TJ2LaserSlam:
 
         if not os.path.isdir(self.map_dir):
             os.makedirs(self.map_dir)
+            
+        self.amcl_args = dict(
+            map_path=self.map_path + ".yaml",
+            laser_scan_topic=self.laser_scan_topic,
+            amcl_config=self.amcl_config
+        )
 
         self.gmapping_launch_path = rospy.get_param("~gmapping_launch", self.default_launches_dir + "/gmapping.launch")
         self.amcl_launch_path = rospy.get_param("~amcl_launch", self.default_launches_dir + "/amcl.launch")
         self.map_saver_launch_path = rospy.get_param("~map_saver_launch", self.default_launches_dir + "/map_saver.launch")
         self.fake_map_launch_path = rospy.get_param("~fake_map_launch", self.default_launches_dir + "/fake_map.launch")
-
+        
         self.gmapping_launcher = LaunchManager(self.gmapping_launch_path, laser_scan_topic=self.laser_scan_topic, gmapping_config=self.gmapping_config)
-        self.amcl_launcher = LaunchManager(self.amcl_launch_path, map_path=self.map_path + ".yaml", laser_scan_topic=self.laser_scan_topic, amcl_config=self.amcl_config)
+        self.amcl_launcher = LaunchManager(self.amcl_launch_path, **self.amcl_args)
         self.map_saver_launcher = LaunchManager(self.map_saver_launch_path, map_path=self.map_path)
         self.fake_map_launcher = LaunchManager(self.fake_map_launch_path)
 
@@ -144,7 +150,8 @@ class TJ2LaserSlam:
             self.map_name = map_name
             self.set_map_paths()
             rospy.loginfo("Setting map path to %s" % self.map_path)
-            self.amcl_launcher.set_args(map_path=self.map_path + ".yaml")
+            self.amcl_args["map_path"] = self.map_path + ".yaml"
+            self.amcl_launcher.set_args(**self.amcl_args)
             self.map_saver_launcher.set_args(map_path=self.map_path)
 
         if mode == self.LOCALIZE:

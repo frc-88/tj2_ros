@@ -49,6 +49,7 @@ packages=(
     https://github.com/ros/urdf_parser_py.git
     https://github.com/ros/xacro.git
     https://github.com/ros/executive_smach.git
+    https://github.com/ros/joint_state_publisher.git
 )
 
 branches=(
@@ -99,6 +100,7 @@ branches=(
     melodic-devel  # https://github.com/ros/urdf_parser_py.git
     noetic-devel  # https://github.com/ros/xacro.git
     noetic-devel  # https://github.com/ros/executive_smach.git
+    noetic-devel  # https://github.com/ros/joint_state_publisher.git
 )
 
 len=${#packages[@]}
