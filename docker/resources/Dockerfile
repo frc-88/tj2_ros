@@ -147,6 +147,7 @@ RUN python3 -m pip install pynetworktables==2021.0.0
 RUN python3 -m pip install pynmcli==1.0.5
 RUN python3 -m pip install flask==2.0.3
 RUN python3 -m pip install gevent==22.10.2
+RUN python3 -m pip install shapely==1.6.4
 
 # ---
 # tj2_ros

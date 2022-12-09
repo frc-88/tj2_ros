@@ -10,7 +10,7 @@ from networktables import NetworkTables
 
 import pynmcli
 
-from tj2_networktables.msg import NTEntry
+from tj2_interfaces.msg import NTEntry
 
 from tj2_tools.launch_manager import TopicListener
 

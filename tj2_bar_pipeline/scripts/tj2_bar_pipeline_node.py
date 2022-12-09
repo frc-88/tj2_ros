@@ -25,7 +25,7 @@ from image_geometry import PinholeCameraModel
 
 from std_msgs.msg import ColorRGBA
 
-from tj2_networktables.msg import NTEntry
+from tj2_interfaces.msg import NTEntry
 
 from tj2_tools.robot_state import Pose2d
 
