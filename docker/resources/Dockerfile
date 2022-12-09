@@ -149,6 +149,8 @@ RUN python3 -m pip install flask==2.0.3
 RUN python3 -m pip install gevent==22.10.2
 RUN python3 -m pip install shapely==1.6.4
 
+RUN apt-get install -y i2c-tools python3-smbus
+
 # ---
 # tj2_ros
 # ---

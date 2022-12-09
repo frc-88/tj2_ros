@@ -50,6 +50,7 @@ packages=(
     https://github.com/ros/xacro.git
     https://github.com/ros/executive_smach.git
     https://github.com/ros/joint_state_publisher.git
+    https://github.com/frc-88/rev_color_sensor_ros.git
 )
 
 branches=(
@@ -101,6 +102,7 @@ branches=(
     noetic-devel  # https://github.com/ros/xacro.git
     noetic-devel  # https://github.com/ros/executive_smach.git
     noetic-devel  # https://github.com/ros/joint_state_publisher.git
+    main  # https://github.com/frc-88/rev_color_sensor_ros.git
 )
 
 len=${#packages[@]}

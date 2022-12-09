@@ -32,6 +32,7 @@ echo "Stopping tj2_ros"
 ${SSH_COMMAND} -t "sudo systemctl stop tj2_ros.service"
 
 # build tj2_ros
-${SSH_COMMAND} "cd ${DEST_FULL_PATH}/docker/native/build_tj2_ros.sh"
+${SSH_COMMAND} "sudo ${DEST_FULL_PATH}/docker/native/build_container.sh"
+${SSH_COMMAND} "${DEST_FULL_PATH}/docker/native/post_build.sh"
 
 ${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} tj2_ros
