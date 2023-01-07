@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ -z $1 ]; then
-    LOGS_DIR=~/logs
+    LOGS_DIR=/media/storage/logs
     CURRENT_FILE=`find $LOGS_DIR -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -f2- -d" "`
     echo $CURRENT_FILE
 else
