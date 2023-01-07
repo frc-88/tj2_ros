@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2" >
+        <node name="tj2_detectnet_yolov5n" pkg="tj2_detectnet" type="tj2_detectnet_node" output="screen">
+            <param name="model_name" value=""/>
+            <param name="model_path" value="$(find tj2_detectnet)/models/yolov5n.onnx"/>
+            <param name="prototxt_path" value=""/>
+            <param name="class_labels_path" value="$(find tj2_detectnet)/models/yolov5n-labels.txt"/>
+            <param name="input_blob" value="input_0"/>
+            <param name="output_cvg" value="scores"/>
+            <param name="output_bbox" value="boxes"/>
+            <param name="overlay_flags" value="box,labels,conf"/>
+            <param name="mean_pixel_value" value="0.0"/>
+            <param name="threshold" value="0.3"/>
+
+            <param name="depth_topic"           value="/camera/aligned_depth_to_color/image_raw"/>
+            <param name="depth_info_topic"      value="/camera/aligned_depth_to_color/camera_info"/>
+            <param name="color_topic"     value="/camera/color/image_raw"/>
+            <param name="color_info_topic"     value="/camera/color/camera_info"/>
+
+            <remap from="overlay/image_raw" to="yolov5n/overlay/image_raw"/>
+            <remap from="overlay/camera_info" to="yolov5n/overlay/camera_info"/>
+            <remap from="markers" to="yolov5n/markers"/>
+            <remap from="detections" to="yolov5n/detections"/>
+
+            <param name="always_publish_overlay"     value="true"/>
+
+            <rosparam param="detectnet_marker_colors" file="$(find tj2_detectnet)/config/yolov5n/marker_colors.yaml" command="load"/>
+            <rosparam param="detectnet_z_depth_estimations" file="$(find tj2_detectnet)/config/yolov5n/depth_estimations.yaml" command="load"/>
+
+        </node>
+    </group>
+</launch>

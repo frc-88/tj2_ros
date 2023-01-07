@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_record_match" output="screen" 
+       args="record -o /media/storage/bags/diffyjr
+        /amcl_pose
+        /initialpose
+        /laser/scan
+        /tj2/swerve_modules
+        /tj2/cmd_vel
+        /tj2/cmd_vel_nav
+        /tj2/cmd_vel_teleop
+        /tj2/imu
+        /tj2/is_autonomous
+        /tj2/match_time
+        /tj2/odom
+        /tj2/ping
+        /tj2_zed/obj_det/detections
+        /tj2/team_color
+        " />
+</launch>

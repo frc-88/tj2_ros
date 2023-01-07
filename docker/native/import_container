@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+WS_TAR_PATH=$(realpath "$1")
+
+if [ "$EUID" -ne 0 ]
+    then echo "Please run as root"
+    exit
+fi
+
+docker pull woz4tetra/tj2_ros:latest
+echo "Decompressing docker_ros_ws"
+tar -xvf ${WS_TAR_PATH} -C /media/storage/
+echo "Done!"

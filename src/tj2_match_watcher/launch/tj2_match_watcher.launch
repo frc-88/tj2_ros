@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="record_launch_path" default=""/>
+    <arg name="enable_record_video" default="true"/>
+
+    <arg name="ffmpeg_command" value="/usr/bin/ffmpeg -y -f rawvideo -vcodec rawvideo -s :width:x:height: -pix_fmt rgb24 -r :fps: -i - -maxrate 20M -bufsize 5000k -vb 20M  -vcodec mpeg4 -flush_packets 1 :path:"/>
+    <!-- <arg name="ffmpeg_command" value="/usr/bin/ffmpeg -y -f rawvideo -vcodec rawvideo -s :width:x:height: -pix_fmt rgb24 -r :fps: -i - -maxrate 2048k -bufsize 256k -flush_packets 1 :path:"/> -->
+    <group ns="tj2">
+        <node pkg="tj2_match_watcher" type="tj2_match_watcher_node.py" name="tj2_match_watcher" output="screen" required="false">
+            <param name="record_match_launch_path" value="$(arg record_launch_path)"/>
+        </node>
+
+        <group if="$(arg enable_record_video)">
+            <group ns="color">
+                <node name="color_video_recorder" pkg="tj2_video" type="tj2_video_node" required="true" output="screen">
+                    <param name="video_width" value="672" />
+                    <param name="video_height" value="372" />
+                    <param name="video_fps" value="15" />
+                    <param name="autostart" value="false" />
+                    <param name="output_path" value="/media/storage/videos/color-%Y-%m-%dT%H-%M-%S.avi" />
+                    <param name="ffmpeg_command" value="$(arg ffmpeg_command)" />
+                    <remap from="image" to="/tj2_zed/rgb/image_rect_color"/>
+                </node>
+            </group>
+
+            <group ns="depth">
+                <node name="depth_video_recorder" pkg="tj2_video" type="tj2_video_node" required="true" output="screen">
+                    <param name="video_width" value="672" />
+                    <param name="video_height" value="372" />
+                    <param name="video_fps" value="15" />
+                    <param name="autostart" value="false" />
+                    <param name="output_path" value="/media/storage/videos/depth-%Y-%m-%dT%H-%M-%S.avi" />
+                    <param name="ffmpeg_command" value="$(arg ffmpeg_command)" />
+                    <remap from="image" to="/tj2_zed/depth/depth_registered"/>
+                </node>
+            </group>
+        </group>
+    </group>
+</launch>

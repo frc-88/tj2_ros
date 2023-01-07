@@ -1,0 +1,23 @@
+<launch>
+    <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+      <param name="video_device" value="/dev/video2" />
+      <param name="image_width" value="640" />
+      <param name="image_height" value="480" />
+      <param name="pixel_format" value="yuyv" />
+      <param name="color_format" value="yuv422p" />
+      <param name="camera_frame_id" value="usb_cam" />
+      <param name="io_method" value="mmap"/>
+    </node>
+    <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+      <remap from="image" to="/usb_cam/image_raw"/>
+      <param name="autosize" value="true" />
+    </node>
+    <node name="tj2_video" pkg="tj2_video" type="tj2_video_node" required="true" output="screen">
+        <param name="video_width" value="640" />
+        <param name="video_height" value="480" />
+        <param name="video_fps" value="15" />
+        <param name="autostart" value="false" />
+        <param name="output_path" value="%Y-%m-%dT%H-%M-%S.avi" />
+        <remap from="image" to="/usb_cam/image_raw"/>
+    </node>
+</launch>

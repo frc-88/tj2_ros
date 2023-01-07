@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="camera_imu_topic" default="/tj2_zed/imu/data"/>
+    <arg name="base_imu_topic" default="/tj2/imu"/>
+    <node pkg="tj2_description" type="tj2_imu_joint" name="camera_imu_joint" output="screen" required="false">
+        <param name="base_parent_frame" value="base_link"/>
+        <param name="base_child_frame" value="base_tilt_link"/>
+        <param name="camera_parent_frame" value="camera_tilt_link"/>
+        <param name="camera_child_frame" value="camera_armature_link"/>
+        <param name="publish_rate" value="10.0"/>
+        <remap from="camera_imu" to="$(arg camera_imu_topic)"/>
+        <remap from="base_imu" to="$(arg base_imu_topic)"/>
+    </node>
+</launch>

@@ -1,5 +1,0 @@
-string path
-duration length
----
-bool success
-string output_path

@@ -1,3 +1,0 @@
----
-geometry_msgs/PoseArray waypoints
-string[] names

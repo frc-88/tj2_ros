@@ -1,0 +1,20 @@
+alternate_ir: false
+confidence_threshold: 1
+digital_gain: 1
+enable_ir_reflectivity: false
+enable_max_usable_range: false
+error_polling_enabled: true
+frames_queue_size: 16
+freefall_detection_enabled: true
+global_time_enabled: true
+host_performance: 0
+inter_cam_sync_mode: false
+invalidation_bypass: false
+laser_power: 100
+min_distance: 200
+noise_filtering: 4
+post_processing_sharpening: 1
+pre_processing_sharpening: 0
+receiver_gain: 9
+# sensor_mode: 0
+visual_preset: 0

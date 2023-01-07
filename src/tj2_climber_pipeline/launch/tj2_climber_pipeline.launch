@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2">
+        <node name="tj2_climber_pipeline" pkg="tj2_climber_pipeline" type="tj2_climber_pipeline_node.py" output="screen" required="false">
+            <param name="depth_topic" value="/camera/depth/image_rect_raw"/>
+            <param name="info_topic" value="/camera/depth/camera_info"/>
+            <param name="min_distance" value="0.65"/>
+            <param name="max_distance" value="1.35"/>
+        </node>
+    </group>
+</launch>

@@ -1,0 +1,14 @@
+<launch>
+    <node pkg="tf" type="static_transform_publisher" name="" args="0 0 0  0 0 0 1 camera_link camera_depth_frame 33" />
+    <node pkg="tf" type="static_transform_publisher" name="" args="0.004 -0.001 0.014  0.002 -0.016 0.001 1.000 camera_link camera_color_frame 33" />
+    <node pkg="tf" type="static_transform_publisher" name="" args="0 0 0  0 0 0 1 camera_link camera_infra_frame 33" />
+    <node pkg="tf" type="static_transform_publisher" name="" args="-0.001 -0.012 0.016  0 0 0 1 camera_link camera_gyro_frame 33" />
+    <node pkg="tf" type="static_transform_publisher" name="" args="-0.001 -0.012 0.016  0 0 0 1 camera_link camera_accel_frame 33" />
+    
+    <node pkg="tf" type="static_transform_publisher" name="" args="0 0 0  -0.500 0.500 -0.500 0.500 camera_depth_frame camera_depth_optical_frame 33" />
+    <node pkg="tf" type="static_transform_publisher" name="" args="0 0 0  -0.500 0.500 -0.500 0.500 camera_color_frame camera_color_optical_frame 33" />
+    <node pkg="tf" type="static_transform_publisher" name="" args="0 0 0  -0.500 0.500 -0.500 0.500 camera_infra_frame camera_infra_optical_frame 33" />
+    <node pkg="tf" type="static_transform_publisher" name="" args="0 0 0  0 0 0 1 camera_gyro_frame camera_gyro_optical_frame 33" />
+    <node pkg="tf" type="static_transform_publisher" name="" args="0 0 0  0 0 0 1 camera_accel_frame camera_accel_optical_frame 33" />
+    
+</launch>

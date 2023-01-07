@@ -1,0 +1,35 @@
+enable_shot_correction: true  # compensate the shot for robot velocity
+enable_stationary_shot_probability: true  # calculate probability based on stationary measurements
+enable_moving_shot_probability: true  # calculate probability based on how much the target is changing
+enable_limelight_fine_tuning: false  # use the limelight's compensated target if within a threshold
+enable_marauding: false  # if an opposing team color object is encountered, select the nearest marauding waypoint instead of the main target
+enable_reset_to_limelight: false  # send initial pose estimate messages based on the limelight target if received
+enable_target_marker_pub: true  # publish the probability percentage marker for RViz
+
+target_cosmic_ray_compensation_degrees: 3.0  # arbitrary offset to apply to the final target angle
+target_dark_energy_compensation_meters: 0.25  # arbitrary offset to apply to the final target distance
+
+target_base_frame: turret_tilt_link  # frame id to calculate target angle and distance from
+
+x_cov_threshold: 1.0  # X covariance threshold /amcl_pose can have before setting shot probability to zero
+y_cov_threshold: 1.0  # Y covariance threshold /amcl_pose can have before setting shot probability to zero
+theta_cov_threshold_deg: 10.0  # theta covariance threshold /amcl_pose can have before setting shot probability to zero
+
+maraude_message_timeout: 0.5  # time threshold to consider a color message valid
+
+reset_x_cov: 0.5  # x covariance to send to /initialpose when a reset to limelight command is received
+reset_y_cov: 0.5  # y covariance to send to /initialpose when a reset to limelight command is received
+reset_theta_cov_deg: 5.0  # theta covariance to send to /initialpose when a reset to limelight command is received
+
+stale_limelight_timeout: 0.25  # time threshold for considering limelight targets (used if enable_limelight_fine_tuning is true)
+
+cargo_egress_time: 0.5
+
+limelight_waypoint_agreement_threshold: 1.0  # if enable_limelight_fine_tuning is true and the limelight target minus waypoint target distance is less than this value, use the limelight target
+
+tof_a_const: -0.02614939  # slope of hood up distance to TOF function
+tof_b_const: 1.28455000  # y intercept of hood up distance to TOF function
+
+v_filter_k: 0.8  # k value to apply to robot velocity. This smoothes out sharp velocity changes. Set to null to disable.
+
+moving_probability_x_scale: 0.5  # how much to scale the moving shot probability function. Decreasing this value causes changing targets to get a lower probability score

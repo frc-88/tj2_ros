@@ -1,4 +1,0 @@
-pursuit:
-  package: "tj2_pursuit"
-  path: "tj2_simple_pursuit.launch"
-  on_start: true

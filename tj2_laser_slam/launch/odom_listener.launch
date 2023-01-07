@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<launch>
-    <node pkg="tj2_laser_slam" type="odom_listener.py" name="odom_listener" output="screen">
-        <remap from="odom" to="/tj2/odom"/>
-    </node>
-</launch>

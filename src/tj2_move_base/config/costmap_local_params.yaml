@@ -1,0 +1,18 @@
+global_frame: odom
+robot_base_frame: base_link
+update_frequency: 5.0
+publish_frequency: 1.0
+width: 4.0
+height: 4.0
+# origin_x: -1.5
+# origin_y: -1.5
+resolution: 0.075
+# static_map: false  # unnecessary with plugins
+rolling_window: true
+
+footprint_padding: 0.0
+
+inflation:
+    enabled: true
+    cost_scaling_factor: 3.0
+    inflation_radius: 1.5

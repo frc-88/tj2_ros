@@ -1,6 +1,0 @@
-tj2_laser_slam/bags/
-tj2_laser_slam/maps/
-tj2_camera/bags/
-tj2_target/config/
-tj2_target/maps/
-tj2_waypoints/waypoints/

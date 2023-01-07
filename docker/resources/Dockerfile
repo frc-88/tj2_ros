@@ -95,7 +95,35 @@ RUN apt-get update && sudo apt-get install -y \
     lm-sensors  \
     python3-psutil  \
     libusb-1.0-0*  \
-    libswscale-dev
+    libswscale-dev \
+    libsuitesparse-dev \
+    python3-termcolor \
+    i2c-tools \
+    python3-smbus \
+    libceres-dev
+
+RUN python3 -m pip install scipy==1.5.4 \
+    shapely==1.6.4 \
+    mido \
+    pyperclip \
+    dataclasses \
+    PyYAML==5.4.1 \
+    pynetworktables==2021.0.0 \
+    pynmcli==1.0.5 \
+    flask==2.0.3 \
+    py-trees==0.7.6
+
+RUN apt-get install -y llvm-7*
+RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
+RUN python3 -m pip install Cython
+RUN python3 -m pip install llvmlite==0.32.0
+RUN python3 -m pip install numba==0.49.0
+
+WORKDIR /tmp
+RUN git clone https://github.com/wjakob/tbb.git
+WORKDIR /tmp/tbb/build
+RUN cmake ..
+RUN make -j4 && make install
 
 WORKDIR /tmp
 RUN git clone https://github.com/AprilRobotics/apriltag.git && \
@@ -118,9 +146,9 @@ RUN python3 -m pip install psutil
 RUN mkdir ../../python_orocos_kdl/build
 WORKDIR /tmp/orocos_kinematics_dynamics/python_orocos_kdl/build
 RUN cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
-        -D PYTHON_INCLUDE_DIR=/usr/include/python3.6 \
-        -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.6m.so \
-        -D PYBIND11_PYTHON_VERSION=3 ..
+    -D PYTHON_INCLUDE_DIR=/usr/include/python3.6 \
+    -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.6m.so \
+    -D PYBIND11_PYTHON_VERSION=3 ..
 RUN make -j4 && make install
 
 WORKDIR /tmp
@@ -137,19 +165,20 @@ WORKDIR /tmp/CmakeWpilib/build
 RUN cmake .. -DWITHOUT_CSCORE=ON -DWITHOUT_JAVA=ON
 RUN make -j4 && make install
 
+WORKDIR /tmp
+RUN git clone https://github.com/RainerKuemmerle/g2o.git
+WORKDIR /tmp/g2o
+RUN git checkout 20201223_git
+RUN mkdir build
+WORKDIR /tmp/g2o/build
+RUN cmake ..
+RUN make -j4 && make install
+
+RUN apt-get install -y dumb-init
+
 WORKDIR /
 RUN ldconfig
 RUN rm -r /tmp/*
-
-RUN python3 -m pip install scipy==1.5.4
-RUN python3 -m pip install PyYAML==5.4.1
-RUN python3 -m pip install pynetworktables==2021.0.0
-RUN python3 -m pip install pynmcli==1.0.5
-RUN python3 -m pip install flask==2.0.3
-RUN python3 -m pip install gevent==22.10.2
-RUN python3 -m pip install shapely==1.6.4
-
-RUN apt-get install -y i2c-tools python3-smbus
 
 # ---
 # tj2_ros
@@ -162,22 +191,20 @@ WORKDIR ${HOME}
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${HOME}/ros_ws/src
 
-COPY ./scripts ${HOME}/scripts
-COPY ./configs ${HOME}/configs
-
-RUN sudo mv ${HOME}/scripts/preferences /etc/apt/preferences
-RUN sudo mv ${HOME}/configs/zed/* /usr/local/zed/settings/
-
-RUN cat ${HOME}/scripts/bashrc >> ${HOME}/.bashrc
-RUN rm ${HOME}/scripts/bashrc
-
 ENV FLASK_ENV=development
-
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools"
 
-COPY ./scripts/entrypoint.sh /entrypoint.sh
-COPY ./scripts/launch.sh /launch.sh
-COPY ./scripts/roscore.sh /roscore.sh
+COPY ./install ${HOME}/install
+COPY ./configs ${HOME}/configs
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["source ${HOME}/.bashrc"]
+RUN sudo mv ${HOME}/configs/zed/* /usr/local/zed/settings/
+RUN sudo mv ${HOME}/install/preferences /etc/apt/preferences
+
+RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
+RUN rm ${HOME}/install/bashrc
+
+COPY ./install/entrypoint.sh /entrypoint.sh
+COPY ./install/launch.sh /launch.sh
+COPY ./install/roscore.sh /roscore.sh
+
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
