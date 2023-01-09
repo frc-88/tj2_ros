@@ -11,7 +11,11 @@ mesh.scale(1e-3, np.array([0.0, 0.0, 0.0]))
 original_mesh = copy.deepcopy(mesh)
 
 R = mesh.get_rotation_matrix_from_xyz(
-    (np.deg2rad(100.0), np.deg2rad(130.0), np.deg2rad(200.0))
+    (
+        np.deg2rad(np.random.random() * 360.0),
+        np.deg2rad(np.random.random() * 360.0),
+        np.deg2rad(np.random.random() * 360.0),
+    )
 )
 
 mesh.rotate(R)
@@ -30,6 +34,9 @@ bb = pcl.get_oriented_bounding_box()
 
 pca_R = copy.deepcopy(bb.R)
 pca_center = bb.get_center()
+rotate_up = mesh.get_rotation_matrix_from_xyz(
+    (np.deg2rad(90.0), np.deg2rad(90.0), np.deg2rad(90.0))
+)
 pca_T = np.eye(4)
 pca_T[:3, :3] = pca_R
 pca_T[:3, 3] = pca_center
@@ -40,6 +47,7 @@ mesh_axis = open3d.geometry.TriangleMesh.create_box(
 mesh_axis.translate(-mesh_axis.get_center())
 
 pca_axis = open3d.geometry.TriangleMesh.create_box(width=0.005, height=0.005, depth=1.0)
+pca_axis.rotate(rotate_up)
 pca_axis.translate(-pca_axis.get_center())
 pca_axis.transform(pca_T)
 
