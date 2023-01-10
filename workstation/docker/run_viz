@@ -1,0 +1,22 @@
+#!/bin/bash
+function cleanup {
+    xhost -local:root
+}
+trap cleanup EXIT
+
+xhost +local:root
+docker run -it \
+    --name workstation_rviz \
+    --env="DISPLAY" \
+    --env="QT_X11_NO_MITSHM=1" \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v=/home/${USER}/tj2_ros/src/tj2_ros:/root/ros_ws/src/tj2_ros:rw \
+    -v=/home/${USER}/tj2_ros/workstation/resources/scripts:/root/scripts:rw \
+    -v=/home/${USER}/docker_ros_ws_tj2:/root/ros_ws:rw \
+    -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+    --rm \
+    bwbots_workstation:latest \
+    /entrypoint.sh rviz -d /root/ros_ws/src/bwbots/bw_viz/rviz/standard.rviz

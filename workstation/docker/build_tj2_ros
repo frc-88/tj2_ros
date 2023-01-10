@@ -1,0 +1,23 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+mkdir -p ${HOME}/docker_ros_ws_tj2/src
+mkdir -p ${HOME}/docker_ros_ws_tj2/devel
+touch ${HOME}/docker_ros_ws_tj2/devel/setup.bash
+mkdir -p ${HOME}/tj2_ros/logs
+mkdir -p ${HOME}/tj2_ros/bags
+
+cd ${BASE_DIR}/resources
+
+docker run -it \
+    --name workstation_build_tj2_ros \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v /home/${USER}/tj2_ros/src:/root/ros_ws/src/tj2_ros:rw \
+    -v /home/${USER}/tj2_ros/workstation/resources/scripts:/root/scripts:rw \
+    -v /home/${USER}/docker_ros_ws_tj2:/root/ros_ws:rw \
+    --rm \
+    tj2_ros_workstation:latest \
+    /root/install/build_tj2_ros.sh
