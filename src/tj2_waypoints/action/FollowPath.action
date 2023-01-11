@@ -1,6 +1,0 @@
-tj2_waypoints/WaypointArray waypoints
-float64 intermediate_tolerance
----
-bool success
----
-int32 index

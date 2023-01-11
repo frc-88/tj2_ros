@@ -16,10 +16,6 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 
-#include "actionlib/client/simple_action_client.h"
-#include "actionlib/client/terminal_state.h"
-#include "actionlib/client/simple_client_goal_state.h"
-
 #include "tf2/LinearMath/Quaternion.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -37,9 +33,6 @@
 #include "sensor_msgs/LaserScan.h"
 #include "apriltag_ros/AprilTagDetectionArray.h"
 #include "apriltag_ros/AprilTagDetection.h"
-
-#include "tj2_waypoints/FollowPathGoal.h"
-#include "tj2_waypoints/FollowPathAction.h"
 
 #include "tj2_waypoints/Waypoint.h"
 #include "tj2_waypoints/WaypointArray.h"
@@ -59,15 +52,6 @@
 #include "networktables/EntryListenerFlags.h"
 
 using namespace std;
-
-
-typedef enum {
-    IDLE=0,
-    RUNNING=1,
-    FINISHED=2,
-    FAILED=3,
-    INVALID=-1,
-} GoalStatus;
 
 
 int sign_of(double x) {
@@ -96,6 +80,8 @@ protected:
 
     // NT helpers
     double get_double(NT_Entry entry, double default_value = 0.0);
+    vector<double> get_double_array(NT_Entry entry);
+    vector<string> get_string_array(NT_Entry entry);
     bool get_boolean(NT_Entry entry, bool default_value = false);
     string get_string(NT_Entry entry, string default_value = "");
     NT_Entry get_entry(string path);
@@ -136,79 +122,33 @@ private:
     string _classes_path;
 
     // odom entries
-    NT_Entry _odom_x_entry;
-    NT_Entry _odom_y_entry;
-    NT_Entry _odom_t_entry;
-    NT_Entry _odom_vx_entry;
-    NT_Entry _odom_vy_entry;
-    NT_Entry _odom_vt_entry;
-    NT_Entry _odom_update_entry;
+    NT_Entry _odom_entry;
+    NT_Entry _global_entry;
+    NT_Entry _imu_entry;
+    NT_Entry _pose_est_entry;
+    NT_Entry _cmd_vel_entry;
 
     // ping entries
     NT_Entry _ping_entry;
     NT_Entry _ping_return_entry;
 
-    // reset odom entries
-    NT_Entry _set_odom_x_entry;
-    NT_Entry _set_odom_y_entry;
-    NT_Entry _set_odom_t_entry;
-    NT_Entry _set_odom_update_entry;
-
-    // waypoint entries
-    NT_Entry _goal_status_entry;
-    NT_Entry _goal_status_update_entry;
-
-    // robot global pose entries
-    NT_Entry _global_x_entry;
-    NT_Entry _global_y_entry;
-    NT_Entry _global_t_entry;
-    NT_Entry _global_update_entry;
-
-    // imu entries
-    NT_Entry _imu_tx_entry;
-    NT_Entry _imu_ty_entry;
-    NT_Entry _imu_tz_entry;
-    NT_Entry _imu_vz_entry;
-    NT_Entry _imu_ax_entry;
-    NT_Entry _imu_ay_entry;
-    NT_Entry _imu_update_entry;
-
     // match entries
     NT_Entry _match_time_entry;
     NT_Entry _is_auto_entry;
     NT_Entry _team_color_entry;
-    NT_Entry _match_update_entry;
-
-    // pose estimate entries
-    NT_Entry _pose_est_x_entry;
-    NT_Entry _pose_est_y_entry;
-    NT_Entry _pose_est_t_entry;
-    NT_Entry _pose_est_update_entry;
-
-    // waypoint entries
-    NT_Entry _waypoint_is_continuous_entry;
-    NT_Entry _waypoint_ignore_orientation_entry;
-    NT_Entry _waypoint_intermediate_tolerance_entry;
-    NT_Entry _waypoint_ignore_obstacles_entry;
-    NT_Entry _waypoint_ignore_walls_entry;
-    NT_Entry _waypoint_timeout_entry;
-    NT_Entry _waypoint_goal_x_entry;
-    NT_Entry _waypoint_goal_y_entry;
-    NT_Entry _waypoint_goal_t_entry;
-    NT_Entry _waypoint_goal_name_entry;
-
-    // waypoint plan entries
-    NT_Entry _exec_waypoint_plan_entry;
-    NT_Entry _exec_waypoint_plan_update_entry;
-    NT_Entry _reset_waypoint_plan_entry;
-    NT_Entry _cancel_waypoint_plan_entry;
 
     // velocity command entries
-    NT_Entry _cmd_vel_x_entry;
-    NT_Entry _cmd_vel_y_entry;
-    NT_Entry _cmd_vel_t_entry;
-    NT_Entry _cmd_vel_update_entry;
     NT_Entry _field_relative_entry;
+
+    // joint entries
+    NT_Entry _joint_states_entry;
+    NT_Entry _joint_commands_entry;
+
+    // waypoint entries
+    NT_Entry _waypoint_names_entry;
+    NT_Entry _waypoint_xs_entry;
+    NT_Entry _waypoint_ys_entry;
+    NT_Entry _waypoint_ts_entry;
 
     // laser scan entries
     NT_Entry _laser_entry_xs;
@@ -216,7 +156,12 @@ private:
 
     // zone entries
     NT_Entry _zones_valid_entry;
-    NT_Entry _nogo_zones_update_entry;
+    NT_Entry _zone_names_entry;
+    NT_Entry _zone_nearest_x_entry;
+    NT_Entry _zone_nearest_y_entry;
+    NT_Entry _zone_distance_entry;
+    NT_Entry _zone_is_inside_entry;
+    NT_Entry _zone_is_nogo_entry;
     NT_Entry _nogo_zones_names_entry;
 
     // Members
@@ -226,23 +171,27 @@ private:
     ros::Duration _odom_timeout;
 
     ros::Time _prev_twist_timestamp;
-    double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
     ros::Time _prev_odom_timestamp;
     ros::Time _prev_imu_timestamp;
 
+    vector<double> _twist_cmd;
+    vector<double> _global_pose;
+
+    vector<string> _waypoint_names;
+    vector<double> _waypoint_xs;
+    vector<double> _waypoint_ys;
+    vector<double> _waypoint_ts;
+
+    vector<double> _joint_commands;
+
     tj2_waypoints::WaypointArray _waypoints;
-    actionlib::SimpleActionClient<tj2_waypoints::FollowPathAction> *_waypoints_action_client;
-    GoalStatus _currentGoalStatus;
-    GoalStatus _prevPollStatus;
-    std::vector<std::string> _class_names;
+    vector<string> _class_names;
 
-    std::vector<double> _laser_scan_ranges;
-    std::vector<double> _laser_scan_xs;
-    std::vector<double> _laser_scan_ys;
+    vector<double> _laser_scan_ranges;
+    vector<double> _laser_scan_xs;
+    vector<double> _laser_scan_ys;
 
-    string _zones_base_key;
-
-    std::map<std::string, int> _detection_counter;
+    std::map<string, int> _detection_counter;
 
     // Messages
     nav_msgs::Odometry _odom_msg;
@@ -275,14 +224,16 @@ private:
     tf2_ros::TransformListener _tf_listener;
     vector<ros::Subscriber>* _raw_joint_subs;
 
-    // Service Servers
-    ros::ServiceServer _odom_reset_srv;
-
     // NT publishers
     void publish_cmd_vel();
-    void publish_goal_status();
     void publish_robot_global_pose();
-    void publish_joints();
+    void publish_detection_count(string name, int count);
+    void publish_detection(string name, int index, geometry_msgs::PoseStamped pose);
+
+    // NT subscribers
+    void publish_joint(size_t joint_index, double joint_position);
+    void publish_odom();
+    void publish_imu();
 
     // Subscription callbacks
     void twist_callback(const geometry_msgs::TwistConstPtr& msg);
@@ -290,33 +241,24 @@ private:
     void nt_passthrough_string_callback(const tj2_interfaces::NTEntryStringConstPtr& msg);
     void waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg);
     void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
-    void joint_command_callback(const std_msgs::Float64ConstPtr& msg, string joint_name, int joint_index);
+    void joint_command_callback(const std_msgs::Float64ConstPtr& msg, int joint_index);
     void field_relative_callback(const std_msgs::BoolConstPtr& msg);
     void scan_callback(const sensor_msgs::LaserScanConstPtr& msg);
     void zones_info_callback(const tj2_interfaces::ZoneInfoArrayConstPtr& msg);
     void tags_callback(const apriltag_ros::AprilTagDetectionArrayConstPtr& msg);
 
-    // Service callbacks
-    bool odom_reset_callback(tj2_interfaces::OdomReset::Request &req, tj2_interfaces::OdomReset::Response &resp);
-
     // NT callbacks
     void odom_callback(const nt::EntryNotification& event);
     void ping_callback(const nt::EntryNotification& event);
     void imu_callback(const nt::EntryNotification& event);
-    void joint_callback(size_t joint_index);
     void match_callback(const nt::EntryNotification& event);
     void pose_estimate_callback(const nt::EntryNotification& event);
-
-    void create_waypoint(size_t index);
-    void exec_waypoint_plan_callback(const nt::EntryNotification& event);
-    void reset_waypoint_plan_callback(const nt::EntryNotification& event);
-    void cancel_waypoint_plan_callback(const nt::EntryNotification& event);
+    void joint_state_callback(const nt::EntryNotification& event);
 
     void nogo_zones_callback(const nt::EntryNotification& event);
 
     // Timer callbacks
     void ping_timer_callback(const ros::TimerEvent& event);
-    void joint_timer_callback(const ros::TimerEvent& event);
 
     // Other helpers
     void add_joint(string name);
@@ -325,16 +267,5 @@ private:
     string get_label(int obj_id);
     int get_index(int obj_id);
     std::vector<std::string> load_label_names(const string& path);
-    void publish_odom();
-    void publish_imu();
-    void publish_detection_count(string name, int count);
-    void publish_detection(string name, int index, geometry_msgs::PoseStamped pose);
-
-    // Waypoint control
-    void set_goal_status(GoalStatus status);
-    void send_waypoints();
-    void cancel_waypoint_goal();
-    void reset_waypoints();
-    tj2_waypoints::Waypoint make_waypoint_from_nt(size_t index);
-    void add_waypoint(tj2_waypoints::Waypoint waypoint);
+    
 };

@@ -61,6 +61,8 @@ add_message_files(
   ZoneInfo.msg
   ZoneInfoArray.msg
   NoGoZones.msg
+  Waypoint.msg
+  WaypointArray.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -68,6 +70,11 @@ add_service_files(
   FILES
   OdomReset.srv
   StartVideo.srv
+  DeleteWaypoint.srv
+  GetAllWaypoints.srv
+  GetWaypoint.srv
+  GetWaypoints.srv
+  SaveWaypoint.srv
 )
 
 ## Generate actions in the 'action' folder
