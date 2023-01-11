@@ -8,9 +8,6 @@
 #include "tj2_interfaces/SwerveModule.h"
 #include "tj2_interfaces/SwerveMotor.h"
 
-#include "tj2_interfaces/Shooter.h"
-#include "tj2_interfaces/Hood.h"
-
 #include "networktables/EntryListenerFlags.h"
 
 #include "tj2_networktables.h"

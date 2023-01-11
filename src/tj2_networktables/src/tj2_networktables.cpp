@@ -472,7 +472,7 @@ void TJ2NetworkTables::joint_command_callback(const std_msgs::Float64ConstPtr& m
         nt::SetEntryValue(_joint_commands_entry, nt::Value::MakeDoubleArray(_joint_commands));
     }
     else {
-        ROS_WARN("Received invalid command for joint index: %d", joint_index);
+        ROS_WARN_THROTTLE(1.0, "Received invalid command for joint index: %d", joint_index);
     }
 }
 
@@ -534,7 +534,7 @@ void TJ2NetworkTables::imu_callback(const nt::EntryNotification& event)
 void TJ2NetworkTables::publish_joint(size_t joint_index, double joint_position)
 {
     if (joint_index >= _raw_joint_msgs->size()) {
-        ROS_WARN("Invalid joint index received: %ld. Valid range is 0..%ld. (Joint value was %f)", joint_index, _raw_joint_msgs->size() - 1, joint_position);
+        ROS_WARN_THROTTLE(1.0, "Invalid joint index received: %ld. Valid range is 0..%ld. (Joint value was %f)", joint_index, _raw_joint_msgs->size() - 1, joint_position);
         return;
     }
     if (!std::isfinite(joint_position)) {
@@ -587,7 +587,7 @@ void TJ2NetworkTables::pose_estimate_callback(const nt::EntryNotification& event
 
     vector<double> pose_est_value = get_double_array(_pose_est_entry);
     if (pose_est_value.size() != 4) {
-        ROS_WARN("Received invalid size for pose estimate: %lu. Ignoring.", pose_est_value.size());
+        ROS_WARN_THROTTLE(1.0, "Received invalid size for pose estimate: %lu. Ignoring.", pose_est_value.size());
         return;
     }
 
@@ -727,7 +727,7 @@ void TJ2NetworkTables::publish_odom()
     vector<double> odom_value = get_double_array(_odom_entry);
     
     if (odom_value.size() != 7) {
-        ROS_WARN("Received invalid size for odom: %lu. Ignoring.", odom_value.size());
+        ROS_WARN_THROTTLE(1.0, "Received invalid size for odom: %lu. Ignoring.", odom_value.size());
         return;
     }
 
@@ -782,7 +782,7 @@ void TJ2NetworkTables::publish_imu()
     vector<double> imu_value = get_double_array(_imu_entry);
     
     if (imu_value.size() != 7) {
-        ROS_WARN("Received invalid size for imu: %lu. Ignoring.", imu_value.size());
+        ROS_WARN_THROTTLE(1.0, "Received invalid size for imu: %lu. Ignoring.", imu_value.size());
         return;
     }
 
@@ -854,27 +854,35 @@ void TJ2NetworkTables::publish_detection_count(string name, int count)
 
 vector<double> TJ2NetworkTables::get_double_array(NT_Entry entry)
 {
-    auto value = nt::GetEntryValue(_nogo_zones_names_entry);
+    auto value = nt::GetEntryValue(entry);
     vector<double> result;
-    if (value && value->IsDoubleArray()) {
-        result = value->GetDoubleArray();
+    if (value == nullptr) {
+        ROS_WARN_THROTTLE(1.0, "NT entry is NULL. Expected a double array!");
+        return result;
+    }
+    else if (!value->IsDoubleArray()) {
+        ROS_WARN_THROTTLE(1.0, "NT entry is not a double array as expected! Got type %d", value->type());
         return result;
     }
     else {
-        ROS_WARN_THROTTLE(1.0, "NT entry is not a double array as expected!");
+        result = value->GetDoubleArray();
         return result;
     }
 }
 vector<string> TJ2NetworkTables::get_string_array(NT_Entry entry)
 {
-    auto value = nt::GetEntryValue(_nogo_zones_names_entry);
+    auto value = nt::GetEntryValue(entry);
     vector<string> result;
-    if (value && value->IsStringArray()) {
-        result = value->GetStringArray();
+    if (value == nullptr) {
+        ROS_WARN_THROTTLE(1.0, "NT entry is NULL. Expected a string array!");
+        return result;
+    }
+    else if (!value->IsStringArray()) {
+        ROS_WARN_THROTTLE(1.0, "NT entry is not a string array as expected! Got type %d", value->type());
         return result;
     }
     else {
-        ROS_WARN_THROTTLE(1.0, "NT entry is not a string array as expected!");
+        result = value->GetStringArray();
         return result;
     }
 }

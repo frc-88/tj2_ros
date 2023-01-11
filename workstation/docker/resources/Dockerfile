@@ -20,7 +20,7 @@ RUN python3 -m pip install numba==0.49.0
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # ---
-# bwbots dependencies
+# tj2_ros dependencies
 # ---
 
 # generated using rosdep install --from-paths . -r --reinstall --simulate
@@ -93,6 +93,8 @@ RUN sed -i "16i #define __PTHREAD_SPINS         0, 0" CmakeWpilib/libraries/wpiu
 WORKDIR /tmp/CmakeWpilib/build
 RUN cmake .. -DWITHOUT_CSCORE=ON -DWITHOUT_JAVA=ON
 RUN make -j4 && make install
+
+RUN python3 -m pip install pynetworktables==2021.0.0
 
 WORKDIR /
 RUN ldconfig

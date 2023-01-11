@@ -1,7 +1,7 @@
 #!/bin/bash
-echo "Starting bwbots"
+echo "Starting tj2_ros"
 
-SESSION=bwbots
+SESSION=tj2_ros
 
 tmux has-session -t $SESSION > /dev/null
 
@@ -25,7 +25,7 @@ int_handler() {
 }
 trap 'int_handler' SIGINT
 
-tmux send -t $SESSION 'source ${HOME}/install/enable_tmux_logger.sh bw' ENTER
+tmux send -t $SESSION 'source ${HOME}/install/enable_tmux_logger.sh tj2_ros' ENTER
 tmux send -t $SESSION 'source /opt/ros/${ROS_DISTRO}/setup.bash' ENTER
 tmux send -t $SESSION 'source ${HOME}/ros_ws/devel/setup.bash' ENTER
 tmux send -t $SESSION 'source ${HOME}/scripts/startup.sh' ENTER

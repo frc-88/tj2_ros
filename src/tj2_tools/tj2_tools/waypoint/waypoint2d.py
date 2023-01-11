@@ -3,7 +3,7 @@ import rospy
 
 from ..robot_state import Pose2d
 
-from bw_interfaces.msg import Waypoint
+from tj2_interfaces.msg import Waypoint
 
 
 class Waypoint2d(Pose2d):

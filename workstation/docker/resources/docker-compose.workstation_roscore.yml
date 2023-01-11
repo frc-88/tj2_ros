@@ -2,7 +2,7 @@ version: "3"
 
 services:
   roscore:
-    image: bwbots_workstation:latest
+    image: tj2_ros_workstation:latest
     container_name: roscore
     restart: "no"
     network_mode: "host"

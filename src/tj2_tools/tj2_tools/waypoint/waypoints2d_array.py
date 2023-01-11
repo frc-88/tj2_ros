@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 
 from .waypoint2d import Waypoint2d
-from bw_interfaces.msg import Waypoint, WaypointArray
+from tj2_interfaces.msg import Waypoint, WaypointArray
 
 
 class Waypoints2dArray:

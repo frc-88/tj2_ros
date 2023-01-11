@@ -75,6 +75,7 @@ add_service_files(
   GetWaypoint.srv
   GetWaypoints.srv
   SaveWaypoint.srv
+  SaveTF.srv
 )
 
 ## Generate actions in the 'action' folder

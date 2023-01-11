@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(tj2_object_orienter)
+project(tj2_yolo)
 
 # Set to C++14
 set(CMAKE_CXX_STANDARD 14)

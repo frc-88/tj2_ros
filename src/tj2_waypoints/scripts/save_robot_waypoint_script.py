@@ -2,7 +2,7 @@
 import rospy
 import argparse
 
-from bw_interfaces.srv import SaveTF
+from tj2_interfaces.srv import SaveTF
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
         # log_level=rospy.DEBUG
     )
 
-    save_tf_srv = rospy.ServiceProxy("/bw/bw_waypoints/save_tf", SaveTF)
+    save_tf_srv = rospy.ServiceProxy("/tj2/tj2_waypoints/save_tf", SaveTF)
 
     parser = argparse.ArgumentParser(description="action_script")
 
