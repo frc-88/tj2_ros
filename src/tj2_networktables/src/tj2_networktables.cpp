@@ -82,10 +82,10 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _raw_joint_subs = new vector<ros::Subscriber>();
     _raw_joint_msgs = new vector<std_msgs::Float64*>();
     
+    _joint_commands.resize(_joint_names.size());
     for (size_t index = 0; index < _joint_names.size(); index++) {
         add_joint(_joint_names.at(index));
     }
-    _joint_commands.resize(_joint_names.size());
 
     _match_time_pub = nh.advertise<std_msgs::Float64>("match_time", 10);
     _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
@@ -99,7 +99,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2NetworkTables::twist_callback, this);
     _nt_passthrough_sub = nh.subscribe<tj2_interfaces::NTEntry>("nt_passthrough", 50, &TJ2NetworkTables::nt_passthrough_callback, this);
     _nt_passthrough_string_sub = nh.subscribe<tj2_interfaces::NTEntryString>("nt_passthrough_string", 50, &TJ2NetworkTables::nt_passthrough_string_callback, this);
-    _waypoints_sub = nh.subscribe<tj2_waypoints::WaypointArray>("waypoints", 50, &TJ2NetworkTables::waypoints_callback, this);
+    _waypoints_sub = nh.subscribe<tj2_interfaces::WaypointArray>("waypoints", 50, &TJ2NetworkTables::waypoints_callback, this);
     _field_relative_sub = nh.subscribe<std_msgs::Bool>("field_relative", 10, &TJ2NetworkTables::field_relative_callback, this);
     _laser_sub = nh.subscribe<sensor_msgs::LaserScan>("scan", 10, &TJ2NetworkTables::scan_callback, this);
     _zones_sub = nh.subscribe<tj2_interfaces::ZoneInfoArray>("zones_info", 10, &TJ2NetworkTables::zones_info_callback, this);
@@ -179,6 +179,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     nt::AddEntryListener(_joint_states_entry, boost::bind(&TJ2NetworkTables::joint_state_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     _joint_commands_entry = nt::GetEntry(_nt, _base_key + "joints/commands");
+    nt::SetEntryValue(_joint_commands_entry, nt::Value::MakeDoubleArray(_joint_commands));
 
     string waypoints_base_key = _base_key + "waypoints/";
     _waypoint_names_entry = nt::GetEntry(_nt, waypoints_base_key + "name");
@@ -199,7 +200,8 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _zone_is_inside_entry = nt::GetEntry(_nt, zones_info_base_key + "is_inside");
     _zone_is_nogo_entry = nt::GetEntry(_nt, zones_info_base_key + "is_nogo");
     _nogo_zones_names_entry = nt::GetEntry(_nt, zones_base_key + "set_nogo");
-    nt::AddEntryListener(_nogo_zones_names_entry, boost::bind(&TJ2NetworkTables::nogo_zones_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
+    _nogo_zones_update_entry = nt::GetEntry(_nt, zones_base_key + "update");
+    nt::AddEntryListener(_nogo_zones_update_entry, boost::bind(&TJ2NetworkTables::nogo_zones_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     ROS_INFO("tj2_networktables init complete");
 }
@@ -300,7 +302,7 @@ void TJ2NetworkTables::nt_passthrough_string_callback(const tj2_interfaces::NTEn
     nt::SetEntryValue(entry, nt::Value::MakeString(msg->value));
 }
 
-void TJ2NetworkTables::waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg)
+void TJ2NetworkTables::waypoints_callback(const tj2_interfaces::WaypointArrayConstPtr& msg)
 {
     _waypoint_names.resize(msg->waypoints.size());
     _waypoint_xs.resize(msg->waypoints.size());

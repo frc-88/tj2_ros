@@ -1,149 +1,186 @@
-center:
-- 0.0
-- 0.0
-- 0.0
-hanger_se:
-- 5.16546615
-- -1.37152276
-- 0.0
-hanger_ne:
-- 5.16546615
-- -3.81976436
-- 0.0
-hanger_nw:
-- 7.92487724
-- -3.81976436
-- 0.0
-hanger_sw:
-- 7.92487724
-- -1.37152276
-- 0.0
-lower_bar_n:
-- 4.950968
-- -3.974846
-- 0.0
-mid_bar_n:
-- 6.01727757
-- -3.974846
-- 0.0
-high_bar_n:
-- 6.62687757
-- -3.974846
-- 0.0
-trav_bar_n:
-- 7.23647757
-- -3.974846
-- 0.0
-lower_bar_s:
-- 4.950968
-- -1.218946
-- 0.0
-mid_bar_s:
-- 6.01727757
-- -1.218946
-- 0.0
-high_bar_s:
-- 6.62687757
-- -1.218946
-- 0.0
-trav_bar_s:
-- 7.23647757
-- -1.218946
-- 0.0
-hub_pt1:
-- 1.17645882
-- 0.66281202
-- 0.0
-hub_pt2:
-- 1.3907483
-- 1.05015934
-- 0.0
-hub_pt3:
-- 1.71101273
-- 0.33083365
-- 0.0
-hub_pt4:
-- 1.2823527
-- 0.42497046
-- 0.0
-hub_pt5:
-- 0.5234441
-- 0.08708258
-- 0.0
-hub_pt6:
-- 0.41496743
-- 0.33072515
-- 0.0
-hub_pt1_r:
-- -0.6628120199999998
-- 1.17645882
-- 0.0
-hub_pt2_r:
-- -1.05015934
-- 1.3907483
-- 0.0
-hub_pt3_r:
-- -0.33083364999999987
-- 1.71101273
-- 0.0
-hub_pt4_r:
-- -0.42497045999999994
-- 1.2823527
-- 0.0
-hub_pt5_r:
-- -0.08708257999999998
-- 0.5234441
-- 0.0
-hub_pt6_r:
-- -0.33072515
-- 0.41496743
-- 0.0
-blue_start_5:
-- -0.5706322691517519
-- -2.330741882822545
-- -1.5113073336527485
-blue_start_2:
-- -2.270497597279067
-- 1.109268663712922
-- 2.461059237009006
-red_start_5:
-- 0.5706322691517522
-- 2.330741882822545
-- 1.6302853199370446
-red_start_2:
-- 2.270497597279067
-- -1.1092686637129219
-- -0.6805334165807874
-red_maraude_1:
-- 5.545
-- -1.5956
-- 0.0
-red_maraude_2:
-- 5.545
-- 1.5956
-- 0.0
-blue_maraude_1:
-- -5.545
-- 1.5956
-- 0.0
-blue_maraude_2:
-- -5.545
-- -1.5956
-- 0.0
-blue_start_1R:
-- -2.517450475772515
-- 0.21229190314399143
-- 3.1327687356565406
-blue_start_1L:
-- -1.6023049770192161
-- 1.915258415527084
-- 2.3129243589026505
-red_start_1R:
-- 2.517450475772515
-- -0.21229190314399143
-- -0.008823917933252545
-red_start_1L:
-- 1.6023049770192161
-- -1.915258415527084
-- -0.8286682946871426
+- name: center
+  x: 0.0
+  y: 0.0
+  theta: 0.0
+  parent_frame: map
+- name: hanger_se
+  x: 5.16546615
+  y: -1.37152276
+  theta: 0.0
+  parent_frame: map
+- name: hanger_ne
+  x: 5.16546615
+  y: -3.81976436
+  theta: 0.0
+  parent_frame: map
+- name: hanger_nw
+  x: 7.92487724
+  y: -3.81976436
+  theta: 0.0
+  parent_frame: map
+- name: hanger_sw
+  x: 7.92487724
+  y: -1.37152276
+  theta: 0.0
+  parent_frame: map
+- name: lower_bar_n
+  x: 4.950968
+  y: -3.974846
+  theta: 0.0
+  parent_frame: map
+- name: mid_bar_n
+  x: 6.01727757
+  y: -3.974846
+  theta: 0.0
+  parent_frame: map
+- name: high_bar_n
+  x: 6.62687757
+  y: -3.974846
+  theta: 0.0
+  parent_frame: map
+- name: trav_bar_n
+  x: 7.23647757
+  y: -3.974846
+  theta: 0.0
+  parent_frame: map
+- name: lower_bar_s
+  x: 4.950968
+  y: -1.218946
+  theta: 0.0
+  parent_frame: map
+- name: mid_bar_s
+  x: 6.01727757
+  y: -1.218946
+  theta: 0.0
+  parent_frame: map
+- name: high_bar_s
+  x: 6.62687757
+  y: -1.218946
+  theta: 0.0
+  parent_frame: map
+- name: trav_bar_s
+  x: 7.23647757
+  y: -1.218946
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt1
+  x: 1.17645882
+  y: 0.66281202
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt2
+  x: 1.3907483
+  y: 1.05015934
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt3
+  x: 1.71101273
+  y: 0.33083365
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt4
+  x: 1.2823527
+  y: 0.42497046
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt5
+  x: 0.5234441
+  y: 0.08708258
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt6
+  x: 0.41496743
+  y: 0.33072515
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt1_r
+  x: -0.6628120199999998
+  y: 1.17645882
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt2_r
+  x: -1.05015934
+  y: 1.3907483
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt3_r
+  x: -0.33083364999999987
+  y: 1.71101273
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt4_r
+  x: -0.42497045999999994
+  y: 1.2823527
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt5_r
+  x: -0.08708257999999998
+  y: 0.5234441
+  theta: 0.0
+  parent_frame: map
+- name: hub_pt6_r
+  x: -0.33072515
+  y: 0.41496743
+  theta: 0.0
+  parent_frame: map
+- name: blue_start_5
+  x: -0.5706322691517519
+  y: -2.330741882822545
+  theta: -1.5113073336527485
+  parent_frame: map
+- name: blue_start_2
+  x: -2.270497597279067
+  y: 1.109268663712922
+  theta: 2.461059237009006
+  parent_frame: map
+- name: red_start_5
+  x: 0.5706322691517522
+  y: 2.330741882822545
+  theta: 1.6302853199370446
+  parent_frame: map
+- name: red_start_2
+  x: 2.270497597279067
+  y: -1.1092686637129219
+  theta: -0.6805334165807874
+  parent_frame: map
+- name: red_maraude_1
+  x: 5.545
+  y: -1.5956
+  theta: 0.0
+  parent_frame: map
+- name: red_maraude_2
+  x: 5.545
+  y: 1.5956
+  theta: 0.0
+  parent_frame: map
+- name: blue_maraude_1
+  x: -5.545
+  y: 1.5956
+  theta: 0.0
+  parent_frame: map
+- name: blue_maraude_2
+  x: -5.545
+  y: -1.5956
+  theta: 0.0
+  parent_frame: map
+- name: blue_start_1R
+  x: -2.517450475772515
+  y: 0.21229190314399143
+  theta: 3.1327687356565406
+  parent_frame: map
+- name: blue_start_1L
+  x: -1.6023049770192161
+  y: 1.915258415527084
+  theta: 2.3129243589026505
+  parent_frame: map
+- name: red_start_1R
+  x: 2.517450475772515
+  y: -0.21229190314399143
+  theta: -0.008823917933252545
+  parent_frame: map
+- name: red_start_1L
+  x: 1.6023049770192161
+  y: -1.915258415527084
+  theta: -0.8286682946871426
+  parent_frame: map
 

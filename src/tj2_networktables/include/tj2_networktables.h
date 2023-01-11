@@ -34,8 +34,8 @@
 #include "apriltag_ros/AprilTagDetectionArray.h"
 #include "apriltag_ros/AprilTagDetection.h"
 
-#include "tj2_waypoints/Waypoint.h"
-#include "tj2_waypoints/WaypointArray.h"
+#include "tj2_interfaces/Waypoint.h"
+#include "tj2_interfaces/WaypointArray.h"
 
 #include "tj2_interfaces/OdomReset.h"
 #include "tj2_interfaces/NTEntry.h"
@@ -163,6 +163,7 @@ private:
     NT_Entry _zone_is_inside_entry;
     NT_Entry _zone_is_nogo_entry;
     NT_Entry _nogo_zones_names_entry;
+    NT_Entry _nogo_zones_update_entry;
 
     // Members
     ros::Timer _ping_timer;
@@ -184,7 +185,7 @@ private:
 
     vector<double> _joint_commands;
 
-    tj2_waypoints::WaypointArray _waypoints;
+    tj2_interfaces::WaypointArray _waypoints;
     vector<string> _class_names;
 
     vector<double> _laser_scan_ranges;
@@ -239,7 +240,7 @@ private:
     void twist_callback(const geometry_msgs::TwistConstPtr& msg);
     void nt_passthrough_callback(const tj2_interfaces::NTEntryConstPtr& msg);
     void nt_passthrough_string_callback(const tj2_interfaces::NTEntryStringConstPtr& msg);
-    void waypoints_callback(const tj2_waypoints::WaypointArrayConstPtr& msg);
+    void waypoints_callback(const tj2_interfaces::WaypointArrayConstPtr& msg);
     void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
     void joint_command_callback(const std_msgs::Float64ConstPtr& msg, int joint_index);
     void field_relative_callback(const std_msgs::BoolConstPtr& msg);

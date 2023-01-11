@@ -9,7 +9,7 @@ JOYSTICK_DEVICE=$2
 
 xhost +local:root
 docker run -it \
-    --name workstation_rviz \
+    --name workstation_joystick \
     --env="DISPLAY" \
     --env="QT_X11_NO_MITSHM=1" \
     --env="HOST_MACHINE=$HOST_MACHINE" \

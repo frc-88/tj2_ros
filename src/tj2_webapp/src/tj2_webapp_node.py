@@ -32,8 +32,7 @@ from sensor_msgs.msg import Image
 
 from vision_msgs.msg import Detection3DArray
 
-from tj2_waypoints.msg import WaypointArray
-
+from tj2_interfaces.msg import WaypointArray
 from tj2_interfaces.msg import ZoneInfoArray
 
 from tj2_tools.occupancy_grid import OccupancyGridManager
