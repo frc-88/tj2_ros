@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node name="tj2_object_orienter" pkg="tj2_object_orienter" type="o3d_pca_test_node.py" output="screen" required="false">
+        <param name="class_names_path"  value="$(find tj2_object_orienter)/resources/person.names" />
+        <param name="max_detection_distance" value="5.0"/>
+        <remap from="points" to="/zed/point_cloud/cloud_registered" />
+        <remap from="detections" to="/zed/obj_det/detections" />
+    </node>
+    <!-- <node name="tj2_object_orienter" pkg="tj2_object_orienter" type="surface_match_test_node.py" output="screen" required="false">
+        <param name="class_names_path"  value="$(find tj2_yolo)/models/person.names" />
+        <param name="mesh_path"  value="$(find tj2_object_orienter)/meshes/cone.ply" />
+        <param name="max_detection_distance" value="5.0"/>
+        <remap from="points" to="/zed/point_cloud/cloud_registered" />
+        <remap from="detections" to="/zed/obj_det/detections" />
+    </node> -->
+</launch>

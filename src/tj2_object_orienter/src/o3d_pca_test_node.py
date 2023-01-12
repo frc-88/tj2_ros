@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 import copy
 import os
-from typing import List
+from typing import List, Optional
 import rospy
+import tf2_ros
 import open3d
 import ros_numpy  # apt install ros-noetic-ros-numpy
 import numpy as np
+import PyKDL
 from scipy.spatial.transform import Rotation
+from tf2_sensor_msgs.tf2_sensor_msgs import transform_to_kdl
 
 from sensor_msgs.msg import PointCloud2, PointField
 import sensor_msgs.point_cloud2 as pc2
@@ -60,9 +63,18 @@ def convert_pc_o3d_to_ros(open3d_cloud, frame_id):
     return pc2.create_cloud(header, fields, cloud_data)
 
 
-class TJ2ObjectOrienter:
+def transform_points(points, transform):
+    t_kdl = transform_to_kdl(transform)
+    points_out = []
+    for p_in in points:
+        p_out = t_kdl * PyKDL.Vector(p_in[0], p_in[1], p_in[2])
+        points_out.append((p_out[0], p_out[1], p_out[2]))
+    return np.array(points_out)
+
+
+class O3DPCATestNode:
     def __init__(self) -> None:
-        self.node_name = "tj2_object_orienter"
+        self.node_name = "o3d_pca_test"
         rospy.init_node(
             self.node_name
             # disable_signals=True
@@ -78,9 +90,18 @@ class TJ2ObjectOrienter:
         )
         self.max_detection_distance = rospy.get_param("~max_detection_distance", 1.0)
         self.class_names_path = rospy.get_param("~class_names_path", "")
+        self.ground_threshold = rospy.get_param("~ground_threshold", 0.01)
+        self.grounded_frame = "base_link"
+        self.transform_tolerance = rospy.Duration(1.0)
+        
         self.class_names = self.load_class_names(self.class_names_path)
-        self.marker_color = ColorRGBA(1.0, 0.0, 0.0, 0.5)
+        self.marker_color = ColorRGBA(1.0, 0.0, 0.0, 0.2)
+        self.arrow_color = ColorRGBA(1.0, 0.0, 1.0, 1.0)
         np.set_printoptions(threshold=np.inf)
+
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.point_cloud_sub = rospy.Subscriber(
             "points",
@@ -124,10 +145,14 @@ class TJ2ObjectOrienter:
         ):
             return
 
+        try:
+            global_tf = self.tf_buffer.lookup_transform(self.grounded_frame, msg.header.frame_id, rospy.Time(0), self.transform_tolerance)
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            rospy.logwarn("Failed to look up %s to %s. %s" % (self.grounded_frame, msg.header.frame_id, e))
+            return
         points = convert_pc_msg_to_np(msg)
-        pcl = open3d.geometry.PointCloud()
         oriented_detections = Detection3DArray()
-        oriented_detections.header = self.detections.header
+        oriented_detections.header.frame_id = self.grounded_frame
         for detection in self.detections.detections:
             center = np.array(
                 [
@@ -138,25 +163,31 @@ class TJ2ObjectOrienter:
                 dtype=np.float64,
             )
             size = np.array(
-                [detection.bbox.size.x, detection.bbox.size.y, detection.bbox.size.z - 0.25],
+                [detection.bbox.size.x, detection.bbox.size.y, detection.bbox.size.z],
                 dtype=np.float64,
             )
             size = np.abs(size)
             lower_point = center - size / 2.0
             upper_point = center + size / 2.0
             indices = np.all(np.logical_and(lower_point <= points, points <= upper_point), axis=1)
-            # print(points)
-            print(center)
-            print(size)
-            print(np.count_nonzero(indices))
             if not np.any(indices):
                 return
-            pcl.points = open3d.utility.Vector3dVector(points[indices])
-            self.debug_point_cloud_pub.publish(convert_pc_o3d_to_ros(pcl, msg.header.frame_id))
+            points_transformed = transform_points(points[indices], global_tf)
+            points_transformed = points_transformed[points_transformed[:, 2] > self.ground_threshold]
+            # points_transformed = cv2.ppf_match_3d.transformPCPose(points[indices], transform_matrix)
+            # points_transformed = points_transformed[points_transformed[:, 2] >self.ground_threshold]
+            if len(points_transformed) == 0:
+                return
+            
+            pcl = open3d.geometry.PointCloud()
+            pcl.points = open3d.utility.Vector3dVector(points_transformed)
+            self.debug_point_cloud_pub.publish(convert_pc_o3d_to_ros(pcl, self.grounded_frame))
             oriented_box = self.get_oriented_box_from_cropped_cloud(pcl)
+            if oriented_box is None:
+                return
             
             oriented_detection = copy.deepcopy(detection)
-            oriented_detection.header = detection.header
+            oriented_detection.header.frame_id = self.grounded_frame
             oriented_detection.bbox = oriented_box
             oriented_detection.results[0].pose.pose = oriented_box.center
             oriented_detections.detections.append(oriented_detection)
@@ -164,8 +195,14 @@ class TJ2ObjectOrienter:
 
     def get_oriented_box_from_cropped_cloud(
         self, pcl: open3d.geometry.PointCloud
-    ) -> BoundingBox3D:
-        o3d_bb = pcl.get_oriented_bounding_box()
+    ) -> Optional[BoundingBox3D]:
+        if len(pcl.points) <= 4:
+            return None
+        try:
+            o3d_bb = pcl.get_oriented_bounding_box(robust=True)
+        except RuntimeError as e:
+            rospy.logwarn(f"Error encountered while attempting to find bounding box: {e}. Point cloud: {pcl}")
+            return None
         pca_center = o3d_bb.get_center()
         quat = Rotation.from_matrix(copy.deepcopy(o3d_bb.R)).as_quat()
         pose = Pose()
@@ -185,7 +222,7 @@ class TJ2ObjectOrienter:
     def add_detection_to_marker_array(self, marker_array, detection_3d_msg):
         cube_marker = self.make_marker(detection_3d_msg, self.marker_color)
         text_marker = self.make_marker(detection_3d_msg, self.marker_color)
-        arrow_marker = self.make_marker(detection_3d_msg, self.marker_color)
+        arrow_marker = self.make_marker(detection_3d_msg, self.arrow_color)
 
         label, count = self.get_detection_label(detection_3d_msg)
         
@@ -254,7 +291,7 @@ class TJ2ObjectOrienter:
 
 
 def main():
-    node = TJ2ObjectOrienter()
+    node = O3DPCATestNode()
     node.run()
 
 

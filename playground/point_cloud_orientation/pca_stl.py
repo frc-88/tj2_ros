@@ -4,8 +4,8 @@ import open3d
 import open3d.visualization
 from scipy.spatial.transform import Rotation
 
-path = "./Cone.stl"
-# path = "./Partial Cone.stl"
+path = "./data/simple_cone.stl"
+# path = "./data/simple_partial_cone.stl"
 mesh = open3d.io.read_triangle_mesh(path)
 mesh.scale(1e-3, np.array([0.0, 0.0, 0.0]))
 original_mesh = copy.deepcopy(mesh)
