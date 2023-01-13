@@ -17,6 +17,7 @@ from vision_msgs.msg import Detection3DArray, Detection3D, BoundingBox3D, Object
 from geometry_msgs.msg import Pose, Vector3, Quaternion
 from visualization_msgs.msg import MarkerArray, Marker
 from std_msgs.msg import ColorRGBA, Header
+from tj2_interfaces.msg import Labels
 
 
 def convert_pc_msg_to_np(pc_msg):
@@ -89,12 +90,10 @@ class O3DPCATestNode:
             rospy.get_param("~stale_detection_threshold", 0.5)
         )
         self.max_detection_distance = rospy.get_param("~max_detection_distance", 1.0)
-        self.class_names_path = rospy.get_param("~class_names_path", "")
         self.ground_threshold = rospy.get_param("~ground_threshold", 0.01)
         self.grounded_frame = "base_link"
         self.transform_tolerance = rospy.Duration(1.0)
-        
-        self.class_names = self.load_class_names(self.class_names_path)
+
         self.marker_color = ColorRGBA(1.0, 0.0, 0.0, 0.2)
         self.arrow_color = ColorRGBA(1.0, 0.0, 1.0, 1.0)
         np.set_printoptions(threshold=np.inf)
@@ -115,6 +114,7 @@ class O3DPCATestNode:
             PointCloud2,
             queue_size=1
         )
+        self.labels_sub = rospy.Subscriber("labels", Labels, self.labels_callback, queue_size=1)
         self.detections_sub = rospy.Subscriber(
             "detections", Detection3DArray, self.detections_callback, queue_size=10
         )
@@ -131,12 +131,8 @@ class O3DPCATestNode:
             "detections/oriented/markers", MarkerArray, queue_size=10
         )
 
-    def load_class_names(self, path) -> List:
-        if not os.path.isfile(path):
-            rospy.logwarn(f"Failed to load class names from {path}")
-            return []
-        with open(path) as file:
-            return file.read().splitlines()
+    def labels_callback(self, msg):
+        self.class_names = msg.data
 
     def point_cloud_callback(self, msg: PointCloud2):
         if (

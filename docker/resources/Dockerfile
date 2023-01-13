@@ -64,6 +64,8 @@ RUN ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-
 # tj2_ros dependencies
 # ---
 
+RUN apt-get upgrade -y
+
 RUN apt-get update && sudo apt-get install -y \
     libbullet-dev \
     libeigen3-dev \
@@ -100,10 +102,25 @@ RUN apt-get update && sudo apt-get install -y \
     python3-termcolor \
     i2c-tools \
     python3-smbus \
-    libceres-dev
+    libceres-dev \
+    dumb-init \
+    xorg-dev \
+    libglu1-mesa-dev \
+    libsdl2-dev \
+    ninja-build \
+    libxi-dev \
+    libc++-7-dev \
+    libc++abi-7-dev \
+    gfortran \
+    clang-7 \
+    llvm-7*
 
-RUN apt-get upgrade -y
-RUN apt-get install -y dumb-init
+RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
+
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 100 && \
+    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 100 && \
+    update-alternatives --install /usr/bin/cc cc /usr/bin/clang 100 && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 100
 
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install scipy==1.5.4 \
@@ -115,13 +132,10 @@ RUN python3 -m pip install scipy==1.5.4 \
     pynmcli==1.0.5 \
     flask==2.0.3 \
     py-trees==0.7.6 \
-    open3d==0.15.1
-
-RUN apt-get install -y llvm-7*
-RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
-RUN python3 -m pip install Cython
-RUN python3 -m pip install llvmlite==0.32.0
-RUN python3 -m pip install numba==0.49.0
+    open3d==0.15.1 \
+    Cython \
+    llvmlite==0.32.0 \
+    numba==0.49.0
 
 WORKDIR /tmp
 RUN git clone https://github.com/wjakob/tbb.git
@@ -177,6 +191,26 @@ RUN mkdir build
 WORKDIR /tmp/g2o/build
 RUN cmake ..
 RUN make -j4 && make install
+
+WORKDIR /tmp
+RUN git clone https://github.com/isl-org/Open3D.git && \
+    cd Open3D && \
+    git checkout v0.16.0
+WORKDIR /tmp/Open3D 
+
+RUN ldconfig
+RUN mkdir build && \
+    cd build && \
+    cmake .. \
+        -DBUILD_PYTHON_MODULE=OFF \
+        -DBUILD_EXAMPLES=OFF \
+        -DBUILD_CUDA_MODULE=ON \
+        -DBUILD_COMMON_CUDA_ARCHS=ON \
+        -DBUILD_GUI=OFF \
+        -DENABLE_HEADLESS_RENDERING=OFF \
+    && \
+    make -j4
+RUN make install
 
 WORKDIR /
 RUN ldconfig

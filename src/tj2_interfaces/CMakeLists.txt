@@ -63,6 +63,7 @@ add_message_files(
   NoGoZones.msg
   Waypoint.msg
   WaypointArray.msg
+  Labels.msg
 )
 
 ## Generate services in the 'srv' folder

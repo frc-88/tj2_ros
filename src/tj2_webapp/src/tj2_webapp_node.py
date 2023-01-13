@@ -23,17 +23,13 @@ from flask import send_from_directory
 
 from nav_msgs.msg import OccupancyGrid
 
-from geometry_msgs.msg import PoseStamped
-from geometry_msgs.msg import PolygonStamped
-from geometry_msgs.msg import Point
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import PoseStamped, PolygonStamped, Point, TransformStamped
 
 from sensor_msgs.msg import Image
 
 from vision_msgs.msg import Detection3DArray
 
-from tj2_interfaces.msg import WaypointArray
-from tj2_interfaces.msg import ZoneInfoArray
+from tj2_interfaces.msg import WaypointArray, ZoneInfoArray, Labels
 
 from tj2_tools.occupancy_grid import OccupancyGridManager
 from tj2_tools.robot_state import Pose2d
@@ -47,7 +43,6 @@ class WebappNode:
         self.footprint_param_path = rospy.get_param("~footprint_param", "/move_base/local_costmap/footprint")
         self.footprint_topic = rospy.get_param("~footprint_topic", "/move_base/local_costmap/footprint")
         self.param_footprint = rospy.get_param(self.footprint_param_path, None)
-        self.class_names_path = rospy.get_param("~class_names_path", "")
 
         self.robot_arrow_length_meters = rospy.get_param("~robot_arrow_length_meters", 1.0)
         self.waypoint_arrow_length_meters = rospy.get_param("~waypoint_arrow_length_meters", 0.5)
@@ -85,15 +80,7 @@ class WebappNode:
         else:
             rospy.loginfo("Loading footprint from topic")
             self.footprint_sub = rospy.Subscriber(self.footprint_topic, PolygonStamped, self.footprint_callback, queue_size=1)
-            
-        if self.class_names_path:
-            rospy.loginfo(f"Loading class names from {self.class_names_path}")
-            with open(self.class_names_path) as file:
-                self.class_names = file.read().splitlines()
-        else:
-            rospy.loginfo(f"No class names path defined. Not loading class names")
-            self.class_names = []
-                
+
         self.detections_msg = Detection3DArray()
         
         self.zones_msg = ZoneInfoArray()
@@ -101,6 +88,7 @@ class WebappNode:
 
         self.rate = rospy.Rate(rate)
         self.map_sub = rospy.Subscriber("/map", OccupancyGrid, self.map_callback, queue_size=1)
+        self.labels_sub = rospy.Subscriber("labels", Labels, self.labels_callback, queue_size=1)
         if self.enable_camera:
             self.camera_sub = rospy.Subscriber("/tj2_zed/rgb/image_rect_color", Image, self.camera_callback, queue_size=1)
         self.waypoints_sub = rospy.Subscriber("/tj2/waypoints", WaypointArray, self.waypoints_callback, queue_size=5)
@@ -112,6 +100,9 @@ class WebappNode:
         with lock:
             self.ogm = OccupancyGridManager.from_msg(msg)
             self.ogm.set_scale(self.map_scale)
+    
+    def labels_callback(self, msg):
+        self.class_names = msg.data
 
     def footprint_callback(self, msg):
         global lock

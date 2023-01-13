@@ -32,6 +32,12 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~pose_estimate_theta_std_deg", _pose_estimate_theta_std_deg, 15.0);
     ros::param::param<string>("~pose_estimate_frame_id", _pose_estimate_frame_id, _map_frame);
 
+    double ping_interval;
+    ros::param::param<double>("~ping_interval", ping_interval, 0.5);
+
+    double label_interval;
+    ros::param::param<double>("~label_interval", label_interval, 0.15);
+
     ros::param::param<std::string>("~classes_path", _classes_path, "coco.names");
 
     _class_names = load_label_names(_classes_path);
@@ -136,7 +142,10 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     }
 
     _ping_pub = nh.advertise<std_msgs::Float64>("ping", 50);
-    _ping_timer = nh.createTimer(ros::Duration(0.5), &TJ2NetworkTables::ping_timer_callback, this);
+    _ping_timer = nh.createTimer(ros::Duration(ping_interval), &TJ2NetworkTables::ping_timer_callback, this);
+
+    _label_pub = nh.advertise<tj2_interfaces::Labels>("labels", 50);
+    _label_timer = nh.createTimer(ros::Duration(label_interval), &TJ2NetworkTables::label_timer_callback, this);
 
     _nt = nt::GetDefaultInstance();
     nt::AddLogger(_nt,
@@ -645,6 +654,13 @@ void TJ2NetworkTables::nogo_zones_callback(const nt::EntryNotification& event)
 void TJ2NetworkTables::ping_timer_callback(const ros::TimerEvent& event)
 {
     nt::SetEntryValue(_ping_entry, nt::Value::MakeDouble(get_time()));
+}
+
+void TJ2NetworkTables::label_timer_callback(const ros::TimerEvent& event)
+{
+    tj2_interfaces::Labels msg;
+    msg.labels = _class_names;
+    _label_pub.publish(msg);
 }
 
 

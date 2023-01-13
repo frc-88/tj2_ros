@@ -104,6 +104,14 @@ RUN python3 -m pip install pynetworktables==2021.0.0
 RUN python3 -m pip install -U numpy==1.22.4
 RUN python3 -m pip install open3d
 
+WORKDIR /tmp
+RUN apt-get install wget
+RUN wget https://github.com/isl-org/Open3D/releases/download/v0.16.0/open3d-devel-linux-x86_64-cxx11-abi-cuda-0.16.0.tar.xz
+RUN tar -xvf open3d-devel-linux-x86_64-cxx11-abi-cuda-0.16.0.tar.xz
+RUN mkdir -p /opt/open3d && \
+    mv open3d-devel-linux-x86_64-cxx11-abi-cuda-0.16.0/* /opt/open3d
+ENV CMAKE_PREFIX_PATH=/opt/open3d/lib/cmake/Open3D/${CMAKE_PREFIX_PATH:+:${CMAKE_PREFIX_PATH}}
+
 WORKDIR /
 RUN ldconfig
 RUN rm -r /tmp/*

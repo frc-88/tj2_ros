@@ -48,6 +48,7 @@
 #include "tj2_interfaces/ZoneInfo.h"
 #include "tj2_interfaces/ZoneInfoArray.h"
 #include "tj2_interfaces/NoGoZones.h"
+#include "tj2_interfaces/Labels.h"
 
 #include "networktables/EntryListenerFlags.h"
 
@@ -167,6 +168,7 @@ private:
 
     // Members
     ros::Timer _ping_timer;
+    ros::Timer _label_timer;
     ros::Duration _cmd_vel_timeout;
     ros::Timer _joint_timer;
     ros::Duration _odom_timeout;
@@ -209,6 +211,7 @@ private:
     ros::Publisher _pose_estimate_pub;
     ros::Publisher _pose_reset_pub;
     ros::Publisher _nogo_zone_pub;
+    ros::Publisher _label_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
@@ -260,6 +263,7 @@ private:
 
     // Timer callbacks
     void ping_timer_callback(const ros::TimerEvent& event);
+    void label_timer_callback(const ros::TimerEvent& event);
 
     // Other helpers
     void add_joint(string name);

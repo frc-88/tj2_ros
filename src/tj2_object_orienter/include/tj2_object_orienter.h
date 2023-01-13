@@ -6,6 +6,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
+#include "open3d/Open3D.h"
 
 class TJ2ObjectOrienter {
 public:
