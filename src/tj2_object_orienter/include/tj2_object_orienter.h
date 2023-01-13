@@ -15,6 +15,10 @@ public:
 
 private:
     ros::NodeHandle nh;  // ROS node handle
+    ros::Publisher _point_cloud_pub;
+
+    // Message callbacks
+    void cloud_callback(const sensor_msgs::PointCloud2ConstPtr& msg);
 
     tf2_ros::Buffer _tf_buffer;
     tf2_ros::TransformListener _tf_listener;

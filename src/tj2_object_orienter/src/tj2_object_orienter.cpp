@@ -4,7 +4,8 @@
 TJ2ObjectOrienter::TJ2ObjectOrienter(ros::NodeHandle* nodehandle) :
     nh(*nodehandle), _tf_listener(_tf_buffer)
 {
-
+    _point_cloud_pub = nh.subscribe<sensor_msgs::PointCloud2>("cloud", 1, &TJ2ObjectOrienter::cloud_callback, this);
+    
 }
 
 int TJ2ObjectOrienter::run()

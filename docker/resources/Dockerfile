@@ -197,8 +197,8 @@ RUN git clone https://github.com/isl-org/Open3D.git && \
     cd Open3D && \
     git checkout v0.16.0
 WORKDIR /tmp/Open3D 
-
 RUN ldconfig
+RUN apt-get install -y libtbb-dev
 RUN mkdir build && \
     cd build && \
     cmake .. \
