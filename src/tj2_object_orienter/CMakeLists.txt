@@ -1,34 +1,42 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(tj2_object_orienter)
 
 find_package(catkin REQUIRED COMPONENTS
     rospy
+    roscpp
+    tf2
+    tf2_ros
 )
 
-catkin_python_setup() # added if there is a setup.py. In this case for the node
+catkin_python_setup()
 
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-# include_directories(
-# # include
-#   ${catkin_INCLUDE_DIRS}
-# )
-
-# generate_dynamic_reconfigure_options(
-#     
-# )
 
 catkin_package(
-    CATKIN_DEPENDS rospy
+    INCLUDE_DIRS include
+    # LIBRARIES tj2_object_orienter
+    CATKIN_DEPENDS
+        rospy
+        tf2
 )
 
-# catkin_install_python(PROGRAMS src/tj2_object_orienter_node.py
-#     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
+link_directories(${catkin_LIBRARY_DIRS})
 
-# add_library(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.py)
-# add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.py)
-# add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES LINKER_LANGUAGE py)
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES LINKER_LANGUAGE CMAKE_py_LINK_EXECUTABLE)
+add_executable(tj2_object_orienter
+  src/tj2_object_orienter.cpp
+)
+
+target_link_libraries(tj2_object_orienter
+    ${catkin_LIBRARIES}
+)
+
+add_dependencies(tj2_object_orienter ${tj2_object_orienter_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+install(TARGETS tj2_object_orienter
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)

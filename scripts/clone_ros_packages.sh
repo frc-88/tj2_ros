@@ -55,6 +55,7 @@ packages=(
     https://github.com/rst-tu-dortmund/teb_local_planner
     https://github.com/ros-visualization/interactive_markers.git
     https://github.com/frc-88/rev_color_sensor_ros.git
+    https://github.com/eric-wieser/ros_numpy.git
 )
 
 branches=(
@@ -111,6 +112,7 @@ branches=(
     noetic-devel    # https://github.com/rst-tu-dortmund/teb_local_planner
     noetic-devel    # https://github.com/ros-visualization/interactive_markers.git
     main  # https://github.com/frc-88/rev_color_sensor_ros.git
+    master  # https://github.com/eric-wieser/ros_numpy.git
 )
 
 len=${#packages[@]}

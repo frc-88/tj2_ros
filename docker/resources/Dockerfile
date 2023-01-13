@@ -102,16 +102,20 @@ RUN apt-get update && sudo apt-get install -y \
     python3-smbus \
     libceres-dev
 
+RUN apt-get upgrade -y
+RUN apt-get install -y dumb-init
+
+RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install scipy==1.5.4 \
     shapely==1.6.4 \
     mido \
     pyperclip \
     dataclasses \
-    PyYAML==5.4.1 \
     pynetworktables==2021.0.0 \
     pynmcli==1.0.5 \
     flask==2.0.3 \
-    py-trees==0.7.6
+    py-trees==0.7.6 \
+    open3d==0.15.1
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
@@ -173,8 +177,6 @@ RUN mkdir build
 WORKDIR /tmp/g2o/build
 RUN cmake ..
 RUN make -j4 && make install
-
-RUN apt-get install -y dumb-init
 
 WORKDIR /
 RUN ldconfig

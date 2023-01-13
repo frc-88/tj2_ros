@@ -1,0 +1,28 @@
+#!/bin/bash
+function cleanup {
+    xhost -local:root
+}
+trap cleanup EXIT
+
+DATASET=$1
+
+echo $DATASET
+
+xhost +local:root
+docker run -it \
+    --name label_images \
+    --env="DISPLAY" \
+    --env="QT_X11_NO_MITSHM=1" \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v=/home/${USER}/tj2_ros/src:/root/ros_ws/src/tj2_ros:rw \
+    -v=/home/${USER}/tj2_ros/workstation/docker/resources/scripts:/root/scripts:rw \
+    -v=/home/${USER}/docker_ros_ws_tj2:/root/ros_ws:rw \
+    -v=/home/${USER}/tj2_ros/workstation/docker/resources/configs/default_config.yaml:/root/default_config.yaml:rw \
+    -v=$DATASET:/root/dataset \
+    -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+    --rm \
+    tj2_ros_workstation:latest \
+    /entrypoint.sh labelme /root/dataset --labels /root/dataset/labels.txt --config /root/default_config.yaml

@@ -1,6 +1,6 @@
 Panels:
   - Class: rviz/Displays
-    Help Height: 138
+    Help Height: 112
     Name: Displays
     Property Tree Widget:
       Expanded:
@@ -9,11 +9,12 @@ Panels:
         - /TF1/Tree1
         - /LaserScan1
         - /Object Markers1/Namespaces1
-        - /ZED Depth1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
+        - /MarkerArray1
+        - /MarkerArray2
       Splitter Ratio: 0.4070473909378052
-    Tree Height: 534
+    Tree Height: 560
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -244,7 +245,80 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        {}
+        posblue_maraude_1: true
+        posblue_maraude_2: true
+        posblue_start_1L: true
+        posblue_start_1R: true
+        posblue_start_2: true
+        posblue_start_5: true
+        poscenter: true
+        poshanger_ne: true
+        poshanger_nw: true
+        poshanger_se: true
+        poshanger_sw: true
+        poshigh_bar_n: true
+        poshigh_bar_s: true
+        poshub_pt1: true
+        poshub_pt1_r: true
+        poshub_pt2: true
+        poshub_pt2_r: true
+        poshub_pt3: true
+        poshub_pt3_r: true
+        poshub_pt4: true
+        poshub_pt4_r: true
+        poshub_pt5: true
+        poshub_pt5_r: true
+        poshub_pt6: true
+        poshub_pt6_r: true
+        poslower_bar_n: true
+        poslower_bar_s: true
+        posmid_bar_n: true
+        posmid_bar_s: true
+        posred_maraude_1: true
+        posred_maraude_2: true
+        posred_start_1L: true
+        posred_start_1R: true
+        posred_start_2: true
+        posred_start_5: true
+        postrav_bar_n: true
+        postrav_bar_s: true
+        textblue_maraude_1: true
+        textblue_maraude_2: true
+        textblue_start_1L: true
+        textblue_start_1R: true
+        textblue_start_2: true
+        textblue_start_5: true
+        textcenter: true
+        texthanger_ne: true
+        texthanger_nw: true
+        texthanger_se: true
+        texthanger_sw: true
+        texthigh_bar_n: true
+        texthigh_bar_s: true
+        texthub_pt1: true
+        texthub_pt1_r: true
+        texthub_pt2: true
+        texthub_pt2_r: true
+        texthub_pt3: true
+        texthub_pt3_r: true
+        texthub_pt4: true
+        texthub_pt4_r: true
+        texthub_pt5: true
+        texthub_pt5_r: true
+        texthub_pt6: true
+        texthub_pt6_r: true
+        textlower_bar_n: true
+        textlower_bar_s: true
+        textmid_bar_n: true
+        textmid_bar_s: true
+        textred_maraude_1: true
+        textred_maraude_2: true
+        textred_start_1L: true
+        textred_start_1R: true
+        textred_start_2: true
+        textred_start_5: true
+        texttrav_bar_n: true
+        texttrav_bar_s: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -462,6 +536,7 @@ Visualization Manager:
         Local Costmap: false
         Local Plan: true
         Map: false
+        MarkerArray: true
         Move Base Goal: true
         Move Base Waypoints: true
         Object Markers: true
@@ -598,7 +673,29 @@ Visualization Manager:
       Marker Topic: /apriltag/tag_markers
       Name: Tags
       Namespaces:
-        {}
+        cube11: true
+        pos11: true
+        text11: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /detections/markers
+      Name: MarkerArray
+      Namespaces:
+        arrow_person: true
+        cube_person: true
+        text_cube_person: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /detections/oriented/markers
+      Name: MarkerArray
+      Namespaces:
+        arrow_person: true
+        cube_person: true
+        text_cube_person: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -629,7 +726,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 12.389763832092285
+      Distance: 1.5897924900054932
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -637,17 +734,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.0580495595932007
-        Y: -0.27725058794021606
-        Z: -0.040442150086164474
+        X: 0.7792624235153198
+        Y: 0.12697768211364746
+        Z: 0.08176568150520325
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 0.2047966718673706
       Target Frame: <Fixed Frame>
-      Yaw: 4.743569374084473
+      Yaw: 4.723568439483643
     Saved: ~
 Window Geometry:
   Displays:

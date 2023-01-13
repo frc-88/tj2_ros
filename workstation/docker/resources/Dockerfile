@@ -94,9 +94,13 @@ WORKDIR /tmp/CmakeWpilib/build
 RUN cmake .. -DWITHOUT_CSCORE=ON -DWITHOUT_JAVA=ON
 RUN make -j4 && make install
 
-RUN python3 -m pip install pynetworktables==2021.0.0
+WORKDIR /tmp
+RUN git clone https://github.com/wkentaro/labelme.git
+WORKDIR /tmp/labelme
+RUN python3 setup.py install
 
 RUN apt-get install -y ros-noetic-ros-numpy
+RUN python3 -m pip install pynetworktables==2021.0.0
 RUN python3 -m pip install -U numpy==1.22.4
 RUN python3 -m pip install open3d
 
