@@ -6,7 +6,7 @@ trap cleanup EXIT
 
 DATASET=$1
 
-echo $DATASET
+echo ${DATASET}
 
 xhost +local:root
 docker run -it \
@@ -21,7 +21,7 @@ docker run -it \
     -v=/home/${USER}/tj2_ros/workstation/docker/resources/scripts:/root/scripts:rw \
     -v=/home/${USER}/docker_ros_ws_tj2:/root/ros_ws:rw \
     -v=/home/${USER}/tj2_ros/workstation/docker/resources/configs/default_config.yaml:/root/default_config.yaml:rw \
-    -v=$DATASET:/root/dataset \
+    -v="${DATASET}":/root/dataset \
     -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --rm \
     tj2_ros_workstation:latest \
