@@ -4,11 +4,13 @@ BASE_DIR=$(realpath "$(dirname $0)")
 packages=(
     https://github.com/Unity-Technologies/ROS-TCP-Endpoint.git
     https://github.com/frc-88/zed-ros-wrapper.git
+    https://github.com/tuw-robotics/marker_rviz_plugin.git
 )
 
 branches=(
     main  # https://github.com/Unity-Technologies/ROS-TCP-Endpoint
     tj2_detections  # https://github.com/frc-88/zed-ros-wrapper.git
+    master  # https://github.com/tuw-robotics/marker_rviz_plugin.git
 )
 
 len=${#packages[@]}

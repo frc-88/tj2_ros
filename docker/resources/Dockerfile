@@ -198,14 +198,13 @@ RUN git clone https://github.com/isl-org/Open3D.git && \
     git checkout v0.16.0
 WORKDIR /tmp/Open3D 
 RUN ldconfig
-RUN apt-get install -y libtbb-dev
 RUN mkdir build && \
     cd build && \
     cmake .. \
         -DBUILD_PYTHON_MODULE=OFF \
         -DBUILD_EXAMPLES=OFF \
         -DBUILD_CUDA_MODULE=ON \
-        -DBUILD_COMMON_CUDA_ARCHS=ON \
+        -DBUILD_COMMON_CUDA_ARCHS=OFF \
         -DBUILD_GUI=OFF \
         -DENABLE_HEADLESS_RENDERING=OFF \
     && \

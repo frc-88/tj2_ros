@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     tf2
     tf2_ros
+    sensor_msgs
 )
 
 find_package(Open3D REQUIRED)
@@ -19,6 +20,7 @@ catkin_package(
     CATKIN_DEPENDS
         rospy
         tf2
+        sensor_msgs
 )
 
 include_directories(

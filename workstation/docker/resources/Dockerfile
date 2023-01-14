@@ -3,13 +3,16 @@ FROM osrf/ros:noetic-desktop-full
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init
-RUN apt-get install -y libsdl-image1.2-dev libsdl-dev python3-pip
+RUN apt-get install -y libsdl-image1.2-dev libsdl-dev python3-pip wget
 
-RUN python3 -m pip install scipy==1.5.4 \
+RUN python3 -m pip install -U scipy==1.5.4 \
     shapely==1.6.4 \
     mido \
     pyperclip \
-    dataclasses
+    dataclasses \
+    pynetworktables==2021.0.0 \
+    numpy==1.22.4 \
+    open3d
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
@@ -77,7 +80,9 @@ RUN apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-py-trees-msgs \
     ros-noetic-py-trees \
     ros-noetic-rqt-py-trees \
-    ros-noetic-rosbridge-suite
+    ros-noetic-rosbridge-suite \
+    ros-noetic-marker-msgs \
+    ros-noetic-ros-numpy
 
 WORKDIR /tmp
 RUN git clone https://github.com/FRC-Utilities/LibDS.git
@@ -99,13 +104,7 @@ RUN git clone https://github.com/wkentaro/labelme.git
 WORKDIR /tmp/labelme
 RUN python3 setup.py install
 
-RUN apt-get install -y ros-noetic-ros-numpy
-RUN python3 -m pip install pynetworktables==2021.0.0
-RUN python3 -m pip install -U numpy==1.22.4
-RUN python3 -m pip install open3d
-
 WORKDIR /tmp
-RUN apt-get install wget
 RUN wget https://github.com/isl-org/Open3D/releases/download/v0.16.0/open3d-devel-linux-x86_64-cxx11-abi-cuda-0.16.0.tar.xz
 RUN tar -xvf open3d-devel-linux-x86_64-cxx11-abi-cuda-0.16.0.tar.xz
 RUN mkdir -p /opt/open3d && \
