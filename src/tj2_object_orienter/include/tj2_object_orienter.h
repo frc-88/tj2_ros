@@ -8,8 +8,6 @@
 
 #include <sensor_msgs/PointCloud2.h>
 
-#include "open3d/Open3D.h"
-
 class TJ2ObjectOrienter {
 public:
     TJ2ObjectOrienter(ros::NodeHandle* nodehandle);

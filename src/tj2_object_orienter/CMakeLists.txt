@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
     sensor_msgs
 )
 
-find_package(Open3D REQUIRED)
+# find_package(Open3D REQUIRED)
 
 catkin_python_setup()
 
@@ -35,7 +35,7 @@ add_executable(tj2_object_orienter
 
 target_link_libraries(tj2_object_orienter
     ${catkin_LIBRARIES}
-    Open3D::Open3D
+    # Open3D::Open3D
 )
 
 add_dependencies(tj2_object_orienter ${tj2_object_orienter_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

@@ -108,4 +108,11 @@
         <arg name="node_name" value="apriltag"/>
         <arg name="namespace" value="apriltag"/>
     </include>
+    <!-- <include file="$(find tj2_camera)/launch/cuda_apriltags.launch">
+        <arg name="apriltag_tags" value="$(find tj2_bringup)/config/diffyjr/tags/cuda_tags.yaml"/>
+        <arg name="camera_info_topic" value="/tj2_zed/rgb/camera_info"/>
+        <arg name="image_rect_topic" value="/tj2_zed/rgb/image_rect_color"/>
+        <arg name="node_name" value="cuda_apriltag"/>
+        <arg name="namespace" value="apriltag"/>
+    </include> -->
 </launch>

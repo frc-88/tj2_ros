@@ -2,6 +2,7 @@
 set -e
 
 docker pull woz4tetra/tj2_ros:latest
+docker tag woz4tetra/tj2_ros:latest tj2_ros:latest
 
 if [ -z $1 ]; then
     echo "Skipping docker_ros_ws setup. tar.gz path not specified."
@@ -9,6 +10,5 @@ else
     echo "Decompressing docker_ros_ws"
     WS_TAR_PATH=$(realpath "$1")
     tar -xvf ${WS_TAR_PATH} -C /media/storage/
-    docker tag woz4tetra/tj2_ros:latest tj2_ros:latest
 fi
 echo "Done!"

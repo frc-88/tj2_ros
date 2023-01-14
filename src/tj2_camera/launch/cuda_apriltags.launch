@@ -1,0 +1,19 @@
+<launch>
+    <arg name="apriltag_tags" default="$(find tj2_bringup)/config/diffyjr/tags/cuda_tags.yaml"/>
+    <arg name="camera_info_topic" default="/tj2_zed/rgb/camera_info"/>
+    <arg name="image_rect_topic" default="/tj2_zed/rgb/image_rect_color"/>
+    <arg name="node_name" default="apriltag"/>
+    <arg name="namespace" default="apriltag"/>
+
+    <group ns="apriltag">
+        <rosparam command="load" file="$(arg apriltag_tags)" ns="$(arg node_name)"/>
+        <node pkg="cuda_apriltag_ros" type="cuda_continuous_detector" name="$(arg node_name)" required="false" output="screen">
+            <param name="image_topic" value="$(arg image_rect_topic)" />
+            <param name="camera_info" value="$(arg camera_info_topic)" />
+            <param name="pub_topic" value="tag_detections" />
+            <param name="transport_hint" value="raw" />
+        </node>
+
+        <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen"/>
+    </group>
+</launch>
