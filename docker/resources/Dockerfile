@@ -182,6 +182,8 @@ WORKDIR /
 RUN ldconfig
 RUN rm -r /tmp/*
 
+RUN apt-get install -y network-manager && systemctl start NetworkManager.service
+
 # ---
 # tj2_ros
 # ---
