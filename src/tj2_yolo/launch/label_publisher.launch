@@ -1,0 +1,8 @@
+<launch>
+    <arg name="class_names_path" default="$(find tj2_yolo)/models/powercell_2021.names"/>
+    <group ns="tj2">
+        <node name="label_publisher" pkg="tj2_yolo" type="label_publisher.py" output="screen" required="false">
+            <param name="class_names_path" value="$(arg class_names_path)"/>
+        </node>
+    </group>
+</launch>
