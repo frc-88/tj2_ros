@@ -1,81 +1,85 @@
+import copy
+from typing import Dict, List, Tuple
+from .training_object import TrainingFrame, TrainingObject
+from .get_image_size import get_image_size
 
-class YoloObject:
-    def __init__(self):
-        self.bndbox = [0.0, 0.0, 0.0, 0.0]  # [center x, center y, width, height] (normalized to image size)
-        self.class_index = 0
-
-    @classmethod
-    def from_pascal_voc(cls, obj, class_mapping: list, image_width, image_height):
-        self = cls()
-        self.class_index = class_mapping.index(obj.name)
-        box_width = (obj.bndbox[2] - obj.bndbox[0]) / image_width
-        box_height = (obj.bndbox[3] - obj.bndbox[1]) / image_height
-        cx = obj.bndbox[0] / image_width + box_width / 2.0
-        cy = obj.bndbox[1] / image_height + box_height / 2.0
-
-        self.bndbox[0] = cx
-        self.bndbox[1] = cy
-        self.bndbox[2] = box_width
-        self.bndbox[3] = box_height
-
-        return self
-
-    def constrain_bndbox(self):
-        if self.bndbox[0] < 0.0:
-            self.bndbox[0] = 0.0
-        if self.bndbox[1] < 0.0:
-            self.bndbox[1] = 0.0
-        if self.bndbox[2] > 1.0:
-            self.bndbox[2] = 1.0
-        if self.bndbox[3] > 1.0:
-            self.bndbox[3] = 1.0
-        assert self.bndbox_is_ok()
-
-    def is_out_of_bounds(self):
-        if self.bndbox[0] >= 1.0:
-            return True
-        if self.bndbox[1] >= 1.0:
-            return True
-        if self.bndbox[2] <= 0:
-            return True
-        if self.bndbox[3] <= 0:
-            return True
-        return False
-
-    def bndbox_is_ok(self):
-        if self.bndbox[0] > self.bndbox[2]:
-            return False
-        if self.bndbox[1] > self.bndbox[3]:
-            return False
-        if self.is_out_of_bounds():
-            return False
-        return True
-
-    def to_txt(self):
-        string = str(self.class_index) + " "
-        string += " ".join(map(self._format_bndbox_element, self.bndbox))
-        string += "\n"
-        return string
+class YoloObject(TrainingObject):
+    def __init__(self, label, x0, x1, y0, y1, width, height):
+        super().__init__(label, x0, x1, y0, y1, width, height)
 
     @staticmethod
     def _format_bndbox_element(x):
         return "%0.6f" % x
 
+    def _to_yolo_box(self) -> Tuple[float, float, float, float]:
+        bounding_box = self.bounding_box.constrain()
+        center_x = (bounding_box.x1 + bounding_box.x0) / 2.0
+        center_y = (bounding_box.y1 + bounding_box.y0) / 2.0
+        box_width = bounding_box.x1 - bounding_box.x0
+        box_height = bounding_box.y1 - bounding_box.y0
+        center_x /= bounding_box.width
+        center_y /= bounding_box.height
+        box_width /= bounding_box.width
+        box_height /= bounding_box.height
+        return center_x, center_y, box_width, box_height
 
-class YoloFrame:
-    def __init__(self):
-        self.objects = []
-
-    def write(self, path):
-        contents = ""
-        for obj in self.objects:
-            contents += obj.to_txt()
-        with open(path, 'w') as file:
-            file.write(contents)
+    def to_yolo(self, label_index_mapping: Dict[str, int]) -> str:
+        class_index = label_index_mapping[self.label]
+        string = str(class_index) + " "
+        string += " ".join(map(self._format_bndbox_element, self._to_yolo_box()))
+        return string
 
     @classmethod
-    def from_pascal_voc(cls, frame, class_mapping: list):
-        self = cls()
-        for obj in frame.objects:
-            self.objects.append(YoloObject.from_pascal_voc(obj, class_mapping, frame.width, frame.height))
+    def from_str(cls, line, labels: List[str], width, height):
+        elements = line.split(" ")
+        index = int(elements[0].strip())
+        label = labels[index]
+        
+        box = [float(element.strip()) for element in elements[1:]]
+        assert len(box) == 4
+        center_x = box[0]
+        center_y = box[1]
+        box_width = box[2]
+        box_height = box[3]
+        x0 = (center_x - box_width / 2.0) * width
+        x1 = (center_x + box_width / 2.0) * width
+        y0 = (center_y - box_height / 2.0) * height
+        y1 = (center_y + box_height / 2.0) * height
+        
+        return cls(label, x0, x1, y0, y1, width, height)
+
+
+class YoloFrame(TrainingFrame):
+    def __init__(self, frame_path: str, image_path: str, labels: List[str]):
+        super().__init__(frame_path, image_path)
+        self.labels = labels
+        self.label_index_mapping = {label: index for index, label in enumerate(labels)}
+
+    @classmethod
+    def from_frame(cls, other: "YoloFrame"):
+        assert type(other) == YoloFrame
+        self = cls(other.frame_path, other.image_path, other.labels)
+        for obj in other.objects:
+            self.add_object(copy.deepcopy(obj))
         return self
+
+    def read(self):
+        width, height = get_image_size(self.image_path)
+        with open(self.frame_path) as file:
+            for line in file.read().splitlines():
+                obj = YoloObject.from_str(line, self.labels, width, height)
+                self.add_object(obj)
+
+    @classmethod
+    def from_file(cls, frame_path: str, image_path: str, labels: List[str]):
+        self = cls(frame_path, image_path, labels)
+        self.read()
+        return self
+
+    def write(self):
+        contents = ""
+        for obj in self.objects:
+            assert type(obj) == YoloObject
+            contents += obj.to_yolo(self.label_index_mapping) + "\n"
+        with open(self.frame_path, 'w') as file:
+            file.write(contents)

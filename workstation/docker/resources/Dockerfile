@@ -3,9 +3,12 @@ FROM osrf/ros:noetic-desktop-full
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init
-RUN apt-get install -y libsdl-image1.2-dev libsdl-dev python3-pip wget
+RUN apt-get install -y libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk
 
-RUN python3 -m pip install -U scipy==1.5.4 \
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+RUN python -m pip install -U setuptools
+RUN python -m pip install -U scipy==1.5.4 \
     shapely==1.6.4 \
     mido \
     pyperclip \
@@ -16,11 +19,12 @@ RUN python3 -m pip install -U scipy==1.5.4 \
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
-RUN python3 -m pip install Cython
-RUN python3 -m pip install llvmlite==0.32.0
-RUN python3 -m pip install numba==0.49.0
+RUN python -m pip install Cython
+RUN python -m pip install llvmlite==0.32.0
+RUN python -m pip install numba==0.49.0
 
-RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN python -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+
 
 # ---
 # tj2_ros dependencies
@@ -104,12 +108,9 @@ RUN git clone https://github.com/wkentaro/labelme.git
 WORKDIR /tmp/labelme
 RUN python3 setup.py install
 
-WORKDIR /tmp
-RUN wget https://github.com/isl-org/Open3D/releases/download/v0.16.0/open3d-devel-linux-x86_64-cxx11-abi-cuda-0.16.0.tar.xz
-RUN tar -xvf open3d-devel-linux-x86_64-cxx11-abi-cuda-0.16.0.tar.xz
-RUN mkdir -p /opt/open3d && \
-    mv open3d-devel-linux-x86_64-cxx11-abi-cuda-0.16.0/* /opt/open3d
-ENV CMAKE_PREFIX_PATH=/opt/open3d/lib/cmake/Open3D/${CMAKE_PREFIX_PATH:+:${CMAKE_PREFIX_PATH}}
+RUN python -m pip install gitpython wandb
+RUN cd /opt && git clone https://github.com/frc-88/yolov5.git
+RUN cd /opt/yolov5 && python -m pip install -r requirements.txt
 
 WORKDIR /
 RUN ldconfig
@@ -127,7 +128,7 @@ ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${HOME}/ros_ws/src
 
 ENV FLASK_ENV=development
-ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools"
+ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools:/opt/yolov5"
 
 COPY ./workstation/docker/resources/install ${HOME}/install
 

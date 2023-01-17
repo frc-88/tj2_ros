@@ -1,23 +1,30 @@
 import os
+import tqdm
 from pathlib import Path
 import shutil
-from tj2_tools.training.pascal_voc import PascalVOCFrame
-from tj2_tools.training.yolo import YoloFrame
-from ..detect_collector import DetectCollector
+from .collector import Collector
 from .dataset_builder import DatasetBuilder, BACKGROUND_LABEL
-from ..get_image_size import get_image_size
+from ..training_object import TrainingFrame
+from ..yolo import YoloFrame
 
 ANNOTATIONS = "labels"
 JPEGIMAGES = "images"
 
 
 class YoloDatasetBuilder(DatasetBuilder):
-    def __init__(self, output_dir: Path, image_collector: DetectCollector, labels: list, dry_run=True):
-        super(YoloDatasetBuilder, self).__init__(output_dir, dry_run=dry_run)
+    def __init__(self, output_dir: str, image_collector: Collector, labels: list, 
+                 test_ratio=0.05, train_ratio=0.80, validation_ratio=0.15,
+                 test_name="test", train_name="train", validation_name="val", dry_run=True):
+        super(YoloDatasetBuilder, self).__init__(
+            Path(output_dir),
+            test_ratio, train_ratio, validation_ratio,
+            test_name, train_name, validation_name,
+            dry_run
+        )
         self.image_collector = image_collector
         self.frames = []
-        self.frame_filenames = {}
         self.labels = labels
+        self.duplicate_image_name_counts = {}
 
     def reset(self):
         # deletes all image and xml files under annotations and jpeg images respectively
@@ -25,12 +32,53 @@ class YoloDatasetBuilder(DatasetBuilder):
         images_dir = self.output_dir / JPEGIMAGES
         self.reset_dir(annotations_dir, ".txt")
         self.reset_dir(images_dir, ".jpg", ".jpeg")
+        self.frames = []
+        self.duplicate_image_name_counts = {}
 
     def build(self):
         self.frames = []
-        for frame in self.image_collector.iter():
-            self.frames.append(frame)
-            self.copy_annotation(frame)
+        
+        label_to_identifier_map = {}
+        frame_map = {}
+
+        with tqdm.tqdm(total=self.image_collector.get_length()) as pbar:
+            for frame in self.image_collector.iter():
+                pbar.update(1)
+                label = frame.get_object(0).label
+                if label not in label_to_identifier_map:
+                    label_to_identifier_map[label] = []
+                label_to_identifier_map[label].append(hash(frame))
+                frame_map[hash(frame)] = frame
+                
+                image_filename = os.path.basename(frame.image_path)
+                if image_filename not in self.duplicate_image_name_counts:
+                    self.duplicate_image_name_counts[image_filename] = 0
+                self.duplicate_image_name_counts[image_filename] += 1
+                
+        image_sets = self.get_distributed_sets(label_to_identifier_map)
+
+        test_count = len(image_sets[self.test_name])
+        train_count = len(image_sets[self.train_name])
+        validation_count = len(image_sets[self.validation_name])
+        total_count = test_count + train_count + validation_count
+        print(
+            f"Total {total_count}:\n"
+            f"\tTest: {test_count}\t{test_count / total_count:0.2f}\n"
+            f"\tTrain: {train_count}\t{train_count / total_count:0.2f}\n"
+            f"\tValidation: {validation_count}\t{validation_count / total_count:0.2f}"
+        )
+
+        for set_key in image_sets.keys():
+            for label in self.labels:
+                self.makedir(self.output_dir / ANNOTATIONS / set_key)
+                self.makedir(self.output_dir / JPEGIMAGES / set_key)
+
+        for key, image_set in image_sets.items():
+            for frame_hash in image_set:
+                frame = frame_map[frame_hash]
+                self.frames.append(frame)
+                self.copy_annotation(key, frame)
+
         self.write_labels()
 
     def write_labels(self):
@@ -40,43 +88,38 @@ class YoloDatasetBuilder(DatasetBuilder):
         print("Writing labels to %s" % labels_path)
         self.write_list(labels_path, self.labels)
 
-    def copy_annotation(self, frame: PascalVOCFrame):
-        if frame.filename not in self.frame_filenames:
-            self.frame_filenames[frame.filename] = 0
-        filename_count = self.frame_filenames[frame.filename]
-        self.frame_filenames[frame.filename] += 1
-        width, height = get_image_size(frame.path)
-        frame.width = width
-        frame.height = height
-
-        annotation_dir = self.output_dir / ANNOTATIONS
-        images_dir = self.output_dir / JPEGIMAGES
+    def copy_annotation(self, subdirectory: str, frame: TrainingFrame):
+        annotation_dir = self.output_dir / ANNOTATIONS / subdirectory
+        images_dir = self.output_dir / JPEGIMAGES / subdirectory
         self.makedir(annotation_dir)
         self.makedir(images_dir)
-        new_image_path = images_dir / frame.filename
-        if filename_count > 0:
+        
+        image_filename = os.path.basename(frame.image_path)
+        filename_count = self.duplicate_image_name_counts[image_filename]
+        
+        new_image_path = images_dir / image_filename
+        if filename_count > 1:
             name = new_image_path.stem
             ext = new_image_path.suffix
             new_image_path = new_image_path.parent / ("%s-%05d%s" % (name, filename_count, ext))
 
-        new_frame_path = annotation_dir / os.path.basename(frame.frame_path)
-        if filename_count > 0:
-            name = new_frame_path.stem
+        new_anno_path = annotation_dir / os.path.basename(frame.frame_path)
+        if filename_count > 1:
+            name = new_anno_path.stem
             ext = ".txt"
-            new_frame_path = new_frame_path.parent / ("%s-%05d%s" % (name, filename_count, ext))
+            new_anno_path = new_anno_path.parent / ("%s-%05d%s" % (name, filename_count, ext))
         else:
-            name = new_frame_path.stem
+            name = new_anno_path.stem
             ext = ".txt"
-            new_frame_path = new_frame_path.parent / ("%s%s" % (name, ext))
+            new_anno_path = new_anno_path.parent / ("%s%s" % (name, ext))
 
-        print("Copying image %s -> %s%s" % (frame.path, new_image_path,
-                                            (". Adding count: %05d" % filename_count) if filename_count > 0 else ""))
+        print("Copying image %s -> %s%s" % (frame.image_path, new_image_path,
+                                            (". Adding count: %05d" % filename_count) if filename_count > 1 else ""))
         if not self.dry_run:
-            shutil.copy(frame.path, new_image_path)
+            shutil.copy(frame.image_path, new_image_path)
 
-        frame.set_path(new_image_path)
-        print("Copying annotation %s -> %s" % (frame.frame_path, new_frame_path))
-        frame.frame_path = str(new_frame_path.name)
-        yolo_frame = YoloFrame.from_pascal_voc(frame, self.labels)
+        print("Copying annotation %s -> %s" % (frame.frame_path, new_anno_path))
+        copy_frame = YoloFrame.from_frame(frame)
+        copy_frame.set_paths(str(new_anno_path.absolute()), str(new_image_path.absolute()))
         if not self.dry_run:
-            yolo_frame.write(str(new_frame_path))
+            copy_frame.write()

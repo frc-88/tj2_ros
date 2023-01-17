@@ -1,9 +1,9 @@
 version: "3"
 
 services:
-  tj2_ros_workstation:
+  tj2_ros_devcontainer:
     image: tj2_ros_workstation:latest
-    container_name: tj2_ros_workstation
+    container_name: tj2_ros_devcontainer
     restart: "no"
     network_mode: "host"
     privileged: true
@@ -17,8 +17,18 @@ services:
     ipc: host
     volumes:
       - /home/${USER}/docker_ros_ws_tj2:/root/ros_ws:rw
+      - /home/${USER}/tj2_ros:/root/tj2_ros:rw
       - /home/${USER}/tj2_ros/src:/root/ros_ws/src/tj2_ros:rw
       - /home/${USER}/tj2_ros/workstation/docker/resources/scripts:/root/scripts:rw
+      - /media/storage/tj2_ros_training_data:/root/tj2_ros/dataset_builder/data:rw
       - /home/${USER}/tj2_ros/logs:/root/logs:rw
       - /home/${USER}/tj2_ros/bags:/root/bags:rw
-    command: [ "/launch.sh" ]
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority:rw
+      # Allow container to control docker
+      - /home/${USER}/.docker:/root/.docker:rw # docker looks here inside a container
+      - /home/${USER}/.docker:/home/${USER}/.docker:rw # but we need to satisfy spice-lib.sh
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: /bin/sh -c "sleep infinity"

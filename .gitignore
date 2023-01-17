@@ -13,6 +13,7 @@ playground/particle_filter/data
 playground/bounce_trajectories/data
 playground/swerve/swerve_bag_plotter/data
 
+**/wandb/*
 .OutlineViewer/
 .idea/
 .vscode/

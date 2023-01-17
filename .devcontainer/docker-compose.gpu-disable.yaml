@@ -1,0 +1,5 @@
+version: '3'
+services:
+  tj2_ros_devcontainer:
+    environment:
+      - HAS_GPU=disable

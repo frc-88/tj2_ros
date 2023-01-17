@@ -18,12 +18,6 @@ services:
       - /media/storage:/media/storage:rw
       - /run/systemd:/run/systemd:rw
       - /dev:/dev:rw
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority:rw
-      # Allow container to control docker
-      - /home/${USER}/.docker:/root/.docker:rw # docker looks here inside a container
-      - /home/${USER}/.docker:/home/${USER}/.docker:rw # but we need to satisfy spice-lib.sh
-      - /var/run/docker.sock:/var/run/docker.sock
       # Allow container to control NetworkManager
       - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket
     command: [ "/launch.sh" ]

@@ -3,7 +3,7 @@ import cv2
 import math
 import random
 import numpy as np
-from tj2_tools.training.pascal_voc import PascalVOCFrame, PascalVOCObject
+from bw_tools.training.pascal_voc import PascalVOCFrame, PascalVOCObject
 
 
 def random_warp(offset, random_width):
