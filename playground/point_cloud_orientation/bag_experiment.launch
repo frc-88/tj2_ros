@@ -9,6 +9,13 @@
             <remap from="points" to="/tj2_zed/point_cloud/cloud_registered" />
             <remap from="detections" to="/tj2_zed/obj_det/detections" />
         </node>
+
+        <node name="experiment_detections_publisher" pkg="tj2_object_orienter" type="experiment_detections_publisher.py" output="screen" required="false">
+            <remap from="camera_info" to="/tj2_zed/rgb_raw/camera_info" />
+            <remap from="points" to="/tj2_zed/point_cloud/cloud_registered" />
+            <remap from="detections" to="/tj2_zed/obj_det/detections" />
+            <remap from="image" to="/tj2_zed/rgb_raw/image_raw_color" />
+        </node>
     </group>
     <include file="$(find tj2_yolo)/launch/label_publisher.launch">
         <arg name="class_names_path" default="$(find tj2_yolo)/models/charged_up_2023.names"/>

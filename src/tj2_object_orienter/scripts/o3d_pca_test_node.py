@@ -82,6 +82,7 @@ class O3DPCATestNode:
             # log_level=rospy.DEBUG
         )
 
+        self.class_names = []
         self.rotate_up = open3d.geometry.Geometry3D.get_rotation_matrix_from_xyz(
             (np.deg2rad(90.0), np.deg2rad(90.0), np.deg2rad(90.0))
         )
