@@ -1,3 +1,3 @@
 #!/bin/bash
-roslaunch bag_experiment.launch _bag_path:=$1
+roslaunch bag_experiment.launch bag_path:=$(realpath $1)
 

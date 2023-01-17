@@ -132,7 +132,7 @@ class O3DPCATestNode:
         )
 
     def labels_callback(self, msg):
-        self.class_names = msg.data
+        self.class_names = msg.labels
 
     def point_cloud_callback(self, msg: PointCloud2):
         if (

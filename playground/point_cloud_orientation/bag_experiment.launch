@@ -2,7 +2,7 @@
 <launch>
     <arg name="bag_path" default=""/>
     <param name="use_sim_time" value="true"/>
-    <node name="camera_bag" pkg="rosbag" type="play" output="screen" args="$(arg bag_path --clock --pause"/>
+    <node name="camera_bag" pkg="rosbag" type="play" output="screen" args="$(arg bag_path) --clock --loop"/>
     <group ns="tj2">
         <node name="tj2_object_orienter" pkg="tj2_object_orienter" type="o3d_pca_test_node.py" output="screen" required="false">
             <param name="max_detection_distance" value="5.0"/>

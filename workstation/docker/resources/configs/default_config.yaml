@@ -88,8 +88,8 @@ shortcuts:
   save_to: null
   delete_file: Ctrl+Delete
 
-  open_next: [D, Ctrl+Shift+D]
-  open_prev: [A, Ctrl+Shift+A]
+  open_next: [D, Right]
+  open_prev: [A, Left]
 
   zoom_in: [Ctrl++, Ctrl+=]
   zoom_out: Ctrl+-
@@ -98,12 +98,12 @@ shortcuts:
   fit_width: Ctrl+Shift+F
 
   create_polygon: Ctrl+N
-  create_rectangle: W
+  create_rectangle: [W, Up]
   create_circle: null
   create_line: null
   create_point: null
   create_linestrip: null
-  edit_polygon: E
+  edit_polygon: [E, Down]
   delete_polygon: Delete
   duplicate_polygon: Ctrl+D
   copy_polygon: Ctrl+C
