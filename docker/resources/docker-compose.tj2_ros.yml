@@ -9,6 +9,8 @@ services:
     runtime: "nvidia"
     privileged: true
     stop_signal: SIGINT
+    environment:
+      - ROS_MASTER_INTERFACE=eth0
     group_add:
       - dialout
     volumes:

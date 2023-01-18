@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo docker exec -it tj2_ros /bin/bash
+sudo docker exec -it tj2_ros env TERM=xterm-256color /bin/bash

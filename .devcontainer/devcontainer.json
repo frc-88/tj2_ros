@@ -5,6 +5,7 @@
   "initializeCommand": ".devcontainer/setup_container.sh",
   "workspaceFolder": "/root/tj2_ros",
   "shutdownAction": "stopCompose",
+  "postCreateCommand": ".devcontainer/post_create.sh",
   "extensions": [
     "editorconfig.editorconfig",
     "ms-python.python",

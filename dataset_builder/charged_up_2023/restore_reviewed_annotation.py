@@ -1,7 +1,6 @@
 import os
 import shutil
 from util import get_labels, load_validation_data, save_validation_data
-from tj2_tools.training.yolo import YoloFrame
 
 def main():
     validation_path = "/root/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces/validation.csv"
@@ -9,7 +8,6 @@ def main():
     
     labels = get_labels()
     validation_table = load_validation_data(validation_path, labels)
-    
     
     for frame, review in validation_table.values():
         review = review.lower()

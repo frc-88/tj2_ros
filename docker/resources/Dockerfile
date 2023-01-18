@@ -182,8 +182,6 @@ WORKDIR /
 RUN ldconfig
 RUN rm -r /tmp/*
 
-RUN apt-get install -y network-manager && systemctl start NetworkManager.service
-
 # ---
 # tj2_ros
 # ---
@@ -197,6 +195,7 @@ ENV ROS_WS_SRC=${HOME}/ros_ws/src
 
 ENV FLASK_ENV=development
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools"
+ENV PYTHONIOENCODING=utf-8
 
 COPY ./install ${HOME}/install
 COPY ./configs ${HOME}/configs
