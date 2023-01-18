@@ -1,13 +1,14 @@
 import os
 import cv2
 import csv
+import tqdm
 import numpy as np
 import matplotlib
 from matplotlib import pyplot as plt
 
 from tj2_tools.training.yolo import YoloFrame
 from charged_up_2023_collector import ChargedUp2023Collector
-from util import get_labels
+from util import get_labels, load_validation_data, save_validation_data
 
 matplotlib.use("TkAgg")
 
@@ -16,9 +17,10 @@ class Validator:
     def __init__(self) -> None:
         self.labels = get_labels()
         base_path = "/root/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces"
-        self.output_path = "/root/tj2_ros/dataset_builder/data/charged_up_2023/game_pieces/validation.csv"
+        self.output_path = "/root/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces/validation.csv"
         self.frames = []
         self.collector = ChargedUp2023Collector(base_path, self.labels)
+        self.pbar = tqdm.tqdm(desc="image", total=self.collector.get_length(), bar_format='Loading: {desc}{percentage:3.0f}%|{bar}|{n}/{total}')
         self.generator = self.collector.iter()
         self.current_index = 0
         
@@ -30,31 +32,7 @@ class Validator:
             "cube": [0.278, 0.227, 0.643],
         }
         
-        self.validation_table = self.load_validation_data(self.output_path)
-
-    def load_validation_data(self, path):
-        table = {}
-        if os.path.isfile(path):
-            with open(path, 'r') as file:
-                reader = csv.reader(file)
-                header = next(reader)
-                for row in reader:
-                    frame_path = row[header.index("frame")]
-                    image_path = row[header.index("image")]
-                    frame = YoloFrame.from_file(frame_path, image_path, self.labels)
-                    review = row[header.index("review")]
-                    table[frame] = (frame, review)
-            print(f"Loaded {len(table)} rows")
-        else:
-            print("Not validation table found. Creating one.")
-        return table
-
-    def save_validation_data(self, path):
-        with open(path, 'w') as file:
-            writer = csv.writer(file)
-            writer.writerow(["frame", "image", "review"])
-            for frame, review in self.validation_table.values():
-                writer.writerow([frame.frame_path, frame.image_path, review])
+        self.validation_table = load_validation_data(self.output_path, self.labels)
 
     def on_press(self, event):
         index = self.current_index
@@ -82,6 +60,8 @@ class Validator:
         index = self.bound_index(index)
         if index != self.current_index or len(review) != 0:
             self.draw_frame(index)
+            self.pbar.update(index - self.current_index)
+            self.pbar.refresh()
             self.current_index = index
     
     def bound_index(self, index: int) -> int:
@@ -109,7 +89,7 @@ class Validator:
         frame = self.frames[index]
         self.validation_table[frame] = frame, review
         print(f"Marking {frame.frame_path} as {review}")
-        self.save_validation_data(self.output_path)
+        save_validation_data(self.validation_table, self.output_path)
         return review
 
     def load_index(self, index) -> YoloFrame:

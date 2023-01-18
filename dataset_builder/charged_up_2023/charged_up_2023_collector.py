@@ -1,33 +1,9 @@
 import os
-import json
 from typing import Generator, List, Tuple
+from tj2_tools.training.yolo import YoloFrame
 from tj2_tools.training.dataset_builder.collector import Collector
 from tj2_tools.training.training_object import TrainingFrame
-from tj2_tools.training.yolo import YoloFrame, YoloObject
-from tj2_tools.training.get_image_size import get_image_size
-
-
-def read_labelme_annotation(labelme_path, image_path, labels) -> YoloFrame:
-    anno_path = os.path.splitext(image_path)[0] + ".txt"
-    anno = YoloFrame(anno_path, image_path, labels)
-    
-    with open(labelme_path) as file:
-        data = json.load(file)
-    
-    width, height = get_image_size(image_path)
-    for shape in data["shapes"]:
-        if shape["shape_type"] != "rectangle":
-            continue
-        x0 = shape["points"][0][0]
-        y0 = shape["points"][0][1]
-        x1 = shape["points"][1][0]
-        y1 = shape["points"][1][1]
-        
-        label = shape["label"]
-        
-        anno.add_object(YoloObject(label, x0, x1, y0, y1, width, height))
-    
-    return anno
+from util import read_labelme_annotation
 
 
 class ChargedUp2023Collector(Collector):
