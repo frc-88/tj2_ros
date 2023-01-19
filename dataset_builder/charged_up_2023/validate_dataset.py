@@ -1,6 +1,5 @@
 import os
 import cv2
-import csv
 import tqdm
 import numpy as np
 import matplotlib

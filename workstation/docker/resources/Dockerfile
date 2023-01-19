@@ -109,8 +109,7 @@ WORKDIR /tmp/labelme
 RUN python3 setup.py install
 
 RUN python -m pip install gitpython wandb
-RUN cd /opt && git clone https://github.com/frc-88/yolov5.git
-RUN cd /opt/yolov5 && python -m pip install -r requirements.txt
+RUN mkdir -p /opt/yolov5 cd /opt/yolov5 && git clone https://github.com/ultralytics/yolov5.git
 
 WORKDIR /
 RUN ldconfig

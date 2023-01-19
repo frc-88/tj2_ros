@@ -1,5 +1,7 @@
 import os
+import sys
 import csv
+import yaml
 import json
 from tj2_tools.training.yolo import YoloFrame, YoloObject
 from tj2_tools.training.get_image_size import get_image_size
@@ -65,3 +67,26 @@ def save_validation_data(validation_table, path):
         writer.writerow(["frame", "image", "review"])
         for frame, review in validation_table.values():
             writer.writerow([frame.frame_path, frame.image_path, review])
+
+
+def read_training_config(data_path):
+    filename = os.path.basename(data_path)
+    tmp_path = os.path.join("/tmp", filename)
+    with open(os.path.join("/tmp", filename), 'w') as tmp:
+        with open(data_path, 'r') as file:
+            config = yaml.safe_load(file)
+        base_dir = config["path"]
+        config["path"] = os.path.abspath(os.path.join(base_dir, config.get("path", '')))
+        config["train"] = os.path.abspath(os.path.join(base_dir, config.get("train", '')))
+        config["val"] = os.path.abspath(os.path.join(base_dir, config.get("val", '')))
+        config["test"] = os.path.abspath(os.path.join(base_dir, config.get("test", '')))
+        labels = get_labels()
+        config["nc"] = len(labels)
+        config["names"] = labels
+        yaml.dump(config, tmp)
+    return config, tmp_path
+
+
+def yolov5_module_path_hack():
+    sys.path.insert(0, "/opt/yolov5/yolov5")  # :/ yolov5 organizes its files badly
+    

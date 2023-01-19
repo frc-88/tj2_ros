@@ -1,13 +1,19 @@
+import sys
 import time
 import torch
 import numpy as np
 from torch.backends import cudnn
+
+module_path = "/opt/yolov5/yolov5"
+if module_path not in sys.path:
+    sys.path.insert(0, "/opt/yolov5/yolov5")  # :/ yolov5 organizes its files badly
+
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.torch_utils import select_device
-from yolov5.utils.general import non_max_suppression, scale_coords, xyxy2xywh
+from yolov5.utils.general import non_max_suppression, scale_boxes, check_img_size
 from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.augmentations import letterbox
-from .utils import get_label, get_obj_id
+from .util import get_label, get_obj_id
 
 
 class YoloDetector:
@@ -50,7 +56,8 @@ class YoloDetector:
 
         # Run inference
         self.image_size = (self.image_width, self.image_height)
-        self.model.warmup(imgsz=(1, 3, *self.image_size), half=self.half)  # warmup
+        self.image_size = check_img_size(self.image_size, self.stride)
+        self.model.warmup(imgsz=(1, 3, *self.image_size))  # warmup
 
     def detect(self, image):
         t_start = time.time()
@@ -93,7 +100,7 @@ class YoloDetector:
         detection = prediction[0]
 
         # Rescale boxes from torch_image size to image size
-        detection[:, :4] = scale_coords(torch_image.shape[2:], detection[:, :4], image.shape).round()
+        detection[:, :4] = scale_boxes(torch_image.shape[2:], detection[:, :4], image.shape).round()
         t3 = time.time()
 
         if self.publish_overlay:
@@ -108,7 +115,8 @@ class YoloDetector:
         t4 = time.time()
 
         class_count = {}
-        for *xyxy, confidence, class_index in reversed(detection):
+        for *xyxy, confidence, class_tensor in reversed(detection):
+            class_index = int(class_tensor.item())
             if class_index not in class_count:
                 class_count[class_index] = 0
             else:
@@ -122,6 +130,10 @@ class YoloDetector:
 
         if self.report_loop_times:
             self.timing_report = ""
+            self.timing_report += "\tDetections:\n"
+            for c in detection[:, 5].unique():
+                n = (detection[:, 5] == c).sum()  # detections per class
+                self.timing_report += f"\t\t{n} {self.class_names[int(c)]}{'s' * (n > 1)}\n"  # add to string
             self.timing_report += "\ttensor prep: %0.4f\n" % (t0 - t_start)
             self.timing_report += "\tpredict: %0.4f\n" % (t1 - t0)
             self.timing_report += "\tnms: %0.4f\n" % (t2 - t1)
