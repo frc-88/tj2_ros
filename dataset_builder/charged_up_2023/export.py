@@ -1,5 +1,6 @@
 # https://docs.ultralytics.com/tutorials/torchscript-onnx-coreml-export/
 import os
+import datetime
 from pathlib import Path
 
 from util import get_best_model, read_training_config, yolov5_module_path_hack
@@ -9,7 +10,7 @@ yolov5_module_path_hack()
 import yolov5
 import yolov5.export
 
-model_name = "charged_up_2023-01-17.torchscript"
+model_name = datetime.datetime.now().strftime("charged_up_%Y-%m-%d.torchscript")
 classes_name = "charged_up_2023.names"
 config_name = "charged_up_2023.yaml"
 config_path = os.path.abspath(config_name)
