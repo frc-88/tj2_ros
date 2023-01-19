@@ -35,15 +35,16 @@ class Tester:
         }
         self.highlight_colors = {
             "truth": [0.0, 0.5, 0.0],
-            "inference": [0.5, 0.0, 0.0],
+            "inference": [1.0, 0.0, 0.0],
         }
+        self.show_truth = True
         
         model_device = 0
         model_dir = get_best_model("/root/tj2_ros/dataset_builder/data/outputs/charged_up_2023_train")
         model_path = os.path.join(model_dir, "weights/best.pt")
         self.image_width = 1280
         self.image_height = 720
-        confidence_threshold = 0.1
+        confidence_threshold = 0.5
         nms_iou_threshold = 0.4
         max_detections = 10
         report_loop_times = True
@@ -56,17 +57,20 @@ class Tester:
 
     def on_press(self, event):
         index = self.current_index
-        review = ""
+        redraw = False
         if event.key == "left":
             index -= 1
         elif event.key == "right":
             index += 1
         elif event.key == "q":
             quit()
+        elif event.key == "t":
+            self.show_truth = not self.show_truth
+            redraw = True
         else:
             print("pressed", event.key)
         index = self.bound_index(index)
-        if index != self.current_index or len(review) != 0:
+        if index != self.current_index or redraw:
             self.draw_frame(index)
             self.pbar.update(index - self.current_index)
             self.pbar.refresh()
@@ -94,23 +98,23 @@ class Tester:
 
         self.ax.set_title(f"{os.path.basename(frame.frame_path)}")
 
-        for obj in frame.objects:
-            
-            bb_x0, bb_y0, bb_x1, bb_y1 = obj.bounding_box.x0, obj.bounding_box.y0, obj.bounding_box.x1, obj.bounding_box.y1
-            if obj.label not in self.colors:
-                color = (np.random.random((1, 3))*0.8+0.2).tolist()[0]
-            else:
-                color = self.colors[obj.label]
-            highlight = self.highlight_colors["truth"]
-            
-            self.ax.plot([bb_x0, bb_x0, bb_x1, bb_x1, bb_x0], [bb_y0, bb_y1, bb_y1, bb_y0, bb_y0], '-', color=highlight, linewidth=7)
-            self.ax.plot([bb_x0, bb_x0, bb_x1, bb_x1, bb_x0], [bb_y0, bb_y1, bb_y1, bb_y0, bb_y0], '-', color=color)
-            self.ax.annotate(
-                obj.label, xy=(obj.bounding_box.x0, obj.bounding_box.y0),
-                color=highlight,
-                arrowprops=dict(facecolor=highlight, shrink=0.05),
-                horizontalalignment='right', verticalalignment='top',
-            )
+        if self.show_truth:
+            for obj in frame.objects:
+                bb_x0, bb_y0, bb_x1, bb_y1 = obj.bounding_box.x0, obj.bounding_box.y0, obj.bounding_box.x1, obj.bounding_box.y1
+                if obj.label not in self.colors:
+                    color = (np.random.random((1, 3))*0.8+0.2).tolist()[0]
+                else:
+                    color = self.colors[obj.label]
+                highlight = self.highlight_colors["truth"]
+                
+                self.ax.plot([bb_x0, bb_x0, bb_x1, bb_x1, bb_x0], [bb_y0, bb_y1, bb_y1, bb_y0, bb_y0], '-', color=highlight, linewidth=5)
+                self.ax.plot([bb_x0, bb_x0, bb_x1, bb_x1, bb_x0], [bb_y0, bb_y1, bb_y1, bb_y0, bb_y0], '-', color=color)
+                self.ax.annotate(
+                    obj.label, xy=(obj.bounding_box.x0, obj.bounding_box.y0),
+                    color=highlight,
+                    arrowprops=dict(facecolor=highlight, shrink=0.05),
+                    horizontalalignment='right', verticalalignment='top',
+                )
         
         print("Num detections:", len(detections))
         for obj_id, (bndbox, confidence) in detections.items():
@@ -121,7 +125,7 @@ class Tester:
                 color = self.colors[label]
             highlight = self.highlight_colors["inference"]
             bb_x0, bb_y0, bb_x1, bb_y1 = bndbox
-            self.ax.plot([bb_x0, bb_x0, bb_x1, bb_x1, bb_x0], [bb_y0, bb_y1, bb_y1, bb_y0, bb_y0], '-', color=highlight, linewidth=7)
+            self.ax.plot([bb_x0, bb_x0, bb_x1, bb_x1, bb_x0], [bb_y0, bb_y1, bb_y1, bb_y0, bb_y0], '-', color=highlight, linewidth=5)
             self.ax.plot([bb_x0, bb_x0, bb_x1, bb_x1, bb_x0], [bb_y0, bb_y1, bb_y1, bb_y0, bb_y0], '-', color=color)
             self.ax.annotate(
                 f"{label}-{count}|{confidence * 100.0:0.1f}", xy=(bb_x1, bb_y1),
