@@ -113,7 +113,7 @@ class Tester:
                     obj.label, xy=(obj.bounding_box.x0, obj.bounding_box.y0),
                     color=highlight,
                     arrowprops=dict(facecolor=highlight, shrink=0.05),
-                    horizontalalignment='right', verticalalignment='top',
+                    horizontalalignment='left', verticalalignment='top',
                 )
         
         print("Num detections:", len(detections))
@@ -131,7 +131,7 @@ class Tester:
                 f"{label}-{count}|{confidence * 100.0:0.1f}", xy=(bb_x1, bb_y1),
                 color=highlight,
                 arrowprops=dict(facecolor=highlight, shrink=0.05),
-                horizontalalignment='right', verticalalignment='top',
+                horizontalalignment='right', verticalalignment='bottom',
             )
         
         print(self.yolo.timing_report)

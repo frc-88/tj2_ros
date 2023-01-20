@@ -23,6 +23,7 @@
             <remap from="joint_states" to="zed_joint_states"/>
         </node>
     </group>
+
     <node name="tj2_zed" pkg="zed_wrapper" type="zed_wrapper_node" output="screen" required="false" respawn="true">
         <rosparam file="$(find tj2_camera)/config/zed2.yaml" command="load" />
 

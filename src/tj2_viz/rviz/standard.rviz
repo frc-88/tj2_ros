@@ -534,6 +534,7 @@ Visualization Manager:
         Local Costmap: false
         Local Plan: true
         Map: false
+        MarkerArray: true
         Move Base Goal: true
         Move Base Waypoints: true
         Object Markers: true
@@ -704,6 +705,14 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
+    - Class: rviz/MarkerArray
+      Enabled: false
+      Marker Topic: /tj2/detections/oriented/markers
+      Name: MarkerArray
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -732,7 +741,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 14.959619522094727
+      Distance: 2.5200932025909424
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -740,17 +749,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.17263638973236084
-        Y: -3.5927982330322266
-        Z: 2.7418136596679688e-06
+        X: 1.0236471891403198
+        Y: -0.31777358055114746
+        Z: 2.5033950805664062e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8753982186317444
+      Pitch: 0.20539818704128265
       Target Frame: <Fixed Frame>
-      Yaw: 4.688579082489014
+      Yaw: 3.4335787296295166
     Saved: ~
 Window Geometry:
   Displays:
