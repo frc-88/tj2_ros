@@ -18,6 +18,8 @@
         /tj2_zed/rgb_raw/camera_info
         /tj2_zed/rgb_raw/image_raw_color
         /tj2_zed/point_cloud/cloud_registered
+        /tj2_zed/obj_det/detections
+        /tj2_zed/obj_det/yolo_objects
 
         --duration=15 --lz4
         " />

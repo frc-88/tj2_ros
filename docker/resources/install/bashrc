@@ -80,7 +80,7 @@ if ! shopt -oq posix; then
   fi
 fi
 
-
+source ~/scripts/set_master.sh eth0
 source /opt/ros/${ROS_DISTRO}/setup.bash
 source ${HOME}/ros_ws/devel/setup.bash
 source ${HOME}/scripts/startup.sh
