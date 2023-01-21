@@ -4,19 +4,26 @@
     <arg name="map_name" default="map-{date}"/>
     <arg name="bag_name" default=""/>
     <arg name="mode" default="mapping"/> <!-- "mapping", "localize", or "idle" -->
-    <node if="$(eval len(bag_name) > 0)" pkg="rosbag" type="play" name="player" output="screen" args="--pause --clock $(find tj2_laser_slam)/bags/$(arg bag_name)"/>
+    <node if="$(eval len(bag_name) > 0)" pkg="rosbag" type="play" name="player" output="screen" args="--pause --clock /root/bags/$(arg bag_name)"/>
 
     <node pkg="tj2_laser_slam" type="odom_bag_publisher.py" name="odom_bag_publisher" output="screen">
         <remap from="odom" to="/tj2/odom"/>
     </node>
-    <include file="$(find tj2_rplidar)/launch/laser_filter.launch"/>
-    <!-- <include file="$(find tj2_description)/launch/basic_transforms.launch"/> -->
-    <!-- <include file="$(find tj2_description)/launch/tj2_description_diffyjr.launch"/> -->
-    <include file="$(find tj2_description)/launch/tj2_description_2022_swervy.launch"/>
+    <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+        <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/laser_filter.yaml" />
+    </node>
+    <include file="$(find tj2_description)/launch/tj2_description.launch">
+        <arg name="model" value="$(find tj2_description)/urdf/diffyjr.urdf.xml"/>
+        <arg name="joint_names" value="$(find tj2_bringup)/config/diffyjr/joints.yaml"/>
+    </include>
 
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="$(arg mode)"/>
+        <!-- <arg name="mode" value="idle"/> -->
         <arg name="map_name" value="$(arg map_name)"/>
+        <arg name="laser_scan_topic" value="/laser/scan"/>
+        <arg name="gmapping_config" value="$(find tj2_bringup)/config/diffyjr/gmapping.yaml"/>
+        <arg name="amcl_config" value="$(find tj2_bringup)/config/diffyjr/amcl.yaml"/>
     </include>
     
 </launch>
