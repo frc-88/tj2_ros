@@ -140,6 +140,7 @@ class O3DPCATestNode:
             rospy.Time.now() - self.detections.header.stamp
             > self.stale_detection_threshold
         ):
+            rospy.logwarn("Detection is stale. Not computing orientations!")
             return
 
         try:
@@ -168,12 +169,14 @@ class O3DPCATestNode:
             upper_point = center + size / 2.0
             indices = np.all(np.logical_and(lower_point <= points, points <= upper_point), axis=1)
             if not np.any(indices):
+                rospy.logwarn("Bounding box filtered out all cloud points!")
                 return
             points_transformed = transform_points(points[indices], global_tf)
             points_transformed = points_transformed[points_transformed[:, 2] > self.ground_threshold]
             # points_transformed = cv2.ppf_match_3d.transformPCPose(points[indices], transform_matrix)
             # points_transformed = points_transformed[points_transformed[:, 2] >self.ground_threshold]
             if len(points_transformed) == 0:
+                rospy.logwarn("Ground threshold filtered out all cloud points!")
                 return
             
             pcl = open3d.geometry.PointCloud()
@@ -181,6 +184,7 @@ class O3DPCATestNode:
             self.debug_point_cloud_pub.publish(convert_pc_o3d_to_ros(pcl, self.grounded_frame))
             oriented_box = self.get_oriented_box_from_cropped_cloud(pcl)
             if oriented_box is None:
+                rospy.logwarn("Failed to compute oriented bounding box!")
                 return
             
             oriented_detection = copy.deepcopy(detection)
@@ -253,7 +257,7 @@ class O3DPCATestNode:
         marker.action = Marker.ADD
         marker.pose = detection_3d_msg.results[0].pose.pose
         marker.header = detection_3d_msg.header
-        marker.lifetime = rospy.Duration(1.0)
+        marker.lifetime = rospy.Duration(10.0)
         label, count = self.get_detection_label(detection_3d_msg)
         marker.ns = label
         marker.id = count
