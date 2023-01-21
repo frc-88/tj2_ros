@@ -673,9 +673,30 @@ Visualization Manager:
       Marker Topic: /apriltag/tag_markers
       Name: Tags
       Namespaces:
-        cube11: true
-        pos11: true
-        text11: true
+        cube1: true
+        cube2: true
+        cube3: true
+        cube4: true
+        cube5: true
+        cube6: true
+        cube7: true
+        cube8: true
+        pos1: true
+        pos2: true
+        pos3: true
+        pos4: true
+        pos5: true
+        pos6: true
+        pos7: true
+        pos8: true
+        text1: true
+        text2: true
+        text3: true
+        text4: true
+        text5: true
+        text6: true
+        text7: true
+        text8: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -711,9 +732,7 @@ Visualization Manager:
       Marker Topic: /tj2/detections/oriented/markers
       Name: MarkerArray
       Namespaces:
-        arrow_cone: true
-        cube_cone: true
-        text_cube_cone: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -744,7 +763,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 10.844138145446777
+      Distance: 4.590242385864258
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -752,17 +771,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 3.27290678024292
-        Y: 1.4678661823272705
-        Z: 3.993511199951172e-06
+        X: 3.1294949054718018
+        Y: -0.5828321576118469
+        Z: 4.129173248657025e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8803977370262146
+      Pitch: 1.0203981399536133
       Target Frame: <Fixed Frame>
-      Yaw: 3.7617688179016113
+      Yaw: 3.6848976612091064
     Saved: ~
 Window Geometry:
   Displays:

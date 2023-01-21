@@ -31,6 +31,6 @@
         /tj2/color/recorded_frame
         /tj2/depth/recorded_frame
 
-        --duration=15 --lz4
+        --duration=60 --lz4
         " />
 </launch>
