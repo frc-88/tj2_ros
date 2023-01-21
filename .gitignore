@@ -9,6 +9,7 @@ dataset_builder/powercells_2021/outputs
 dataset_builder/cargo_2022/outputs
 dataset_builder/cargo_2022/resources
 dataset_builder/cargo_2022/wandb/
+dataset_builder/data
 playground/particle_filter/data
 playground/bounce_trajectories/data
 playground/swerve/swerve_bag_plotter/data
