@@ -16,15 +16,15 @@ particles: 500
 # minimumScore: 40
 
 # Update frequencies
-linearUpdate: 0.025
-angularUpdate: 0.008
+linearUpdate: 0.05
+angularUpdate: 0.02
 temporalUpdate: 0.01
 # resampleThreshold: 0.7
 
-srr: 0.01
-srt: 0.01
-str: 0.01
-stt: 0.01
+srr: 0.05
+srt: 0.05
+str: 0.05
+stt: 0.05
 
 # Initial Map Size
 xmin: -15.0

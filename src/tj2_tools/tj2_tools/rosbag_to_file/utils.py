@@ -1,9 +1,22 @@
+from dataclasses import dataclass
 import os
 import tqdm
 import copy
 import rospy
 import rosbag
 from datetime import datetime
+
+@dataclass
+class Options:
+    path: str
+    output_dir: str
+    all = True
+    topic_names = ""
+    start_time = 0.0
+    end_time = 0.0
+    no_header = True
+    output_type = "json"
+
 
 def to_datestr(timestamp):
     return datetime.fromtimestamp(timestamp).strftime("%Y/%m/%d %H:%M:%S.%f")
