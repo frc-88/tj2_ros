@@ -64,7 +64,7 @@ class Validator:
             self.current_index = index
     
     def bound_index(self, index: int) -> int:
-        return max(0, min(self.collector.get_length(), index))
+        return max(0, min(self.collector.get_length() - 1, index))
     
     def get_next_unvalidated_index(self, index: int) -> int:
         increment = -1 if index - self.current_index < 0 else 1
@@ -92,8 +92,12 @@ class Validator:
         return review
 
     def load_index(self, index) -> YoloFrame:
-        while index >= len(self.frames):
-            self.frames.append(next(self.generator))
+        try:
+            while index >= len(self.frames):
+                print(f"Loading index {len(self.frames)}")
+                self.frames.append(next(self.generator))
+        except StopIteration:
+            pass
         return self.frames[index]
     
     def draw_frame(self, index):

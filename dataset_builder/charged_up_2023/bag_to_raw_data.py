@@ -7,8 +7,13 @@ from tj2_tools.rosbag_to_file.utils import enumerate_bag, Options
 from tj2_tools.training.yolo import YoloFrame, YoloObject
 from util import get_labels
 
-bag_path = "/root/bags/diffyjr_alot_2023-01-21-20-42-10.bag"
-output_base_path = "/root/tj2_ros/dataset_builder/data/charged_up_2023_raw/"
+# bag_path = "/root/bags/diffyjr_alot_2023-01-21-20-42-10.bag"
+
+# bag_path = "/root/bags/diffyjr_alot_2023-01-21-20-38-43.bag"
+# bag_path = "/root/bags/diffyjr_alot_2023-01-21-20-39-34.bag"
+bag_path = "/root/bags/diffyjr_alot_2023-01-21-20-43-47.bag"
+
+output_base_path = "/root/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces/"
 
 output_path = os.path.join(output_base_path, os.path.splitext(os.path.basename(bag_path))[0])
 if not os.path.isdir(output_path):
