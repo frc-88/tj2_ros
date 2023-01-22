@@ -13,11 +13,13 @@ def main():
         review = review.lower()
         if review == "fail" or review == "not reviewed":
             path = os.path.join(failed_path, os.path.basename(frame.frame_path))
-            if not os.path.isfile(path):
-                continue
-            shutil.copy(path, frame.frame_path)
-            validation_table[frame] = frame, "Not reviewed"
-            print(f"Copied {path} to {frame.frame_path}. Marking as not reviewed")
+            if os.path.isfile(path):
+                shutil.copy(path, frame.frame_path)
+                validation_table[frame] = frame, "Not reviewed"
+                print(f"Copied {path} to {frame.frame_path}. Marking as not reviewed")
+            else:
+                print(f"Deleting path {frame.frame_path}")
+                os.remove(frame.frame_path)
     
     save_validation_data(validation_table, validation_path)
 

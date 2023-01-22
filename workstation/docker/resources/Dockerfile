@@ -108,8 +108,11 @@ RUN git clone https://github.com/wkentaro/labelme.git
 WORKDIR /tmp/labelme
 RUN python3 setup.py install
 
-RUN python -m pip install gitpython wandb
-RUN mkdir -p /opt/yolov5 cd /opt/yolov5 && git clone https://github.com/ultralytics/yolov5.git
+RUN python -m pip install wandb
+RUN mkdir -p /opt/yolov5
+WORKDIR /opt/yolov5
+RUN git clone https://github.com/ultralytics/yolov5.git
+RUN cd yolov5 && python -m pip install -r requirements.txt
 
 RUN python -m pip install ezdxf
 

@@ -53,6 +53,12 @@ def load_validation_data(path, labels):
             for row in reader:
                 frame_path = row[header.index("frame")]
                 image_path = row[header.index("image")]
+                if not os.path.isfile(frame_path):
+                    print(f"{frame_path} is not a valid annotation. Removing from the table")
+                    continue
+                if not os.path.isfile(image_path):
+                    print(f"{frame_path} is not a valid image. Removing from the table")
+                    continue
                 frame = YoloFrame.from_file(frame_path, image_path, labels)
                 review = row[header.index("review")]
                 table[frame] = (frame, review)
