@@ -1,9 +1,11 @@
+import random
 from charged_up_2023_collector import ChargedUp2023Collector
 from tj2_tools.training.dataset_builder.yolo_dataset_builder import YoloDatasetBuilder
 from util import get_labels
 
 
 def main():
+    random.seed(2023)
     labels = get_labels()
     base_path = "/root/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces"
     output_path = "/root/tj2_ros/dataset_builder/data/charged_up_2023/game_pieces"

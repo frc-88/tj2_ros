@@ -22,9 +22,11 @@ class YoloDatasetBuilder(DatasetBuilder):
             dry_run
         )
         self.image_collector = image_collector
-        self.frames = []
         self.labels = labels
         self.duplicate_image_name_counts = {}
+        self.written_duplicate_counts = {}
+        self.written_annotation_paths = set()
+        self.written_images_paths = set()
 
     def reset(self):
         # deletes all image and xml files under annotations and jpeg images respectively
@@ -32,12 +34,11 @@ class YoloDatasetBuilder(DatasetBuilder):
         images_dir = self.output_dir / JPEGIMAGES
         self.reset_dir(annotations_dir, ".txt")
         self.reset_dir(images_dir, ".jpg", ".jpeg")
-        self.frames = []
         self.duplicate_image_name_counts = {}
+        self.written_annotation_paths = set()
+        self.written_images_paths = set()
 
     def build(self):
-        self.frames = []
-        
         label_to_identifier_map = {}
         frame_map = {}
 
@@ -73,11 +74,13 @@ class YoloDatasetBuilder(DatasetBuilder):
                 self.makedir(self.output_dir / ANNOTATIONS / set_key)
                 self.makedir(self.output_dir / JPEGIMAGES / set_key)
 
+        count = 0
         for key, image_set in image_sets.items():
             for frame_hash in image_set:
                 frame = frame_map[frame_hash]
-                self.frames.append(frame)
                 self.copy_annotation(key, frame)
+                count += 1
+        print(f"Copied {count} annotations")
 
         self.write_labels()
 
@@ -97,29 +100,42 @@ class YoloDatasetBuilder(DatasetBuilder):
         image_filename = os.path.basename(frame.image_path)
         filename_count = self.duplicate_image_name_counts[image_filename]
         
+        if filename_count > 0:
+            if image_filename not in self.written_duplicate_counts:
+                self.written_duplicate_counts[image_filename] = 0
+            counter = self.written_duplicate_counts[image_filename]
+            self.written_duplicate_counts[image_filename] += 1
+        else:
+            counter = 0
+        
         new_image_path = images_dir / image_filename
-        if filename_count > 1:
+        new_anno_path = annotation_dir / os.path.basename(frame.frame_path)
+        if counter > 0:
             name = new_image_path.stem
             ext = new_image_path.suffix
-            new_image_path = new_image_path.parent / ("%s-%05d%s" % (name, filename_count, ext))
+            new_image_path = new_image_path.parent / ("%s-%05d%s" % (name, counter, ext))
 
-        new_anno_path = annotation_dir / os.path.basename(frame.frame_path)
-        if filename_count > 1:
             name = new_anno_path.stem
             ext = ".txt"
-            new_anno_path = new_anno_path.parent / ("%s-%05d%s" % (name, filename_count, ext))
+            new_anno_path = new_anno_path.parent / ("%s-%05d%s" % (name, counter, ext))
         else:
             name = new_anno_path.stem
             ext = ".txt"
             new_anno_path = new_anno_path.parent / ("%s%s" % (name, ext))
 
-        print("Copying image %s -> %s%s" % (frame.image_path, new_image_path,
-                                            (". Adding count: %05d" % filename_count) if filename_count > 1 else ""))
         if not self.dry_run:
             shutil.copy(frame.image_path, new_image_path)
 
-        print("Copying annotation %s -> %s" % (frame.frame_path, new_anno_path))
+        new_anno_path_str = str(new_anno_path.absolute())
+        new_image_path_str = str(new_image_path.absolute())
+        if new_anno_path_str in self.written_annotation_paths:
+            print(f"WARNING: overwriting {new_anno_path_str}")
+        if new_image_path_str in self.written_images_paths:
+            print(f"WARNING: overwriting {new_image_path_str}")
+        self.written_annotation_paths.add(new_anno_path_str)
+        self.written_images_paths.add(new_image_path_str)
+
         copy_frame = YoloFrame.from_frame(frame)
-        copy_frame.set_paths(str(new_anno_path.absolute()), str(new_image_path.absolute()))
+        copy_frame.set_paths(new_anno_path_str, new_image_path_str)
         if not self.dry_run:
             copy_frame.write()
