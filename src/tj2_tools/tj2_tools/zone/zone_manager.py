@@ -21,10 +21,14 @@ from tj2_tools.occupancy_grid import OccupancyGridManager
 
 
 class ZoneManager:
-    def __init__(self, nogo_names: Optional[List[str]] = None) -> None:
+    def __init__(self, reference_frame: str, nogo_names: Optional[List[str]] = None) -> None:
         self._zones = ZoneArray()
+        self.set_reference_frame(reference_frame)
         self._name_mapping = {}
         self.nogo_names = [] if nogo_names is None else nogo_names
+
+    def set_reference_frame(self, frame: str) -> None:
+        self._zones.header.frame_id = frame
 
     def load_zones(self, path: str) -> ZoneArray:
         zones = ZoneArray()
@@ -55,6 +59,7 @@ class ZoneManager:
             raise FileNotFoundError(f"Zones directory doesn't exist: {save_dir}")
 
     def add_polygon(self, name: str, priority: float, polygon: Polygon) -> None:
+        # a lower priority means this zone will be considered first when checking for collision
         zone = self.to_zone(name, priority, self._zones.header.frame_id, polygon)
         self.add_zone(zone)
 
@@ -181,13 +186,13 @@ class ZoneManager:
 
     @classmethod
     def from_msg(cls, zone_array: ZoneArray) -> "ZoneManager":
-        self = cls()
+        self = cls(zone_array.header.frame_id)
         self.update_zones(zone_array)
         return self
     
     @classmethod
-    def from_file(cls, path: str) -> "ZoneManager":
-        self = cls()
+    def from_file(cls, reference_frame: str, path: str) -> "ZoneManager":
+        self = cls(reference_frame)
         self.update_zones(self.load_zones(path))
         return self
 

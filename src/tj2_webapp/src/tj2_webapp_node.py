@@ -331,14 +331,11 @@ class WebappNode:
     def render(self):
         # map renders
         map_image = self.ogm.to_debug_image()
-        map_image = np.flipud(map_image).astype(np.uint8)
 
         map_image = self.render_zones(map_image)
         map_image = self.render_waypoints(map_image)
         map_image = self.render_robot(map_image)
         map_image = self.render_detections(map_image)
-
-        map_image = np.flipud(map_image).astype(np.uint8)
 
         # post flip renders
         if self.enable_camera:

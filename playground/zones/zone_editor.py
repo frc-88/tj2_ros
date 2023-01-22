@@ -67,7 +67,7 @@ current_nogo = 0
 
 cv2.namedWindow(window_name)
 while True:
-    grid_data = manager.to_image(ogm)
+    grid_data = manager.to_grid_data(ogm)
     new_ogm = OccupancyGridManager.from_ogm(ogm)
     new_ogm.set_grid_data(grid_data)
     cv2.imshow(window_name, new_ogm.to_debug_image())

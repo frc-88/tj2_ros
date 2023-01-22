@@ -111,6 +111,8 @@ RUN python3 setup.py install
 RUN python -m pip install gitpython wandb
 RUN mkdir -p /opt/yolov5 cd /opt/yolov5 && git clone https://github.com/ultralytics/yolov5.git
 
+RUN python -m pip install ezdxf
+
 WORKDIR /
 RUN ldconfig
 RUN rm -r /tmp/*

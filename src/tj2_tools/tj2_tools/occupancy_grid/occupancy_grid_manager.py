@@ -312,14 +312,14 @@ class OccupancyGridManager:
 
     def get_world_x_y(self, costmap_x, costmap_y):
         world_x = costmap_x * self.resolution + self.origin.x
-        world_y = costmap_y * self.resolution + self.origin.y
+        world_y = (self.height - costmap_y) * self.resolution + self.origin.y
         return world_x, world_y
 
     def get_costmap_x_y(self, world_x, world_y):
         costmap_x = int(
             round((world_x - self.origin.x) / self.resolution))
         costmap_y = int(
-            round((world_y - self.origin.y) / self.resolution))
+            self.height - round((world_y - self.origin.y) / self.resolution))
 
         return costmap_x, costmap_y
 
@@ -331,9 +331,9 @@ class OccupancyGridManager:
             raise IndexError("Coordinates out of grid (in frame: {}) x: {}, y: {} must be in between: [{}, {}], [{}, {}]. Internal error: {}".format(
                 self._reference_frame, x, y,
                 self.origin.x,
-                self.origin.x + self.height * self.resolution,
+                self.origin.x + self.width * self.resolution,
                 self.origin.y,
-                self.origin.y + self.width * self.resolution,
+                self.origin.y + self.height * self.resolution,
                 e))
 
     def get_cost_from_costmap_x_y(self, x, y):

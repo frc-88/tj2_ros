@@ -42,7 +42,7 @@ class TJ2Zones:
         self.zones_info_pub = rospy.Publisher("zones_info", ZoneInfoArray, queue_size=10)
         self.zone_map_pub = rospy.Publisher("zone_map", OccupancyGrid, queue_size=10)
         self.zone_map_update_pub = rospy.Publisher("zone_map_updates", OccupancyGridUpdate, queue_size=10)
-        self.zone_manager = ZoneManager.from_file(self.zones_path)
+        self.zone_manager = ZoneManager.from_file(self.global_frame, self.zones_path)
         self.zone_manager.update_nogos([name.data for name in self.nogo_zones_param])
     
         self.tf_buffer = tf2_ros.Buffer()
