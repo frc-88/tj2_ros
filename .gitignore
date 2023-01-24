@@ -15,7 +15,6 @@ playground/bounce_trajectories/data
 playground/swerve/swerve_bag_plotter/data
 
 *.pt
-*.torchscript
 
 **/wandb/*
 .OutlineViewer/
