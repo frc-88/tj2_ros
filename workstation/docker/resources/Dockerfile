@@ -15,7 +15,9 @@ RUN python -m pip install -U scipy==1.5.4 \
     dataclasses \
     pynetworktables==2021.0.0 \
     numpy==1.22.4 \
-    open3d
+    open3d \
+    ezdxf \
+    jsonlines
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
@@ -113,8 +115,6 @@ RUN mkdir -p /opt/yolov5
 WORKDIR /opt/yolov5
 RUN git clone https://github.com/ultralytics/yolov5.git
 RUN cd yolov5 && python -m pip install -r requirements.txt
-
-RUN python -m pip install ezdxf jsonlines
 
 WORKDIR /
 RUN ldconfig
