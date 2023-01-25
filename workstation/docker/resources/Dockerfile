@@ -114,7 +114,7 @@ WORKDIR /opt/yolov5
 RUN git clone https://github.com/ultralytics/yolov5.git
 RUN cd yolov5 && python -m pip install -r requirements.txt
 
-RUN python -m pip install ezdxf
+RUN python -m pip install ezdxf jsonlines
 
 WORKDIR /
 RUN ldconfig

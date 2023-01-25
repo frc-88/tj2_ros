@@ -1,5 +1,6 @@
 import os
 import tqdm
+import jsonlines
 from pathlib import Path
 import shutil
 from .collector import Collector
@@ -74,15 +75,47 @@ class YoloDatasetBuilder(DatasetBuilder):
                 self.makedir(self.output_dir / ANNOTATIONS / set_key)
                 self.makedir(self.output_dir / JPEGIMAGES / set_key)
 
+        # erase metadata files
+        for key in image_sets.keys():
+            with open(self.get_metadata_path(key), 'w') as file:
+                file.write('')
+
         count = 0
         for key, image_set in image_sets.items():
             for frame_hash in image_set:
                 frame = frame_map[frame_hash]
+                self.write_metadata(self.get_metadata_path(key), frame)
                 self.copy_annotation(key, frame)
                 count += 1
         print(f"Copied {count} annotations")
 
         self.write_labels()
+
+    def get_metadata_path(self, key):
+        return self.output_dir / JPEGIMAGES / key / "metadata.jsonl"
+
+    def write_metadata(self, path, frame: YoloFrame):
+        bbox = []
+        categories = []
+        for obj in frame.objects:
+            index = self.labels.index(obj.label)
+            bbox.append([
+                obj.bounding_box.x0,
+                obj.bounding_box.y0,
+                obj.bounding_box.x1,
+                obj.bounding_box.y1,
+            ])
+            categories.append(index)
+        data = {
+            "file_name": os.path.basename(frame.image_path),
+            "objects": {
+                "bbox": bbox,
+                "categories": categories
+            }
+        }
+        if not self.dry_run:
+            with jsonlines.open(path, mode='a') as writer:
+                writer.write(data)
 
     def write_labels(self):
         if BACKGROUND_LABEL in self.labels:

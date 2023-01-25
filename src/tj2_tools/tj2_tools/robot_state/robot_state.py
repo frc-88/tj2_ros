@@ -1,4 +1,5 @@
 import math
+from typing import List
 import numpy as np
 import tf_conversions
 from geometry_msgs.msg import Quaternion
@@ -42,7 +43,7 @@ class State:
         self = cls()
         self.x = pose.position.x
         self.y = pose.position.y
-        self.theta = State.theta_from_quat(pose.orientation)
+        self.theta = cls.normalize_theta(cls.theta_from_quat(pose.orientation))
         return self
 
     @staticmethod
@@ -57,10 +58,8 @@ class State:
     def is_none(self):
         return self.x is None and self.y is None and self.theta is None
 
-    def get_theta_as_quat(self, as_list=False):
-        quat = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, self.theta)
-        if as_list:
-            return quat
+    def get_theta_as_quat(self) -> Quaternion:
+        quat = self.get_theta_as_quat_as_list()
 
         quat_msg = Quaternion()
         quat_msg.x = quat[0]
@@ -69,7 +68,10 @@ class State:
         quat_msg.w = quat[3]
         return quat_msg
 
-    def relative_to(self, other):
+    def get_theta_as_quat_as_list(self) -> List[float]:
+        return tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, self.theta).tolist()
+
+    def transform_by(self, other):
         if not isinstance(other, self.__class__):
             raise ValueError("Can't transform %s to %s" % (self.__class__, other.__class__))
         state = self.__class__.from_state(self)
@@ -79,7 +81,7 @@ class State:
         state.theta = self.normalize_theta(state.theta)
         return state
 
-    def relative_to_reverse(self, other):
+    def relative_to(self, other):
         if not isinstance(other, self.__class__):
             raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
         state = self.__class__.from_state(self)
@@ -174,6 +176,39 @@ class State:
             dx = self.x - other.x
             dy = self.y - other.y
             return math.atan2(dy, dx)
+
+    @classmethod
+    def median(cls, poses: List["Pose2d"]):
+        self = cls()
+        xs = [pose.x for pose in poses]
+        ys = [pose.y for pose in poses]
+        thetas = [pose.theta for pose in poses]
+        self.x = np.median(xs)
+        self.y = np.median(ys)
+        self.theta = np.median(thetas)
+        return self
+
+    @classmethod
+    def average(cls, poses: List["Pose2d"]):
+        self = cls()
+        xs = [pose.x for pose in poses]
+        ys = [pose.y for pose in poses]
+        thetas = [pose.theta for pose in poses]
+        self.x = np.average(xs)
+        self.y = np.average(ys)
+        self.theta = np.average(thetas)
+        return self
+
+    @classmethod
+    def stddev(cls, poses: List["Pose2d"]):
+        self = cls()
+        xs = [pose.x for pose in poses]
+        ys = [pose.y for pose in poses]
+        thetas = [pose.theta for pose in poses]
+        self.x = np.std(xs)
+        self.y = np.std(ys)
+        self.theta = np.std(thetas)
+        return self
 
     @classmethod
     def normalize_theta(cls, theta):
@@ -301,4 +336,9 @@ class Pose2d(State):
 
 
 class Velocity(State):
-    pass
+    @classmethod
+    def from_global_relative_speeds(cls, vx: float, vy: float, vt: float, angle_ref: float):
+        self = cls(vx, vy, 0.0)
+        self.rotate_by(-angle_ref)
+        self.theta = vt
+        return self
