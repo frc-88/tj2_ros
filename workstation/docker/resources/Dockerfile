@@ -2,8 +2,9 @@ FROM osrf/ros:noetic-desktop-full
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
-RUN apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init
-RUN apt-get install -y libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk
+RUN apt-get update && \
+    apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init \
+    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
