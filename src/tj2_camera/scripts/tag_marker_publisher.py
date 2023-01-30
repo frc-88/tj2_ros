@@ -29,6 +29,7 @@ class TagMarkerPublisher:
         )
         # rospy.on_shutdown(self.shutdown_hook)
         self.tag_pose_size = 0.25
+        self.marker_duration = rospy.Duration(0.25)
         self.tag_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10)
         self.marker_pub = rospy.Publisher("tag_markers", MarkerArray, queue_size=10)
         self.rotated_tag_pub = rospy.Publisher("rotated_detections", AprilTagDetectionArray, queue_size=10)
@@ -130,7 +131,7 @@ class TagMarkerPublisher:
         marker.action = Marker.ADD
         marker.pose = pose.pose
         marker.header = pose.header
-        marker.lifetime = rospy.Duration(1.0)  # seconds
+        marker.lifetime = self.marker_duration
         marker.ns = name
         marker.id = 0  # all waypoint names should be unique
 
