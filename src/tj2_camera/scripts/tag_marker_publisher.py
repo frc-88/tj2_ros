@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import copy
-from typing import List
+from typing import List, Tuple
 
 import rospy
-import tf.transformations
+
+import numpy as np
+from scipy.spatial.transform import Rotation
 
 from apriltag_ros.msg import AprilTagDetectionArray
 
@@ -29,35 +31,46 @@ class TagMarkerPublisher:
         )
         # rospy.on_shutdown(self.shutdown_hook)
         self.tag_pose_size = 0.25
-        self.marker_duration = rospy.Duration(0.25)
+        self.marker_publish_rate = 5.0
         self.tag_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10)
         self.marker_pub = rospy.Publisher("tag_markers", MarkerArray, queue_size=10)
         self.rotated_tag_pub = rospy.Publisher("rotated_detections", AprilTagDetectionArray, queue_size=10)
 
         self.tag_msg = AprilTagDetectionArray()
-        self.rotate_quat = (0.5, -0.5, 0.5, 0.5)
+        self.rotate_quat = (0.5, -0.5, -0.5, -0.5)
         
-        self.marker_color = (1.0, 0.0, 0.0, 1.0)
+        self.marker_colors = {
+            "1": (1.0, 0.0, 0.0, 1.0),
+            "2": (1.0, 0.0, 0.0, 1.0),
+            "3": (1.0, 0.0, 0.0, 1.0),
+            "4": (0.25, 0.25, 1.0, 1.0),
+            "5": (1.0, 0.25, 0.25, 1.0),
+            "6": (0.0, 0.0, 1.0, 1.0),
+            "7": (0.0, 0.0, 1.0, 1.0),
+            "8": (0.0, 0.0, 1.0, 1.0),
+            None: (1.0, 1.0, 1.0, 1.0)
+        }
 
         rospy.loginfo("%s init complete" % self.name)
 
     def tag_callback(self, msg: AprilTagDetectionArray):
-        self.tag_msg = copy.deepcopy(msg)
         for detection in msg.detections:
             pose: Pose = detection.pose.pose.pose
-            detection.pose.pose.pose.orientation = self.rotate_tag_orientation(pose.orientation)
+            detection.pose.pose.pose.orientation = self.rotate_tag_orientation(pose.orientation, self.rotate_quat)
+        if len(msg.detections) != 0:
+            self.tag_msg = msg
         self.rotated_tag_pub.publish(msg)
     
-    def rotate_tag_orientation(self, tag_orientation: Quaternion) -> Quaternion:
-        tag_quat = (
-            tag_orientation.w,
+    def rotate_tag_orientation(self, tag_orientation: Quaternion, rotate_quat: Tuple[float, float, float, float]) -> Quaternion:
+        rotate_mat = Rotation.from_quat(rotate_quat)  # type: ignore
+        tag_mat = Rotation.from_quat((
             tag_orientation.x,
             tag_orientation.y,
             tag_orientation.z,
-        )
-        rotated_quat = tf.transformations.quaternion_multiply(tag_quat, self.rotate_quat)
-        
-        return Quaternion(*rotated_quat)
+            tag_orientation.w,
+        ))  # type: ignore
+        rotated_tag = tag_mat * rotate_mat
+        return Quaternion(*rotated_tag.as_quat())
 
     def publish_marker(self, msg: AprilTagDetectionArray):
         markers = MarkerArray()
@@ -73,28 +86,41 @@ class TagMarkerPublisher:
             pose_stamped.header = header
             pose_stamped.pose = pose
             
-            position_marker = self.make_marker(name, pose_stamped, self.marker_color)
-            text_marker = self.make_marker(name, pose_stamped, self.marker_color)
-            square_marker = self.make_marker(name, pose_stamped, self.marker_color)
+            if name in self.marker_colors:
+                marker_color = self.marker_colors[name]
+            else:
+                marker_color = self.marker_colors[None]
+            x_position_marker = self.make_marker(name, pose_stamped, marker_color)
+            y_position_marker = self.make_marker(name, pose_stamped, marker_color)
+            z_position_marker = self.make_marker(name, pose_stamped, marker_color)
+            text_marker = self.make_marker(name, pose_stamped, marker_color)
+            square_marker = self.make_marker(name, pose_stamped, marker_color)
             
-            self.prep_position_marker(position_marker)
+            self.prep_position_marker("x", x_position_marker, None, (1.0, 0.0, 0.0))
+            self.prep_position_marker("y", y_position_marker, (0.0000, 0.0000, 0.7071, 0.7071), (0.0, 1.0, 0.0))
+            self.prep_position_marker("z", z_position_marker, (0.0000, -0.7071, 0.0000, 0.7071), (0.0, 0.0, 1.0))
             self.prep_text_marker(text_marker, name)
             self.prep_square_marker(square_marker, size)
 
-            markers.markers.append(position_marker)
+            markers.markers.append(x_position_marker)
+            markers.markers.append(y_position_marker)
+            markers.markers.append(z_position_marker)
             markers.markers.append(text_marker)
             markers.markers.append(square_marker)
         self.marker_pub.publish(markers)
     
-    def prep_position_marker(self, position_marker):
+    def prep_position_marker(self, name, position_marker, rotate_quat, color: Tuple[float, float, float]):
         position_marker.type = Marker.ARROW
-        position_marker.ns = "pos" + position_marker.ns
+        position_marker.ns = "pos" + name + position_marker.ns
+        position_marker.color.r = color[0]
+        position_marker.color.g = color[1]
+        position_marker.color.b = color[2]
         position_marker.color.a = 0.75
         position_marker.scale.x = self.tag_pose_size / 4.0
         position_marker.scale.y = self.tag_pose_size / 2.5
         position_marker.scale.z = self.tag_pose_size / 2.0
-        position_marker.pose = copy.deepcopy(position_marker.pose)
-        position_marker.pose.orientation = self.rotate_tag_orientation(position_marker.pose.orientation)
+        if rotate_quat is not None:
+            position_marker.pose.orientation = self.rotate_tag_orientation(position_marker.pose.orientation, rotate_quat)
         
         p1 = Point()
         p2 = Point()
@@ -120,18 +146,18 @@ class TagMarkerPublisher:
     def prep_square_marker(self, square_marker, tag_size):
         square_marker.type = Marker.CUBE
         square_marker.ns = "cube" + square_marker.ns
-        square_marker.scale.x = tag_size
+        square_marker.scale.x = 0.001
         square_marker.scale.y = tag_size
-        square_marker.scale.z = 0.001
+        square_marker.scale.z = tag_size
     
     def make_marker(self, name, pose, color):
         # name: str, marker name
         # pose: PoseStamped
         marker = Marker()
         marker.action = Marker.ADD
-        marker.pose = pose.pose
+        marker.pose = copy.deepcopy(pose.pose)
         marker.header = pose.header
-        marker.lifetime = self.marker_duration
+        marker.lifetime = rospy.Duration(2.0 / self.marker_publish_rate)
         marker.ns = name
         marker.id = 0  # all waypoint names should be unique
 
@@ -151,7 +177,7 @@ class TagMarkerPublisher:
 
 
     def run(self):
-        rate = rospy.Rate(5.0)
+        rate = rospy.Rate(self.marker_publish_rate)
         while not rospy.is_shutdown():
             self.publish_marker(self.tag_msg)
             rate.sleep()

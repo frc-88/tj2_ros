@@ -6,11 +6,11 @@
     <arg name="node_name" default="apriltag"/>
     <arg name="namespace" default="apriltag"/>
 
-    <group ns="apriltag">
+    <group ns="$(arg namespace)">
         <rosparam command="load" file="$(arg apriltag_settings)" ns="$(arg node_name)"/>
         <rosparam command="load" file="$(arg apriltag_tags)" ns="$(arg node_name)"/>
         <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="$(arg node_name)" required="false" output="screen">
-            <param name="publish_tag_detections_image" type="bool" value="false" />
+            <param name="publish_tag_detections_image" type="bool" value="true" />
             <remap from="camera_info" to="$(arg camera_info_topic)"/>
             <remap from="image_rect" to="$(arg image_rect_topic)"/>
         </node>

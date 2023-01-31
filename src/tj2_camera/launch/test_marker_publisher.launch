@@ -1,0 +1,5 @@
+<launch>
+    <group ns="apriltag">
+        <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen"/>
+    </group>
+</launch>

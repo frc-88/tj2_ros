@@ -18,7 +18,8 @@ SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
-RUN apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb
+RUN apt-get update && \
+    apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init
 
 # ---
 # CMake
@@ -26,7 +27,8 @@ RUN apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb
 
 WORKDIR /tmp
 
-RUN apt-get install -y build-essential libtool autoconf zip unzip wget
+RUN apt-get update && \
+    apt-get install -y build-essential libtool autoconf zip unzip wget
 RUN wget -O cmake.sh https://cmake.org/files/v3.23/cmake-3.23.1-linux-aarch64.sh
 RUN mkdir /opt/cmake
 RUN sh cmake.sh --prefix=/opt/cmake --exclude-subdir --skip-license
@@ -49,8 +51,8 @@ WORKDIR /
 # This environment variable is needed to use the streaming features on Jetson inside a container
 ENV LOGNAME root
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update || true
-RUN apt-get install --no-install-recommends lsb-release less udev sudo apt-transport-https -y && \
+RUN apt-get update && \
+    apt-get install --no-install-recommends lsb-release less udev sudo apt-transport-https -y && \
     echo "# R${L4T_MAJOR_VERSION} (release), REVISION: ${L4T_MINOR_VERSION}.${L4T_PATCH_VERSION}" > /etc/nv_tegra_release ; \
     wget -q --no-check-certificate -O ZED_SDK_Linux.run https://download.stereolabs.com/zedsdk/${ZED_SDK_MAJOR}.${ZED_SDK_MINOR}/l4t${L4T_MAJOR_VERSION}.${L4T_MINOR_VERSION}/jetsons && \
     chmod +x ZED_SDK_Linux.run ; ./ZED_SDK_Linux.run silent skip_tools && \
@@ -63,6 +65,9 @@ RUN ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-
 # ---
 # tj2_ros dependencies
 # ---
+
+RUN rm /usr/bin/python
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 RUN apt-get update && sudo apt-get install -y \
     libbullet-dev \
@@ -100,31 +105,33 @@ RUN apt-get update && sudo apt-get install -y \
     python3-termcolor \
     i2c-tools \
     python3-smbus \
-    libceres-dev
+    libceres-dev \
+    libturbojpeg0-dev
 
 RUN apt-get upgrade -y
-RUN apt-get install -y dumb-init
 
-RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install scipy==1.5.4 \
+RUN python -m pip install --upgrade pip
+RUN python -m pip install --upgrade setuptools
+RUN python -m pip install scipy==1.5.4 \
     shapely==1.6.4 \
-    mido \
-    pyperclip \
     dataclasses \
     pynetworktables==2021.0.0 \
     pynmcli==1.0.5 \
     flask==2.0.3 \
     py-trees==0.7.6 \
-    open3d==0.15.1
+    open3d==0.15.1 \
+    psutil
 
-RUN apt-get install -y llvm-7*
+RUN apt-get update && apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
-RUN python3 -m pip install Cython
-RUN python3 -m pip install llvmlite==0.32.0
-RUN python3 -m pip install numba==0.49.0
+RUN python -m pip install Cython
+RUN python -m pip install llvmlite==0.32.0
+RUN python -m pip install numba==0.49.0
 
 WORKDIR /tmp
-RUN git clone https://github.com/wjakob/tbb.git
+RUN git clone https://github.com/wjakob/tbb.git && \
+    cd tbb && \
+    git checkout 9e219e24fe223b299783200f217e9d27790a87b0
 WORKDIR /tmp/tbb/build
 RUN cmake ..
 RUN make -j4 && make install
@@ -132,6 +139,7 @@ RUN make -j4 && make install
 WORKDIR /tmp
 RUN git clone https://github.com/AprilRobotics/apriltag.git && \
     cd apriltag && \
+    git checkout 3e8e974d0d8d6ab318abf56d87506d15d7f2cc35 && \
     mkdir build
 WORKDIR /tmp/apriltag/build
 RUN cmake ..
@@ -140,13 +148,13 @@ RUN make -j4 && make install
 WORKDIR /tmp
 RUN git clone https://github.com/orocos/orocos_kinematics_dynamics.git && \
     cd orocos_kinematics_dynamics && \
+    git checkout 5541147d4a220cab97d0ae1efa1aa860557d5c32 && \
     git submodule update --init && \
     cd orocos_kdl && \
     mkdir build
 WORKDIR /tmp/orocos_kinematics_dynamics/orocos_kdl/build
 RUN cmake ..
 RUN make -j4 && make install
-RUN python3 -m pip install psutil
 RUN mkdir ../../python_orocos_kdl/build
 WORKDIR /tmp/orocos_kinematics_dynamics/python_orocos_kdl/build
 RUN cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
@@ -156,7 +164,9 @@ RUN cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
 RUN make -j4 && make install
 
 WORKDIR /tmp
-RUN git clone https://github.com/FRC-Utilities/LibDS.git
+RUN git clone https://github.com/FRC-Utilities/LibDS.git && \
+    cd LibDS && \
+    git checkout 14cac0a7f3b911b3f1c661c3b5f455522ae6638b
 WORKDIR /tmp/LibDS
 RUN qmake -qt=qt5
 RUN make -j4 && make install
@@ -164,6 +174,7 @@ RUN make -j4 && make install
 WORKDIR /tmp
 RUN git clone --recursive https://github.com/ThadHouse/CmakeWpilib.git && \
     cd CmakeWpilib && \
+    git checkout d5bbeb949de35a4c576838e598493779bcf6a328 && \
     mkdir build
 WORKDIR /tmp/CmakeWpilib/build
 RUN cmake .. -DWITHOUT_CSCORE=ON -DWITHOUT_JAVA=ON

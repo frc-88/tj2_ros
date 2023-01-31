@@ -6,5 +6,12 @@ if [ "$EUID" -ne 0 ]
     exit
 fi
 
+cd ${BASE_DIR}/../../scripts
+./prioritize_wifi.sh
+
 cd ${BASE_DIR}/../resources
+docker-compose -f docker-compose.roscore.yml -f docker-compose.tj2_ros.yml stop
 docker build -f ./Dockerfile -t tj2_ros:latest .
+
+cd ${BASE_DIR}
+./post_build

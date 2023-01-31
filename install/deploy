@@ -33,7 +33,6 @@ echo "Stopping tj2_ros"
 ${SSH_COMMAND} -t "sudo systemctl stop tj2_ros.service"
 
 # build tj2_ros
-${SSH_COMMAND} "sudo ${DEST_FULL_PATH}/scripts/prioritize_wifi.sh"
 ${SSH_COMMAND} "sudo ${DEST_FULL_PATH}/docker/native/build_container"
 ${SSH_COMMAND} "${DEST_FULL_PATH}/docker/native/post_build"
 
