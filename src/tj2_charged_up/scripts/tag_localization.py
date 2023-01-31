@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
+from typing import List, Optional
 import rospy
 
 from dynamic_reconfigure.server import Server
 
+import tf2_ros
 import numpy as np
 
+import tf2_geometry_msgs
 from tf.transformations import quaternion_from_euler
 
 from apriltag_ros.msg import AprilTagDetectionArray, AprilTagDetection
@@ -17,6 +20,7 @@ from particle_filter import ParticleFilter
 
 from tj2_interfaces.msg import WaypointArray
 from tj2_tools.waypoint import Waypoints2dArray
+from tj2_tools.robot_state import Pose2d
 from tj2_charged_up.cfg import ParticleFilterConfig
 
 
@@ -37,9 +41,12 @@ class TagLocalizationNode:
         self.initial_distribution_type = rospy.get_param("~initial_distribution_type", "gaussian")
         self.velocity_smooth_k = rospy.get_param("~velocity_smooth_k", 0.0)
         self.loop_rate = rospy.get_param("~loop_rate", 15.0)
+        self.stale_detection_seconds = rospy.Duration(rospy.get_param("~stale_detection_seconds", 1.0))
         self.particle_filter_type = rospy.get_param("~particle_filter_type", "JitParticleFilter")
         self.tag_id_to_waypoint_map = rospy.get_param("~tag_id_to_waypoint_map", {})
+        self.robot_frame = rospy.get_param("~robot_frame", "base_link")
         self.global_frame = rospy.get_param("~global_frame", "map")
+        self.publish_tf = rospy.get_param("~publish_tf", False)
 
         if self.particle_filter_type == "JitParticleFilter":
             self.pf = JitParticleFilter(self.num_particles, self.meas_std_val, self.u_std)
@@ -51,6 +58,9 @@ class TagLocalizationNode:
         
         self.prev_predict_time = rospy.Time.now()
         self.waypoints = Waypoints2dArray()
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.pose_publisher = rospy.Publisher("robot_tag_pose", PoseStamped, queue_size=5)
         self.detections_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.detections_callback, queue_size=25)
@@ -104,17 +114,54 @@ class TagLocalizationNode:
     def detections_callback(self, msg):
         states = []
         for detection in msg.detections:
-            states.append(self.tag_to_robot_state(detection))
+            state = self.tag_to_robot_state(detection)
+            if state is None:
+                continue
+            states.append(state)
         weighted_state = np.mean(np.array(states, dtype=np.float64))
         self.pf.update(weighted_state)
 
-    def tag_to_robot_state(self, detection: AprilTagDetection) -> np.ndarray:
+    def tag_to_robot_state(self, detection: AprilTagDetection) -> Optional[np.ndarray]:
         # convert detection to pose stamped
         # lookup tag id in waypoint map
         # request global waypoint pose
         # apply robot->tag transform relative to waypoint. get pose
         # convert pose to particle filter measurement
-        pass
+
+        tag_pose = PoseStamped()
+        tag_pose.header = detection.pose.header
+        tag_pose.pose = detection.pose.pose.pose
+        tag_base_pose = self.transform_tag_to_base(tag_pose)
+        if tag_base_pose is None:
+            return None
+        tag_base_pose_2d = Pose2d.from_ros_pose(tag_base_pose.pose)
+        
+        tag_id: List[int] = detection.id
+        name = "-".join([str(sub_id) for sub_id in tag_id])
+        
+        if name not in self.tag_id_to_waypoint_map:
+            rospy.logwarn(f"Tag {name} is not mapped to a waypoint. Ignoring.")
+            return None
+        waypoint_name = self.tag_id_to_waypoint_map[name]
+        waypoint = self.waypoints.get(waypoint_name)
+        if waypoint is None:
+            rospy.logwarn(f"Waypoint {waypoint_name} is not a valid waypoint. Ignoring.")
+            return None
+        robot_global_pose2d = waypoint.transform_by(tag_base_pose_2d)
+        return np.array(robot_global_pose2d.to_list())
+
+    def transform_tag_to_base(self, tag_pose_stamped: PoseStamped) -> Optional[PoseStamped]:
+        try:
+            transform = self.tf_buffer.lookup_transform(
+                self.robot_frame,
+                tag_pose_stamped.header.frame_id,
+                rospy.Time(0),
+                self.stale_detection_seconds
+            )
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            rospy.logwarn("Failed to look up %s to %s. %s" % (self.robot_frame, tag_pose_stamped.header.frame_id, e))
+            return None
+        return tf2_geometry_msgs.do_transform_pose(tag_pose_stamped, transform)
 
     def odom_callback(self, msg):
         dt = self.get_predict_dt(msg.header.stamp)
