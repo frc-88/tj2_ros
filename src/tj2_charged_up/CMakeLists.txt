@@ -3,19 +3,30 @@ project(tj2_charged_up)
 
 find_package(catkin REQUIRED COMPONENTS
     rospy
+    geometry_msgs
+    std_msgs
+    message_generation
+    genmsg
+    dynamic_reconfigure
 )
 
 catkin_python_setup()
 
 
+generate_dynamic_reconfigure_options(
+  dynamic_config/ParticleFilter.cfg
+)
+
 catkin_package(
     # INCLUDE_DIRS include
     # LIBRARIES tj2_charged_up
-    # CATKIN_DEPENDS
-    #     rospy
-    #     tf2
-    #     sensor_msgs
+    CATKIN_DEPENDS
+      rospy
+      std_msgs
+      message_runtime
+      dynamic_reconfigure
 )
+
 
 # include_directories(
 #   include
