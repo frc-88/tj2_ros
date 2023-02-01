@@ -46,6 +46,7 @@ class TagLocalizationNode:
         self.robot_frame = rospy.get_param("~robot_frame", "base_link")
         self.global_frame = rospy.get_param("~global_frame", "map")
         self.publish_tf = rospy.get_param("~publish_tf", False)
+        self.debug = rospy.get_param("~debug", False)
 
         if self.particle_filter_type == "JitParticleFilter":
             self.pf = JitParticleFilter(self.num_particles, self.meas_std_val, self.u_std)
@@ -72,6 +73,7 @@ class TagLocalizationNode:
         self.waypoints_sub = rospy.Subscriber("waypoints", WaypointArray, self.waypoints_callback, queue_size=5)
 
         self.particles_pub = rospy.Publisher("robot_tag_particles", PoseArray, queue_size=5)
+        self.measurement_input_pub = rospy.Publisher("debug_measurement", PoseArray, queue_size=5) if self.debug else None
 
         self.dyn_config = {}
         self.dyn_server = Server(ParticleFilterConfig, self.dyn_config_callback)
@@ -122,6 +124,8 @@ class TagLocalizationNode:
             if state is None:
                 continue
             states.append(state)
+        if self.measurement_input_pub is not None:
+            self.publish_measurement_inputs(states)
         if len(states) > 1:
             weighted_state = np.mean(np.array(states, dtype=np.float64), axis=0)
         elif len(states) == 1:
@@ -138,6 +142,8 @@ class TagLocalizationNode:
         dt = self.get_predict_dt(msg.header.stamp)
         u_vector = self.odom_to_predict_vector(msg)
         self.odom_pose2d = Pose2d.from_xyt(*u_vector)
+        if not self.pf.is_initialized():
+            return
         if abs(u_vector[0]) > 0.01 or abs(u_vector[1]) > 0.01 or abs(u_vector[2]) > 0.01:
             self.pf.predict(u_vector, dt)
 
@@ -199,6 +205,16 @@ class TagLocalizationNode:
             msg.twist.twist.angular.z,
         ])
 
+    def publish_measurement_inputs(self, states):
+        states_msg = PoseArray()
+        states_msg.header.frame_id = self.global_frame
+        states_msg.header.stamp = rospy.Time.now()
+
+        for state in states:
+            states_msg.poses.append(self.robot_state_to_pose(state))
+
+        self.measurement_input_pub.publish(states_msg)
+
     def publish_pose(self):
         pose_stamped = PoseStamped()
         pose_stamped.header.stamp = rospy.Time.now()
@@ -252,8 +268,9 @@ class TagLocalizationNode:
             if rospy.is_shutdown():
                 break
 
-            self.publish_pose()
-            self.publish_particles()
+            if self.pf.is_initialized():
+                self.publish_pose()
+                self.publish_particles()
 
 
 if __name__ == "__main__":
