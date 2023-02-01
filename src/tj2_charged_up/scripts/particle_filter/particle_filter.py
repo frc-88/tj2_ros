@@ -31,13 +31,9 @@ def predict(particles, input_std_error, num_particles, u, dt):
     vx_a = vx_u * np.cos(th_0) - vy_u * np.sin(th_0)
     vy_a = vx_u * np.sin(th_0) + vy_u * np.cos(th_0)
 
-    # angular predict
-    theta_delta = vt_u * dt + normal(0.0, 1.0, num_particles) * vt_sd_u
-
-    # x, y linear predict
-    x_1 = x_0 + vx_a * dt + normal(0.0, 1.0, num_particles) * vx_sd_u
-    y_1 = y_0 + vy_a * dt + normal(0.0, 1.0, num_particles) * vy_sd_u
-    th_1 = th_0 + theta_delta
+    x_1 = x_0 + vx_a * dt + normal(0.0, vx_sd_u, num_particles)
+    y_1 = y_0 + vy_a * dt + normal(0.0, vy_sd_u, num_particles)
+    th_1 = th_0 + vt_u * dt + normal(0.0, vt_sd_u, num_particles)
 
     particles[:, 0] = x_1
     particles[:, 1] = y_1
@@ -46,6 +42,7 @@ def predict(particles, input_std_error, num_particles, u, dt):
 
 class ParticleFilter:
     def __init__(self, num_particles, measure_std_error, input_std_error):
+        self.lock = Lock()
         self.num_states = 3  # x, y, theta
         self.particles = np.zeros((num_particles, self.num_states))
         self.num_particles = num_particles
@@ -57,12 +54,10 @@ class ParticleFilter:
 
         self.initialize_weights()
 
-        self.lock = Lock()
-
     def reset(self):
         with self.lock:
             self.particles = np.zeros((self.num_particles, self.num_states))
-            self.initialize_weights()
+        self.initialize_weights()
 
     def set_parameters(self, num_particles, measure_std_error, input_std_error):
         with self.lock:
@@ -73,16 +68,16 @@ class ParticleFilter:
             
         self.reset()
 
-    def initialize_particles(self, initial_distribution_type, initial_range):
-        zero_state = np.zeros((self.num_states, 1), dtype=np.float64)
+    def initialize_particles(self, initial_distribution_type, initial_range, initial_state=None):
+        if initial_state is None:
+            initial_state = np.zeros((self.num_states, 1), dtype=np.float64)
         if initial_distribution_type == "gaussian":
-            self.create_gaussian_particles(zero_state, initial_range)
+            self.create_gaussian_particles(initial_state, initial_range)
         elif initial_distribution_type == "uniform":
-            self.create_uniform_particles(zero_state, initial_range)
+            self.create_uniform_particles(initial_state, initial_range)
         else:
             warnings.warn(f"Invalid distribution type: {initial_distribution_type}. Defaulting to gaussian.")
-            self.create_gaussian_particles(zero_state, initial_range)
-        self.reset()
+            self.create_gaussian_particles(initial_state, initial_range)
 
     def is_initialized(self):
         with self.lock:
@@ -90,23 +85,24 @@ class ParticleFilter:
 
     def initialize_weights(self):
         # initialize with uniform weight
-        self.weights = np.ones(self.num_particles)
-        self.weights /= np.sum(self.weights)
+        with self.lock:
+            self.weights = np.ones(self.num_particles)
+            self.weights /= np.sum(self.weights)
 
     def create_uniform_particles(self, initial_state, state_range):
         assert len(initial_state) == self.num_states
         assert len(state_range) == self.num_states
 
+        self.initialize_weights()
         with self.lock:
-            self.initialize_weights()
             for state_num in range(self.num_states):
                 min_val = initial_state[state_num] - state_range[state_num]
                 max_val = initial_state[state_num] + state_range[state_num]
                 self.particles[:, state_num] = uniform(min_val, max_val, size=self.num_particles)
 
     def create_gaussian_particles(self, mean, var):
+        self.initialize_weights()
         with self.lock:
-            self.initialize_weights()
             for state_num in range(self.num_states):
                 self.particles[:, state_num] = mean[state_num] + randn(self.num_particles) * var[state_num]
 

@@ -82,14 +82,13 @@
     </node>
 
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
-    <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
+    <!-- <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="localize"/>
-        <!-- <arg name="mode" value="idle"/> -->
         <arg name="map_name" value="$(arg map_name)"/>
         <arg name="laser_scan_topic" value="$(arg laser_scan_topic)"/>
         <arg name="gmapping_config" value="$(find tj2_bringup)/config/diffyjr/gmapping.yaml"/>
         <arg name="amcl_config" value="$(find tj2_bringup)/config/diffyjr/amcl.yaml"/>
-    </include>
+    </include> -->
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
     </include>

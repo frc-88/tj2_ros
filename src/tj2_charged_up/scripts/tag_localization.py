@@ -13,7 +13,7 @@ from tf.transformations import quaternion_from_euler
 
 from apriltag_ros.msg import AprilTagDetectionArray, AprilTagDetection
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Pose, PoseArray, PoseStamped, Quaternion
+from geometry_msgs.msg import Pose, PoseArray, PoseStamped, Quaternion, TransformStamped
 
 from particle_filter import JitParticleFilter
 from particle_filter import ParticleFilter
@@ -53,13 +53,18 @@ class TagLocalizationNode:
             self.pf = ParticleFilter(self.num_particles, self.meas_std_val, self.u_std)
         else:
             raise RuntimeError(f"Invalid particle filter type: {self.particle_filter_type}")
-        self.pf.initialize_particles(self.initial_distribution_type, self.initial_range)
         
         self.prev_predict_time = rospy.Time.now()
         self.waypoints = Waypoints2dArray()
+        self.odom_frame = ""
+        self.odom_pose2d = Pose2d()
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        if self.publish_tf:
+            self.tf_broadcaster = tf2_ros.TransformBroadcaster()
+        else:
+            self.tf_broadcaster = None
 
         self.pose_publisher = rospy.Publisher("robot_tag_pose", PoseStamped, queue_size=5)
         self.detections_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.detections_callback, queue_size=25)
@@ -117,10 +122,24 @@ class TagLocalizationNode:
             if state is None:
                 continue
             states.append(state)
-        weighted_state = np.mean(np.array(states, dtype=np.float64))
+        if len(states) > 1:
+            weighted_state = np.mean(np.array(states, dtype=np.float64), axis=0)
+        elif len(states) == 1:
+            weighted_state = states[0]
+        else:
+            return
+        if not self.pf.is_initialized():
+            self.pf.initialize_particles(self.initial_distribution_type, self.initial_range, weighted_state)
         self.pf.update(weighted_state)
         self.pf.check_resample()
 
+    def odom_callback(self, msg):
+        self.odom_frame = msg.header.frame_id
+        dt = self.get_predict_dt(msg.header.stamp)
+        u_vector = self.odom_to_predict_vector(msg)
+        self.odom_pose2d = Pose2d.from_xyt(*u_vector)
+        if abs(u_vector[0]) > 0.01 or abs(u_vector[1]) > 0.01 or abs(u_vector[2]) > 0.01:
+            self.pf.predict(u_vector, dt)
 
     def tag_to_robot_state(self, detection: AprilTagDetection) -> Optional[np.ndarray]:
         # convert detection to pose stamped
@@ -148,7 +167,7 @@ class TagLocalizationNode:
         if waypoint is None:
             rospy.logwarn(f"Waypoint {waypoint_name} is not a valid waypoint. Ignoring.")
             return None
-        robot_global_pose2d = waypoint.to_pose2d().transform_by(-tag_base_pose_2d)
+        robot_global_pose2d = waypoint.to_pose2d().transform_by(tag_base_pose_2d)
         return np.array(robot_global_pose2d.to_list())
 
     def transform_tag_to_base(self, tag_pose_stamped: PoseStamped) -> Optional[PoseStamped]:
@@ -166,12 +185,6 @@ class TagLocalizationNode:
             return None
         return tf2_geometry_msgs.do_transform_pose(tag_pose_stamped, transform)
 
-    def odom_callback(self, msg):
-        dt = self.get_predict_dt(msg.header.stamp)
-        u_vector = self.odom_to_predict_vector(msg)
-        if abs(u_vector[0]) > 0.01 or abs(u_vector[1]) > 0.01 or abs(u_vector[2]) > 0.01:
-            self.pf.predict(u_vector, dt)
-
     def get_predict_dt(self, stamp) -> float:
         # return time since last predict message
         dt = (stamp - self.prev_predict_time).to_sec()
@@ -186,13 +199,30 @@ class TagLocalizationNode:
             msg.twist.twist.angular.z,
         ])
 
-    def publish_all_pose(self):
-        pose = self.robot_state_to_pose(self.pf.mean())
+    def publish_pose(self):
         pose_stamped = PoseStamped()
         pose_stamped.header.stamp = rospy.Time.now()
         pose_stamped.header.frame_id = self.global_frame
-        pose_stamped.pose = pose
+        pose_stamped.pose = self.robot_state_to_pose(self.pf.mean())
         self.pose_publisher.publish(pose_stamped)
+        
+        if self.tf_broadcaster is not None and len(self.odom_frame) > 0:
+            global_to_robot2d = Pose2d.from_xyt(*self.pf.mean())
+            global_to_odom2d = self.odom_pose2d.relative_to(global_to_robot2d)
+            global_to_odom = global_to_odom2d.to_ros_pose()
+            tf_msg = TransformStamped()
+            tf_msg.header.frame_id = self.global_frame
+            tf_msg.child_frame_id = self.odom_frame
+            tf_msg.header.stamp = pose_stamped.header.stamp
+            tf_msg.transform.translation.x = global_to_odom.position.x
+            tf_msg.transform.translation.y = global_to_odom.position.y
+            tf_msg.transform.translation.z = global_to_odom.position.z
+            tf_msg.transform.rotation.x = global_to_odom.orientation.x
+            tf_msg.transform.rotation.y = global_to_odom.orientation.y
+            tf_msg.transform.rotation.z = global_to_odom.orientation.z
+            tf_msg.transform.rotation.w = global_to_odom.orientation.w
+
+            self.tf_broadcaster.sendTransform(tf_msg)
     
     def robot_state_to_pose(self, state: np.ndarray) -> Pose:
         pose = Pose()
@@ -208,8 +238,9 @@ class TagLocalizationNode:
         particles_msg.header.frame_id = self.global_frame
         particles_msg.header.stamp = rospy.Time.now()
 
-        for particle in self.pf.particles:
-            particles_msg.poses.append(self.robot_state_to_pose(particle))
+        with self.pf.lock:
+            for particle in self.pf.particles:
+                particles_msg.poses.append(self.robot_state_to_pose(particle))
 
         self.particles_pub.publish(particles_msg)
 
@@ -221,7 +252,7 @@ class TagLocalizationNode:
             if rospy.is_shutdown():
                 break
 
-            self.publish_all_pose()
+            self.publish_pose()
             self.publish_particles()
 
 

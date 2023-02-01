@@ -12,6 +12,7 @@ Panels:
         - /ZED Depth1/Occlusion Compensation1
         - /Pose1
         - /Pose1/Status1
+        - /PoseArray1
       Splitter Ratio: 0.4070473909378052
     Tree Height: 318
   - Class: rviz/Selection
@@ -275,8 +276,7 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        postag1: true
-        texttag1: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -634,41 +634,7 @@ Visualization Manager:
       Marker Topic: /apriltag/tag_markers
       Name: Apriltags
       Namespaces:
-        cube1: true
-        cube2: true
-        cube3: true
-        cube5: true
-        cube6: true
-        cube7: true
-        cube8: true
-        posx1: true
-        posx2: true
-        posx3: true
-        posx5: true
-        posx6: true
-        posx7: true
-        posx8: true
-        posy1: true
-        posy2: true
-        posy3: true
-        posy5: true
-        posy6: true
-        posy7: true
-        posy8: true
-        posz1: true
-        posz2: true
-        posz3: true
-        posz5: true
-        posz6: true
-        posz7: true
-        posz8: true
-        text1: true
-        text2: true
-        text3: true
-        text5: true
-        text6: true
-        text7: true
-        text8: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -711,7 +677,7 @@ Visualization Manager:
       Axes Length: 1
       Axes Radius: 0.10000000149011612
       Class: rviz/Pose
-      Color: 255; 25; 0
+      Color: 0; 0; 255
       Enabled: true
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
@@ -728,7 +694,7 @@ Visualization Manager:
       Axes Length: 0.30000001192092896
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
-      Color: 255; 25; 0
+      Color: 0; 0; 255
       Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
@@ -744,7 +710,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -768,7 +734,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.5749897956848145
+      Distance: 3.57741117477417
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -776,17 +742,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.13751615583896637
-        Y: 0.6252099275588989
-        Z: 0.012603648006916046
+        X: 1.1394773721694946
+        Y: 0.34283459186553955
+        Z: 0.08244717121124268
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2847962379455566
+      Pitch: 0.5547964572906494
       Target Frame: <Fixed Frame>
-      Yaw: 2.94307541847229
+      Yaw: 4.308078289031982
     Saved: ~
 Window Geometry:
   Displays:

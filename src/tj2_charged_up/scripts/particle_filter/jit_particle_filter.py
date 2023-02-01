@@ -63,13 +63,13 @@ class JitParticleFilter(ParticleFilter):
 
     def warmup(self):
         # first call to numba-fied functions takes some time. Do it before real data shows up
-        if JitParticleFilter.is_warmed_up:
+        if self.__class__.is_warmed_up:
             return
         self.update(np.zeros(self.num_states))
         self.predict(np.zeros(len(self.input_std_error)), 0.1)
         self.resample()
         self.reset()
-        JitParticleFilter.is_warmed_up = True
+        self.__class__.is_warmed_up = True
 
     def predict(self, u, dt):
         with self.lock:

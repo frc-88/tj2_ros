@@ -1,4 +1,4 @@
-meas_std_val: 0.001
+meas_std_val: 0.1
 u_std: [0.01, 0.01, 0.01]
 initial_range: [1.0, 1.0, 6.14]
 num_particles: 50
@@ -11,4 +11,4 @@ tag_id_to_waypoint_map: {
 }
 robot_frame: "base_link"
 global_frame: "map"
-publish_tf: False
+publish_tf: true
