@@ -27,15 +27,16 @@ def predict(particles, input_std_error, num_particles, u, dt):
     vx_sd_u = input_std_error[0]
     vy_sd_u = input_std_error[1]
     vt_sd_u = input_std_error[2]
+    
+    vx_a = vx_u * np.cos(th_0) - vy_u * np.sin(th_0)
+    vy_a = vx_u * np.sin(th_0) + vy_u * np.cos(th_0)
 
     # angular predict
     theta_delta = vt_u * dt + normal(0.0, 1.0, num_particles) * vt_sd_u
-    x_a = x_0 * np.cos(theta_delta) - y_0 * np.sin(theta_delta)
-    y_a = x_0 * np.sin(theta_delta) + y_0 * np.cos(theta_delta)
 
     # x, y linear predict
-    x_1 = x_a + vx_u * dt + normal(0.0, 1.0, num_particles) * vx_sd_u
-    y_1 = y_a + vy_u * dt + normal(0.0, 1.0, num_particles) * vy_sd_u
+    x_1 = x_0 + vx_a * dt + normal(0.0, 1.0, num_particles) * vx_sd_u
+    y_1 = y_0 + vy_a * dt + normal(0.0, 1.0, num_particles) * vy_sd_u
     th_1 = th_0 + theta_delta
 
     particles[:, 0] = x_1
@@ -67,6 +68,7 @@ class ParticleFilter:
         with self.lock:
             self.num_particles = num_particles
             self.measure_std_error = measure_std_error
+            self.measure_distribution = scipy.stats.norm(0.0, self.measure_std_error)
             self.input_std_error = np.array(input_std_error)
             
         self.reset()
@@ -119,7 +121,7 @@ class ParticleFilter:
 
     def update(self, z):
         """Update particle filter according to measurement z (robot global position from tag: [x, y, theta])"""
-        # self.weights.fill(1.0)  # debateable as to whether this is detrimental or not (shouldn't weights be preserved between measurements?)
+        self.weights.fill(1.0)  # debateable as to whether this is detrimental or not (shouldn't weights be preserved between measurements?)
         with self.lock:
             distances = np.linalg.norm(self.particles - z, axis=1)
             

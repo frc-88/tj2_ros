@@ -12,9 +12,8 @@ class Waypoint2d(Pose2d):
         self.parent_frame = parent_frame
         super().__init__(x, y, theta)
 
-    @classmethod
-    def from_state(cls, waypoint) -> Waypoint:
-        return cls(waypoint.name, waypoint.parent_frame, waypoint.x, waypoint.y, waypoint.theta)
+    def to_pose2d(self) -> Pose2d:
+        return Pose2d(self.x, self.y, self.theta)
 
     def to_ros_waypoint(self) -> Waypoint:
         waypoint = Waypoint()

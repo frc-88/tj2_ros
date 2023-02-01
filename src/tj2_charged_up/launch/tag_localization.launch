@@ -2,7 +2,7 @@
 <launch>
     <arg name="settings" default="$(find tj2_bringup)/config/diffyjr/tags/tag_localization.yaml"/>
     <group ns="tj2">
-        <node name="tj2_charged_up" pkg="tj2_charged_up" type="tag_localization.py" output="screen" required="false">
+        <node name="tag_localization" pkg="tj2_charged_up" type="tag_localization.py" output="screen" required="false">
             <rosparam command="load" file="$(arg settings)"/>
         
             <remap from="tag_detections" to="/apriltag/tag_detections" />

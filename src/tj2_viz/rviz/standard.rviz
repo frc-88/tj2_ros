@@ -10,6 +10,8 @@ Panels:
         - /Object Markers1/Namespaces1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
+        - /Pose1
+        - /Pose1/Status1
       Splitter Ratio: 0.4070473909378052
     Tree Height: 318
   - Class: rviz/Selection
@@ -133,7 +135,15 @@ Visualization Manager:
           Value: true
         tag2:
           Value: true
+        tag3:
+          Value: true
+        tag4:
+          Value: true
         tag5:
+          Value: true
+        tag6:
+          Value: true
+        tag7:
           Value: true
         tag8:
           Value: true
@@ -185,7 +195,15 @@ Visualization Manager:
                                 {}
                               tag2:
                                 {}
+                              tag3:
+                                {}
+                              tag4:
+                                {}
                               tag5:
+                                {}
+                              tag6:
+                                {}
+                              tag7:
                                 {}
                               tag8:
                                 {}
@@ -532,7 +550,7 @@ Visualization Manager:
       Use rainbow: true
       Value: false
     - Class: rviz_plugin_zed_od/ZedOdDisplay
-      Enabled: true
+      Enabled: false
       Joint Radius: 0.10000000149011612
       Label Scale: 5
       Link Size: 0.05000000074505806
@@ -544,7 +562,7 @@ Visualization Manager:
       Topic: /tj2_zed/obj_det/yolo_objects
       Transparency: 0.25
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -617,19 +635,39 @@ Visualization Manager:
       Name: Apriltags
       Namespaces:
         cube1: true
+        cube2: true
+        cube3: true
         cube5: true
+        cube6: true
+        cube7: true
         cube8: true
         posx1: true
+        posx2: true
+        posx3: true
         posx5: true
+        posx6: true
+        posx7: true
         posx8: true
         posy1: true
+        posy2: true
+        posy3: true
         posy5: true
+        posy6: true
+        posy7: true
         posy8: true
         posz1: true
+        posz2: true
+        posz3: true
         posz5: true
+        posz6: true
+        posz7: true
         posz8: true
         text1: true
+        text2: true
+        text3: true
         text5: true
+        text6: true
+        text7: true
         text8: true
       Queue Size: 100
       Value: true
@@ -706,7 +744,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_link
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -730,7 +768,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 30.63483428955078
+      Distance: 3.5749897956848145
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -738,17 +776,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.8249335885047913
-        Y: -0.20539580285549164
-        Z: 0.19523966312408447
+        X: 0.13751615583896637
+        Y: 0.6252099275588989
+        Z: 0.012603648006916046
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0597965717315674
+      Pitch: 1.2847962379455566
       Target Frame: <Fixed Frame>
-      Yaw: 2.5380711555480957
+      Yaw: 2.94307541847229
     Saved: ~
 Window Geometry:
   Displays:

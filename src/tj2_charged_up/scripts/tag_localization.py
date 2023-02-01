@@ -39,7 +39,6 @@ class TagLocalizationNode:
         self.initial_range = rospy.get_param("~initial_range", [1.0, 1.0, 2 * np.pi])
         self.num_particles = rospy.get_param("~num_particles", 50)
         self.initial_distribution_type = rospy.get_param("~initial_distribution_type", "gaussian")
-        self.velocity_smooth_k = rospy.get_param("~velocity_smooth_k", 0.0)
         self.loop_rate = rospy.get_param("~loop_rate", 15.0)
         self.stale_detection_seconds = rospy.Duration(rospy.get_param("~stale_detection_seconds", 1.0))
         self.particle_filter_type = rospy.get_param("~particle_filter_type", "JitParticleFilter")
@@ -120,6 +119,8 @@ class TagLocalizationNode:
             states.append(state)
         weighted_state = np.mean(np.array(states, dtype=np.float64))
         self.pf.update(weighted_state)
+        self.pf.check_resample()
+
 
     def tag_to_robot_state(self, detection: AprilTagDetection) -> Optional[np.ndarray]:
         # convert detection to pose stamped
@@ -147,7 +148,7 @@ class TagLocalizationNode:
         if waypoint is None:
             rospy.logwarn(f"Waypoint {waypoint_name} is not a valid waypoint. Ignoring.")
             return None
-        robot_global_pose2d = waypoint.transform_by(tag_base_pose_2d)
+        robot_global_pose2d = waypoint.to_pose2d().transform_by(-tag_base_pose_2d)
         return np.array(robot_global_pose2d.to_list())
 
     def transform_tag_to_base(self, tag_pose_stamped: PoseStamped) -> Optional[PoseStamped]:
@@ -167,7 +168,9 @@ class TagLocalizationNode:
 
     def odom_callback(self, msg):
         dt = self.get_predict_dt(msg.header.stamp)
-        self.pf.predict(self.odom_to_predict_vector(msg), dt)
+        u_vector = self.odom_to_predict_vector(msg)
+        if abs(u_vector[0]) > 0.01 or abs(u_vector[1]) > 0.01 or abs(u_vector[2]) > 0.01:
+            self.pf.predict(u_vector, dt)
 
     def get_predict_dt(self, stamp) -> float:
         # return time since last predict message
@@ -217,9 +220,6 @@ class TagLocalizationNode:
             rate.sleep()
             if rospy.is_shutdown():
                 break
-
-            if self.pf.is_initialized():
-                self.pf.check_resample()
 
             self.publish_all_pose()
             self.publish_particles()
