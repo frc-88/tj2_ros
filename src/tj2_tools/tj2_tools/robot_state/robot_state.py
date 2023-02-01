@@ -30,8 +30,6 @@ class State:
 
     @classmethod
     def from_state(cls, state):
-        if not isinstance(state, cls):
-            raise ValueError("%s is not of type %s" % (repr(state), cls))
         self = cls()
         self.x = state.x
         self.y = state.y
@@ -72,8 +70,6 @@ class State:
         return tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, self.theta).tolist()
 
     def transform_by(self, other):
-        if not isinstance(other, self.__class__):
-            raise ValueError("Can't transform %s to %s" % (self.__class__, other.__class__))
         state = self.__class__.from_state(self)
         state = state.rotate_by(other.theta)
         state.x += other.x
@@ -82,8 +78,6 @@ class State:
         return state
 
     def relative_to(self, other):
-        if not isinstance(other, self.__class__):
-            raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
         state = self.__class__.from_state(self)
         state.x -= other.x
         state.y -= other.y
@@ -102,9 +96,6 @@ class State:
         return state
     
     def delta(self, other, states="xy"):
-        if not isinstance(other, self.__class__):
-            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
-
         state = self.__class__.from_state(self)
         for key in states:
             if key == "x":
@@ -117,9 +108,6 @@ class State:
         return state
 
     def add(self, other, states="xy"):
-        if not isinstance(other, self.__class__):
-            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
-
         state = self.__class__.from_state(self)
         for key in states:
             if key == "x":
@@ -161,8 +149,6 @@ class State:
     def distance(self, other=None):
         if other is None:  # if other is None, assume you're getting distance from the origin
             other = self.__class__()
-        if not isinstance(other, self.__class__):
-            raise ValueError("Can't get distance from %s to %s" % (self.__class__, other.__class__))
         dx = self.x - other.x
         dy = self.y - other.y
         return math.sqrt(dx * dx + dy * dy)
@@ -171,8 +157,6 @@ class State:
         if other is None:
             return math.atan2(self.y, self.x)
         else:
-            if not isinstance(other, self.__class__):
-                raise ValueError("Can't get heading from %s to %s" % (self.__class__, other.__class__))
             dx = self.x - other.x
             dy = self.y - other.y
             return math.atan2(dy, dx)
@@ -257,9 +241,6 @@ class State:
         return new_state
 
     def __add__(self, other):
-        if not isinstance(other, self.__class__):
-            raise ValueError("Can't add %s and %s" % (self.__class__, other.__class__))
-
         state = self.__class__()
         state.x = self.x + other.x
         state.y = self.y + other.y
@@ -267,9 +248,6 @@ class State:
         return state
 
     def __sub__(self, other):
-        if not isinstance(other, self.__class__):
-            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
-
         state = self.__class__()
         state.x = self.x - other.x
         state.y = self.y - other.y
@@ -277,31 +255,27 @@ class State:
         return state
 
     def __mul__(self, other):
-        state = self.__class__()
-        if isinstance(other, self.__class__):
-            state.x = self.x * other.x
-            state.y = self.y * other.y
-            state.theta = self.theta * other.theta
-        elif isinstance(other, int) or isinstance(other, float):
+        state = self.__class__() 
+        if isinstance(other, int) or isinstance(other, float):
             state.x = self.x * other
             state.y = self.y * other
             state.theta = self.theta * other
         else:
-            raise ValueError("Can't multiply %s and %s" % (self.__class__, other.__class__))
+            state.x = self.x * other.x
+            state.y = self.y * other.y
+            state.theta = self.theta * other.theta
         return state
 
     def __truediv__(self, other):
         state = self.__class__()
-        if isinstance(other, self.__class__):
-            state.x = self.x / other.x
-            state.y = self.y / other.y
-            state.theta = self.theta / other.theta
-        elif isinstance(other, int) or isinstance(other, float):
+        if isinstance(other, int) or isinstance(other, float):
             state.x = self.x / other
             state.y = self.y / other
             state.theta = self.theta / other
         else:
-            raise ValueError("Can't divide %s and %s" % (self.__class__, other.__class__))
+            state.x = self.x / other.x
+            state.y = self.y / other.y
+            state.theta = self.theta / other.theta
         return state
 
     def __abs__(self):

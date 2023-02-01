@@ -54,7 +54,7 @@ class TagLocalizationNode:
             self.pf = ParticleFilter(self.num_particles, self.meas_std_val, self.u_std)
         else:
             raise RuntimeError(f"Invalid particle filter type: {self.particle_filter_type}")
-        self.pf.initialize_particles(self.u_std, self.initial_distribution_type)
+        self.pf.initialize_particles(self.initial_distribution_type, self.initial_range)
         
         self.prev_predict_time = rospy.Time.now()
         self.waypoints = Waypoints2dArray()
@@ -96,7 +96,7 @@ class TagLocalizationNode:
         self.initial_distribution_type = self.get_default_config("initial_distribution_type", config, self.initial_distribution_type)
         
         self.pf.set_parameters(self.num_particles, self.meas_std_val, self.u_std)
-        self.pf.initialize_particles(self.u_std, self.initial_distribution_type)
+        self.pf.initialize_particles(self.initial_distribution_type, self.initial_range)
 
         return self.dyn_config
     
@@ -151,6 +151,8 @@ class TagLocalizationNode:
         return np.array(robot_global_pose2d.to_list())
 
     def transform_tag_to_base(self, tag_pose_stamped: PoseStamped) -> Optional[PoseStamped]:
+        if self.robot_frame == tag_pose_stamped.header.frame_id:
+            return tag_pose_stamped
         try:
             transform = self.tf_buffer.lookup_transform(
                 self.robot_frame,

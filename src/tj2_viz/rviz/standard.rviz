@@ -133,15 +133,7 @@ Visualization Manager:
           Value: true
         tag2:
           Value: true
-        tag3:
-          Value: true
-        tag4:
-          Value: true
         tag5:
-          Value: true
-        tag6:
-          Value: true
-        tag7:
           Value: true
         tag8:
           Value: true
@@ -193,15 +185,7 @@ Visualization Manager:
                                 {}
                               tag2:
                                 {}
-                              tag3:
-                                {}
-                              tag4:
-                                {}
                               tag5:
-                                {}
-                              tag6:
-                                {}
-                              tag7:
                                 {}
                               tag8:
                                 {}
@@ -273,7 +257,8 @@ Visualization Manager:
       Marker Topic: /tj2/waypoint_markers
       Name: Waypoints
       Namespaces:
-        {}
+        postag1: true
+        texttag1: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -498,6 +483,8 @@ Visualization Manager:
         Object Markers: true
         Oriented Markers: true
         Path Potential: false
+        Pose: true
+        PoseArray: true
         RobotModel: false
         Sinistra LaserScan: true
         TF: false
@@ -630,44 +617,19 @@ Visualization Manager:
       Name: Apriltags
       Namespaces:
         cube1: true
-        cube2: true
-        cube3: true
-        cube4: true
         cube5: true
-        cube6: true
-        cube7: true
         cube8: true
         posx1: true
-        posx2: true
-        posx3: true
-        posx4: true
         posx5: true
-        posx6: true
-        posx7: true
         posx8: true
         posy1: true
-        posy2: true
-        posy3: true
-        posy4: true
         posy5: true
-        posy6: true
-        posy7: true
         posy8: true
         posz1: true
-        posz2: true
-        posz3: true
-        posz4: true
         posz5: true
-        posz6: true
-        posz7: true
         posz8: true
         text1: true
-        text2: true
-        text3: true
-        text4: true
         text5: true
-        text6: true
-        text7: true
         text8: true
       Queue Size: 100
       Value: true
@@ -707,6 +669,39 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: false
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /tj2/robot_tag_pose
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: PoseArray
+      Queue Size: 10
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic: /tj2/robot_tag_particles
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -735,7 +730,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.319268703460693
+      Distance: 30.63483428955078
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -743,17 +738,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.9426367878913879
-        Y: -0.2272549271583557
-        Z: 0.574803352355957
+        X: 0.8249335885047913
+        Y: -0.20539580285549164
+        Z: 0.19523966312408447
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.62979656457901
+      Pitch: 1.0597965717315674
       Target Frame: <Fixed Frame>
-      Yaw: 3.333073616027832
+      Yaw: 2.5380711555480957
     Saved: ~
 Window Geometry:
   Displays:

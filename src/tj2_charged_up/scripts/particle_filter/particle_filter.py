@@ -162,10 +162,6 @@ class ParticleFilter:
         with self.lock:
             return np.average(self.particles, weights=self.weights, axis=0)
 
-    def get_state(self) -> FilterState:
-        mu = self.mean()
-        return FilterState(mu[0], mu[1], mu[2], 0.0, mu[3], mu[4], mu[5], 0.0)
-
     def check_resample(self):
         neff = self.neff()
         with self.lock:
