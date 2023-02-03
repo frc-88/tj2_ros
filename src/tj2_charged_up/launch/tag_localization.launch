@@ -5,7 +5,12 @@
         <node name="tag_localization" pkg="tj2_charged_up" type="tag_localization.py" output="screen" required="false">
             <rosparam command="load" file="$(arg settings)"/>
         
-            <remap from="tag_detections" to="/apriltag/tag_detections" />
+            <remap from="tag_detections" to="/apriltag/rotated_detections" />
         </node>
     </group>
+
+    <group ns="apriltag">
+        <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen"/>
+    </group>
+
 </launch>

@@ -71,9 +71,10 @@ class State:
 
     def transform_by(self, other):
         state = self.__class__.from_state(self)
-        state = state.rotate_by(other.theta)
-        state.x += other.x
-        state.y += other.y
+        rotated = other.rotate_by(other.theta)
+        state.x += rotated.x
+        state.y += rotated.y
+        state.theta = other.theta + state.theta
         state.theta = self.normalize_theta(state.theta)
         return state
 

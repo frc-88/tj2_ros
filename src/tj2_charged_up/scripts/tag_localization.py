@@ -59,6 +59,7 @@ class TagLocalizationNode:
         self.waypoints = Waypoints2dArray()
         self.odom_frame = ""
         self.odom_pose2d = Pose2d()
+        self.prev_measurement = np.array([0.0, 0.0, 0.0])
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -132,16 +133,17 @@ class TagLocalizationNode:
             weighted_state = states[0]
         else:
             return
+        self.prev_measurement = weighted_state
         if not self.pf.is_initialized():
             self.pf.initialize_particles(self.initial_distribution_type, self.initial_range, weighted_state)
         self.pf.update(weighted_state)
         self.pf.check_resample()
 
-    def odom_callback(self, msg):
+    def odom_callback(self, msg: Odometry):
         self.odom_frame = msg.header.frame_id
         dt = self.get_predict_dt(msg.header.stamp)
         u_vector = self.odom_to_predict_vector(msg)
-        self.odom_pose2d = Pose2d.from_xyt(*u_vector)
+        self.odom_pose2d = Pose2d.from_ros_pose(msg.pose.pose)
         if not self.pf.is_initialized():
             return
         if abs(u_vector[0]) > 0.01 or abs(u_vector[1]) > 0.01 or abs(u_vector[2]) > 0.01:
@@ -166,14 +168,22 @@ class TagLocalizationNode:
         name = "-".join([str(sub_id) for sub_id in tag_id])
         
         if name not in self.tag_id_to_waypoint_map:
-            rospy.logwarn(f"Tag {name} is not mapped to a waypoint. Ignoring.")
+            rospy.logwarn(
+                f"Tag {name} is not mapped to a waypoint. "
+                f"Valid waypoints are: {tuple(self.tag_id_to_waypoint_map.values())}"
+            )
             return None
         waypoint_name = self.tag_id_to_waypoint_map[name]
         waypoint = self.waypoints.get(waypoint_name)
         if waypoint is None:
-            rospy.logwarn(f"Waypoint {waypoint_name} is not a valid waypoint. Ignoring.")
+            rospy.logwarn(
+                f"Waypoint {waypoint_name} is not a valid waypoint. "
+                f"Valid waypoints are: {self.waypoints.get_names()}"
+            )
             return None
-        robot_global_pose2d = waypoint.to_pose2d().transform_by(tag_base_pose_2d)
+        waypoint_pose = waypoint.to_pose2d()
+        tag_transform = Pose2d().relative_to(tag_base_pose_2d)
+        robot_global_pose2d = waypoint_pose.transform_by(tag_transform)
         return np.array(robot_global_pose2d.to_list())
 
     def transform_tag_to_base(self, tag_pose_stamped: PoseStamped) -> Optional[PoseStamped]:
@@ -181,8 +191,8 @@ class TagLocalizationNode:
             return tag_pose_stamped
         try:
             transform = self.tf_buffer.lookup_transform(
-                self.robot_frame,
                 tag_pose_stamped.header.frame_id,
+                self.robot_frame,
                 rospy.Time(0),
                 self.stale_detection_seconds
             )
@@ -216,15 +226,17 @@ class TagLocalizationNode:
         self.measurement_input_pub.publish(states_msg)
 
     def publish_pose(self):
+        # state = self.pf.mean()
+        state = self.prev_measurement
         pose_stamped = PoseStamped()
         pose_stamped.header.stamp = rospy.Time.now()
         pose_stamped.header.frame_id = self.global_frame
-        pose_stamped.pose = self.robot_state_to_pose(self.pf.mean())
+        pose_stamped.pose = self.robot_state_to_pose(state)
         self.pose_publisher.publish(pose_stamped)
         
         if self.tf_broadcaster is not None and len(self.odom_frame) > 0:
-            global_to_robot2d = Pose2d.from_xyt(*self.pf.mean())
-            global_to_odom2d = self.odom_pose2d.relative_to(global_to_robot2d)
+            global_to_robot2d = Pose2d.from_xyt(*state)
+            global_to_odom2d = global_to_robot2d.relative_to(self.odom_pose2d)
             global_to_odom = global_to_odom2d.to_ros_pose()
             tf_msg = TransformStamped()
             tf_msg.header.frame_id = self.global_frame

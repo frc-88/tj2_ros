@@ -12,3 +12,4 @@ tag_id_to_waypoint_map: {
 robot_frame: "base_link"
 global_frame: "map"
 publish_tf: true
+debug: true

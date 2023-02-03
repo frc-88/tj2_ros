@@ -4,7 +4,6 @@ from typing import List, Tuple
 
 import rospy
 
-import numpy as np
 from scipy.spatial.transform import Rotation
 
 from apriltag_ros.msg import AprilTagDetectionArray
@@ -137,9 +136,9 @@ class TagMarkerPublisher:
         text_marker.scale.x = 0.0
         text_marker.scale.y = 0.0
         text_marker.color = ColorRGBA(
-            r=0.0,
-            g=0.0,
-            b=0.0,
+            r=1.0,
+            g=1.0,
+            b=1.0,
             a=1.0,
         )
     
