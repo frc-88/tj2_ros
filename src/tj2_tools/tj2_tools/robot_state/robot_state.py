@@ -1,7 +1,7 @@
 import math
 from typing import List
 import numpy as np
-import tf_conversions
+import tf.transformations
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Pose
 
@@ -46,7 +46,7 @@ class State:
 
     @staticmethod
     def theta_from_quat(quaternion):
-        return tf_conversions.transformations.euler_from_quaternion((
+        return tf.transformations.euler_from_quaternion((
             quaternion.x,
             quaternion.y,
             quaternion.z,
@@ -67,7 +67,7 @@ class State:
         return quat_msg
 
     def get_theta_as_quat_as_list(self) -> List[float]:
-        return tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, self.theta).tolist()
+        return tf.transformations.quaternion_from_euler(0.0, 0.0, self.theta).tolist()
 
     def transform_by(self, other):
         state = self.__class__.from_state(self)
@@ -219,6 +219,20 @@ class State:
             elif state == "t":
                 output.append(float(self.theta))
         return output
+
+    def to_transform_matrix(self) -> np.ndarray:
+        return tf.transformations.concatenate_matrices(
+            tf.transformations.translation_matrix([self.x, self.y, 0.0]),
+            tf.transformations.quaternion_matrix(
+                tf.transformations.quaternion_from_euler(0.0, 0.0, self.theta)
+            )
+        )
+
+    @classmethod
+    def from_transform_matrix(cls, matrix: np.ndarray):
+        x, y, _ = tf.transformations.translation_from_matrix(matrix)
+        _, _, theta = tf.transformations.euler_from_matrix(matrix)
+        return cls(x, y, theta)
 
     @classmethod
     def to_array(cls, poses: list):

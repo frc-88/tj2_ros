@@ -9,11 +9,11 @@ import tf2_ros
 import numpy as np
 
 import tf2_geometry_msgs
-from tf.transformations import quaternion_from_euler
+import tf.transformations
 
 from apriltag_ros.msg import AprilTagDetectionArray, AprilTagDetection
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Pose, PoseArray, PoseStamped, Quaternion, TransformStamped
+from geometry_msgs.msg import Point, Pose, PoseArray, PoseStamped, Quaternion, TransformStamped
 
 from particle_filter import JitParticleFilter
 from particle_filter import ParticleFilter
@@ -162,7 +162,7 @@ class TagLocalizationNode:
         tag_base_pose = self.transform_tag_to_base(tag_pose)
         if tag_base_pose is None:
             return None
-        tag_base_pose_2d = Pose2d.from_ros_pose(tag_base_pose.pose)
+        tag_base_pose2d = Pose2d.from_ros_pose(tag_base_pose.pose)
         
         tag_id: List[int] = detection.id
         name = "-".join([str(sub_id) for sub_id in tag_id])
@@ -181,9 +181,14 @@ class TagLocalizationNode:
                 f"Valid waypoints are: {self.waypoints.get_names()}"
             )
             return None
-        waypoint_pose = waypoint.to_pose2d()
-        tag_transform = Pose2d().relative_to(tag_base_pose_2d)
-        robot_global_pose2d = waypoint_pose.transform_by(tag_transform)
+        waypoint_pose2d = waypoint.to_pose2d()
+
+        map_to_waypoint_tf = waypoint_pose2d.to_transform_matrix()
+        base_to_tag_tf = tag_base_pose2d.to_transform_matrix()
+        tag_to_base_tf = tf.transformations.inverse_matrix(base_to_tag_tf)
+        map_to_base_tf = map_to_waypoint_tf @ tag_to_base_tf
+        robot_global_pose2d = Pose2d.from_transform_matrix(map_to_base_tf)
+
         return np.array(robot_global_pose2d.to_list())
 
     def transform_tag_to_base(self, tag_pose_stamped: PoseStamped) -> Optional[PoseStamped]:
@@ -235,9 +240,7 @@ class TagLocalizationNode:
         self.pose_publisher.publish(pose_stamped)
         
         if self.tf_broadcaster is not None and len(self.odom_frame) > 0:
-            global_to_robot2d = Pose2d.from_xyt(*state)
-            global_to_odom2d = global_to_robot2d.relative_to(self.odom_pose2d)
-            global_to_odom = global_to_odom2d.to_ros_pose()
+            global_to_odom = self.get_global_to_odom_tf(Pose2d.from_xyt(*state))
             tf_msg = TransformStamped()
             tf_msg.header.frame_id = self.global_frame
             tf_msg.child_frame_id = self.odom_frame
@@ -251,14 +254,25 @@ class TagLocalizationNode:
             tf_msg.transform.rotation.w = global_to_odom.orientation.w
 
             self.tf_broadcaster.sendTransform(tf_msg)
-    
+        
+    def get_global_to_odom_tf(self, state: Pose2d) -> Pose:
+        map_to_base_tf = state.to_transform_matrix()
+        
+        base_to_map_tf = tf.transformations.inverse_matrix(map_to_base_tf)
+        odom_to_base_tf = self.odom_pose2d.to_transform_matrix()
+        odom_to_map_tf = odom_to_base_tf @ base_to_map_tf
+        map_to_odom_tf = tf.transformations.inverse_matrix(odom_to_map_tf)
+        map_to_odom_pose2d = Pose2d.from_transform_matrix(map_to_odom_tf)
+
+        return map_to_odom_pose2d.to_ros_pose()
+
     def robot_state_to_pose(self, state: np.ndarray) -> Pose:
         pose = Pose()
         pose.position.x = state[0]
         pose.position.y = state[1]
-        pose.orientation = Quaternion(*quaternion_from_euler(0.0, 0.0, state[2]))
+        pose.orientation = Quaternion(*tf.transformations.quaternion_from_euler(0.0, 0.0, state[2]))
         return pose
-    
+
     def publish_particles(self):
         if self.particles_pub.get_num_connections() == 0:
             return
