@@ -1,5 +1,5 @@
 meas_std_val: 0.1
-u_std: [0.02, 0.02, 0.02]
+u_std: [0.008, 0.008, 0.008]
 initial_range: [0.25, 0.25, 1.0]
 num_particles: 50
 initial_distribution_type: "gaussian"
