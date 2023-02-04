@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
 import copy
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import rospy
+import tf2_ros
+import tf2_geometry_msgs
 
 from scipy.spatial.transform import Rotation
 
-from apriltag_ros.msg import AprilTagDetectionArray
-
-from geometry_msgs.msg import Pose
-from geometry_msgs.msg import Point
-from geometry_msgs.msg import Vector3
-from geometry_msgs.msg import PoseStamped
-from geometry_msgs.msg import Quaternion
-
+from apriltag_ros.msg import AprilTagDetectionArray, AprilTagDetection
+from geometry_msgs.msg import Pose, Point, Vector3, PoseStamped, Quaternion, PoseArray
 from std_msgs.msg import ColorRGBA
-
-from visualization_msgs.msg import MarkerArray
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray, Marker
 
 
 class TagMarkerPublisher:
@@ -29,11 +23,18 @@ class TagMarkerPublisher:
             # log_level=rospy.DEBUG
         )
         # rospy.on_shutdown(self.shutdown_hook)
-        self.tag_pose_size = 0.25
-        self.marker_publish_rate = 5.0
+        self.tag_pose_marker_size = rospy.get_param("~tag_pose_marker_size", 0.25)
+        self.marker_publish_rate = rospy.get_param("~marker_publish_rate", 5.0)
+        self.debug = rospy.get_param("~debug", False)
+        self.robot_frame = rospy.get_param("~robot_frame", "base_link")
+        self.stale_detection_seconds = rospy.Duration(rospy.get_param("~stale_detection_seconds", 1.0))
         self.tag_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10)
         self.marker_pub = rospy.Publisher("tag_markers", MarkerArray, queue_size=10)
         self.rotated_tag_pub = rospy.Publisher("rotated_detections", AprilTagDetectionArray, queue_size=10)
+        self.rotated_debug_pub = rospy.Publisher("rotated_debug", PoseArray, queue_size=10)
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.tag_msg = AprilTagDetectionArray()
         self.rotate_quat = (0.5, -0.5, -0.5, -0.5)
@@ -53,13 +54,55 @@ class TagMarkerPublisher:
         rospy.loginfo("%s init complete" % self.name)
 
     def tag_callback(self, msg: AprilTagDetectionArray):
+        base_detections = AprilTagDetectionArray()
         for detection in msg.detections:
             pose: Pose = detection.pose.pose.pose
             detection.pose.pose.pose.orientation = self.rotate_tag_orientation(pose.orientation, self.rotate_quat)
-        if len(msg.detections) != 0:
-            self.tag_msg = msg
-        self.rotated_tag_pub.publish(msg)
+            new_detection = self.transform_tag_to_base(detection)
+            if new_detection is None:
+                continue
+            base_detections.header = new_detection.pose.header
+            base_detections.detections.append(new_detection)
+            
+        if len(base_detections.detections) != 0:
+            self.tag_msg = base_detections
+        self.rotated_tag_pub.publish(self.tag_msg)
+        if self.debug:
+            self.publish_debug_rotation(self.tag_msg)
+        
+    def publish_debug_rotation(self, msg: AprilTagDetectionArray):
+        pose_array = PoseArray()
+        pose_array.header = msg.header
+        for detection in msg.detections:
+            pose: Pose = detection.pose.pose.pose
+            pose_array.poses.append(pose)
+        self.rotated_debug_pub.publish(pose_array)
     
+    def transform_tag_to_base(self, detection: AprilTagDetection) -> Optional[AprilTagDetection]:
+        tag_pose_stamped = PoseStamped()
+        tag_pose_stamped.header = detection.pose.header
+        tag_pose_stamped.pose = detection.pose.pose.pose
+        
+        if self.robot_frame == tag_pose_stamped.header.frame_id:
+            return tag_pose_stamped
+        try:
+            transform = self.tf_buffer.lookup_transform(
+                self.robot_frame,
+                tag_pose_stamped.header.frame_id,
+                rospy.Time(0),
+                self.stale_detection_seconds
+            )
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            rospy.logwarn("Failed to look up %s to %s. %s" % (self.robot_frame, tag_pose_stamped.header.frame_id, e))
+            return None
+        base_pose_stamped = tf2_geometry_msgs.do_transform_pose(tag_pose_stamped, transform)
+        
+        new_detection = copy.deepcopy(detection)
+        new_detection.pose.pose.pose = base_pose_stamped.pose
+        new_detection.pose.header = base_pose_stamped.header
+        
+        return new_detection
+
     def rotate_tag_orientation(self, tag_orientation: Quaternion, rotate_quat: Tuple[float, float, float, float]) -> Quaternion:
         rotate_mat = Rotation.from_quat(rotate_quat)  # type: ignore
         tag_mat = Rotation.from_quat((
@@ -115,16 +158,16 @@ class TagMarkerPublisher:
         position_marker.color.g = color[1]
         position_marker.color.b = color[2]
         position_marker.color.a = 0.75
-        position_marker.scale.x = self.tag_pose_size / 4.0
-        position_marker.scale.y = self.tag_pose_size / 2.5
-        position_marker.scale.z = self.tag_pose_size / 2.0
+        position_marker.scale.x = self.tag_pose_marker_size / 4.0
+        position_marker.scale.y = self.tag_pose_marker_size / 2.5
+        position_marker.scale.z = self.tag_pose_marker_size / 2.0
         if rotate_quat is not None:
             position_marker.pose.orientation = self.rotate_tag_orientation(position_marker.pose.orientation, rotate_quat)
         
         p1 = Point()
         p2 = Point()
         
-        p2.x = self.tag_pose_size
+        p2.x = self.tag_pose_marker_size
 
         position_marker.points.append(p1)
         position_marker.points.append(p2)
@@ -161,9 +204,9 @@ class TagMarkerPublisher:
         marker.id = 0  # all waypoint names should be unique
 
         scale_vector = Vector3()
-        scale_vector.x = self.tag_pose_size
-        scale_vector.y = self.tag_pose_size
-        scale_vector.z = self.tag_pose_size
+        scale_vector.x = self.tag_pose_marker_size
+        scale_vector.y = self.tag_pose_marker_size
+        scale_vector.z = self.tag_pose_marker_size
         marker.scale = scale_vector
         marker.color = ColorRGBA(
             r=color[0],

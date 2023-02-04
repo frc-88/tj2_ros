@@ -11,7 +11,6 @@ Panels:
         - /Object Markers1/Namespaces1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
-        - /Pose1
       Splitter Ratio: 0.4070473909378052
     Tree Height: 316
   - Class: rviz/Selection
@@ -135,15 +134,7 @@ Visualization Manager:
           Value: true
         tag2:
           Value: true
-        tag3:
-          Value: true
-        tag4:
-          Value: true
-        tag5:
-          Value: true
         tag6:
-          Value: true
-        tag7:
           Value: true
         tag8:
           Value: true
@@ -194,16 +185,6 @@ Visualization Manager:
                               tag1:
                                 {}
                               tag2:
-                                {}
-                              tag3:
-                                {}
-                              tag4:
-                                {}
-                              tag5:
-                                {}
-                              tag6:
-                                {}
-                              tag7:
                                 {}
                               tag8:
                                 {}
@@ -635,45 +616,10 @@ Visualization Manager:
       Name: Apriltags
       Namespaces:
         cube1: true
-        cube2: true
-        cube3: true
-        cube4: true
-        cube5: true
-        cube6: true
-        cube7: true
-        cube8: true
         posx1: true
-        posx2: true
-        posx3: true
-        posx4: true
-        posx5: true
-        posx6: true
-        posx7: true
-        posx8: true
         posy1: true
-        posy2: true
-        posy3: true
-        posy4: true
-        posy5: true
-        posy6: true
-        posy7: true
-        posy8: true
         posz1: true
-        posz2: true
-        posz3: true
-        posz4: true
-        posz5: true
-        posz6: true
-        posz7: true
-        posz8: true
         text1: true
-        text2: true
-        text3: true
-        text4: true
-        text5: true
-        text6: true
-        text7: true
-        text8: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -717,7 +663,7 @@ Visualization Manager:
       Axes Radius: 0.02500000037252903
       Class: rviz/Pose
       Color: 0; 0; 255
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: Pose
@@ -727,14 +673,14 @@ Visualization Manager:
       Shape: Arrow
       Topic: /tj2/robot_tag_pose
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Arrow Length: 0.30000001192092896
       Axes Length: 0.30000001192092896
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
-      Color: 0; 0; 255
-      Enabled: false
+      Color: 255; 255; 0
+      Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
       Name: PoseArray
@@ -744,7 +690,7 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /tj2/robot_tag_particles
       Unreliable: false
-      Value: false
+      Value: true
     - Alpha: 1
       Arrow Length: 0.30000001192092896
       Axes Length: 0.30000001192092896
@@ -758,7 +704,7 @@ Visualization Manager:
       Queue Size: 10
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
-      Shape: Arrow (Flat)
+      Shape: Axes
       Topic: /tj2/debug_measurement
       Unreliable: false
       Value: true
@@ -766,7 +712,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_link
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -790,7 +736,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.003387212753296
+      Distance: 7.575906276702881
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -798,17 +744,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.25947117805480957
-        Y: 0.2809256911277771
-        Z: 0.18523132801055908
+        X: -0.08889421075582504
+        Y: -0.6923544406890869
+        Z: -0.2930966317653656
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3297961950302124
+      Pitch: 0.6747961640357971
       Target Frame: <Fixed Frame>
-      Yaw: 1.6680999994277954
+      Yaw: 3.036284923553467
     Saved: ~
 Window Geometry:
   Displays:

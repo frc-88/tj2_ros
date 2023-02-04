@@ -8,7 +8,6 @@ from dynamic_reconfigure.server import Server
 import tf2_ros
 import numpy as np
 
-import tf2_geometry_msgs
 import tf.transformations
 
 from apriltag_ros.msg import AprilTagDetectionArray, AprilTagDetection
@@ -61,8 +60,6 @@ class TagLocalizationNode:
         self.odom_pose2d = Pose2d()
         self.prev_measurement = np.array([0.0, 0.0, 0.0])
 
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         if self.publish_tf:
             self.tf_broadcaster = tf2_ros.TransformBroadcaster()
         else:
@@ -102,8 +99,8 @@ class TagLocalizationNode:
         self.num_particles = self.get_default_config("num_particles", config, self.num_particles)
         self.initial_distribution_type = self.get_default_config("initial_distribution_type", config, self.initial_distribution_type)
         
-        self.pf.set_parameters(self.num_particles, self.meas_std_val, self.u_std)
-        self.pf.initialize_particles(self.initial_distribution_type, self.initial_range)
+        # self.pf.set_parameters(self.num_particles, self.meas_std_val, self.u_std)
+        # self.pf.initialize_particles(self.initial_distribution_type, self.initial_range)
 
         return self.dyn_config
     
@@ -125,7 +122,7 @@ class TagLocalizationNode:
             if state is None:
                 continue
             states.append(state)
-        if self.measurement_input_pub is not None:
+        if self.debug and self.measurement_input_pub is not None:
             self.publish_measurement_inputs(states)
         if len(states) > 1:
             weighted_state = np.mean(np.array(states, dtype=np.float64), axis=0)
@@ -135,9 +132,9 @@ class TagLocalizationNode:
             return
         self.prev_measurement = weighted_state
         if not self.pf.is_initialized():
+            rospy.loginfo("First detection found. Initializing particle filter.")
             self.pf.initialize_particles(self.initial_distribution_type, self.initial_range, weighted_state)
         self.pf.update(weighted_state)
-        self.pf.check_resample()
 
     def odom_callback(self, msg: Odometry):
         self.odom_frame = msg.header.frame_id
@@ -146,8 +143,11 @@ class TagLocalizationNode:
         self.odom_pose2d = Pose2d.from_ros_pose(msg.pose.pose)
         if not self.pf.is_initialized():
             return
-        if abs(u_vector[0]) > 0.01 or abs(u_vector[1]) > 0.01 or abs(u_vector[2]) > 0.01:
+        if abs(u_vector[0]) > 0.001 or abs(u_vector[1]) > 0.001 or abs(u_vector[2]) > 0.001:
             self.pf.predict(u_vector, dt)
+            did_resample = self.pf.check_resample()
+            if self.debug and did_resample:
+                rospy.loginfo("Tag particle filter resampled")
 
     def tag_to_robot_state(self, detection: AprilTagDetection) -> Optional[np.ndarray]:
         # convert detection to pose stamped
@@ -156,12 +156,16 @@ class TagLocalizationNode:
         # apply robot->tag transform relative to waypoint. get pose
         # convert pose to particle filter measurement
 
-        tag_pose = PoseStamped()
-        tag_pose.header = detection.pose.header
-        tag_pose.pose = detection.pose.pose.pose
-        tag_base_pose = self.transform_tag_to_base(tag_pose)
-        if tag_base_pose is None:
+        if detection.pose.header.frame_id != self.robot_frame:
+            rospy.logwarn(
+                "Detection isn't in the expected frame. "
+                f"Expected {self.robot_frame}. "
+                f"Got {detection.pose.header.frame_id}"
+            )
             return None
+        tag_base_pose = PoseStamped()
+        tag_base_pose.header = detection.pose.header
+        tag_base_pose.pose = detection.pose.pose.pose
         tag_base_pose2d = Pose2d.from_ros_pose(tag_base_pose.pose)
         
         tag_id: List[int] = detection.id
@@ -188,23 +192,8 @@ class TagLocalizationNode:
         tag_to_base_tf = tf.transformations.inverse_matrix(base_to_tag_tf)
         map_to_base_tf = map_to_waypoint_tf @ tag_to_base_tf
         robot_global_pose2d = Pose2d.from_transform_matrix(map_to_base_tf)
-
+        
         return np.array(robot_global_pose2d.to_list())
-
-    def transform_tag_to_base(self, tag_pose_stamped: PoseStamped) -> Optional[PoseStamped]:
-        if self.robot_frame == tag_pose_stamped.header.frame_id:
-            return tag_pose_stamped
-        try:
-            transform = self.tf_buffer.lookup_transform(
-                tag_pose_stamped.header.frame_id,
-                self.robot_frame,
-                rospy.Time(0),
-                self.stale_detection_seconds
-            )
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            rospy.logwarn("Failed to look up %s to %s. %s" % (self.robot_frame, tag_pose_stamped.header.frame_id, e))
-            return None
-        return tf2_geometry_msgs.do_transform_pose(tag_pose_stamped, transform)
 
     def get_predict_dt(self, stamp) -> float:
         # return time since last predict message
@@ -231,8 +220,7 @@ class TagLocalizationNode:
         self.measurement_input_pub.publish(states_msg)
 
     def publish_pose(self):
-        # state = self.pf.mean()
-        state = self.prev_measurement
+        state = self.pf.mean()
         pose_stamped = PoseStamped()
         pose_stamped.header.stamp = rospy.Time.now()
         pose_stamped.header.frame_id = self.global_frame
@@ -294,9 +282,8 @@ class TagLocalizationNode:
             if rospy.is_shutdown():
                 break
 
-            if self.pf.is_initialized():
-                self.publish_pose()
-                self.publish_particles()
+            self.publish_pose()
+            self.publish_particles()
 
 
 if __name__ == "__main__":

@@ -20,20 +20,20 @@ def predict(particles, input_std_error, num_particles, u, dt):
     y_0 = particles[:, 1]
     th_0 = particles[:, 2]
 
-    vx_u = u[0]
-    vy_u = u[1]
-    vt_u = u[2]
+    dx_u = u[0] * dt
+    dy_u = u[1] * dt
+    dth_u = u[2] * dt
 
     vx_sd_u = input_std_error[0]
     vy_sd_u = input_std_error[1]
     vt_sd_u = input_std_error[2]
     
-    vx_a = vx_u * np.cos(th_0) - vy_u * np.sin(th_0)
-    vy_a = vx_u * np.sin(th_0) + vy_u * np.cos(th_0)
+    dx_a = dx_u * np.cos(th_0) - dy_u * np.sin(th_0)
+    dy_a = dx_u * np.sin(th_0) + dy_u * np.cos(th_0)
 
-    x_1 = x_0 + vx_a * dt + normal(0.0, vx_sd_u, num_particles)
-    y_1 = y_0 + vy_a * dt + normal(0.0, vy_sd_u, num_particles)
-    th_1 = th_0 + vt_u * dt + normal(0.0, vt_sd_u, num_particles)
+    x_1 = x_0 + dx_a + normal(0.0, vx_sd_u, num_particles)
+    y_1 = y_0 + dy_a + normal(0.0, vy_sd_u, num_particles)
+    th_1 = th_0 + dth_u + normal(0.0, vt_sd_u, num_particles)
 
     particles[:, 0] = x_1
     particles[:, 1] = y_1
@@ -101,6 +101,9 @@ class ParticleFilter:
                 self.particles[:, state_num] = uniform(min_val, max_val, size=self.num_particles)
 
     def create_gaussian_particles(self, mean, var):
+        assert len(mean) == self.num_states
+        assert len(var) == self.num_states
+
         self.initialize_weights()
         with self.lock:
             for state_num in range(self.num_states):
@@ -177,7 +180,7 @@ class ParticleFilter:
 
     def systematic_resample(self):
         cumulative_sum = np.cumsum(self.weights)
-        indices = np.zeros(self.num_particles, 'int')
+        indices = np.zeros(self.num_particles, np.int64)
         t = np.linspace(0, 1.0 - 1.0 / self.num_particles, self.num_particles) + random() / self.num_particles
 
         i, j = 0, 0
