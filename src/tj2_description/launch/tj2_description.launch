@@ -2,7 +2,6 @@
     <arg name="model" default="$(find tj2_description)/urdf/diffyjr.urdf.xml"/>
     <arg name="joint_names" default="$(find tj2_description)/config/diffyjr_joints.yaml"/>
     <arg name="gui" default="false" />
-    <arg name="tilt_correction" default="true" />
 
     <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
     <param name="use_gui" value="$(arg gui)"/>

@@ -34,7 +34,7 @@ RUN python -m pip install torch torchvision torchaudio --extra-index-url https:/
 # ---
 
 # generated using rosdep install --from-paths . -r --reinstall --simulate
-RUN apt-get install -y --ignore-missing ros-noetic-rospy \
+RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-catkin \
     ros-noetic-tf \
     ros-noetic-robot-localization \

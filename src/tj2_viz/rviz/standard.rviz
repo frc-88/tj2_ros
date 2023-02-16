@@ -5,6 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /RobotModel1
+        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
         - /Object Markers1/Namespaces1
@@ -29,7 +31,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -55,7 +57,7 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 0.699999988079071
+    - Alpha: 0.8999999761581421
       Class: rviz/RobotModel
       Collision Enabled: false
       Enabled: true
@@ -65,7 +67,52 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        arm1_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        arm1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        arm2_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        arm2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        arm3_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        arm3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         base_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        end_effector_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        end_effector_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        intake_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        intake_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -101,25 +148,41 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_link:
-          Value: true
-        base_tilt_link:
+        arm1_base_link:
           Value: false
-        camera_armature_link:
+        arm1_link:
+          Value: false
+        arm2_base_link:
+          Value: false
+        arm2_link:
+          Value: false
+        arm3_base_link:
+          Value: false
+        arm3_link:
+          Value: false
+        base_tilt_link:
+          Value: true
+        camera_base_link:
           Value: false
         camera_link:
+          Value: true
+        end_effector_base_link:
           Value: false
-        camera_tilt_link:
-          Value: false
+        end_effector_link:
+          Value: true
         imu:
+          Value: true
+        intake_base_link:
+          Value: false
+        intake_link:
           Value: false
         laser:
+          Value: true
+        laser_base_link:
+          Value: false
+        limelight_base_link:
           Value: false
         limelight_link:
-          Value: false
-        map:
-          Value: true
-        odom:
           Value: true
         swerve_wheel_0:
           Value: false
@@ -129,36 +192,6 @@ Visualization Manager:
           Value: false
         swerve_wheel_3:
           Value: false
-        tag1:
-          Value: true
-        tag2:
-          Value: true
-        tag3:
-          Value: true
-        tag5:
-          Value: true
-        zed2_baro_link:
-          Value: false
-        zed2_base_link:
-          Value: false
-        zed2_camera_center:
-          Value: false
-        zed2_imu_link:
-          Value: false
-        zed2_left_camera_frame:
-          Value: false
-        zed2_left_camera_optical_frame:
-          Value: false
-        zed2_mag_link:
-          Value: false
-        zed2_right_camera_frame:
-          Value: false
-        zed2_right_camera_optical_frame:
-          Value: false
-        zed2_temp_left_link:
-          Value: false
-        zed2_temp_right_link:
-          Value: false
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -166,52 +199,38 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          odom:
-            base_link:
-              base_tilt_link:
-                camera_tilt_link:
-                  camera_armature_link:
-                    camera_link:
-                      zed2_base_link:
-                        zed2_camera_center:
-                          zed2_baro_link:
-                            {}
-                          zed2_left_camera_frame:
-                            zed2_imu_link:
-                              {}
-                            zed2_left_camera_optical_frame:
-                              tag1:
-                                {}
-                              tag2:
-                                {}
-                              tag3:
-                                {}
-                              tag5:
-                                {}
-                            zed2_temp_left_link:
-                              {}
-                          zed2_mag_link:
-                            {}
-                          zed2_right_camera_frame:
-                            zed2_right_camera_optical_frame:
-                              {}
-                            zed2_temp_right_link:
-                              {}
-                imu:
-                  {}
-                laser:
-                  {}
-                limelight_link:
-                  {}
-                swerve_wheel_0:
-                  {}
-                swerve_wheel_1:
-                  {}
-                swerve_wheel_2:
-                  {}
-                swerve_wheel_3:
-                  {}
+        base_tilt_link:
+          arm1_base_link:
+            arm1_link:
+              arm2_base_link:
+                arm2_link:
+                  arm3_base_link:
+                    arm3_link:
+                      end_effector_base_link:
+                        end_effector_link:
+                          {}
+          camera_base_link:
+            camera_link:
+              {}
+          imu:
+            {}
+          intake_base_link:
+            intake_link:
+              {}
+          laser_base_link:
+            laser:
+              {}
+          limelight_base_link:
+            limelight_link:
+              {}
+          swerve_wheel_0:
+            {}
+          swerve_wheel_1:
+            {}
+          swerve_wheel_2:
+            {}
+          swerve_wheel_3:
+            {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -708,7 +727,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: base_tilt_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -732,7 +751,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 26.216073989868164
+      Distance: 2.1315557956695557
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -740,17 +759,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 0.4300558269023895
+        Y: -0.029818609356880188
+        Z: 0.3716652989387512
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8303983807563782
+      Pitch: 0.9647979736328125
       Target Frame: <Fixed Frame>
-      Yaw: 0.4603980481624603
+      Yaw: 4.073573589324951
     Saved: ~
 Window Geometry:
   Displays:
