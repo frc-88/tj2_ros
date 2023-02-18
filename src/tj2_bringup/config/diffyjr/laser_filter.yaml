@@ -3,9 +3,19 @@ scan_filter_chain:
   type: laser_filters/LaserScanRangeFilter
   params:
     lower_threshold: 0.35
-    upper_threshold: .inf
-- name: angle
-  type: laser_filters/LaserScanAngularBoundsFilterInPlace
+    upper_threshold: 12.0
+# - name: angle
+#   type: laser_filters/LaserScanAngularBoundsFilterInPlace
+#   params:
+#     lower_angle: -2.35619
+#     upper_angle: -1.57079
+- name: box
+  type: laser_filters/LaserScanBoxFilter
   params:
-    lower_angle: -2.35619
-    upper_angle: -1.57079
+    box_frame: base_tilt_link
+    min_x: -0.23
+    max_x: 0.23
+    min_y: -0.23
+    max_y: 0.23
+    min_z: 0.0
+    max_z: 0.2

@@ -18,8 +18,10 @@
         /tj2/odom
         /tj2/ping
         /tj2_zed/rgb/camera_info
-        /tj2_zed/rgb/image_raw_color
+        /tj2_zed/rgb/image_rect_color
         /tj2_zed/point_cloud/cloud_registered
+        /tj2_zed/depth/camera_info
+        /tj2_zed/depth/depth_registered
         /tj2_zed/obj_det/detections
         /tj2_zed/obj_det/yolo_objects
 

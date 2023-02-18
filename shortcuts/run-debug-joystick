@@ -1,4 +1,6 @@
 #!/bin/bash
-source ~/tj2_ros/scripts/set_client.sh 10.0.88.35
-roslaunch tj2_debug_joystick tj2_debug_joystick.launch topic_name:=joy_remote device:=/dev/input/js1
+BASE_DIR=$(realpath "$(dirname $0)")
 
+IP=`bash ${BASE_DIR}/lib/get-ip.sh ${1}`
+
+${BASE_DIR}/../workstation/docker/run_joystick $IP $2

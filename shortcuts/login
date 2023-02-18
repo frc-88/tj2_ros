@@ -1,6 +1,18 @@
 #!/bin/bash
 BASE_DIR=$(realpath "$(dirname $0)")
 
-IP=`bash ${BASE_DIR}/lib/get-ip.sh ${1}`
+DEVICE=$1
+RESTART=$2
 
-${BASE_DIR}/../workstation/docker/run_joystick $IP $2
+IP=`bash ${BASE_DIR}/lib/get-ip.sh ${1}`
+KEY=`bash ${BASE_DIR}/lib/get-key.sh ${1}`
+
+if [ -z $IP ]; then
+    exit 1
+fi
+
+if [ -z $KEY ]; then
+    exit 1
+fi
+
+ssh -i "${KEY}" tj2@${IP} -p 5810
