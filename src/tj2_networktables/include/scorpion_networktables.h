@@ -15,26 +15,16 @@
 using namespace std;
 
 
-class DiffyJrNetworkTables : public TJ2NetworkTables {
+class ScorpionNetworkTables : public TJ2NetworkTables {
 private:
     // Parameters
     string _tag_global_frame;
 
     // module entires
-    NT_Entry _module_num_entry;
     NT_Entry _tag_global_entry;
 
     // Members
-    int _num_modules;
     vector<double> _tag_global_pose;
-
-    // Publishers
-    ros::Publisher _modules_pub;
-
-    // NT callbacks
-    void module_num_callback(const nt::EntryNotification& event);
-
-    // Timer callbacks
 
     // Other helpers
     void publish_module();
@@ -44,6 +34,6 @@ private:
     void loop();
 
 public:
-    DiffyJrNetworkTables(ros::NodeHandle* nodehandle);
+    ScorpionNetworkTables(ros::NodeHandle* nodehandle);
     int run();
 };

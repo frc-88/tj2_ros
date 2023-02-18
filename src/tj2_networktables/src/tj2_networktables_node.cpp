@@ -1,5 +1,6 @@
 #include "diffyjr_networktables.h"
 #include "robot_2022_networktables.h"
+#include "scorpion_networktables.h"
 
 int main(int argc, char **argv)
 {
@@ -15,6 +16,9 @@ int main(int argc, char **argv)
     }
     else if (nt_interface_name.compare("robot_2022") == 0) {
         nt_interface = new Robot2022NetworkTables(&nh);
+    }
+    else if (nt_interface_name.compare("scorpion") == 0) {
+        nt_interface = new ScorpionNetworkTables(&nh);
     }
     else {
         ROS_ERROR("Failed to initialize networktables interface!! Check selected interface name.");

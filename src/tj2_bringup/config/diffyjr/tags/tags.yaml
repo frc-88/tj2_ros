@@ -51,14 +51,31 @@ standalone_tags:
 #   ]
 tag_bundles:
   [
-#     {
-#       name: 'target',
-#       layout:
-#         [
-#           {id: 242, size: 0.04, x: -0.0275, y:  0.02875, z: 0.0, qw: 1.0, qx: 0.0, qy: 0.0, qz: 0.0},
-#           {id: 113, size: 0.04, x:  0.0275, y:  0.02875, z: 0.0, qw: 1.0, qx: 0.0, qy: 0.0, qz: 0.0},
-#           {id: 137, size: 0.04, x: -0.0275, y: -0.02875, z: 0.0, qw: 1.0, qx: 0.0, qy: 0.0, qz: 0.0},
-#           {id: 440, size: 0.04, x:  0.0275, y: -0.02875, z: 0.0, qw: 1.0, qx: 0.0, qy: 0.0, qz: 0.0},
-#         ]
-#     }
+    {
+      name: 'field',
+      layout:
+      [
+        {id: 1, size: 0.1524, x: -7.243096, y:  2.936589, z:  0.467500, qx: 0.5000, qy: 0.5000, qz: 0.5000, qw: 0.5000},  # red alliance community, POV robot: right-most, POV field: (+X, +Y)
+        {id: 2, size: 0.1524, x: -7.243096, y:  1.260189, z:  0.467500, qx: 0.5000, qy: 0.5000, qz: 0.5000, qw: 0.5000},  # red alliance community, POV robot: center, POV field: (+X, +Y)
+        {id: 3, size: 0.1524, x: -7.243096, y: -0.416211, z:  0.467500, qx: 0.5000, qy: 0.5000, qz: 0.5000, qw: 0.5000},  # red alliance community, POV robot: left-most, POV field: (+X, +Y)
+        {id: 4, size: 0.1524, x: -7.908322, y: -2.741613, z:  0.467500, qx: 0.5000, qy: 0.5000, qz: 0.5000, qw: 0.5000},  # red alliance substation, POV field: (+X, -Y)
+        {id: 5, size: 0.1524, x:  7.908322, y: -2.741613, z:  0.467500, qx: 0.5000, qy: 0.5000, qz: 0.5000, qw: 0.5000},  # blue alliance substation, POV field: (-X, -Y)
+        {id: 6, size: 0.1524, x:  7.243096, y: -0.416211, z:  0.467500, qx: 0.5000, qy: 0.5000, qz: 0.5000, qw: 0.5000},  # blue alliance community, POV robot: right-most, POV field: (-X, +Y)
+        {id: 7, size: 0.1524, x:  7.243096, y:  1.260189, z:  0.467500, qx: 0.5000, qy: 0.5000, qz: 0.5000, qw: 0.5000},  # blue alliance community, POV robot: center, POV field: (-X, +Y)
+        {id: 8, size: 0.1524, x:  7.243096, y:  2.936589, z:  0.467500, qx: 0.5000, qy: 0.5000, qz: 0.5000, qw: 0.5000},  # blue alliance community, POV robot: left-most, POV field: (-X, +Y)
+      ]
+    }
   ]
+
+#     CHARGED UP 2023 FIELD
+#         SCORING TABLE
+#   RED                   BLUE
+# |----------------------------|
+# |-- 1                   8 -- |
+# |              +Y            |
+# |-- 2          |        7 -- |
+# |              o--+X         |
+# |-- 3                   6 -- |
+# |                            |
+# |-4                        5-|
+# |----------------------------|

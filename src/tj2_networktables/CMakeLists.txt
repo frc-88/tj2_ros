@@ -118,7 +118,7 @@ catkin_python_setup()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES tj2_networktables diffyjr_networktables robot_2022_networktables
+  LIBRARIES tj2_networktables diffyjr_networktables robot_2022_networktables scorpion_networktables
   CATKIN_DEPENDS 
     rospy
     std_msgs
@@ -156,6 +156,10 @@ add_library(robot_2022_networktables
   src/robot_2022_networktables.cpp
 )
 
+add_library(scorpion_networktables
+  src/scorpion_networktables.cpp
+)
+
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -191,9 +195,14 @@ target_link_libraries(robot_2022_networktables
     ntcore wpiutil tj2_networktables
 )
 
+target_link_libraries(scorpion_networktables
+    ${catkin_LIBRARIES}
+    ntcore wpiutil tj2_networktables
+)
+
 target_link_libraries(tj2_networktables_node
     ${catkin_LIBRARIES}
-    ntcore wpiutil tj2_networktables robot_2022_networktables diffyjr_networktables
+    ntcore wpiutil tj2_networktables robot_2022_networktables diffyjr_networktables scorpion_networktables
 )
 
 ## Add cmake target dependencies of the executable
@@ -201,6 +210,7 @@ target_link_libraries(tj2_networktables_node
 add_dependencies(tj2_networktables ${tj2_networktables_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(diffyjr_networktables ${diffyjr_networktables_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(robot_2022_networktables ${robot_2022_networktables_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(scorpion_networktables ${scorpion_networktables_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(tj2_networktables_node ${tj2_networktables_node_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #############

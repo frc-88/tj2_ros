@@ -88,17 +88,30 @@ protected:
     NT_Entry get_entry(string path);
 
     // Main loop methods
-    void loop();
+    virtual void loop();
+protected:
+    string _base_frame;
+    string _odom_frame;
+    string _map_frame;
+    string _imu_frame;
+
+    tf2_ros::Buffer _tf_buffer;
+    tf2_ros::TransformListener _tf_listener;
+
+    double get_time();
+    string get_label(int obj_id);
+    int get_index(int obj_id);
+
+    std::map<string, int> _detection_counter;
+    void publish_detection_count(string name, int count);
+    void publish_detection(string name, int index, geometry_msgs::PoseStamped pose);
+
 private:
     // Parameters
     int _nt_port;
     double _update_interval;
 
     bool _publish_odom_tf;
-    string _base_frame;
-    string _odom_frame;
-    string _map_frame;
-    string _imu_frame;
 
     double _cmd_vel_timeout_param;
     double _odom_timeout_param;
@@ -194,7 +207,6 @@ private:
     vector<double> _laser_scan_xs;
     vector<double> _laser_scan_ys;
 
-    std::map<string, int> _detection_counter;
 
     // Messages
     nav_msgs::Odometry _odom_msg;
@@ -224,15 +236,11 @@ private:
     ros::Subscriber _zones_sub;
     ros::Subscriber _tags_sub;
 
-    tf2_ros::Buffer _tf_buffer;
-    tf2_ros::TransformListener _tf_listener;
     vector<ros::Subscriber>* _raw_joint_subs;
 
     // NT publishers
     void publish_cmd_vel();
     void publish_robot_global_pose();
-    void publish_detection_count(string name, int count);
-    void publish_detection(string name, int index, geometry_msgs::PoseStamped pose);
 
     // NT subscribers
     void publish_joint(size_t joint_index, double joint_position);
@@ -267,10 +275,7 @@ private:
 
     // Other helpers
     void add_joint(string name);
-    double get_time();
     vector<double> get_double_list_param(string name, size_t length);
-    string get_label(int obj_id);
-    int get_index(int obj_id);
     std::vector<std::string> load_label_names(const string& path);
     
 };

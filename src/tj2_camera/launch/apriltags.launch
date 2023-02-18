@@ -5,6 +5,7 @@
     <arg name="image_rect_topic" default="/tj2_zed/rgb/image_rect_color"/>
     <arg name="node_name" default="apriltag"/>
     <arg name="namespace" default="apriltag"/>
+    <arg name="map_name" default="charged-up-2023.yaml"/>
 
     <group ns="$(arg namespace)">
         <rosparam command="load" file="$(arg apriltag_settings)" ns="$(arg node_name)"/>
@@ -15,6 +16,10 @@
             <remap from="image_rect" to="$(arg image_rect_topic)"/>
         </node>
 
-        <!-- <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen"/> -->
+        <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen"/>
+
+        <node name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_laser_slam)/maps/$(arg map_name)">
+            <param name="frame_id" value="field"/>
+        </node>
     </group>
 </launch>

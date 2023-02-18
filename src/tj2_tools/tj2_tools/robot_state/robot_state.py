@@ -1,9 +1,8 @@
 import math
 from typing import List
 import numpy as np
-import tf.transformations
-from geometry_msgs.msg import Quaternion
-from geometry_msgs.msg import Pose
+import tf_conversions
+from geometry_msgs.msg import Quaternion, Pose, Twist
 
 
 class State:
@@ -46,7 +45,7 @@ class State:
 
     @staticmethod
     def theta_from_quat(quaternion):
-        return tf.transformations.euler_from_quaternion((
+        return tf_conversions.transformations.euler_from_quaternion((
             quaternion.x,
             quaternion.y,
             quaternion.z,
@@ -67,18 +66,23 @@ class State:
         return quat_msg
 
     def get_theta_as_quat_as_list(self) -> List[float]:
-        return tf.transformations.quaternion_from_euler(0.0, 0.0, self.theta).tolist()
+        return tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, self.theta).tolist()
 
     def transform_by(self, other):
+        if not isinstance(other, self.__class__):
+            raise ValueError("Can't transform %s to %s" % (self.__class__, other.__class__))
         state = self.__class__.from_state(self)
-        rotated = other.rotate_by(other.theta)
-        state.x += rotated.x
-        state.y += rotated.y
-        state.theta = other.theta + state.theta
+        state = state.rotate_by(other.theta)
+        state.x += other.x
+        state.y += other.y
+        state.theta = other.theta + self.theta
+        
         state.theta = self.normalize_theta(state.theta)
         return state
 
     def relative_to(self, other):
+        if not isinstance(other, self.__class__):
+            raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
         state = self.__class__.from_state(self)
         state.x -= other.x
         state.y -= other.y
@@ -97,6 +101,9 @@ class State:
         return state
     
     def delta(self, other, states="xy"):
+        if not isinstance(other, self.__class__):
+            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
+
         state = self.__class__.from_state(self)
         for key in states:
             if key == "x":
@@ -109,6 +116,9 @@ class State:
         return state
 
     def add(self, other, states="xy"):
+        if not isinstance(other, self.__class__):
+            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
+
         state = self.__class__.from_state(self)
         for key in states:
             if key == "x":
@@ -150,6 +160,8 @@ class State:
     def distance(self, other=None):
         if other is None:  # if other is None, assume you're getting distance from the origin
             other = self.__class__()
+        if not isinstance(other, self.__class__):
+            raise ValueError("Can't get distance from %s to %s" % (self.__class__, other.__class__))
         dx = self.x - other.x
         dy = self.y - other.y
         return math.sqrt(dx * dx + dy * dy)
@@ -158,6 +170,8 @@ class State:
         if other is None:
             return math.atan2(self.y, self.x)
         else:
+            if not isinstance(other, self.__class__):
+                raise ValueError("Can't get heading from %s to %s" % (self.__class__, other.__class__))
             dx = self.x - other.x
             dy = self.y - other.y
             return math.atan2(dy, dx)
@@ -220,20 +234,6 @@ class State:
                 output.append(float(self.theta))
         return output
 
-    def to_transform_matrix(self) -> np.ndarray:
-        return tf.transformations.concatenate_matrices(
-            tf.transformations.translation_matrix([self.x, self.y, 0.0]),
-            tf.transformations.quaternion_matrix(
-                tf.transformations.quaternion_from_euler(0.0, 0.0, self.theta)
-            )
-        )
-
-    @classmethod
-    def from_transform_matrix(cls, matrix: np.ndarray):
-        x, y, _ = tf.transformations.translation_from_matrix(matrix)
-        _, _, theta = tf.transformations.euler_from_matrix(matrix)
-        return cls(x, y, theta)
-
     @classmethod
     def to_array(cls, poses: list):
         return np.array([pose.to_list() for pose in poses])
@@ -256,6 +256,9 @@ class State:
         return new_state
 
     def __add__(self, other):
+        if not isinstance(other, self.__class__):
+            raise ValueError("Can't add %s and %s" % (self.__class__, other.__class__))
+
         state = self.__class__()
         state.x = self.x + other.x
         state.y = self.y + other.y
@@ -263,6 +266,9 @@ class State:
         return state
 
     def __sub__(self, other):
+        if not isinstance(other, self.__class__):
+            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
+
         state = self.__class__()
         state.x = self.x - other.x
         state.y = self.y - other.y
@@ -270,27 +276,31 @@ class State:
         return state
 
     def __mul__(self, other):
-        state = self.__class__() 
-        if isinstance(other, int) or isinstance(other, float):
+        state = self.__class__()
+        if isinstance(other, self.__class__):
+            state.x = self.x * other.x
+            state.y = self.y * other.y
+            state.theta = self.theta * other.theta
+        elif isinstance(other, int) or isinstance(other, float):
             state.x = self.x * other
             state.y = self.y * other
             state.theta = self.theta * other
         else:
-            state.x = self.x * other.x
-            state.y = self.y * other.y
-            state.theta = self.theta * other.theta
+            raise ValueError("Can't multiply %s and %s" % (self.__class__, other.__class__))
         return state
 
     def __truediv__(self, other):
         state = self.__class__()
-        if isinstance(other, int) or isinstance(other, float):
+        if isinstance(other, self.__class__):
+            state.x = self.x / other.x
+            state.y = self.y / other.y
+            state.theta = self.theta / other.theta
+        elif isinstance(other, int) or isinstance(other, float):
             state.x = self.x / other
             state.y = self.y / other
             state.theta = self.theta / other
         else:
-            state.x = self.x / other.x
-            state.y = self.y / other.y
-            state.theta = self.theta / other.theta
+            raise ValueError("Can't divide %s and %s" % (self.__class__, other.__class__))
         return state
 
     def __abs__(self):
@@ -326,8 +336,29 @@ class Pose2d(State):
 
 class Velocity(State):
     @classmethod
-    def from_global_relative_speeds(cls, vx: float, vy: float, vt: float, angle_ref: float):
+    def from_poses(cls, old_pose: Pose2d, new_pose: Pose2d, dt: float) -> 'Velocity':
+        relative_pose = new_pose.relative_to(old_pose)
+        velocity_pose = relative_pose / dt
+        return cls.from_state(velocity_pose)
+
+    @classmethod
+    def from_global_relative_speeds(cls, vx: float, vy: float, vt: float, angle_ref: float) -> 'Velocity':
         self = cls(vx, vy, 0.0)
         self.rotate_by(-angle_ref)
         self.theta = vt
         return self
+
+    @classmethod
+    def from_ros_twist(cls, twist: Twist):
+        self = cls()
+        self.x = twist.linear.x
+        self.y = twist.linear.y
+        self.theta = twist.angular.z
+        return self
+
+    def to_ros_twist(self) -> Twist:
+        ros_twist = Twist()
+        ros_twist.linear.x = self.x
+        ros_twist.linear.y = self.y
+        ros_twist.angular.z = self.theta
+        return ros_twist
