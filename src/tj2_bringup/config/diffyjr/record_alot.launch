@@ -3,34 +3,71 @@
     <node pkg="rosbag" type="record" name="rosbag_record_alot" output="screen" 
        args="record -o /media/storage/bags/diffyjr_alot
         /amcl_pose
+        /apriltag/map
+        /apriltag/map_metadata
+        /apriltag/rotated_debug
+        /apriltag/rotated_detections
+        /apriltag/tag_detections
+        /apriltag/tag_markers
+        /clicked_point
         /initialpose
+        /joint_states
         /laser/scan
+        /laser/scan_filtered
         /map
         /map_metadata
+        /map_updates
+        /particlecloud
         /tf
         /tf_static
+        /tj2/add_zone
+        /tj2/bag_name
+        /tj2/bag_status
+        /tj2/cmd_vel
+        /tj2/cmd_vel_follow
+        /tj2/cmd_vel_nav
+        /tj2/cmd_vel_teleop
+        /tj2/field_relative
+        /tj2/imu
+        /tj2/is_autonomous
         /tj2/joint/base_link_to_wheel_0_joint
         /tj2/joint/base_link_to_wheel_1_joint
         /tj2/joint/base_link_to_wheel_2_joint
         /tj2/joint/base_link_to_wheel_3_joint
-        /tj2/cmd_vel
-        /tj2/cmd_vel_nav
-        /tj2/cmd_vel_teleop
-        /tj2/imu
-        /tj2/is_autonomous
+        /tj2/joint/command/base_link_to_wheel_0_joint
+        /tj2/joint/command/base_link_to_wheel_1_joint
+        /tj2/joint/command/base_link_to_wheel_2_joint
+        /tj2/joint/command/base_link_to_wheel_3_joint
+        /tj2/joint_states
+        /tj2/labels
         /tj2/match_time
+        /tj2/nogo_zones
+        /tj2/nt_passthrough
+        /tj2/nt_passthrough_string
         /tj2/odom
         /tj2/ping
+        /tj2/reset_pose
+        /tj2/robot_status
+        /tj2/robot_tag_pose
+        /tj2/smart_dashboard
+        /tj2/swerve_modules
+        /tj2/team_color
+        /tj2/twist_lock
+        /tj2/update_zones
+        /tj2/waypoint_markers
+        /tj2/waypoints
+        /tj2/zone_map
+        /tj2/zone_map_updates
+        /tj2/zones
+        /tj2/zones_info
+        /tj2_zed/imu/data
+        /tj2_zed/imu/data_raw
+        /tj2_zed/imu/mag
         /tj2_zed/obj_det/detections
         /tj2_zed/obj_det/yolo_objects
-        /tj2/markers
-        /tj2/team_color
-        /tj2/smart_dashboard
-        /tj2_zed/rgb_raw/camera_info
-        /tj2_zed/rgb_raw/image_raw_color
-        /tj2/color/recorded_frame
-        /tj2/depth/recorded_frame
-
+        /tj2_zed/rgb/camera_info
+        /tj2_zed/rgb/image_rect_color
+       
         --duration=60 --lz4
         " />
 </launch>

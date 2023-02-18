@@ -102,7 +102,7 @@ class WebappNode:
             self.ogm.set_scale(self.map_scale)
     
     def labels_callback(self, msg):
-        self.class_names = msg.data
+        self.class_names = msg.labels
 
     def footprint_callback(self, msg):
         global lock

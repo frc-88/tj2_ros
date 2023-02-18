@@ -88,5 +88,6 @@
         <arg name="image_rect_topic" value="/tj2_zed/rgb/image_rect_color"/>
         <arg name="node_name" value="apriltag"/>
         <arg name="namespace" value="apriltag"/>
+        <arg name="publish_tag_detections_image" value="false"/>
     </include>
 </launch>

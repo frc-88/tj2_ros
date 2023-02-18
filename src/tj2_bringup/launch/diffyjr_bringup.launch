@@ -108,6 +108,7 @@
         <arg name="image_rect_topic" value="/tj2_zed/rgb/image_rect_color"/>
         <arg name="node_name" value="apriltag"/>
         <arg name="namespace" value="apriltag"/>
+        <arg name="publish_tag_detections_image" value="false"/>
     </include>
     <!-- <include file="$(find tj2_camera)/launch/cuda_apriltags.launch">
         <arg name="apriltag_tags" value="$(find tj2_bringup)/config/diffyjr/tags/cuda_tags.yaml"/>

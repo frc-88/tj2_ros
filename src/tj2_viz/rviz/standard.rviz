@@ -577,7 +577,7 @@ Visualization Manager:
       Color: 114; 159; 207
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -592,7 +592,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -605,7 +605,7 @@ Visualization Manager:
       Color: 138; 226; 52
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -620,7 +620,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 0.699999988079071
       Class: rviz/Map
       Color Scheme: map
@@ -638,27 +638,47 @@ Visualization Manager:
       Namespaces:
         cube1: true
         cube1-2-3-4-5-6-7-8: true
+        cube2: true
+        cube3: true
         cube4: true
+        cube5: true
+        cube6: true
         cube7: true
         cube8: true
         posx1: true
         posx1-2-3-4-5-6-7-8: true
+        posx2: true
+        posx3: true
         posx4: true
+        posx5: true
+        posx6: true
         posx7: true
         posx8: true
         posy1: true
         posy1-2-3-4-5-6-7-8: true
+        posy2: true
+        posy3: true
         posy4: true
+        posy5: true
+        posy6: true
         posy7: true
         posy8: true
         posz1: true
         posz1-2-3-4-5-6-7-8: true
+        posz2: true
+        posz3: true
         posz4: true
+        posz5: true
+        posz6: true
         posz7: true
         posz8: true
         text1: true
         text1-2-3-4-5-6-7-8: true
+        text2: true
+        text3: true
         text4: true
+        text5: true
+        text6: true
         text7: true
         text8: true
       Queue Size: 100
@@ -753,17 +773,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.9930219650268555
-        Y: 1.2298492193222046
-        Z: 2.288745641708374
+        X: -1.3374404907226562
+        Y: 1.3174571990966797
+        Z: 2.338728904724121
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0647965669631958
+      Pitch: 1.0147968530654907
       Target Frame: <Fixed Frame>
-      Yaw: 4.719926834106445
+      Yaw: 4.779929161071777
     Saved: ~
 Window Geometry:
   Displays:
