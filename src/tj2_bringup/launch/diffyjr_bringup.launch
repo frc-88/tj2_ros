@@ -2,10 +2,10 @@
 <launch>
     <arg name="robot_address" default="10.0.88.2"/>
     <arg name="enable_driver_station" value="true"/>
-    <!-- <arg name="yolo_class_names" value="$(find tj2_yolo)/models/charged_up_2023.names"/>
-    <arg name="yolo_model_path" value="$(find tj2_yolo)/models/charged_up_2023-01-23.torchscript"/> -->
-    <arg name="yolo_class_names" value="$(find tj2_yolo)/models/powercell_2021.names"/>
-    <arg name="yolo_model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/>
+    <arg name="yolo_class_names" value="$(find tj2_yolo)/models/charged_up_2023.names"/>
+    <arg name="yolo_model_path" value="$(find tj2_yolo)/models/charged_up_2023-01-23.torchscript"/>
+    <!-- <arg name="yolo_class_names" value="$(find tj2_yolo)/models/powercell_2021.names"/>
+    <arg name="yolo_model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/> -->
     <arg name="laser_scan_topic" value="/laser/scan_filtered"/>
 
     <rosparam file="$(find tj2_bringup)/config/diffyjr/networktables.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
