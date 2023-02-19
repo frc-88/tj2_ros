@@ -4,5 +4,5 @@
     <include if="$(eval env('ROBOT') == 'diffyjr-mapping')" file="$(find tj2_bringup)/launch/diffyjr_build_map.launch"/>
     <include if="$(eval env('ROBOT') == '2022-robot')" file="$(find tj2_bringup)/launch/2022_robot_bringup.launch"/>
     <include if="$(eval env('ROBOT') == '2022-swervy')" file="$(find tj2_bringup)/launch/2022_swervy_bringup.launch"/>
-    <include if="$(eval env('ROBOT') == 'scorpion')" file="$(find tj2_bringup)/launch/scorpion.launch"/>
+    <include if="$(eval env('ROBOT') == 'scorpion')" file="$(find tj2_bringup)/launch/scorpion_bringup.launch"/>
 </launch>
