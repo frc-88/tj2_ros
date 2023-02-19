@@ -10,6 +10,10 @@ case $DEVICE in
     echo -n "10.0.88.35"
     ;;
 
+  porygonz)
+    echo -n "10.0.88.77"
+    ;;
+
   *)
     echo -n ""
     >&2 echo "error invalid device name: ${DEVICE}"

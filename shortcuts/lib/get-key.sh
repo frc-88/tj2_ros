@@ -10,6 +10,10 @@ case $DEVICE in
     echo -n "~/.ssh/tj2_porygon2"
     ;;
 
+  porygonz)
+    echo -n "~/.ssh/tj2_porygonz"
+    ;;
+
   *)
     echo -n ""
     >&2 echo "error invalid device name: ${DEVICE}"

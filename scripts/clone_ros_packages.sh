@@ -56,7 +56,6 @@ packages=(
     https://github.com/ros-visualization/interactive_markers.git
     https://github.com/frc-88/rev_color_sensor_ros.git
     https://github.com/eric-wieser/ros_numpy.git
-    https://github.com/frc-88/cuda_apriltag_ros.git
     https://github.com/tuw-robotics/marker_msgs.git
 )
 
@@ -115,7 +114,6 @@ branches=(
     noetic-devel    # https://github.com/ros-visualization/interactive_markers.git
     main  # https://github.com/frc-88/rev_color_sensor_ros.git
     master  # https://github.com/eric-wieser/ros_numpy.git
-    main  # https://github.com/frc-88/cuda_apriltag_ros.git
     master  # https://github.com/tuw-robotics/marker_msgs.git
 )
 
