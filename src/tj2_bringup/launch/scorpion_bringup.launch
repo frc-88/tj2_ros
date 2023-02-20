@@ -19,6 +19,7 @@
         <arg name="joint_names" value="$(find tj2_bringup)/config/scorpion/joints.yaml"/>
     </include>
 
+    <node pkg="tf" type="static_transform_publisher" name="field_to_map" args="0.0 0.0 0.0  0 0 0 1 field map 20" />
     <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" /> -->
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_base_link" args="-0.04899 -0.24130 0.40174  0 0 0 1 base_tilt_link camera_base_link 20" />
     <node pkg="tf" type="static_transform_publisher" name="camera_base_to_camera_link" args="0.0 0.0 0.0  0.0872  -0.0000  0.9962  0.0000 camera_base_link camera_link 20" />

@@ -1,5 +1,5 @@
-export ROBOT=scorpion
-# export ROBOT=diffyjr
+# export ROBOT=scorpion
+export ROBOT=diffyjr
 # export ROBOT=diffyjr-mapping
 # export ROBOT=2022-robot
 # export ROBOT=2022-swervy

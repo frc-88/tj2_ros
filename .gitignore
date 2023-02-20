@@ -1,4 +1,5 @@
 # specific files/directories
+scripts/startup.sh
 src/tj2_limelight/models
 src/tj2_detectnet/models
 src/tj2_detectnet/scripts/video_dataset/output

@@ -29,6 +29,7 @@
     <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_laser" args="-0.0553 0.116 0.253  0 0 1 0 base_tilt_link laser 20" />
     <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_imu" args="0.0634 0.0012 0.2039  0.0000  0.0000  0.7071  0.7071 base_tilt_link imu 33" />
     <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_limelight" args="0.2182 0.0 0.2188  0.0 0.0 0.0 1.0 base_tilt_link limelight_link 33" />
+    <!-- <node pkg="tf" type="static_transform_publisher" name="field_to_map" args="0.0 0.0 0.0  0 0 0 1 field map 20" /> -->
 
     <include file="$(find tj2_description)/launch/imu_joint.launch">
         <arg name="camera_imu_topic" value="/tj2_zed/imu/data"/>
