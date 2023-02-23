@@ -3,4 +3,5 @@
     <node pkg="tj2_launcher" type="tj2_launcher_node.py" name="tj2_launcher" output="log" required="false">
         <rosparam param="launches" file="$(find tj2_launcher)/config/launcher.yaml" command="load"/>
     </node>
+    <node pkg="tf" type="static_transform_publisher" name="camera_armature_to_link" args="0.0 0.0 0.0  0 0 0 1 camera_armature_link camera_link 20" />
 </launch>
