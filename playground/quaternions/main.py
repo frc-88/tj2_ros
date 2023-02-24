@@ -21,8 +21,8 @@ def quaternion_from_euler(roll, pitch, yaw):
 # euler_from_quaternion(0.0000, 0.0000, -0.7071, 0.7071)
 # euler_from_quaternion(-0.0145, -0.0063, 0.2245, 0.9743)
 # euler_from_quaternion(-0.0147, 0.0058, -0.5302, 0.8477)
-euler_from_quaternion(-0.43, -0.54, -0.44, 0.55)
-# quaternion_from_euler(-90.0 + 3.0, 8.0, 90.0)
+# euler_from_quaternion(0.0872,  -0.0000,  0.9962,  0.0000)
+quaternion_from_euler(0.0000,  0.0000,  180.0000)
 # quaternion_from_euler(0.0, -42.5124239, 180.0)
 # quaternion_from_euler(90.0, 0.0, 90.0)
 
