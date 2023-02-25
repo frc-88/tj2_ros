@@ -14,15 +14,20 @@ yolov5_module_path_hack()
 
 
 class Player:
-    def __init__(self, bag_path) -> None:
+    def __init__(self, path) -> None:
         self.labels = get_labels()
         self.frames = []
         self.current_index = 0
         self.bridge = CvBridge()
-        options = Options(bag_path, "")
-        self.bag_generator = enumerate_bag(options)
-        self.bag_length = get_bag_length(options)
-        self.pbar = tqdm.tqdm(desc="image", total=self.bag_length, bar_format='Loading: {desc}{percentage:3.0f}%|{bar}|{n}/{total}')
+        if path.endswith(".bag"):
+            options = Options(path, "")
+            self.image_generator = self.bag_generator(options)
+            self.length = get_bag_length(options)
+        else:
+            video = cv2.VideoCapture(path)
+            self.length = video.get(cv2.CAP_PROP_FRAME_COUNT)
+            self.image_generator = self.video_generator(video)
+        self.pbar = tqdm.tqdm(desc="image", total=self.length, bar_format='Loading: {desc}{percentage:3.0f}%|{bar}|{n}/{total}')
 
         self.colors = {
             "cone": [0.863, 0.682, 0.2],
@@ -50,6 +55,18 @@ class Player:
         self.window_name = os.path.basename(model_path)
         cv2.namedWindow(self.window_name)
 
+    def bag_generator(self, options):
+        for topic, msg, timestamp in enumerate_bag(options):
+            if "image" in str(type(msg)).lower():
+                image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+                yield image
+
+    def video_generator(self, video):
+        success = True
+        while success:
+            success, image = video.read()
+            yield image
+
     def bound_index(self, index: int) -> int:
         return max(0, min(len(self.frames) - 1, index))
 
@@ -66,10 +83,7 @@ class Player:
     def next_image(self):
         try:
             while True:
-                topic, msg, timestamp = next(self.bag_generator)
-                if "image" in str(type(msg)).lower():
-                    image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-                    return image
+                return next(self.image_generator)
         except StopIteration:
             pass
         return None
@@ -99,10 +113,10 @@ class Player:
 
 def main():
     parser = argparse.ArgumentParser(description="play_on_bag", add_help=True)
-    parser.add_argument("bag_path", help="path to bag to test")
+    parser.add_argument("path", help="path to test")
     args = parser.parse_args()
     
-    player = Player(args.bag_path)
+    player = Player(args.path)
     player.run()
 
 if __name__ == '__main__':

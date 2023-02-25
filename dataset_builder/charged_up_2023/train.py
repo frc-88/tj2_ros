@@ -25,5 +25,5 @@ yolov5.train.run(
     project=os.path.abspath("../data/outputs/charged_up_2023_train"),
     multi_scale=True,
     cache='ram',
-    # resume='../data/outputs/charged_up_2023_train/exp11/weights/last.pt'
+    # resume='../data/outputs/charged_up_2023_train/exp8/weights/last.pt'
 )
