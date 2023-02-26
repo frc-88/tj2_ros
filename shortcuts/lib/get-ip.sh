@@ -7,11 +7,11 @@ case $DEVICE in
     ;;
 
   porygon2)
-    echo -n "10.0.88.35"
+    echo -n "10.0.88.44"
     ;;
 
   porygonz)
-    echo -n "10.0.88.77"
+    echo -n "10.0.88.44"
     ;;
 
   *)
