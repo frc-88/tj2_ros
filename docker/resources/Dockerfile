@@ -10,7 +10,7 @@ ENV L4T_MINOR_VERSION=6
 ENV L4T_PATCH_VERSION=1
 
 ENV ZED_SDK_MAJOR=3
-ENV ZED_SDK_MINOR=7
+ENV ZED_SDK_MINOR=8
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV SHELL /bin/bash
@@ -28,7 +28,7 @@ RUN apt-get update && \
 WORKDIR /tmp
 
 RUN apt-get update && \
-    apt-get install -y build-essential libtool autoconf zip unzip wget
+    apt-get install -y build-essential libtool autoconf zip unzip wget zstd
 RUN wget -O cmake.sh https://cmake.org/files/v3.23/cmake-3.23.1-linux-aarch64.sh
 RUN mkdir /opt/cmake
 RUN sh cmake.sh --prefix=/opt/cmake --exclude-subdir --skip-license
