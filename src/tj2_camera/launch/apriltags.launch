@@ -13,13 +13,15 @@
         <rosparam command="load" file="$(arg apriltag_settings)" ns="$(arg node_name)"/>
         <rosparam command="load" file="$(arg apriltag_tags)" ns="$(arg node_name)"/>
         <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="$(arg node_name)" required="false" output="screen">
-            <param name="nodelet_name" type="string" value="apriltag_ros/ContinuousDepthDetector" />
+            <!-- <param name="nodelet_name" type="string" value="apriltag_ros/ContinuousDepthDetector" /> -->
             <param name="publish_tag_detections_image" type="bool" value="$(arg publish_tag_detections_image)" />
-            <param name="depth_min_range" type="double" value="0.25" />
-            <param name="depth_max_range" type="double" value="10.0" />
-            <remap from="color/camera_info" to="$(arg camera_info_topic)"/>
-            <remap from="color/image_rect" to="$(arg image_rect_topic)"/>
-            <remap from="depth/image_rect" to="$(arg depth_rect_topic)"/>
+            <!-- <param name="depth_min_range" type="double" value="0.25" /> -->
+            <!-- <param name="depth_max_range" type="double" value="10.0" /> -->
+            <!-- <remap from="color/camera_info" to="$(arg camera_info_topic)"/> -->
+            <!-- <remap from="color/image_rect" to="$(arg image_rect_topic)"/> -->
+            <!-- <remap from="depth/image_rect" to="$(arg depth_rect_topic)"/> -->
+            <remap from="camera_info" to="$(arg camera_info_topic)"/>
+            <remap from="image_rect" to="$(arg image_rect_topic)"/>
         </node>
 
         <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen"/>
