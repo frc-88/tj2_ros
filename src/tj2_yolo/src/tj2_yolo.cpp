@@ -184,7 +184,7 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
 
     vision_msgs::Detection2DArray detection_2d_arr_msg = detections_to_msg(result);
     detection_2d_arr_msg.header = color_image->header;
-;
+
     visualization_msgs::MarkerArray marker_array;
 
     for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++) {
