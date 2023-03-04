@@ -26,4 +26,4 @@ quaternion_from_euler(0.0000,  0.0000,  180.0000)
 # quaternion_from_euler(0.0, -42.5124239, 180.0)
 # quaternion_from_euler(90.0, 0.0, 90.0)
 
-# print(quaternion_multiply((0.5, 0.5, -0.5, 0.5), quaternion_from_euler(180.0, 0.0, 0.0)))
+print(quaternion_multiply((0.5, 0.5, 0.5, 0.5), quaternion_from_euler(0.0, 180.0, 0.0)))
