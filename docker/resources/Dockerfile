@@ -106,7 +106,11 @@ RUN apt-get update && sudo apt-get install -y \
     i2c-tools \
     python3-smbus \
     libceres-dev \
-    libturbojpeg0-dev
+    libturbojpeg0-dev \
+    python3-twisted \
+    python3-tornado \
+    python3-autobahn \
+    python3-bson
 
 RUN apt-get upgrade -y
 

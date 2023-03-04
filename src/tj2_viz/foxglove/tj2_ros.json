@@ -1,0 +1,124 @@
+{
+  "configById": {
+    "3D!18i6zy7": {
+      "layers": {
+        "845139cb-26bc-40b3-8161-8ab60af4baf5": {
+          "visible": true,
+          "frameLocked": true,
+          "label": "Grid",
+          "instanceId": "845139cb-26bc-40b3-8161-8ab60af4baf5",
+          "layerId": "foxglove.Grid",
+          "size": 10,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#248eff",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "order": 1
+        }
+      },
+      "cameraState": {
+        "perspective": true,
+        "distance": 18.999999999988752,
+        "phi": 34.56780684621323,
+        "thetaOffset": 8.475063390900203,
+        "targetOffset": [
+          1.109065338205544,
+          1.2906027258111457,
+          3.420937264191922e-17
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "followTf": "map",
+      "scene": {
+        "backgroundColor": "#000000",
+        "enableStats": false,
+        "meshUpAxis": "y_up",
+        "transforms": {
+          "editable": false,
+          "axisScale": 0.5,
+          "labelSize": 0.05
+        }
+      },
+      "transforms": {},
+      "topics": {
+        "param:/robot_description": {
+          "visible": true
+        },
+        "/map": {
+          "visible": true
+        },
+        "/laser/scan_filtered": {
+          "visible": true,
+          "colorField": "intensity",
+          "colorMode": "colormap",
+          "colorMap": "turbo",
+          "pointSize": 5
+        },
+        "/apriltag/tag_poses": {
+          "visible": true
+        },
+        "/apriltag/filtered_tag_poses": {
+          "visible": true
+        },
+        "/move_base/TebLocalPlannerROS/teb_markers": {
+          "visible": true
+        },
+        "/move_base/local_costmap/costmap": {
+          "visible": true,
+          "colorMode": "costmap"
+        },
+        "/move_base/GlobalPlanner/potential": {
+          "visible": false
+        },
+        "/move_base/global_costmap/costmap": {
+          "visible": true,
+          "colorMode": "costmap"
+        },
+        "/move_base/current_goal": {
+          "visible": true
+        },
+        "/bw/waypoint_markers": {
+          "visible": true
+        }
+      },
+      "publish": {
+        "type": "pose_estimate",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      }
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": "3D!18i6zy7"
+}

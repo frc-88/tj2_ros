@@ -118,4 +118,6 @@
         <arg name="node_name" value="cuda_apriltag"/>
         <arg name="namespace" value="apriltag"/>
     </include> -->
+
+    <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/>
 </launch>

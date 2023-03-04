@@ -57,6 +57,8 @@ packages=(
     https://github.com/frc-88/rev_color_sensor_ros.git
     https://github.com/eric-wieser/ros_numpy.git
     https://github.com/tuw-robotics/marker_msgs.git
+    https://github.com/RobotWebTools/rosbridge_suite.git
+    https://github.com/GT-RAIL/rosauth.git
 )
 
 branches=(
@@ -115,6 +117,8 @@ branches=(
     main  # https://github.com/frc-88/rev_color_sensor_ros.git
     master  # https://github.com/eric-wieser/ros_numpy.git
     master  # https://github.com/tuw-robotics/marker_msgs.git
+    ros1  # https://github.com/RobotWebTools/rosbridge_suite.git
+    develop  # https://github.com/GT-RAIL/rosauth.git
 )
 
 len=${#packages[@]}
