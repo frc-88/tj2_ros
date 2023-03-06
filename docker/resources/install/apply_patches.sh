@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-BASE_DIR=$(realpath "$(dirname $1)")
+BASE_DIR=$(realpath $1)
 
 find ${BASE_DIR}/src -type f -name CMakeLists.txt -exec sed -i'' -e 's/Boost REQUIRED python37/Boost REQUIRED python3/g' {} +
 

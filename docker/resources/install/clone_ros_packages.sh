@@ -47,7 +47,6 @@ packages=(
     https://github.com/ros/kdl_parser.git
     https://github.com/ros/xacro.git
     https://github.com/ros/urdf_parser_py.git
-    https://github.com/ros/xacro.git
     https://github.com/ros/executive_smach.git
     https://github.com/ros/joint_state_publisher.git
     https://github.com/splintered-reality/py_trees_ros.git
@@ -59,6 +58,12 @@ packages=(
     https://github.com/tuw-robotics/marker_msgs.git
     https://github.com/RobotWebTools/rosbridge_suite.git
     https://github.com/GT-RAIL/rosauth.git
+    https://github.com/ros/catkin.git
+    https://github.com/OctoMap/octomap.git
+    https://github.com/wg-perception/object_recognition_msgs.git
+    https://github.com/ros-planning/random_numbers.git
+    https://github.com/ros/resource_retriever.git
+    https://github.com/ros/common_msgs.git
 )
 
 branches=(
@@ -107,7 +112,6 @@ branches=(
     noetic-devel  # https://github.com/ros/kdl_parser.git
     noetic-devel  # https://github.com/ros/xacro.git
     melodic-devel  # https://github.com/ros/urdf_parser_py.git
-    noetic-devel  # https://github.com/ros/xacro.git
     noetic-devel  # https://github.com/ros/executive_smach.git
     noetic-devel  # https://github.com/ros/joint_state_publisher.git
     release/0.6.x  # https://github.com/splintered-reality/py_trees_ros.git
@@ -119,6 +123,12 @@ branches=(
     master  # https://github.com/tuw-robotics/marker_msgs.git
     ros1  # https://github.com/RobotWebTools/rosbridge_suite.git
     develop  # https://github.com/GT-RAIL/rosauth.git
+    noetic-devel  # https://github.com/ros/catkin.git
+    devel  # https://github.com/OctoMap/octomap.git
+    noetic-devel  # https://github.com/wg-perception/object_recognition_msgs.git
+    master  # https://github.com/ros-planning/random_numbers.git
+    kinetic-devel  # https://github.com/ros/resource_retriever.git
+    noetic-devel  # https://github.com/ros/common_msgs.git
 )
 
 len=${#packages[@]}

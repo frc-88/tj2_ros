@@ -43,7 +43,6 @@
 
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch">
         <arg name="record_launch_path"     value="$(find tj2_bringup)/config/2022-swervy/record_match.launch" />
-        <arg name="enable_record_video" value="false" />
     </include>
 
     <!-- Right laser -->

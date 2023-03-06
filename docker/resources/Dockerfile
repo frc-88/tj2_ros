@@ -225,17 +225,19 @@ COPY ./install ${HOME}/install
 RUN sudo mv ${HOME}/install/preferences /etc/apt/preferences
 
 RUN ${HOME}/install/clone_ros_packages.sh
-RUN ${HOME}/install/apply_patches.sh
+RUN ${HOME}/install/apply_patches.sh ${DEP_ROS_WS_ROOT}
 
-WORKDIR ${DEP_ROS_WS}
+WORKDIR ${DEP_ROS_WS_ROOT}
 RUN rosdep install --from-paths src --ignore-src --rosdistro=noetic -y -r || true
 
 # https://github.com/ros/catkin/issues/863
-RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DSETUPTOOLS_DEB_LAYOUT=OFF 
+RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF 
 RUN catkin config --install
 RUN catkin build
 
+RUN rm -r ${DEP_ROS_WS_ROOT}/build
 RUN rm -r ${DEP_ROS_WS_SRC}
+RUN apt-get clean
 
 # ---
 # tj2_ros
