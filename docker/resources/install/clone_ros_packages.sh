@@ -124,9 +124,4 @@ branches=(
 len=${#packages[@]}
 for (( i=0; i<$len; i++ )); do
     git clone --recursive ${packages[i]} --branch ${branches[i]}
-    cd "$(basename "${packages[i]}" .git)"
-    chown -R ${USER} .
-    chgrp -R ${USER} .
-    git pull
-    cd ..
 done

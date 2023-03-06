@@ -15,6 +15,12 @@ playground/particle_filter/data
 playground/bounce_trajectories/data
 playground/swerve/swerve_bag_plotter/data
 
+# catkin
+build/
+devel/
+.catkin_tools/
+
+.bash_history
 *.pt
 
 **/wandb/*

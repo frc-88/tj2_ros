@@ -15,9 +15,8 @@ docker run -it \
     --net="host" \
     --privileged \
     --stop-signal=SIGINT \
-    -v /home/${USER}/tj2_ros/src:/root/ros_ws/src/tj2_ros:rw \
+    -v /home/${USER}/tj2_ros:/root/tj2_ros:rw \
     -v /home/${USER}/tj2_ros/workstation/docker/resources/scripts:/root/scripts:rw \
-    -v /home/${USER}/docker_ros_ws_tj2:/root/ros_ws:rw \
     --rm \
     tj2_ros_workstation:latest \
     /root/install/build_tj2_ros.sh

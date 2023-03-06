@@ -9,11 +9,11 @@ Panels:
         - /TF1/Tree1
         - /LaserScan1
         - /Object Markers1/Namespaces1
-        - /ZED1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
+        - /Camera1/Visibility1
       Splitter Ratio: 0.4070473909378052
-    Tree Height: 360
+    Tree Height: 953
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -31,7 +31,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: PointCloud2
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -78,24 +78,50 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        arm1_base_link:
+          Value: true
+        arm1_link:
+          Value: true
+        arm2_base_link:
+          Value: true
+        arm2_link:
+          Value: true
+        arm3_base_link:
+          Value: true
+        arm3_link:
+          Value: true
         base_link:
           Value: true
         base_tilt_link:
           Value: true
         camera_armature_link:
           Value: false
+        camera_base_link:
+          Value: true
         camera_link:
           Value: true
         camera_tilt_link:
           Value: true
+        end_effector_base_link:
+          Value: true
+        end_effector_link:
+          Value: true
+        field:
+          Value: true
         imu:
+          Value: true
+        intake_base_link:
+          Value: true
+        intake_link:
           Value: true
         laser:
           Value: true
+        laser_base_link:
+          Value: true
+        limelight_base_link:
+          Value: true
         limelight_link:
           Value: false
-        map:
-          Value: true
         odom:
           Value: true
         swerve_wheel_0:
@@ -105,6 +131,14 @@ Visualization Manager:
         swerve_wheel_2:
           Value: true
         swerve_wheel_3:
+          Value: true
+        tag2:
+          Value: true
+        tag6:
+          Value: true
+        tag7:
+          Value: true
+        tag8:
           Value: true
         zed2_baro_link:
           Value: false
@@ -135,10 +169,19 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          odom:
-            base_link:
-              base_tilt_link:
+        odom:
+          base_link:
+            base_tilt_link:
+              arm1_base_link:
+                arm1_link:
+                  arm2_base_link:
+                    arm2_link:
+                      arm3_base_link:
+                        arm3_link:
+                          end_effector_base_link:
+                            end_effector_link:
+                              {}
+              camera_base_link:
                 camera_tilt_link:
                   camera_armature_link:
                     camera_link:
@@ -150,7 +193,16 @@ Visualization Manager:
                             zed2_imu_link:
                               {}
                             zed2_left_camera_optical_frame:
-                              {}
+                              field:
+                                {}
+                              tag2:
+                                {}
+                              tag6:
+                                {}
+                              tag7:
+                                {}
+                              tag8:
+                                {}
                             zed2_temp_left_link:
                               {}
                           zed2_mag_link:
@@ -160,20 +212,25 @@ Visualization Manager:
                               {}
                             zed2_temp_right_link:
                               {}
-                imu:
+              imu:
+                {}
+              intake_base_link:
+                intake_link:
                   {}
+              laser_base_link:
                 laser:
                   {}
+              limelight_base_link:
                 limelight_link:
                   {}
-                swerve_wheel_0:
-                  {}
-                swerve_wheel_1:
-                  {}
-                swerve_wheel_2:
-                  {}
-                swerve_wheel_3:
-                  {}
+              swerve_wheel_0:
+                {}
+              swerve_wheel_1:
+                {}
+              swerve_wheel_2:
+                {}
+              swerve_wheel_3:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -434,6 +491,7 @@ Visualization Manager:
         Global Costmap: false
         Global Plan: true
         Grid: true
+        Image: true
         LaserScan: true
         Local Costmap: false
         Local Plan: true
@@ -575,7 +633,31 @@ Visualization Manager:
       Marker Topic: /apriltag/tag_markers
       Name: Tags
       Namespaces:
-        {}
+        cube1-2-3-4-5-6-7-8: true
+        cube2: true
+        cube6: true
+        cube7: true
+        cube8: true
+        posx1-2-3-4-5-6-7-8: true
+        posx2: true
+        posx6: true
+        posx7: true
+        posx8: true
+        posy1-2-3-4-5-6-7-8: true
+        posy2: true
+        posy6: true
+        posy7: true
+        posy8: true
+        posz1-2-3-4-5-6-7-8: true
+        posz2: true
+        posz6: true
+        posz7: true
+        posz8: true
+        text1-2-3-4-5-6-7-8: true
+        text2: true
+        text6: true
+        text7: true
+        text8: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -598,9 +680,9 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.009999999776482582
-      Style: Flat Squares
+      Size (Pixels): 4
+      Size (m): 0.05000000074505806
+      Style: Points
       Topic: /tj2_zed/point_cloud/cloud_registered
       Unreliable: false
       Use Fixed Frame: true
@@ -609,7 +691,7 @@ Visualization Manager:
     - Class: rviz/Camera
       Enabled: true
       Image Rendering: background and overlay
-      Image Topic: /tj2_zed/rgb_raw/image_raw_color
+      Image Topic: /tj2_zed/rgb/image_rect_color
       Name: Camera
       Overlay Alpha: 0.5
       Queue Size: 2
@@ -624,6 +706,7 @@ Visualization Manager:
         Global Costmap: true
         Global Plan: true
         Grid: true
+        Image: true
         LaserScan: true
         Local Costmap: true
         Local Plan: true
@@ -636,7 +719,7 @@ Visualization Manager:
         Polygon: true
         RobotModel: true
         Sinistra LaserScan: true
-        TF: true
+        TF: false
         Tags: true
         Value: true
         Waypoints: true
@@ -645,6 +728,18 @@ Visualization Manager:
         ZedOdDisplay: true
         Zone Map: true
       Zoom Factor: 1
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /tj2_zed/depth/depth_registered
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -673,7 +768,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 4.939269065856934
+      Distance: 6.327661514282227
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -681,17 +776,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.8805103302001953
-        Y: -0.32568520307540894
-        Z: 1.6689300537109375e-06
+        X: -1.5265259742736816
+        Y: 2.067800998687744
+        Z: 6.854534149169922e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8353980183601379
+      Pitch: 0.7303980588912964
       Target Frame: <Fixed Frame>
-      Yaw: 3.671748161315918
+      Yaw: 1.3135693073272705
     Saved: ~
 Window Geometry:
   Camera:
@@ -700,8 +795,10 @@ Window Geometry:
     collapsed: false
   Height: 1368
   Hide Left Dock: false
-  Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd00000004000000000000038000000484fc0200000019fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000007000fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007301000000460000021b000000f500fffffffb00000012005200650061006c00530065006e0073006500000004bc0000028e0000000000000000fb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000000000000000fb0000000c00430061006d0065007200610100000268000002620000001700fffffffb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000fb00000006005a00450044000000029f000001460000001700fffffffb0000000c00430061006d0065007200610000000491000002b90000000000000000fb0000000e004f007600650072006c006100790000000467000002e30000000000000000fb0000000c00430061006d0065007200610000000365000002810000000000000000fb0000000c00430061006d00650072006101000002f8000001cc0000000000000000000000010000024e00000484fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc00000046000004840000000000fffffffa000000000100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730000000d4c000001b40000010200fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000009dc00000068fc0100000002fb0000000800540069006d00650100000000000009dc000003cf00fffffffb0000000800540069006d00650100000000000004500000000000000000000006550000048400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Hide Right Dock: false
+  Image:
+    collapsed: false
+  QMainWindow State: 000000ff00000000fd00000004000000000000026900000478fc0200000014fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000007600fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000004c000004780000010100fffffffb00000012005200650061006c00530065006e0073006500000004bc0000028e0000000000000000fb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000fb00000006005a00450044000000037e000001460000001d00fffffffb0000000c00430061006d0065007200610000000491000002b90000000000000000fb0000000e004f007600650072006c006100790000000467000002e30000000000000000fb0000000c00430061006d0065007200610000000365000002810000000000000000fb0000000c00430061006d00650072006101000002f8000001cc000000000000000000000001000003e500000478fc020000000efb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000c00430061006d006500720061010000004c0000019b0000000000000000fb0000000a0049006d00610067006501000001ee0000018d0000000000000000fb0000000c00430061006d0065007200610000000217000001aa0000000000000000fb0000000c00430061006d006500720061010000004c000001a90000000000000000fb0000000a0049006d00610067006501000001fc000001960000000000000000fb0000000c00430061006d006500720061010000004c000001ca0000001d00fffffffb0000000a0049006d006100670065010000021d000001ce0000001d00fffffffc000003f2000000d2000000d200fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000012200fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000009dc00000068fc0100000002fb0000000800540069006d00650100000000000009dc000004b400fffffffb0000000800540069006d00650100000000000004500000000000000000000003800000047800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -709,9 +806,9 @@ Window Geometry:
   Tool Properties:
     collapsed: false
   Views:
-    collapsed: true
+    collapsed: false
   Width: 2524
-  X: 72
+  X: 2596
   Y: 35
   ZED:
     collapsed: false

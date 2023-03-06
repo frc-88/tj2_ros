@@ -27,7 +27,8 @@ trap 'int_handler' SIGINT
 
 tmux send -t $SESSION 'source ${HOME}/install/enable_tmux_logger.sh tj2_ros' ENTER
 tmux send -t $SESSION 'source /opt/ros/${ROS_DISTRO}/setup.bash' ENTER
-tmux send -t $SESSION 'source ${HOME}/ros_ws/devel/setup.bash' ENTER
+tmux send -t $SESSION 'source ${DEP_ROS_WS_ROOT}/devel/setup.bash' ENTER
+tmux send -t $SESSION 'source ${ROS_WS_ROOT}/devel/setup.bash' ENTER
 tmux send -t $SESSION 'source ${HOME}/scripts/startup.sh' ENTER
 tmux send -t $SESSION 'roslaunch --wait tj2_bringup simulation.launch --screen &' ENTER
 tmux send -t $SESSION 'echo $! > /root/roslaunch_pid' ENTER

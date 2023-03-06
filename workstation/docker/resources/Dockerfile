@@ -33,6 +33,8 @@ RUN python -m pip install torch torchvision torchaudio --extra-index-url https:/
 # tj2_ros dependencies
 # ---
 
+RUN sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+
 # generated using rosdep install --from-paths . -r --reinstall --simulate
 RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-catkin \
@@ -91,6 +93,13 @@ RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-marker-msgs \
     ros-noetic-ros-numpy
 
+RUN sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN apt-get update && apt-get install -y \
+    python3-catkin-tools \
+    python3-osrf-pycommon \
+    python3-wstool
+
+
 WORKDIR /tmp
 RUN git clone https://github.com/FRC-Utilities/LibDS.git
 WORKDIR /tmp/LibDS
@@ -122,15 +131,50 @@ RUN ldconfig
 RUN rm -r /tmp/*
 
 # ---
-# tj2_ros build environment
+# User setup
 # ---
 
 ENV USER=root
 ENV HOME=/${USER}
 WORKDIR ${HOME}
 
-ENV ROS_WS_ROOT=${HOME}/ros_ws
-ENV ROS_WS_SRC=${HOME}/ros_ws/src
+# ---
+# Build temporary workspace
+# ---
+
+ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
+ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
+
+# move_it
+WORKDIR ${DEP_ROS_WS_SRC}
+RUN wstool init .
+RUN wstool merge -t . https://raw.githubusercontent.com/ros-planning/moveit/master/moveit.rosinstall
+RUN wstool remove moveit_tutorials && wstool remove panda_moveit_config
+RUN wstool update -t .
+
+RUN git clone https://github.com/ros-planning/moveit_tutorials.git -b master
+RUN git clone https://github.com/ros-planning/panda_moveit_config.git -b noetic-devel
+RUN git clone --recursive https://github.com/Unity-Technologies/ROS-TCP-Endpoint.git --branch main
+RUN git clone --recursive https://github.com/tuw-robotics/marker_rviz_plugin.git --branch master
+RUN git clone --recursive https://github.com/robopeak/rplidar_ros.git --branch master
+RUN git clone --recursive https://github.com/wjwwood/serial --branch main
+
+RUN rosdep install -y --from-paths . --ignore-src --rosdistro noetic
+
+WORKDIR ${DEP_ROS_WS_ROOT}
+# https://github.com/ros/catkin/issues/863
+RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF 
+RUN catkin config --install
+RUN catkin build
+
+# RUN rm -r ${DEP_ROS_WS_SRC}
+
+# ---
+# ROS build environment
+# ---
+
+ENV ROS_WS_ROOT=${HOME}/tj2_ros
+ENV ROS_WS_SRC=${HOME}/tj2_ros/src
 
 ENV FLASK_ENV=development
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools:/opt/yolov5"
@@ -144,8 +188,10 @@ COPY ./workstation/docker/resources/install ${HOME}/install
 RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
 RUN rm ${HOME}/install/bashrc
 
-COPY ./workstation/docker/resources/install/entrypoint.sh /entrypoint.sh
-COPY ./workstation/docker/resources/install/launch.sh /launch.sh
-COPY ./workstation/docker/resources/install/roscore.sh /roscore.sh
+COPY ./workstation/docker/resources/launch/entrypoint.sh /entrypoint.sh
+COPY ./workstation/docker/resources/launch/launch.sh /launch.sh
+COPY ./workstation/docker/resources/launch/roscore.sh /roscore.sh
+
+WORKDIR ${HOME}
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

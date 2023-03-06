@@ -4,5 +4,3 @@ BASE_DIR=$(realpath "$(dirname $0)")
 
 cd ${BASE_DIR}/../..
 docker build -f ./workstation/docker/resources/Dockerfile -t tj2_ros_workstation:latest .
-
-${BASE_DIR}/post_build

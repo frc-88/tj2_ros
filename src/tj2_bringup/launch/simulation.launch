@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <node name="tj2_object_orienter" pkg="tj2_object_orienter" type="o3d_pca_test_node.py" output="screen" required="false">
-        <param name="class_names_path"  value="$(find tj2_object_orienter)/resources/person.names" />
+    <node name="object_orienter" pkg="tj2_charged_up" type="o3d_pca_test_node.py" output="screen" required="false">
         <param name="max_detection_distance" value="5.0"/>
         <remap from="points" to="/tj2_zed/point_cloud/cloud_registered" />
         <remap from="detections" to="/tj2_zed/obj_det/detections" />

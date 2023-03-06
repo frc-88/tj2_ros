@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <node pkg="rosbag" type="record" name="rosbag_record_match" output="screen" 
-       args="record -o /media/storage/bags/2022_robot
+       args="record -o /media/storage/bags/scorpion
         /amcl_pose
         /initialpose
         /laser/scan

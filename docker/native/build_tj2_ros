@@ -9,8 +9,7 @@ docker run \
     --net="host" \
     --privileged \
     --stop-signal=SIGINT \
-    -v /home/${USER}/docker_ros_ws:/root/ros_ws:rw \
-    -v /home/${USER}/tj2_ros/src:/root/ros_ws/src/tj2_ros:rw \
+    -v /home/${USER}/tj2_ros:/root/tj2_ros:rw \
     -v /home/${USER}/tj2_ros/scripts:/root/scripts:rw \
     --rm \
     --gpus all \

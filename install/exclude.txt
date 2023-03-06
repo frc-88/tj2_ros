@@ -18,6 +18,10 @@ tj2_tunnel/bags/
 tj2_tools/build/
 tj2_tools/dist/
 tj2_tools/tj2_tools.egg-info/
+workstation/
 .vscode/
 __pycache__
 .pytest_cache/
+build/
+devel/
+.catkin_tools/

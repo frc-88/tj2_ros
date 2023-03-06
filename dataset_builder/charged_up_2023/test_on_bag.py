@@ -88,7 +88,7 @@ class Tester:
         try:
             while True:
                 topic, msg, timestamp = next(self.bag_generator)
-                if "image" in str(type(msg)).lower():
+                if topic.startswith("/tj2_zed/rgb/") and "image" in str(type(msg)).lower():
                     image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
                     return image
         except StopIteration:

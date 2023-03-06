@@ -198,31 +198,61 @@ RUN ldconfig
 RUN rm -r /tmp/*
 
 # ---
-# tj2_ros
+# ROS dependency workspace
 # ---
 
 ENV USER=root
 ENV HOME=/${USER}
 WORKDIR ${HOME}
 
-ENV ROS_WS_ROOT=${HOME}/ros_ws
-ENV ROS_WS_SRC=${HOME}/ros_ws/src
+RUN sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN apt-get update && apt-get install -y \
+    python3-catkin-tools \
+    python3-osrf-pycommon \
+    python3-wstool
+
+ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
+ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
+
+# move_it
+WORKDIR ${DEP_ROS_WS_SRC}
+RUN wstool init .
+RUN wstool merge -t . https://raw.githubusercontent.com/ros-planning/moveit/master/moveit.rosinstall
+RUN wstool remove moveit_tutorials && wstool remove panda_moveit_config
+RUN wstool update -t .
+
+COPY ./install ${HOME}/install
+RUN sudo mv ${HOME}/install/preferences /etc/apt/preferences
+
+RUN ${HOME}/install/clone_ros_packages.sh
+RUN ${HOME}/install/apply_patches.sh
+
+WORKDIR ${DEP_ROS_WS}
+RUN rosdep install --from-paths src --ignore-src --rosdistro=noetic -y -r || true
+
+# https://github.com/ros/catkin/issues/863
+RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DSETUPTOOLS_DEB_LAYOUT=OFF 
+RUN catkin config --install
+RUN catkin build
+
+RUN rm -r ${DEP_ROS_WS_SRC}
+
+# ---
+# tj2_ros
+# ---
+
+ENV ROS_WS_ROOT=${HOME}/tj2_ros
+ENV ROS_WS_SRC=${HOME}/tj2_ros/src
 
 ENV FLASK_ENV=development
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools"
 ENV PYTHONIOENCODING=utf-8
 
-COPY ./install ${HOME}/install
-COPY ./configs ${HOME}/configs
-
-RUN sudo mv ${HOME}/configs/zed/* /usr/local/zed/settings/
-RUN sudo mv ${HOME}/install/preferences /etc/apt/preferences
-
 RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
 RUN rm ${HOME}/install/bashrc
 
-COPY ./install/entrypoint.sh /entrypoint.sh
-COPY ./install/launch.sh /launch.sh
-COPY ./install/roscore.sh /roscore.sh
+COPY ./launch/entrypoint.sh /entrypoint.sh
+COPY ./launch/launch.sh /launch.sh
+COPY ./launch/roscore.sh /roscore.sh
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
