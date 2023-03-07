@@ -198,7 +198,7 @@ RUN ldconfig
 RUN rm -r /tmp/*
 
 # ---
-# ROS dependency workspace
+# ROS evergreen dependency workspace
 # ---
 
 ENV USER=root
@@ -216,26 +216,34 @@ ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 WORKDIR ${DEP_ROS_WS_SRC}
 RUN wstool init .
 
-COPY ./install ${HOME}/install
-RUN sudo mv ${HOME}/install/preferences /etc/apt/preferences
+COPY ./install/environment ${HOME}/install/environment
+RUN sudo mv ${HOME}/install/environment/preferences /etc/apt/preferences
+
+COPY ./install/evergreen ${HOME}/install/evergreen
 
 WORKDIR ${DEP_ROS_WS_SRC}
-RUN wstool merge -t . ${HOME}/install/tj2_ros_evergreen.rosinstall
+RUN wstool merge -t . ${HOME}/install/evergreen/tj2_ros_evergreen.rosinstall
 RUN wstool update -t .
-RUN ${HOME}/install/patch_evergreen_packages.sh
+RUN ${HOME}/install/evergreen/patch_evergreen_packages.sh
 
 WORKDIR ${DEP_ROS_WS_ROOT}
-RUN ${HOME}/install/rosdep_install.sh || true
+RUN ${HOME}/install/environment/rosdep_install.sh
 
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
     catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
 
+# ---
+# ROS overlay dependency workspace
+# ---
+
+COPY ./install/overlay ${HOME}/install/overlay
+
 WORKDIR ${DEP_ROS_WS_SRC}
-RUN wstool merge -t . ${HOME}/install/tj2_ros_overlay.rosinstall
+RUN wstool merge -t . ${HOME}/install/overlay/tj2_ros_overlay.rosinstall
 RUN wstool update -t .
 
 WORKDIR ${DEP_ROS_WS_ROOT}
-RUN ${HOME}/install/rosdep_install.sh || true
+RUN ${HOME}/install/environment/rosdep_install.sh
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
     catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
 
@@ -252,8 +260,8 @@ ENV FLASK_ENV=development
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools"
 ENV PYTHONIOENCODING=utf-8
 
-RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
-RUN rm ${HOME}/install/bashrc
+RUN cat ${HOME}/install/environment/bashrc >> ${HOME}/.bashrc
+RUN rm ${HOME}/install/environment/bashrc
 
 COPY ./launch/entrypoint.sh /entrypoint.sh
 COPY ./launch/launch.sh /launch.sh

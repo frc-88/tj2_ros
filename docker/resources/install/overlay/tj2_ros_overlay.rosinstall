@@ -1,0 +1,9 @@
+
+- git:
+    local-name: rosbridge_suite
+    uri: https://github.com/RobotWebTools/rosbridge_suite.git
+    version: ros1
+- git:
+    local-name: rosauth
+    uri: https://github.com/GT-RAIL/rosauth.git
+    version: develop
