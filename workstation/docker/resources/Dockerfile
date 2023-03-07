@@ -18,7 +18,8 @@ RUN python -m pip install -U scipy==1.5.4 \
     numpy==1.22.4 \
     open3d \
     ezdxf \
-    jsonlines
+    jsonlines \
+    PyQt5==5.10.1
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
@@ -145,29 +146,22 @@ WORKDIR ${HOME}
 ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
 ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 
-# move_it
+COPY ./workstation/docker/resources/install ${HOME}/install
+
 WORKDIR ${DEP_ROS_WS_SRC}
 RUN wstool init .
-RUN wstool merge -t . https://raw.githubusercontent.com/ros-planning/moveit/master/moveit.rosinstall
-RUN wstool remove moveit_tutorials && wstool remove panda_moveit_config
+RUN wstool merge -t . ${HOME}/install/tj2_ros.rosinstall
 RUN wstool update -t .
 
-RUN git clone https://github.com/ros-planning/moveit_tutorials.git -b master
-RUN git clone https://github.com/ros-planning/panda_moveit_config.git -b noetic-devel
-RUN git clone --recursive https://github.com/Unity-Technologies/ROS-TCP-Endpoint.git --branch main
-RUN git clone --recursive https://github.com/tuw-robotics/marker_rviz_plugin.git --branch master
-RUN git clone --recursive https://github.com/robopeak/rplidar_ros.git --branch master
-RUN git clone --recursive https://github.com/wjwwood/serial --branch main
-
 RUN rosdep install -y --from-paths . --ignore-src --rosdistro noetic
+
+RUN rm -r ${DEP_ROS_WS_SRC}/zed-ros-wrapper/zed_nodelets
 
 WORKDIR ${DEP_ROS_WS_ROOT}
 # https://github.com/ros/catkin/issues/863
 RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF 
 RUN catkin config --install
 RUN catkin build
-
-# RUN rm -r ${DEP_ROS_WS_SRC}
 
 # ---
 # ROS build environment
@@ -177,9 +171,8 @@ ENV ROS_WS_ROOT=${HOME}/tj2_ros
 ENV ROS_WS_SRC=${HOME}/tj2_ros/src
 
 ENV FLASK_ENV=development
-ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools:/opt/yolov5"
+ENV PYTHONPATH=${ROS_WS_SRC}/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
 
-COPY ./workstation/docker/resources/install ${HOME}/install
 
 # ---
 # tj2_ros launch environment

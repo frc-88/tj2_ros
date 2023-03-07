@@ -17,6 +17,7 @@ services:
       - /home/${USER}/tj2_ros:/root/tj2_ros:rw
       - /home/${USER}/tj2_ros/scripts:/root/scripts:rw
       - /home/${USER}/tj2_ros/docker/resources/configs/zed:/usr/local/zed/settings/:rw
+      - /home/${USER}/zed-resources:/usr/local/zed/resources/:rw
       - /media/storage:/media/storage:rw
       - /run/systemd:/run/systemd:rw
       - /dev:/dev:rw

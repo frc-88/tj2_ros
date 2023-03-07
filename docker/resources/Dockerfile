@@ -247,7 +247,7 @@ RUN ${HOME}/install/rosdep_install.sh
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
     catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
 
-RUN apt-get autoremove -y && apt-get clean
+RUN apt-get clean
 
 # ---
 # Environment setup
@@ -257,7 +257,7 @@ ENV ROS_WS_ROOT=${HOME}/tj2_ros
 ENV ROS_WS_SRC=${HOME}/tj2_ros/src
 
 ENV FLASK_ENV=development
-ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools"
+ENV PYTHONPATH=${ROS_WS_SRC}/tj2_tools${PYTHONPATH:+:${PYTHONPATH}}
 ENV PYTHONIOENCODING=utf-8
 
 COPY ./install/enable_tmux_logger.sh ${HOME}/install

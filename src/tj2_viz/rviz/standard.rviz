@@ -134,10 +134,6 @@ Visualization Manager:
           Value: false
         tag1:
           Value: true
-        tag5:
-          Value: true
-        tag6:
-          Value: true
         tag8:
           Value: true
         zed2_baro_link:
@@ -187,10 +183,6 @@ Visualization Manager:
                               field:
                                 {}
                               tag1:
-                                {}
-                              tag5:
-                                {}
-                              tag6:
                                 {}
                               tag8:
                                 {}
@@ -622,28 +614,18 @@ Visualization Manager:
       Namespaces:
         cube1: true
         cube1-2-3-4-5-6-7-8: true
-        cube5: true
-        cube6: true
         cube8: true
         posx1: true
         posx1-2-3-4-5-6-7-8: true
-        posx5: true
-        posx6: true
         posx8: true
         posy1: true
         posy1-2-3-4-5-6-7-8: true
-        posy5: true
-        posy6: true
         posy8: true
         posz1: true
         posz1-2-3-4-5-6-7-8: true
-        posz5: true
-        posz6: true
         posz8: true
         text1: true
         text1-2-3-4-5-6-7-8: true
-        text5: true
-        text6: true
         text8: true
       Queue Size: 100
       Value: true
@@ -729,7 +711,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.741109848022461
+      Distance: 1.6076616048812866
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -737,17 +719,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 4.710384368896484
-        Y: -1.7381714582443237
-        Z: 2.6835386753082275
+        X: 1.5273406505584717
+        Y: -0.625242292881012
+        Z: 0.17790701985359192
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4197975695133209
+      Pitch: 0.2597980797290802
       Target Frame: <Fixed Frame>
-      Yaw: 4.203087329864502
+      Yaw: 1.2730869054794312
     Saved: ~
 Window Geometry:
   Displays:
