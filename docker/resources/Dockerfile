@@ -208,7 +208,8 @@ WORKDIR ${HOME}
 RUN sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 RUN apt-get update && apt-get install -y \
     python3-osrf-pycommon \
-    python3-wstool
+    python3-wstool \
+    python3-catkin-pkg
 
 ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
 ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
@@ -216,9 +217,7 @@ ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 WORKDIR ${DEP_ROS_WS_SRC}
 RUN wstool init .
 
-COPY ./install/environment ${HOME}/install/environment
-RUN sudo mv ${HOME}/install/environment/preferences /etc/apt/preferences
-
+COPY ./install/preferences /etc/apt/preferences
 COPY ./install/evergreen ${HOME}/install/evergreen
 
 WORKDIR ${DEP_ROS_WS_SRC}
@@ -227,7 +226,8 @@ RUN wstool update -t .
 RUN ${HOME}/install/evergreen/patch_evergreen_packages.sh
 
 WORKDIR ${DEP_ROS_WS_ROOT}
-RUN ${HOME}/install/environment/rosdep_install.sh
+COPY ./install/rosdep_install.sh ${HOME}/install
+RUN ${HOME}/install/rosdep_install.sh
 
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
     catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
@@ -243,11 +243,11 @@ RUN wstool merge -t . ${HOME}/install/overlay/tj2_ros_overlay.rosinstall
 RUN wstool update -t .
 
 WORKDIR ${DEP_ROS_WS_ROOT}
-RUN ${HOME}/install/environment/rosdep_install.sh
+RUN ${HOME}/install/rosdep_install.sh
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
     catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
 
-RUN apt-get autoremove && apt-get clean
+RUN apt-get autoremove -y && apt-get clean
 
 # ---
 # Environment setup
@@ -260,11 +260,13 @@ ENV FLASK_ENV=development
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/tj2_ros/tj2_tools"
 ENV PYTHONIOENCODING=utf-8
 
-RUN cat ${HOME}/install/environment/bashrc >> ${HOME}/.bashrc
-RUN rm ${HOME}/install/environment/bashrc
+COPY ./install/enable_tmux_logger.sh ${HOME}/install
+COPY ./install/bashrc ${HOME}/.bashrc
 
 COPY ./launch/entrypoint.sh /entrypoint.sh
 COPY ./launch/launch.sh /launch.sh
 COPY ./launch/roscore.sh /roscore.sh
+
+WORKDIR ${ROS_WS_ROOT}
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
