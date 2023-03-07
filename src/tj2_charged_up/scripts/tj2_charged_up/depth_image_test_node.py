@@ -3,7 +3,6 @@ import cv2
 import math
 import rospy
 import matplotlib
-matplotlib.use('Qt5Agg')
 import numpy as np
 from typing import List, Tuple
 from cv_bridge import CvBridge
@@ -21,66 +20,29 @@ from hough_bundler import HoughBundler
 
 class DebugPlotter:
     def __init__(self) -> None:
-        self.plot_delay = 0.005
-
-        self.fig = plt.figure(1)
-        plt.tight_layout()
-        plt.ion()
-        self.fig.show()
-
-        self.ax = self.fig.add_subplot(1, 1, 1)
-        self.plot_extent = [-1.0, 1.0, -1.0, 1.0]
+        self.window_name = "plot"
+        cv2.namedWindow(self.window_name)
+        self.image = None
 
     def draw_image(self, image: np.ndarray) -> None:
-        extent = -image.shape[0], image.shape[0], -image.shape[1], image.shape[1]
-        self.ax.imshow(
-            image,
-            aspect='auto',
-            extent=extent,
-            alpha=1.0,
-            zorder=-1,
-            origin='lower',
-        )
-        self.set_plot_extent(*extent)
+        self.image = image
 
     def draw_houghlines(
         self,
         lines: List,
-        color: Tuple[float, float, float] = (0.0, 1.0, 1.0),
+        color: Tuple[float, float, float] = (0, 255, 255),
     ) -> None:
+        if self.image is None:
+            return
         for line in lines:
-            self.ax.plot([line[0], line[2]], [line[1], line[3]], color=color)
-            self.set_plot_extent(line[0], line[2], line[1], line[3])
+            cv2.line(self.image, (line[0], line[1]), line[2], line[3], color)
 
-    def set_plot_extent(self, xmin: float, xmax: float, ymin: float, ymax: float) -> None:
-        if xmin < self.plot_extent[0]:
-            self.plot_extent[0] = xmin
-        if xmax > self.plot_extent[1]:
-            self.plot_extent[1] = xmax
-        if ymin < self.plot_extent[2]:
-            self.plot_extent[2] = ymin
-        if ymax > self.plot_extent[3]:
-            self.plot_extent[3] = ymax
-
-        self.ax.set_xlim((self.plot_extent[0], self.plot_extent[1]))
-        self.ax.set_ylim((self.plot_extent[2], self.plot_extent[3]))
-
-    def clear(self) -> None:
-        plt.cla()
-
-    def pause(self) -> None:
-        backend = plt.rcParams['backend']
-        if backend in matplotlib.rcsetup.interactive_bk:
-            fig_manager = matplotlib._pylab_helpers.Gcf.get_active()
-            if fig_manager is not None:
-                canvas = fig_manager.canvas
-                if canvas.figure.stale:
-                    canvas.draw()
-                canvas.start_event_loop(self.plot_delay)
-
-    def stop(self) -> None:
-        plt.ioff()
-        plt.show()
+    def pause(self):
+        key = cv2.waitKey(1)
+        cv2.imshow(self.window_name, self.image)
+        if chr(key & 0xff) == 'q':
+            quit()
+        self.image = None
 
 
 class NoopDebugPlotter:
@@ -96,14 +58,8 @@ class NoopDebugPlotter:
         color: Tuple[float, float, float] = (0.0, 1.0, 1.0),
     ) -> None:
         pass
-
-    def clear(self) -> None:
-        pass
-
-    def pause(self) -> None:
-        pass
-
-    def stop(self) -> None:
+    
+    def pause(self):
         pass
 
 
@@ -163,6 +119,7 @@ class DepthImageTestNode:
         )
 
     def info_callback(self, msg: CameraInfo):
+        rospy.loginfo("Got camera model")
         self.camera_info_sub.unregister()
         self.camera_model = PinholeCameraModel()
         self.camera_model.fromCameraInfo(msg)
@@ -172,12 +129,13 @@ class DepthImageTestNode:
 
     def color_callback(self, msg: Image):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-        self.plotter.clear()
         self.plotter.draw_image(image)
-        for obj in self.get_crops():
-            crop = image[obj.bounding_box.y0:obj.bounding_box.y1, obj.bounding_box.x0:obj.bounding_box.x1]
+        for bb in self.get_crops(msg.header.stamp):
+            crop = image[bb.y0:bb.y1, bb.x0:bb.x1]
             edges = cv2.Canny(crop, 50, 200, None, 3)
             rho_thetas = cv2.HoughLines(edges, 1, np.pi / 180, 150, None, 0, 0)
+            if rho_thetas is None:
+                continue
             lines = [self.rho_theta_to_xy(line[0][0], line[0][1], image.shape) for line in rho_thetas]
             lines = HoughBundler.bundle(lines)
             self.plotter.draw_houghlines(lines, (1.0, 0.0, 0.0))
@@ -185,8 +143,8 @@ class DepthImageTestNode:
 
     def depth_callback(self, msg: Image):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
-        for obj in self.get_crops():
-            crop = image[obj.bounding_box.y0:obj.bounding_box.y1, obj.bounding_box.x0:obj.bounding_box.x1]
+        for bb in self.get_crops(msg.header.stamp):
+            crop = image[bb.y0:bb.y1, bb.x0:bb.x1]
 
     def rho_theta_to_xy(self, rho, theta, image_shape, length=1000):
         max_y, max_x = image_shape
@@ -206,13 +164,13 @@ class DepthImageTestNode:
     def clamp_dimension(self, value, max_value):
         return max(0, min(value, max_value))
 
-    def get_crops(self):
+    def get_crops(self, now):
         if (
-            rospy.Time.now() - self.objects_timestamp
+            now - self.objects_timestamp
             > self.stale_detection_threshold
         ):
             rospy.logwarn("Detection is stale. Not computing orientations!")
-            raise StopIteration
+            return
 
         for obj in self.objects:
             yield obj.bounding_box

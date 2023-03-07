@@ -19,6 +19,8 @@ playground/swerve/swerve_bag_plotter/data
 build/
 devel/
 .catkin_tools/
+.catkin_workspace
+src/CMakeLists.txt
 
 .bash_history
 *.pt
