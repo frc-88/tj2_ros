@@ -28,10 +28,6 @@ ${BASE_DIR}/upload ${DESTINATION_NAME} ${REMOTE_KEY} n
 
 SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
 
-# stop roslaunch
-echo "Stopping tj2_ros"
-${SSH_COMMAND} -t "sudo systemctl stop tj2_ros.service"
-
 # build tj2_ros
 ${SSH_COMMAND} "${DEST_FULL_PATH}/docker/native/build_tj2_ros"
 

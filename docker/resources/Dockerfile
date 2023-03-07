@@ -207,40 +207,42 @@ WORKDIR ${HOME}
 
 RUN sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 RUN apt-get update && apt-get install -y \
-    python3-catkin-tools \
     python3-osrf-pycommon \
     python3-wstool
 
 ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
 ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 
-# move_it
 WORKDIR ${DEP_ROS_WS_SRC}
 RUN wstool init .
-RUN wstool merge -t . https://raw.githubusercontent.com/ros-planning/moveit/master/moveit.rosinstall
-RUN wstool remove moveit_tutorials && wstool remove panda_moveit_config
-RUN wstool update -t .
 
 COPY ./install ${HOME}/install
 RUN sudo mv ${HOME}/install/preferences /etc/apt/preferences
 
-RUN ${HOME}/install/clone_ros_packages.sh
-RUN ${HOME}/install/apply_patches.sh ${DEP_ROS_WS_ROOT}
+WORKDIR ${DEP_ROS_WS_SRC}
+RUN wstool merge -t . ${HOME}/install/tj2_ros_evergreen.rosinstall
+RUN wstool update -t .
+RUN ${HOME}/install/patch_evergreen_packages.sh
 
 WORKDIR ${DEP_ROS_WS_ROOT}
-RUN rosdep install --from-paths src --ignore-src --rosdistro=noetic -y -r || true
+RUN ${HOME}/install/rosdep_install.sh || true
 
-# https://github.com/ros/catkin/issues/863
-RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF 
-RUN catkin config --install
-RUN catkin build
+RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
+    catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
 
-RUN rm -r ${DEP_ROS_WS_ROOT}/build
-RUN rm -r ${DEP_ROS_WS_SRC}
-RUN apt-get clean
+WORKDIR ${DEP_ROS_WS_SRC}
+RUN wstool merge -t . ${HOME}/install/tj2_ros_overlay.rosinstall
+RUN wstool update -t .
+
+WORKDIR ${DEP_ROS_WS_ROOT}
+RUN ${HOME}/install/rosdep_install.sh || true
+RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
+    catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
+
+RUN apt-get autoremove && apt-get clean
 
 # ---
-# tj2_ros
+# Environment setup
 # ---
 
 ENV ROS_WS_ROOT=${HOME}/tj2_ros

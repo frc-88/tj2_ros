@@ -1,0 +1,41 @@
+
+- git:
+    local-name: rosbridge_suite
+    uri: https://github.com/RobotWebTools/rosbridge_suite.git
+    version: ros1
+- git:
+    local-name: rosauth
+    uri: https://github.com/GT-RAIL/rosauth.git
+    version: develop
+- git:
+    local-name: moveit_msgs
+    uri: https://github.com/ros-planning/moveit_msgs.git
+    version: master
+- git:
+    local-name: moveit_resources
+    uri: https://github.com/ros-planning/moveit_resources.git
+    version: master
+- git:
+    local-name: geometric_shapes
+    uri: https://github.com/ros-planning/geometric_shapes.git
+    version: noetic-devel
+- git:
+    local-name: srdfdom
+    uri: https://github.com/ros-planning/srdfdom
+    version: noetic-devel
+- git:
+    local-name: moveit
+    uri: https://github.com/ros-planning/moveit.git
+    version: master
+- git:
+    local-name: object_recognition_msgs
+    uri: https://github.com/wg-perception/object_recognition_msgs.git
+    version: noetic-devel
+- git:
+    local-name: random_numbers
+    uri: https://github.com/ros-planning/random_numbers.git
+    version: master
+- git:
+    local-name: resource_retriever
+    uri: https://github.com/ros/resource_retriever.git
+    version: kinetic-devel
