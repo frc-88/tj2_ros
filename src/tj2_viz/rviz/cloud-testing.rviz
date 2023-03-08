@@ -13,6 +13,7 @@ Panels:
         - /Camera1
         - /Camera1/Visibility1
         - /MarkerArray1
+        - /Pose1
       Splitter Ratio: 0.4070473909378052
     Tree Height: 546
   - Class: rviz/Selection
@@ -32,7 +33,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: PointCloud2
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -339,6 +340,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         AMCL Particles: true
         AMCL Pose: true
         Camera: true
@@ -359,6 +361,7 @@ Visualization Manager:
         Path Potential: false
         PointCloud2: true
         Polygon: true
+        Pose: true
         RobotModel: false
         Sinistra LaserScan: true
         TF: false
@@ -490,25 +493,15 @@ Visualization Manager:
       Marker Topic: /apriltag/tag_markers
       Name: Tags
       Namespaces:
-        cube1: true
         cube1-2-3-4-5-6-7-8: true
-        cube3: true
         cube6: true
-        posx1: true
         posx1-2-3-4-5-6-7-8: true
-        posx3: true
         posx6: true
-        posy1: true
         posy1-2-3-4-5-6-7-8: true
-        posy3: true
         posy6: true
-        posz1: true
         posz1-2-3-4-5-6-7-8: true
-        posz3: true
         posz6: true
-        text1: true
         text1-2-3-4-5-6-7-8: true
-        text3: true
         text6: true
       Queue Size: 100
       Value: true
@@ -570,6 +563,8 @@ Visualization Manager:
         Path Potential: true
         PointCloud2: false
         Polygon: true
+        Pose: true
+        PoseArray: true
         RobotModel: true
         Sinistra LaserScan: true
         TF: false
@@ -594,14 +589,46 @@ Visualization Manager:
       Unreliable: false
       Value: false
     - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /tj2/cone_markers
+      Enabled: false
+      Marker Topic: /tj2/cones/markers
       Name: MarkerArray
       Namespaces:
-        line: true
-        pose: true
+        {}
       Queue Size: 100
+      Value: false
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /tj2/cones/nearest
+      Unreliable: false
       Value: true
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: false
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: PoseArray
+      Queue Size: 10
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (3D)
+      Topic: /tj2/cones/detections
+      Unreliable: false
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -630,7 +657,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 0.9460785388946533
+      Distance: 2.231240749359131
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -638,17 +665,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.56246417760849
-        Y: 0.03621421754360199
-        Z: 7.033348083496094e-06
+        X: 0.3301272392272949
+        Y: 0.13180424273014069
+        Z: 6.854534149169922e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6897965669631958
+      Pitch: 0.554796576499939
       Target Frame: <Fixed Frame>
-      Yaw: 2.5285732746124268
+      Yaw: 2.858577013015747
     Saved: ~
 Window Geometry:
   Camera:
