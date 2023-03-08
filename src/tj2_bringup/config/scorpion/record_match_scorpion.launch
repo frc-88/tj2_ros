@@ -30,6 +30,9 @@
         /tj2_zed/obj_det/yolo_objects
         /tj2/team_color
         /tj2/smart_dashboard
+        /tj2/cones/markers
+        /tj2/cones/detections
+        /tj2/cones/nearest
 
         --duration=300 --lz4
         " />

@@ -3,8 +3,7 @@
     <group ns="tj2">
         <node name="cone_finder" pkg="tj2_charged_up" type="cone_finder.py" output="screen" required="false">
             <param name="max_detection_distance" value="2.0"/>
-            <remap from="camera_info" to="/tj2_zed/rgb/camera_info" />
-            <remap from="color" to="/tj2_zed/rgb/image_rect_color" />
+            <remap from="camera_info" to="/tj2_zed/depth/camera_info" />
             <remap from="depth" to="/tj2_zed/depth/depth_registered" />
             <remap from="objects" to="/tj2_zed/obj_det/yolo_objects" />
         </node>

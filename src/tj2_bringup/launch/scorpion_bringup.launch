@@ -70,16 +70,19 @@
         <arg name="laser_scan_topic" value="$(arg laser_scan_topic)"/>
         <arg name="gmapping_config" value="$(find tj2_bringup)/config/scorpion/gmapping.yaml"/>
         <arg name="amcl_config" value="$(find tj2_bringup)/config/scorpion/amcl.yaml"/>
-    </include>
-    <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
-        <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
     </include> -->
 
-    <!-- <include file="$(find tj2_webapp)/launch/tj2_webapp.launch"/> -->
-
-    <!-- <include file="$(find tj2_zones)/launch/tj2_zones.launch">
+    <!-- <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
+        <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
+    </include>
+    <include file="$(find tj2_zones)/launch/tj2_zones.launch">
         <arg name="zones_path" value="$(find tj2_zones)/zones/$(arg map_name).bin"/>
     </include> -->
+
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0.0 0.0 0.0  0.0 0.0 0.0 1.0 map odom 20" />
+    <node name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_laser_slam)/maps/$(arg map_name)">
+        <param name="frame_id" value="map"/>
+    </node>
 
     <include file="$(find tj2_camera)/launch/apriltags.launch">
         <arg name="apriltag_settings" value="$(find tj2_bringup)/config/scorpion/tags/settings.yaml"/>

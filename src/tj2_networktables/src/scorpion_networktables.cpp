@@ -14,7 +14,34 @@ ScorpionNetworkTables::ScorpionNetworkTables(ros::NodeHandle* nodehandle) :
     _tag_global_pose[3] = 0.0;
     _tag_global_pose[4] = 0.0;
 
+    _nearest_cone_entry = nt::GetEntry(_nt, _base_key + "nearest_cone");
+    _nearest_cone_pose.resize(8);
+    _nearest_cone_pose[0] = 0.0;  // time
+    _nearest_cone_pose[1] = 0.0;  // x
+    _nearest_cone_pose[2] = 0.0;  // y
+    _nearest_cone_pose[3] = 0.0;  // z
+    _nearest_cone_pose[4] = 0.0;  // qx
+    _nearest_cone_pose[5] = 0.0;  // qy
+    _nearest_cone_pose[6] = 0.0;  // qz
+    _nearest_cone_pose[7] = 0.0;  // qw
+
+    _nearest_cone_sub = nh.subscribe<geometry_msgs::PoseStamped>("cones/nearest", 50, &ScorpionNetworkTables::nearest_cone_callback, this);
+
     ROS_INFO("scorpion_networktables init complete");
+}
+
+void ScorpionNetworkTables::nearest_cone_callback(const geometry_msgs::PoseStampedConstPtr& msg)
+{
+    _nearest_cone_pose[0] = get_time();
+    _nearest_cone_pose[1] = msg->pose.position.x;
+    _nearest_cone_pose[2] = msg->pose.position.y;
+    _nearest_cone_pose[3] = msg->pose.position.z;
+    _nearest_cone_pose[4] = msg->pose.orientation.x;
+    _nearest_cone_pose[5] = msg->pose.orientation.y;
+    _nearest_cone_pose[6] = msg->pose.orientation.z;
+    _nearest_cone_pose[7] = msg->pose.orientation.w;
+
+    nt::SetEntryValue(_nearest_cone_entry, nt::Value::MakeDoubleArray(_nearest_cone_pose));
 }
 
 // ---
