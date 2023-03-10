@@ -83,6 +83,7 @@ class RoiRunnerNode:
         
         self.model_path = rospy.get_param("~model_path", 'models/roi_000919.pkl')
         self.enable_debug_image = False
+        self.enable_timing_report = True
         self.colors = np.array([[51, 174, 220], [164, 58, 71]], dtype=np.uint8)
         self.model_width = 512
         self.model_height = 256
@@ -91,10 +92,13 @@ class RoiRunnerNode:
         self.left_confidence = 0.5
         self.classes = ['cone', 'cube']
         
+        model_start_time = time.time()
         self.device = torch.device('cuda')
         self.model = Net().to(self.device)
         self.model.load_state_dict(torch.load(self.model_path))
         self.model.eval()
+        model_stop_time = time.time()
+        rospy.loginfo(f"Model took {model_stop_time - model_start_time:0.4f} seconds to load.")
         
         self.color_map = {self.classes[index]: self.colors[index] for index in range(len(self.classes))}
         self.depth_msg: Optional[Image] = None
@@ -103,13 +107,18 @@ class RoiRunnerNode:
         self.timings: List[TimingFrame] = []
         self.timing_frame = TimingFrame()
 
+        rospy.loginfo("Warming up net.")
+        warmup_start_time = time.time()
+        self.infer(np.random.randint(0, 255, size=(720, 1280, 3), dtype=np.uint8))
+        warmup_stop_time = time.time()
+        rospy.loginfo(f"Model took {warmup_stop_time - warmup_start_time:0.4f} seconds to warmup.")
+
         self.debug_image_pub = rospy.Publisher("debug_image", Image, queue_size=1)
         self.depth_debug_image_pub = rospy.Publisher("depth_debug_image", Image, queue_size=1)
         self.camera_info_sub = rospy.Subscriber("/tj2_zed/depth/camera_info", CameraInfo, self.info_callback, queue_size=1)
-        self.image_sub = rospy.Subscriber("/tj2_zed/rgb/image_rect_color", Image, self.image_callback, queue_size=1)
-        self.depth_sub = rospy.Subscriber("/tj2_zed/depth/depth_registered", Image, self.depth_callback, queue_size=1)
+        self.image_sub = rospy.Subscriber("/tj2_zed/rgb/image_rect_color", Image, self.image_callback, queue_size=1, buff_size=720 * 1280 * 3 * 256 + 1000)
+        self.depth_sub = rospy.Subscriber("/tj2_zed/depth/depth_registered", Image, self.depth_callback, queue_size=1, buff_size=720 * 1280 * 8 * 256 + 1000)
         self.markers_pub = rospy.Publisher("markers", MarkerArray, queue_size=10)
-        rospy.loginfo("ROI runner is ready")
 
     def info_callback(self, msg: CameraInfo):
         rospy.loginfo("Got camera model")
@@ -141,13 +150,20 @@ class RoiRunnerNode:
         if len(self.timings) >= 10:
             self.timings.pop(0)
         
-        print("Image FPS: %0.2f" % (1.0 / np.mean(np.diff([frame.start for frame in self.timings]))))
-        print("Overall: %0.4fs" % (np.mean([frame.stop - frame.start for frame in self.timings])))
-        print("Resize: %0.4fs" % (np.mean([frame.resize - frame.start for frame in self.timings])))
-        print("Infer: %0.4fs" % (np.mean([frame.inference - frame.resize for frame in self.timings])))
-        print("Detect prep: %0.4fs" % (np.mean([frame.detect2d_prep - frame.inference for frame in self.timings])))
-        print("2D to 3D: %0.4fs" % (np.mean([frame.to_3d - frame.detect2d_prep for frame in self.timings])))
-        print()
+        if self.enable_timing_report:
+            print("Callback FPS: %0.2f" % (1.0 / np.mean(np.diff([frame.start for frame in self.timings]))))
+            print("Overall: %0.4fs" % (np.mean([frame.stop - frame.start for frame in self.timings])))
+            print("Resize: %0.4fs" % (np.mean([frame.resize - frame.start for frame in self.timings])))
+            print("Infer: %0.4fs" % (np.mean([frame.inference - frame.resize for frame in self.timings])))
+            print("Detect prep: %0.4fs" % (np.mean([frame.detect2d_prep - frame.inference for frame in self.timings])))
+            print("2D to 3D: %0.4fs" % (np.mean([frame.to_3d - frame.detect2d_prep for frame in self.timings])))
+            object_counts = {name: 0 for name in self.classes}
+            for detection in detections_3d:
+                object_counts[detection.label] += 1
+            print("Object counts:")
+            for name, count in object_counts.items():
+                print(f"\t{name}: {count}")
+            print()
 
     def depth_callback(self, msg: Image):
         rospy.loginfo_once("Received depth image")
@@ -286,6 +302,9 @@ class RoiRunnerNode:
         bb = detection_2d.bounding_box
         mask[bb.y_top:bb.y_bottom+1, bb.x_left:bb.x_right + 1][detection_2d.mask] = 1
         depth_masked = depth_image[np.where(mask)]
+        if len(depth_masked) == 0:
+            rospy.logwarn('Depth mask is empty!')
+            return 0.0, 0.0
         z_dist = np.nanmean(depth_masked)
         z_std = np.nanstd(depth_masked)
         z_min = z_dist - z_std * 2.0
