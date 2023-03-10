@@ -9,7 +9,10 @@ from scipy import odr
 import tf2_geometry_msgs
 from typing import List, Tuple
 from cv_bridge import CvBridge
+from dataclasses import dataclass
+from numba import njit
 
+from std_msgs.msg import Header
 from geometry_msgs.msg import Pose, Point, PoseStamped, PoseArray, Quaternion
 from image_geometry import PinholeCameraModel
 from sensor_msgs.msg import Image, CameraInfo
@@ -25,6 +28,24 @@ from hough_bundler import HoughBundler
 # type check workaround
 cross = lambda x, y: np.cross(x,y)
 
+@njit
+def find_normals(image):
+    normals = np.zeros_like(image)
+    for y in range(1, image.shape[0] - 1):
+        for x in range(1, image.shape[1] - 1):
+            dzdx = (image[y, x + 1] - image[y, x - 1]) / 2.0
+            dzdy = (image[y + 1, x] - image[y - 1, x]) / 2.0
+            delta = np.array([dzdx, dzdy, 1.0])
+            normals[y, x] = np.linalg.norm(delta)
+    return normals
+
+
+@dataclass
+class ObjectResult:
+    yolo_object: YoloObject
+    position: Tuple[float, float, float]
+
+
 class ConeFinder:
     def __init__(self) -> None:
         self.node_name = "cone_finder"
@@ -36,7 +57,7 @@ class ConeFinder:
 
         self.class_names = []
         self.objects = []
-        self.objects_timestamp = rospy.Time.now()
+        self.objects_header = Header()
         self.camera_model = None
 
         self.stale_detection_threshold = rospy.Duration(
@@ -91,12 +112,15 @@ class ConeFinder:
         self.class_names = msg.labels
 
     def find_detected_lines(self, stamp, image):
+        # image = find_normals(image)
         image = cv2.pyrDown(image)
+        # self.plotter.draw_image(image)
         image = cv2.GaussianBlur(image, (self.gauss_k, self.gauss_k), 0)
         edges = cv2.Canny(image, self.canny_lower, self.canny_upper, None, self.canny_aperture_size)
         self.plotter.draw_image(edges)
         agg_lines = []
-        for bb in self.get_crops(stamp):
+        for obj in self.get_crops(stamp):
+            bb = obj.yolo_object.bounding_box
             x0 = min(bb.x0, bb.x1) // 2
             x1 = max(bb.x0, bb.x1) // 2
             y0 = min(bb.y0, bb.y1) // 2
@@ -120,18 +144,29 @@ class ConeFinder:
             lines[..., 2] += x0
             lines[..., 3] += y0
             self.plotter.draw_houghlines(lines, (0, 255, 0))
-            agg_lines.append(((x0, y0, x1, y1), lines))
+            box = (x0, y0, x1, y1)
+            agg_lines.append((box, obj, lines))
         return agg_lines
 
     def depth_callback(self, msg: Image):
+        if len(self.objects) == 0:
+            return
         try:
             robot_tf = self.tf_buffer.lookup_transform(self.robot_frame, msg.header.frame_id, rospy.Time(0), self.transform_tolerance)
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             rospy.logwarn("Failed to look up %s to %s. %s" % (self.robot_frame, msg.header.frame_id, e))
             return
+        obj_frame_id = self.objects_header.frame_id
+        try:
+            optical_tf = self.tf_buffer.lookup_transform(msg.header.frame_id, obj_frame_id, rospy.Time(0), self.transform_tolerance)
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            rospy.logwarn("Failed to look up %s to %s. %s" % (msg.header.frame_id, obj_frame_id, e))
+            return
 
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
         image = np.clip(image, 0.0, self.max_detection_distance)
+        image[np.isnan(image)] = 0
+        
         norm_image = cv2.normalize(image, None, 0.0, 255.0, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
 
         markers = MarkerArray()
@@ -142,7 +177,7 @@ class ConeFinder:
         agg_lines = self.find_detected_lines(msg.header.stamp, norm_image)
         nearest_distance = None
         nearest_pose = PoseStamped()
-        for index, (bb, lines) in enumerate(agg_lines):
+        for index, (bb, obj, lines) in enumerate(agg_lines):
             result = self.find_cone_line(bb, lines)
             self.plotter.draw_line(result, (0, 0, 255))
 
@@ -153,9 +188,17 @@ class ConeFinder:
             pt1 = self.pixel_to_point(px_pt1)
             dist0 = np.linalg.norm(pt0)
             dist1 = np.linalg.norm(pt1)
-            nearest_dist = dist0 if dist0 < dist1 else dist1                
+            nearest_dist = dist0 if dist0 < dist1 else dist1
             
             pose = self.points_to_pose(pt0, pt1)
+            
+            yolo_obj_pose = PoseStamped()
+            yolo_obj_pose.header = self.objects_header
+            yolo_obj_pose.pose.position = Point(*obj.position)
+            yolo_obj_pose.pose.orientation.w = 1.0
+            yolo_obj_pose = tf2_geometry_msgs.do_transform_pose(yolo_obj_pose, optical_tf)
+            
+            pose.position = yolo_obj_pose.pose.position
             pose_stamped = PoseStamped()
             pose_stamped.header = msg.header
             pose_stamped.pose = pose
@@ -176,22 +219,36 @@ class ConeFinder:
         if not self.camera_model:
             return
         objects = []
-        for object in msg.objects:
-            if object.label != self.cone_label:
+        for obj in msg.objects:
+            if obj.label != self.cone_label:
                 continue
-            top_right_px = object.bounding_box_2d.corners[0].kp
-            bottom_left_px = object.bounding_box_2d.corners[2].kp
-            objects.append(YoloObject(
-                object.label,
+            top_right_px = obj.bounding_box_2d.corners[0].kp
+            bottom_left_px = obj.bounding_box_2d.corners[2].kp
+            position = obj.position
+            yolo_obj = YoloObject(
+                obj.label,
                 bottom_left_px[0],
                 top_right_px[0],
                 bottom_left_px[1],
                 top_right_px[1],
                 self.camera_model.width,
                 self.camera_model.height
-            ))
+            )
+            result = ObjectResult(yolo_obj, position)
+            objects.append(result)
         self.objects = objects
-        self.objects_timestamp = msg.header.stamp
+        self.objects_header = msg.header
+
+    def get_crops(self, now):
+        if (
+            now - self.objects_header.stamp
+            > self.stale_detection_threshold
+        ):
+            rospy.logwarn("Detection is stale. Not computing orientations!")
+            return
+
+        for obj in self.objects:
+            yield obj
 
     def update_nearest_pose(self, pose: PoseStamped):
         new_quat = [0.0 for _ in range(len(self.filters))]
@@ -309,23 +366,12 @@ class ConeFinder:
         m, c = p
         return m * x + c
 
-    def get_crops(self, now):
-        if (
-            now - self.objects_timestamp
-            > self.stale_detection_threshold
-        ):
-            rospy.logwarn("Detection is stale. Not computing orientations!")
-            return
-
-        for obj in self.objects:
-            yield obj.bounding_box
-
     def run(self):
         if type(self.plotter) == NoopDebugPlotter:
             rospy.spin()
         else:
             while not rospy.is_shutdown():
-                time.sleep(0.1)
+                time.sleep(0.01)
                 self.plotter.pause()
 
 
