@@ -81,7 +81,7 @@ class RoiRunnerNode:
             # log_level=rospy.DEBUG
         )
         
-        self.model_path = rospy.get_param("~model_path", 'models/roi_006940.pkl')
+        self.model_path = rospy.get_param("~model_path", 'models/roi_013000.pkl')
         self.enable_debug_image = True
         self.enable_timing_report = True
         self.colors = np.array([[51, 174, 220], [164, 58, 71]], dtype=np.uint8)
