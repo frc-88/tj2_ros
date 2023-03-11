@@ -63,8 +63,8 @@
         </node>
     </group> -->
 
-    <!-- <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
-    <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
+    <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
+    <!-- <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="localize"/>
         <arg name="map_name" value="$(arg map_name)"/>
         <arg name="laser_scan_topic" value="$(arg laser_scan_topic)"/>
@@ -80,7 +80,7 @@
     </include> -->
 
     <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0.0 0.0 0.0  0.0 0.0 0.0 1.0 map odom 20" />
-    <node name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_laser_slam)/maps/$(arg map_name)">
+    <node name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_laser_slam)/maps/$(arg map_name).yaml">
         <param name="frame_id" value="map"/>
     </node>
 
