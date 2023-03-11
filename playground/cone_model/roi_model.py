@@ -8,6 +8,7 @@ from torchvision.ops import roi_align
 from torchvision.transforms import Resize
 from roi_params import *
 from roi_NMS import NMS
+import roi_tools
 
 F_thick = (classes_num+4*classes_num)*anchor_base_n
 
@@ -72,9 +73,9 @@ class Net(nn.Module):
                 over_t, over_b, over_l, over_r = np.random.randint(0, 15, 4)
             else:
                 over_t, over_b, over_l, over_r = 3, 3, 3, 3
-            img_idx, cls_idx, t, b, l, r = obj[:6]
-            t, b = min(max(t - over_t, 0), IMG_H - 1), min(max(b + over_b, 0), IMG_H - 1)
-            l, r = min(max(l - over_l, 0), IMG_W - 1), min(max(r + over_r, 0), IMG_W - 1)
+            img_idx, cls_idx, org_t, org_b, org_l, org_r = obj[:6]
+            t, b = min(max(org_t - over_t, 0), IMG_H - 1), min(max(org_b + over_b, 0), IMG_H - 1)
+            l, r = min(max(org_l - over_l, 0), IMG_W - 1), min(max(org_r + over_r, 0), IMG_W - 1)
             qt, qb, ql, qr = (t + 2) // 4, (b + 2) // 4, (l + 2) // 4, (r + 2) // 4
             qt, qb = min(max(qt - 1, 0), IMG_H // 4 - 1), min(max(qb + 1, 0), IMG_H // 4 - 1)  # quater
             ql, qr = min(max(ql - 1, 0), IMG_W // 4 - 1), min(max(qr + 1, 0), IMG_W // 4 - 1)
@@ -110,6 +111,7 @@ class Net(nn.Module):
         up7 = F.relu(self.up7(self.upsample7(conv6)))
         merge7 = torch.cat((conv3, up7), 1)
         conv7 = F.relu(self.conv7(merge7))
+        big_conv7 = Resize([IMG_H, IMG_W])(conv7) # for roiAlign
 
         convF1a = F.relu(self.convF1a(conv5))
         convF1b = F.relu(self.convF1b(convF1a))
@@ -131,7 +133,7 @@ class Net(nn.Module):
         roi_train_set = []
 
         if mode == 'training':
-            for obj in objs:
+            for obj_idx, obj in enumerate(objs):
                 img_idx, cls_idx, t, b, l, r, stand, l_r, angle, for_s, for_l_r, for_angle, _ = obj
                 to_box = [t, b, l, r]
                 for box in boxes:
@@ -145,17 +147,27 @@ class Net(nn.Module):
                                 pos_neg = 1
                                 roi_train_set.append(
                                     [img_idx, cls_idx, pos_neg, from_box, to_box, stand, l_r, angle, for_reg, for_pos_neg, for_s, for_l_r, for_angle])
+                                '''
+                                if for_reg:
+                                    iou = roi_tools.get_iou(from_box, to_box)
+                                    print(iou)
+                                    iou = iou
+                                '''
                 for sample in roi_samples:
-                    smp_img_idx, smp_cls_idx, bt, bb, bl, br, pos_neg, stand, l_r, angle, for_reg, for_pos_neg, for_s, for_l_r, for_angle = sample
-                    if img_idx == smp_img_idx and cls_idx == smp_cls_idx:
+                    smp_img_idx, smp_cls_idx, smp_obj_idx, bt, bb, bl, br, pos_neg, stand, l_r, angle, for_reg, for_pos_neg, for_s, for_l_r, for_angle = sample
+                    if img_idx == smp_img_idx and cls_idx == smp_cls_idx and obj_idx == smp_obj_idx:
                         from_box = [bt, bb, bl, br]
                         roi_train_set.append(
                             [img_idx, cls_idx, pos_neg, from_box, to_box, stand, l_r, angle, for_reg, for_pos_neg, for_s, for_l_r, for_angle])
-
+                        '''
+                        if for_reg:
+                            iou = roi_tools.get_iou(from_box, to_box)
+                            print(iou)
+                            iou = iou
+                        '''
             for sample in roi_train_set:
                 img_idx, cls_idx, pos_neg, from_box, to_box, stand, l_r, angle, for_reg, for_pos_neg, for_s, for_l_r, for_angle = sample
                 t, b, l, r = from_box
-                big_conv7 = Resize([IMG_H, IMG_W])(conv7)
                 cropped_2d = big_conv7[img_idx:img_idx + 1, ::, t:b, l:r]
                 roiAlign = Resize([roi_align_h, roi_align_w])(cropped_2d)
                 aligns.append(roiAlign)
@@ -165,7 +177,6 @@ class Net(nn.Module):
             cls_idcs = []
             for box in boxes:
                 img_idx, cls_idx, l, r, t, b = box
-                big_conv7 = Resize([IMG_H, IMG_W])(conv7)
                 cropped_2d = big_conv7[img_idx:img_idx + 1, ::, t:b, l:r]
                 roiAlign = Resize([roi_align_h, roi_align_w])(cropped_2d)
                 aligns.append(roiAlign)
@@ -222,22 +233,22 @@ class Net(nn.Module):
                 img_idx, cls_idx, l, r, t, b = box
                 cx, cy = (l + r) / 2, (t + b) / 2
                 tr, br, lr, rr = [xx.item() for xx in [tr, br, lr, rr]]
-                s, e = (l - cx) * 0.5 + cx, (l - cx) * 1.5 + cx
-                ll = s + (e - s) * lr
-                s, e = (r - cx) * 0.5 + cx, (r - cx) * 1.5 + cx
-                rr = s + (e - s) * rr
-                s, e = (t - cy) * 0.5 + cy, (t - cy) * 1.5 + cy
-                tt = s + (e - s) * tr
-                s, e = (b - cy) * 0.5 + cy, (b - cy) * 1.5 + cy
-                bb = s + (e - s) * br
-                over_d = 10
-                ll, rr, tt, bb = [int(xx + 0.5) for xx in [ll - over_d, rr + over_d, tt - over_d, bb + over_d]]
-                ll = min(max(0, ll), IMG_W - 2)
-                rr = min(max(ll + 1, rr), IMG_W - 1)
-                tt = min(max(0, tt), IMG_H - 2)
-                bb = min(max(tt + 1, bb), IMG_H - 1)
+                s, e = (l - cx) * roi_reg_range_d + cx, (l - cx) * roi_reg_range_u + cx
+                lll = s + (e - s) * lr
+                s, e = (r - cx) * roi_reg_range_d + cx, (r - cx) * roi_reg_range_u + cx
+                rrr = s + (e - s) * rr
+                s, e = (t - cy) * roi_reg_range_d + cy, (t - cy) * roi_reg_range_u + cy
+                ttt = s + (e - s) * tr
+                s, e = (b - cy) * roi_reg_range_d + cy, (b - cy) * roi_reg_range_u + cy
+                bbb = s + (e - s) * br
+                lll, rrr, ttt, bbb = [int(xx + 0.5) for xx in [lll, rrr, ttt, bbb]]
+                rrr, bbb = min(rrr, IMG_W-1), min(bbb, IMG_H-1)
+                lll = min(max(0, lll), IMG_W - 2)
+                rrr = min(max(lll + 1, rrr), IMG_W - 1)
+                ttt = min(max(0, ttt), IMG_H - 2)
+                bbb = min(max(ttt + 1, bbb), IMG_H - 1)
                 if pos_neg > roi_score_th:
-                    reged_boxes.append([img_idx, cls_idx, tt, bb, ll, rr, stand, l_r, angle])
+                    reged_boxes.append([img_idx, cls_idx, ttt, bbb, lll, rrr, stand, l_r, angle])
 
                 '''
                 if img_cls_scores[img_idx, cls_idx] < pos_neg:
@@ -255,10 +266,14 @@ class Net(nn.Module):
             '''
             for obj in reged_boxes:
                 #img_idx, cls_idx, t, b, l, r = obj
+                org_t, org_b, org_l, org_r = obj[2:6]
                 segment = sub_segments(obj, mode='testing')
                 img_idx, cls_idx, ct, cb, cl, cr, mask = segment
                 stand, l_r, angle = obj[-3:]
-                segment = [img_idx, cls_idx, ct, cb, cl, cr, stand, l_r, angle, mask]
+                # for testing mode, the bounding boxes are original box, not aligned by 16,
+                # masks are corresponding to bounding boxes
+                mask = mask[org_t-ct:org_b+1-ct,org_l-cl:org_r+1-cl]
+                segment = [img_idx, cls_idx, org_t, org_b, org_l, org_r, stand, l_r, angle, mask]
                 #segments[img_idx].append(segment)
                 segments.append(segment)
 

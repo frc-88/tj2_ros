@@ -34,7 +34,10 @@ iou_reg_thresh = 0.55
 iou_neg_thresh = 0.4
 
 reg_sample_quota_each_obj = 5
-neg_sample_quota_each_obj = 16
+# for the first stage, more neg samples doesn't affect training speed.
+neg_sample_quota_each_obj = 150
+# for the second stage, the number of neg samples affects training speed.
+roi_neg_sample_quota_each_obj = 5
 
 n_ch = [3, 32, 64, 128, 256, 512]
 
@@ -47,7 +50,11 @@ roi_score_th = 0.65  # after the roi, know whether it's an object.
 
 roi_align_h, roi_align_w = 20, 20
 
-neg_overlap_ratio = 0.6 # given more overlaped neg samples for detection
+neg_overlap_ratio = 0.2 # ensure a certain amount of overlaped neg samples for detection
 
 pos_detect_weight, neg_detect_weight, regression_weight, roi_reg_weight, roi_pos_neg_weight, masks_weight, dice_weight = 1, 1, 1, 1, 1, 1, 1
 roi_stand_weight, roi_lr_weight, roi_angle_weight = 1, 1, 1
+
+reg_range_d, reg_range_u = 0, 2#-4, 6 #0, 2 # regression range down and up
+# for the second regression, with a better resolution
+roi_reg_range_d, roi_reg_range_u = 1-0.5, 1+0.5
