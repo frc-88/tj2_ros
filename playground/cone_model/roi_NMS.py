@@ -46,7 +46,7 @@ def NMS(features, box_cred_th = 0.0, maximumn_obj_num=1):
                 layer_boxes = np.vstack((crds, cls, ls, rs, ts, bs))
                 boxes = np.hstack((boxes, layer_boxes))
         boxes = boxes.transpose()
-        nms_iou_thresh = 0.3 # whose iou with the current box is larger than this one will be deleted
+        nms_iou_thresh = 0.2 # whose iou with the current box is larger than this one will be deleted
         for cls_idx in range(classes_num):
             cur_cls_boxes = boxes[np.where(boxes[::,1]==cls_idx)]
             for i in range(maximumn_obj_num):

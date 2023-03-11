@@ -81,8 +81,8 @@ class RoiRunnerNode:
             # log_level=rospy.DEBUG
         )
         
-        self.model_path = rospy.get_param("~model_path", 'models/roi_000919.pkl')
-        self.enable_debug_image = False
+        self.model_path = rospy.get_param("~model_path", 'models/roi_006940.pkl')
+        self.enable_debug_image = True
         self.enable_timing_report = True
         self.colors = np.array([[51, 174, 220], [164, 58, 71]], dtype=np.uint8)
         self.model_width = 512
@@ -307,8 +307,8 @@ class RoiRunnerNode:
             return 0.0, 0.0
         z_dist = np.nanmean(depth_masked)
         z_std = np.nanstd(depth_masked)
-        z_min = z_dist - z_std * 2.0
-        z_max = z_dist + z_std * 2.0
+        z_min = z_dist - z_std * 0.5
+        z_max = z_dist + z_std * 0.5
         return z_min, z_max
 
     def detections_2d_to_3d(self, depth_image: np.ndarray, camera_model: PinholeCameraModel, detections_2d: List[Detection2d]) -> List[Detection3d]:
@@ -326,7 +326,7 @@ class RoiRunnerNode:
             bottom_left_y_dist = bottom_left_ray[1] * z_min
 
             x_dist = (top_right_x_dist + bottom_left_x_dist) / 2.0
-            y_dist = bottom_left_y_dist  # not sure why this isn't the average...
+            y_dist = (top_right_y_dist + bottom_left_y_dist) / 2.0
             z_dist = (z_max + z_min) / 2.0
 
             width = bottom_left_x_dist - top_right_x_dist
