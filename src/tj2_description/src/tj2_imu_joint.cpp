@@ -22,6 +22,7 @@ TJ2ImuJoint::TJ2ImuJoint(ros::NodeHandle* nodehandle) :
     }
     base_quat_msg.w = 1.0;
     camera_quat_msg.w = 1.0;
+    _base_to_base_tilt_quat.setRPY(0.0, 0.0, 0.0);
 }
 
 void TJ2ImuJoint::camera_imu_callback(const sensor_msgs::ImuConstPtr& imu)
@@ -89,10 +90,6 @@ void TJ2ImuJoint::base_callback(tf2::Quaternion quat)
 
 void TJ2ImuJoint::publish_base_tf()
 {
-    if (!(std::isfinite(base_quat_msg.x) && std::isfinite(base_quat_msg.y) && std::isfinite(base_quat_msg.z) && std::isfinite(base_quat_msg.w))) {
-        ROS_WARN_THROTTLE(1.0, "Base tilt quaternion contains NaNs or Infs!");
-        return;
-    }
     geometry_msgs::TransformStamped tf_stamped;
     tf_stamped.header.stamp = ros::Time::now();
     tf_stamped.header.frame_id = _base_parent_frame;
@@ -100,17 +97,22 @@ void TJ2ImuJoint::publish_base_tf()
     tf_stamped.transform.translation.x = 0.0;
     tf_stamped.transform.translation.y = 0.0;
     tf_stamped.transform.translation.z = 0.0;
-    tf_stamped.transform.rotation = base_quat_msg;
+    tf_stamped.transform.rotation.x = 0.0;
+    tf_stamped.transform.rotation.y = 0.0;
+    tf_stamped.transform.rotation.z = 0.0;
+    tf_stamped.transform.rotation.w = 1.0;
 
+    if (std::isfinite(base_quat_msg.x) && std::isfinite(base_quat_msg.y) && std::isfinite(base_quat_msg.z) && std::isfinite(base_quat_msg.w)) {
+        tf_stamped.transform.rotation = base_quat_msg;
+    }
+    else {
+        ROS_WARN_THROTTLE(1.0, "Base tilt quaternion contains NaNs or Infs!");
+    }
     _tf_broadcaster.sendTransform(tf_stamped);
 }
 
 void TJ2ImuJoint::publish_camera_tf()
 {
-    if (!(std::isfinite(camera_quat_msg.x) && std::isfinite(camera_quat_msg.y) && std::isfinite(camera_quat_msg.z) && std::isfinite(camera_quat_msg.w))) {
-        ROS_WARN_THROTTLE(1.0, "Camera tilt quaternion contains NaNs or Infs!");
-        return;
-    }
     geometry_msgs::TransformStamped tf_stamped;
     tf_stamped.header.stamp = ros::Time::now();
     tf_stamped.header.frame_id = _camera_parent_frame;
@@ -118,8 +120,17 @@ void TJ2ImuJoint::publish_camera_tf()
     tf_stamped.transform.translation.x = 0.0;
     tf_stamped.transform.translation.y = 0.0;
     tf_stamped.transform.translation.z = 0.0;
-    tf_stamped.transform.rotation = camera_quat_msg;
+    tf_stamped.transform.rotation.x = 0.0;
+    tf_stamped.transform.rotation.y = 0.0;
+    tf_stamped.transform.rotation.z = 0.0;
+    tf_stamped.transform.rotation.w = 1.0;
 
+    if (std::isfinite(camera_quat_msg.x) && std::isfinite(camera_quat_msg.y) && std::isfinite(camera_quat_msg.z) && std::isfinite(camera_quat_msg.w)) {
+        tf_stamped.transform.rotation = camera_quat_msg;
+    }
+    else {
+        ROS_WARN_THROTTLE(1.0, "Camera tilt quaternion contains NaNs or Infs!");
+    }
     _tf_broadcaster.sendTransform(tf_stamped);
 }
 
