@@ -83,6 +83,7 @@ private:
     int _relative_threshold;
     double _depth_num_std_devs, _empty_mask_num_std_devs;
     double _cube_opacity, _visuals_line_width;
+    int _erosion_size;
 
     // Members
     Detector* _detector;
@@ -91,6 +92,7 @@ private:
     std::vector<int> _obj_count;
     ros::Duration _marker_persistance;
     sensor_msgs::CameraInfo _camera_info;
+    cv::Mat erode_element;
 
     // Subscribers
     ros::Subscriber _color_info_sub;

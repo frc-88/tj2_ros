@@ -24,6 +24,7 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~long_loop_warning_ms", _long_loop_warning_ms, 75.0);
     ros::param::param<double>("~visuals_cube_opacity", _cube_opacity, 0.75);
     ros::param::param<double>("~visuals_line_width", _visuals_line_width, 0.01);
+    ros::param::param<int>("~erosion_size", _erosion_size, 3);
 
     ros::param::param<bool>("~publish_overlay", _publish_overlay, false);
     ros::param::param<bool>("~report_loop_times", _report_loop_times, true);
@@ -44,6 +45,8 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
         std::exit(EXIT_FAILURE);
     }
     _obj_count.resize(_class_names.size());
+
+    erode_element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2 * _erosion_size + 1, 2 * _erosion_size + 1));
 
     _detector = new Detector(_model_path, device_type, _report_loop_times);
     // run twice to warm up
@@ -300,7 +303,18 @@ void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Dete
     // the result is a foreground mask
     cv::Mat threshold_mask;
     cv::threshold(normalized, threshold_mask, _relative_threshold, 255, cv::THRESH_BINARY_INV);
-    
+
+    // set border to zero then apply erosion
+    for (size_t x = 0; x < depth_crop.cols; x++) {
+        threshold_mask.at<uchar>(0, x) = 0;
+        threshold_mask.at<uchar>(depth_crop.rows - 1, x) = 0;
+    }
+    for (size_t y = 0; y < depth_crop.rows; y++) {
+        threshold_mask.at<uchar>(y, 0) = 0;
+        threshold_mask.at<uchar>(y, depth_crop.cols - 1) = 0;
+    }
+    cv::erode(threshold_mask, threshold_mask, erode_element);
+
     // if the threshold removed all pixels, reset the mask to all true.
     // this way this function will always return results from the image and not zero
     bool is_mask_empty = false;

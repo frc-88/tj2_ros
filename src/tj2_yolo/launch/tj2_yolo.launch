@@ -13,12 +13,13 @@
             <param name="warmup_image_width" value="1280"/>
             <param name="warmup_image_height" value="720"/>
 
-            <param name="publish_overlay" value="false"/>
+            <param name="publish_overlay" value="true"/>
             <param name="report_loop_times" value="false"/>
             <param name="marker_persistance" value="0.25"/>
             <param name="min_depth" value="0.1"/>
             <param name="max_depth" value="5.0"/>
-            <param name="depth_num_std_devs" value="1.5"/>
+            <param name="erosion_size" value="11"/>
+            <param name="depth_num_std_devs" value="2.5"/>
             <param name="relative_threshold" value="50"/>
             <param name="long_loop_warning_ms" value="100"/>
             <param name="message_delay_warning_ms" value="500"/>
