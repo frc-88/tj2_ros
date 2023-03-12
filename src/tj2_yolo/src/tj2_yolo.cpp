@@ -19,7 +19,6 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~min_depth", _min_depth, 0.1);
     ros::param::param<double>("~max_depth", _max_depth, 10.0);
     ros::param::param<double>("~depth_num_std_devs", _depth_num_std_devs, 1.0);
-    ros::param::param<double>("~empty_mask_num_std_devs", _empty_mask_num_std_devs, 0.2);
     ros::param::param<double>("~message_delay_warning_ms", _message_delay_warning_ms, 500.0);
     ros::param::param<double>("~long_loop_warning_ms", _long_loop_warning_ms, 75.0);
     ros::param::param<double>("~visuals_cube_opacity", _cube_opacity, 0.75);
@@ -337,16 +336,15 @@ void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Dete
     double z_dist = mask_min;
     double z_std = stddev.at<double>(0);
     double num_stddevs;
-    if (is_mask_empty) {
-        num_stddevs = _empty_mask_num_std_devs;
-    }
-    else {
-        num_stddevs = _depth_num_std_devs;
-    }
 
     // set min/max based on mean and standard deviation
     z_min = z_dist;
-    z_max = z_dist + z_std * num_stddevs;
+    if (is_mask_empty) {
+        z_max = z_dist + 0.001;
+    }
+    else {
+        z_max = z_dist + z_std * num_stddevs;
+    }
 
     out_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
     for (size_t x = 0; x < depth_crop.cols; x++) {
