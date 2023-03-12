@@ -20,6 +20,8 @@
             <param name="max_depth" value="5.0"/>
             <param name="depth_num_std_devs" value="1.5"/>
             <param name="relative_threshold" value="50"/>
+            <param name="long_loop_warning_ms" value="100"/>
+            <param name="message_delay_warning_ms" value="500"/>
 
             <remap from="color/image_raw" to="/tj2_zed/rgb/image_rect_color"/>
             <remap from="depth/image_raw" to="/tj2_zed/depth/depth_registered"/>
