@@ -47,10 +47,10 @@
         <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
         <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
     </include>
-    <!-- <include file="$(find tj2_yolo)/launch/tj2_yolo.launch">
+    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch">
         <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
-        <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />
-    </include> -->
+        <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
+    </include>
 
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch">
         <arg name="record_launch_path" value="$(find tj2_bringup)/config/scorpion/record_match_scorpion.launch" />
