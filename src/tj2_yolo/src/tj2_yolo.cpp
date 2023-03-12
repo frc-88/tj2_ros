@@ -22,6 +22,8 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~empty_mask_num_std_devs", _empty_mask_num_std_devs, 0.2);
     ros::param::param<double>("~message_delay_warning_ms", _message_delay_warning_ms, 500.0);
     ros::param::param<double>("~long_loop_warning_ms", _long_loop_warning_ms, 75.0);
+    ros::param::param<double>("~visuals_cube_opacity", _cube_opacity, 0.75);
+    ros::param::param<double>("~visuals_line_width", _visuals_line_width, 0.01);
 
     ros::param::param<bool>("~publish_overlay", _publish_overlay, false);
     ros::param::param<bool>("~report_loop_times", _report_loop_times, true);
@@ -203,10 +205,10 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
 
         std_msgs::ColorRGBA obj_color = get_detection_color(color_cv_image, detection_mask);        
         vision_msgs::Detection3D detection_3d_msg = detection_2d_to_3d(detection_2d_msg, z_min, z_max);
-        tf_detection_pose_to_robot(detection_3d_msg);
-
-        detection_3d_arr_msg.detections.push_back(detection_3d_msg);
         add_detection_to_marker_array(marker_array, detection_3d_msg, obj_color);
+
+        tf_detection_pose_to_robot(detection_3d_msg);
+        detection_3d_arr_msg.detections.push_back(detection_3d_msg);
     }
     _detection_pub.publish(detection_3d_arr_msg);
     _marker_pub.publish(marker_array);
@@ -507,6 +509,7 @@ void TJ2Yolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>
 void TJ2Yolo::add_detection_to_marker_array(visualization_msgs::MarkerArray& marker_array, vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color)
 {
     visualization_msgs::Marker cube_marker = make_marker(detection_3d_msg, color);
+    visualization_msgs::Marker line_marker = make_marker(detection_3d_msg, color);
     visualization_msgs::Marker text_marker = make_marker(detection_3d_msg, color);
 
     std::string label = get_class_name(detection_3d_msg.results[0].id);
@@ -514,7 +517,22 @@ void TJ2Yolo::add_detection_to_marker_array(visualization_msgs::MarkerArray& mar
 
     cube_marker.type = visualization_msgs::Marker::CUBE;
     cube_marker.ns = "box_" + cube_marker.ns;
-    cube_marker.color.a = 0.5;
+    cube_marker.color.a = _cube_opacity;
+
+    line_marker.type = visualization_msgs::Marker::LINE_STRIP;
+    line_marker.ns = "line_" + line_marker.ns;
+    double size_x = detection_3d_msg.bbox.size.x / 2.0;
+    double size_y = detection_3d_msg.bbox.size.y / 2.0;
+    line_marker.points.push_back(make_point(size_x, size_y, 0.0));
+    line_marker.points.push_back(make_point(-size_x, size_y, 0.0));
+    line_marker.points.push_back(make_point(-size_x, -size_y, 0.0));
+    line_marker.points.push_back(make_point(size_x, -size_y, 0.0));
+    line_marker.points.push_back(make_point(size_x, size_y, 0.0));
+    line_marker.scale.x = _visuals_line_width;
+    line_marker.color.r = 1.0 - text_marker.color.r;
+    line_marker.color.g = 1.0 - text_marker.color.g;
+    line_marker.color.b = 1.0 - text_marker.color.b;
+    line_marker.color.a = 1.0;
 
     text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     text_marker.ns = "text_" + cube_marker.ns;
@@ -528,6 +546,7 @@ void TJ2Yolo::add_detection_to_marker_array(visualization_msgs::MarkerArray& mar
     text_marker.color.b = 1.0 - text_marker.color.b;
 
     marker_array.markers.push_back(cube_marker);
+    marker_array.markers.push_back(line_marker);
     marker_array.markers.push_back(text_marker);
 }
 

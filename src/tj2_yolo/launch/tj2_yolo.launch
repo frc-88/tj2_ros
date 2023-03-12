@@ -13,7 +13,7 @@
             <param name="warmup_image_width" value="1280"/>
             <param name="warmup_image_height" value="720"/>
 
-            <param name="publish_overlay" value="true"/>
+            <param name="publish_overlay" value="false"/>
             <param name="report_loop_times" value="false"/>
             <param name="marker_persistance" value="0.25"/>
             <param name="min_depth" value="0.1"/>
@@ -22,6 +22,8 @@
             <param name="relative_threshold" value="50"/>
             <param name="long_loop_warning_ms" value="100"/>
             <param name="message_delay_warning_ms" value="500"/>
+            <param name="visuals_cube_opacity" value="0.75"/>
+            <param name="visuals_line_width" value="0.01"/>
 
             <remap from="color/image_raw" to="/tj2_zed/rgb/image_rect_color"/>
             <remap from="depth/image_raw" to="/tj2_zed/depth/depth_registered"/>
