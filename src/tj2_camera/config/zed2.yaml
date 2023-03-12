@@ -59,7 +59,7 @@ object_detection:
     qos_durability:             2               # '1': TRANSIENT_LOCAL - '2': VOLATILE
 
 yolo_object_detection:
-    enabled: true
+    enabled: false
     confidence_threshold: 80.0
     nms_iou_confidence_threshold: 40.0
     report_loop_times: false

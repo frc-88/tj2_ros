@@ -6,7 +6,10 @@ import urllib.request
 pattern = r"\w\:  (.+)=(.+)"
 
 output = subprocess.check_output("usb-devices").decode()
-calibration_dir = os.path.expanduser("~/tj2_ros/docker/resources/configs/zed")
+
+calibration_dir = os.path.expanduser("~/zed-resources")
+if not os.path.isdir(calibration_dir):
+    os.makedirs(calibration_dir)
 
 devices = []
 for section in output.split("\n\n"):
@@ -29,7 +32,7 @@ for device in devices:
         print(f"Found ZED camera. SN={serial_number}. Downloading calibration file.")
         urllib.request.urlretrieve(
             f"https://www.stereolabs.com/developers/calib/?SN={serial_number}", 
-            os.path.join(calibration_dir, "SN{serial_number}.conf")
+            os.path.join(calibration_dir, f"SN{serial_number}.conf")
         )
 
 print("Done!")

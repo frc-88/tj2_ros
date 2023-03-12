@@ -15,7 +15,8 @@
         <arg name="interface_type" value="diffyjr"/>
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
-        <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/>
+        <!-- <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/> -->
+        <arg name="detection_topic" value="/tj2/detections"/>
         <arg name="scan_topic" value="$(arg laser_scan_topic)"/>
         <arg name="tag_topic" value="/apriltag/rotated_detections"/>
         <arg name="classes_path" default="$(arg yolo_class_names)"/>
@@ -42,6 +43,10 @@
     </include>
 
     <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
+        <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
+        <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
+    </include>
+    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch">
         <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
         <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
     </include>
@@ -118,5 +123,5 @@
         <arg name="namespace" value="apriltag"/>
     </include> -->
 
-    <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/>
+    <!-- <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/> -->
 </launch>
