@@ -324,12 +324,17 @@ void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Dete
         is_mask_empty = true;
     }
 
+    // find min value in masked depth
+    double masked_min, masked_max;
+    cv::Point min_loc, max_loc;
+    cv::minMaxLoc(depth_crop, &masked_min, &masked_max, &min_loc, &max_loc, threshold_mask);
+
     // find the mean and standard deviation in the cropped depth image using the foreground mask
     cv::Mat mean, stddev;
     cv::meanStdDev(depth_crop, mean, stddev, threshold_mask);
 
     // extract scalar values
-    double z_dist = mean.at<double>(0);
+    double z_dist = mask_min;
     double z_std = stddev.at<double>(0);
     double num_stddevs;
     if (is_mask_empty) {
@@ -340,7 +345,7 @@ void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Dete
     }
 
     // set min/max based on mean and standard deviation
-    z_min = z_dist - z_std * num_stddevs;
+    z_min = z_dist;
     z_max = z_dist + z_std * num_stddevs;
 
     out_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
