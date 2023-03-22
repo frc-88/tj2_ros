@@ -91,6 +91,4 @@ for id, img_name in enumerate(img_names):
             cv2.waitKey(1000)
             print('here.')
     '''
-
-
     print(id, ': ', path)
