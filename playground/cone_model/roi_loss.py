@@ -11,7 +11,7 @@ def dice_loss_function(predict, target, smooth=1):
     dice = (2 * intersection + smooth) / (predict.sum() + target.sum() + smooth)
     return 1 - dice
 
-def get_loss(outputs, targets, objs):
+def get_loss(outputs, targets, objs, tgt_mask_qs):
     pos_outputs, pos_targets = torch.zeros((0, classes_num + 4)).to(device), torch.zeros((0, classes_num + 4)).to(
         device)
     reg_outputs, reg_targets = torch.zeros((0, classes_num + 4)).to(device), torch.zeros((0, classes_num + 4)).to(
@@ -64,9 +64,9 @@ def get_loss(outputs, targets, objs):
     reg_regression_outputs = reg_outputs[::, classes_num:].reshape(-1)
     regression_targets = torch.cat((pos_regression_targets, reg_regression_targets), axis=0)
     regression_outputs = torch.cat((pos_regression_outputs, reg_regression_outputs), axis=0)
-    pos_detect_loss = F.binary_cross_entropy(pos_detect_outputs, pos_detect_targets)
+    pos_detect_loss = F.binary_cross_entropy(pos_detect_outputs, pos_detect_targets) if len(pos_detect_outputs) > 0 else torch.tensor(0)
     neg_detect_loss = F.binary_cross_entropy(neg_detect_outputs, neg_detect_targets)
-    regression_loss = F.smooth_l1_loss(regression_outputs, regression_targets)
+    regression_loss = F.smooth_l1_loss(regression_outputs, regression_targets) if len(regression_outputs) > 0 else torch.tensor(0)
 
     roi_reg_infos = outputs[4]
     roi_reg_outs, roi_reg_tgts = [], []
@@ -105,11 +105,14 @@ def get_loss(outputs, targets, objs):
         roi_reg_loss = F.smooth_l1_loss(roi_reg_outs, roi_reg_tgts)
     else:
         roi_reg_loss = torch.tensor(0)
-    roi_pos_neg_outs = [info[-1][-4:-3] for info in roi_reg_infos if info[-5] > 0]  # info[-2] is for_pos_neg
-    roi_pos_neg_tgts = [info[2] for info in roi_reg_infos if info[-5] > 0]
-    roi_pos_neg_tgts = torch.FloatTensor(roi_pos_neg_tgts).float().to(device)
-    roi_pos_neg_outs = torch.cat(roi_pos_neg_outs)
-    roi_pos_neg_loss = F.binary_cross_entropy(roi_pos_neg_outs, roi_pos_neg_tgts)
+    if len(roi_reg_infos) > 0:
+        roi_pos_neg_outs = [info[-1][-4:-3] for info in roi_reg_infos if info[-5] > 0]  # info[-2] is for_pos_neg
+        roi_pos_neg_tgts = [info[2] for info in roi_reg_infos if info[-5] > 0]
+        roi_pos_neg_tgts = torch.FloatTensor(roi_pos_neg_tgts).float().to(device)
+        roi_pos_neg_outs = torch.cat(roi_pos_neg_outs)
+        roi_pos_neg_loss = F.binary_cross_entropy(roi_pos_neg_outs, roi_pos_neg_tgts)
+    else:
+        roi_pos_neg_loss = torch.tensor(0)
 
     roi_stand_outs = [info[-1][-3:-2] for info in roi_reg_infos if info[-4]==1]
     roi_stand_tgts = [info[5] for info in roi_reg_infos if info[-4]==1]
@@ -138,7 +141,7 @@ def get_loss(outputs, targets, objs):
         roi_angle_tgts = torch.FloatTensor(roi_angle_tgts).float().to(device)
         roi_angle_loss = F.smooth_l1_loss(roi_angle_outs, roi_angle_tgts)
 
-    masks_loss, dice_loss = 0, 0
+    masks_loss, dice_loss = torch.tensor(0).to(device).float(), torch.tensor(0).to(device).float()
     segs_o = outputs[3]
     for seg_o, obj in zip(segs_o, objs):
         img_idx, cls_idx, ct, cb, cl, cr, mask_o = seg_o
@@ -146,5 +149,11 @@ def get_loss(outputs, targets, objs):
         mask_t = torch.tensor(mask_t/255).to(device).float()
         masks_loss += F.binary_cross_entropy(mask_o, mask_t)
         dice_loss += dice_loss_function(mask_o, mask_t)
+
+    # This is for a better convergence, not used in test mode.
+    mask_qs = outputs[5]
+    tgt_mask_qs = torch.tensor(tgt_mask_qs/255).to(device).float()
+    mask_qs_loss = F.binary_cross_entropy(mask_qs, tgt_mask_qs)
+
     return pos_detect_loss, neg_detect_loss, regression_loss, roi_reg_loss, roi_pos_neg_loss, \
-           roi_stand_loss, roi_lr_loss, roi_angle_loss, masks_loss, dice_loss
+           roi_stand_loss, roi_lr_loss, roi_angle_loss, masks_loss, dice_loss, mask_qs_loss

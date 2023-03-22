@@ -368,4 +368,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+randomly select a certain amount of anchors as negative samples. For these anchors, calculate the iou of this anchor with all
+objects, if the iou is greater than iou_neg_thresh, ignore that digit. Both yolo part and roi part need more neg samples.
 
