@@ -88,7 +88,7 @@ class RoiRunnerNode:
         self.model_width = 512
         self.model_height = 256
         self.mask_confidence = 0.5
-        self.stand_confidence = 0.75
+        self.stand_confidence = 0.5
         self.left_confidence = 0.5
         self.classes = ['cone', 'cube']
         
@@ -333,17 +333,12 @@ class RoiRunnerNode:
             height = bottom_left_y_dist - top_right_y_dist
             depth = z_max - z_min
             
-            base_angle = math.radians(detection_2d.angle_degrees) - math.pi / 2.0
+            base_angle = math.radians(detection_2d.angle_degrees)
             if detection_2d.is_left:
-                base_angle *= -1.0
+                base_angle = base_angle - math.pi / 2.0
             else:
-                base_angle = -(base_angle - math.pi)
-            base_angle += math.pi
-            base_angle %= 2 * math.pi
+                base_angle = (3.0 * math.pi / 2.0) - base_angle
             standing_angle = -math.pi / 2.0 if detection_2d.is_standing else 0.0
-            if detection_2d.is_standing:
-                base_angle = 0.0
-            
             quat = tf_conversions.transformations.quaternion_from_euler(0.0, base_angle, standing_angle)
             bounding_box_3d = BoundingBox3d(x_dist, y_dist, z_dist, width, height, depth)
 
