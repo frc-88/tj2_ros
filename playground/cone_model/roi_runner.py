@@ -80,8 +80,10 @@ class RoiRunnerNode:
             # disable_signals=True
             # log_level=rospy.DEBUG
         )
-        
-        self.model_path = rospy.get_param("~model_path", 'models/roi_013000.pkl')
+
+        # randomly select a certain amount of anchors as negative samples. For these anchors, calculate the iou of this anchor with all
+        # objects, if the iou is greater than iou_neg_thresh, ignore that digit. Both yolo part and roi part need more neg samples.
+        self.model_path = rospy.get_param("~model_path", 'models/roi_deep_038000.pkl')
         self.enable_debug_image = True
         self.enable_timing_report = True
         self.colors = np.array([[51, 174, 220], [164, 58, 71]], dtype=np.uint8)
@@ -175,7 +177,7 @@ class RoiRunnerNode:
         data = data.reshape((-1,)+data.shape)
 
         self.timing_frame.resize = TimingFrame.now()
-        segments = self.model(data, mode='testing')  # run inference
+        segments, mask_qs = self.model(data, mode='testing')  # run inference
         self.timing_frame.inference = TimingFrame.now()
         
         if self.enable_debug_image:
@@ -334,11 +336,15 @@ class RoiRunnerNode:
             depth = z_max - z_min
             
             base_angle = math.radians(detection_2d.angle_degrees)
-            if detection_2d.is_left:
-                base_angle = base_angle - math.pi / 2.0
+            if detection_2d.is_standing:
+                standing_angle = -math.pi / 2.0
+                base_angle = 0.0
             else:
-                base_angle = (3.0 * math.pi / 2.0) - base_angle
-            standing_angle = -math.pi / 2.0 if detection_2d.is_standing else 0.0
+                standing_angle = 0.0
+                if detection_2d.is_left:
+                    base_angle = (3.0 * math.pi / 2.0) - base_angle
+                else:
+                    base_angle = base_angle - math.pi / 2.0
             quat = tf_conversions.transformations.quaternion_from_euler(0.0, base_angle, standing_angle)
             bounding_box_3d = BoundingBox3d(x_dist, y_dist, z_dist, width, height, depth)
 
@@ -363,6 +369,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-randomly select a certain amount of anchors as negative samples. For these anchors, calculate the iou of this anchor with all
-objects, if the iou is greater than iou_neg_thresh, ignore that digit. Both yolo part and roi part need more neg samples.
 
