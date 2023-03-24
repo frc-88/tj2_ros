@@ -29,7 +29,8 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "geometry_msgs/Pose.h"
-#include "vision_msgs/Detection3DArray.h"
+#include "tj2_interfaces/GameObject.h"
+#include "tj2_interfaces/GameObjectsStamped.h"
 #include "sensor_msgs/LaserScan.h"
 #include "apriltag_ros/AprilTagDetectionArray.h"
 #include "apriltag_ros/AprilTagDetection.h"
@@ -49,6 +50,7 @@
 #include "tj2_interfaces/ZoneInfoArray.h"
 #include "tj2_interfaces/NoGoZones.h"
 #include "tj2_interfaces/Labels.h"
+#include "tj2_interfaces/Match.h"
 
 #include "networktables/EntryListenerFlags.h"
 
@@ -150,6 +152,7 @@ private:
     NT_Entry _match_time_entry;
     NT_Entry _is_auto_entry;
     NT_Entry _team_color_entry;
+    NT_Entry _team_position_entry;
 
     // velocity command entries
     NT_Entry _field_relative_entry;
@@ -219,7 +222,7 @@ private:
     ros::Publisher _ping_pub;
     ros::Publisher _imu_pub;
     vector<ros::Publisher>* _raw_joint_pubs;
-    ros::Publisher _match_time_pub, _autonomous_pub, _team_color_pub;
+    ros::Publisher _match_pub;
     ros::Publisher _pose_estimate_pub;
     ros::Publisher _pose_reset_pub;
     ros::Publisher _nogo_zone_pub;
@@ -252,7 +255,7 @@ private:
     void nt_passthrough_callback(const tj2_interfaces::NTEntryConstPtr& msg);
     void nt_passthrough_string_callback(const tj2_interfaces::NTEntryStringConstPtr& msg);
     void waypoints_callback(const tj2_interfaces::WaypointArrayConstPtr& msg);
-    void detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg);
+    void detections_callback(const tj2_interfaces::GameObjectsStampedConstPtr& msg);
     void joint_command_callback(const std_msgs::Float64ConstPtr& msg, int joint_index);
     void field_relative_callback(const std_msgs::BoolConstPtr& msg);
     void scan_callback(const sensor_msgs::LaserScanConstPtr& msg);

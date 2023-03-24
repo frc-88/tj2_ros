@@ -18,6 +18,3 @@ tj2_interfaces/UVBoundingBox bounding_box_2d
 
 # 3D bounding box in camera world frame
 tj2_interfaces/XYZBoundingBox bounding_box_3d
-
-# 3D dimensions (width, height, lenght)
-float32[3] dimensions_3d

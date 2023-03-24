@@ -28,8 +28,14 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     ros::param::param<bool>("~publish_overlay", _publish_overlay, false);
     ros::param::param<bool>("~report_loop_times", _report_loop_times, true);
     ros::param::param<std::string>("~target_frame", _target_frame, "base_link");
-    ros::param::param<double>("~marker_persistance_s", _marker_persistance_s, 0.5);
-    _marker_persistance = ros::Duration(_marker_persistance_s);
+
+    double marker_persistance_s;
+    ros::param::param<double>("~marker_persistance_s", marker_persistance_s, 0.5);
+    _marker_persistance = ros::Duration(marker_persistance_s);
+
+    double transform_tolerance_s;
+    ros::param::param<double>("~transform_tolerance", transform_tolerance_s, 0.1);
+    _transform_tolerance = ros::Duration(transform_tolerance_s);
 
     torch::DeviceType device_type;
     if (torch::cuda::is_available()) {
@@ -46,6 +52,17 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     _obj_count.resize(_class_names.size());
 
     erode_element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2 * _erosion_size + 1, 2 * _erosion_size + 1));
+
+    _box_point_permutations = {
+        {-1, -1,  1}, 
+        { 1,  1,  1}, 
+        { 1, -1,  1}, 
+        {-1, -1,  1}, 
+        {-1, -1, -1}, 
+        { 1,  1, -1}, 
+        { 1, -1, -1}, 
+        {-1, -1, -1}, 
+    };
 
     _detector = new Detector(_model_path, device_type, _report_loop_times);
     // run twice to warm up
@@ -66,7 +83,7 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
 
     _color_info_sub = nh.subscribe<sensor_msgs::CameraInfo>("color/camera_info", 1, &TJ2Yolo::camera_info_callback, this);
 
-    _detection_pub = nh.advertise<vision_msgs::Detection3DArray>("detections", 25);
+    _detection_pub = nh.advertise<tj2_interfaces::GameObjectsStamped>("detections", 25);
     _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("detections/markers", 25);
 
     _overlay_pub = _image_transport.advertise("overlay/image_raw", 2);
@@ -170,7 +187,7 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
             _detector->GetTimingReport().c_str()
         );
     }
-    vision_msgs::Detection3DArray detection_3d_arr_msg;
+    tj2_interfaces::GameObjectsStamped detection_3d_arr_msg;
     detection_3d_arr_msg.header = color_image->header;
 
     if (result.empty()) {
@@ -186,8 +203,7 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    vision_msgs::Detection2DArray detection_2d_arr_msg = detections_to_msg(result);
-    detection_2d_arr_msg.header = color_image->header;
+    detection_3d_arr_msg = detections_to_msg(result);
 
     visualization_msgs::MarkerArray marker_array;
 
@@ -197,20 +213,20 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
 
     cv::Mat debug_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
     for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++) {
-        vision_msgs::Detection2D detection_2d_msg = detection_2d_arr_msg.detections[index];
-        detection_2d_msg.header = color_image->header;
+        tj2_interfaces::GameObject detection_msg = detection_2d_arr_msg.detections[index];
+        detection_msg.header = color_image->header;
         
         double z_min, z_max;
         cv::Mat detection_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
-        get_depth_from_detection(depth_cv_image, detection_2d_msg, detection_mask, z_min, z_max);
+        get_depth_from_detection(depth_cv_image, detection_msg, detection_mask, z_min, z_max);
         cv::bitwise_or(debug_mask, detection_mask, debug_mask);
 
         std_msgs::ColorRGBA obj_color = get_detection_color(color_cv_image, detection_mask);        
-        vision_msgs::Detection3D detection_3d_msg = detection_2d_to_3d(detection_2d_msg, z_min, z_max);
-        add_detection_to_marker_array(marker_array, detection_3d_msg, obj_color);
+        detection_2d_to_3d(detection_msg, z_min, z_max);
+        add_detection_to_marker_array(marker_array, detection_msg, obj_color);
 
-        tf_detection_pose_to_robot(detection_3d_msg);
-        detection_3d_arr_msg.detections.push_back(detection_3d_msg);
+        detection_3d_arr_msg.header.frame_id = tf_detection_pose_to_robot(detection_3d_arr_msg.header.frame_id, detection_msg);
+        detection_3d_arr_msg.detections.push_back(detection_msg);
     }
     _detection_pub.publish(detection_3d_arr_msg);
     _marker_pub.publish(marker_array);
@@ -257,17 +273,17 @@ std_msgs::ColorRGBA TJ2Yolo::get_detection_color(cv::Mat color_cv_image, cv::Mat
     return color;
 }
 
-void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Detection2D detection_2d_msg, cv::Mat& out_mask, double& z_min, double& z_max)
+void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, tj2_interfaces::GameObject detection_msg, cv::Mat& out_mask, double& z_min, double& z_max)
 {
     // assumes depth_cv_image has been converted to CV_32FC1 where 1.0 == 1 meter
     // extract pixel coordinates of bounding box
-    int center_x = (int)(detection_2d_msg.bbox.center.x);
-    int center_y = (int)(detection_2d_msg.bbox.center.y);
-    int size_x = (int)(detection_2d_msg.bbox.size_x);
-    int size_y = (int)(detection_2d_msg.bbox.size_y);
+    int width = (int)(detection_msg.bounding_box_2d.width);
+    int height = (int)(detection_msg.bounding_box_2d.height);
+    int x0 = (int)(detection_msg.bounding_box_2d.points[0].x);
+    int y0 = (int)(detection_msg.bounding_box_2d.points[0].y);
 
     // crop depth image
-    cv::Rect crop(center_x - size_x / 2, center_y - size_y / 2, size_x, size_y);
+    cv::Rect crop(x0, y0, width, height);
     cv::Mat depth_crop = depth_cv_image(crop);
     
     // create range mask
@@ -356,15 +372,15 @@ void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Dete
     }
 }
 
-vision_msgs::Detection3D TJ2Yolo::detection_2d_to_3d(vision_msgs::Detection2D detection_2d_msg, double z_min, double z_max)
+void TJ2Yolo::detection_2d_to_3d(tj2_interfaces::GameObject& detection_msg, double z_min, double z_max)
 {
     double z_center = (z_min + z_max) / 2.0;
     double z_size = abs(z_max - z_min);
-    int x_center_px = (int)(detection_2d_msg.bbox.center.x);
-    int y_center_px = (int)(detection_2d_msg.bbox.center.y);
+    int x_center_px = (int)(abs(detection_msg.bounding_box_2d.points[2].x - detection_msg.bounding_box_2d.points[0].x));
+    int y_center_px = (int)(abs(detection_msg.bounding_box_2d.points[2].y - detection_msg.bounding_box_2d.points[0].y));
 
-    int x_size_px = (int)(detection_2d_msg.bbox.size_x);
-    int y_size_px = (int)(detection_2d_msg.bbox.size_y);
+    int x_size_px = (int)(detection_msg.bounding_box_2d.width);
+    int y_size_px = (int)(detection_msg.bounding_box_2d.height);
 
     cv::Point2d center_point;
     center_point.x = x_center_px;
@@ -392,44 +408,41 @@ vision_msgs::Detection3D TJ2Yolo::detection_2d_to_3d(vision_msgs::Detection2D de
     pose.orientation.z = 0.0;
     pose.orientation.w = 1.0;
 
-    vision_msgs::BoundingBox3D bbox;
+    detection_msg.bounding_box_3d.dimensions.x = x_size;
+    detection_msg.bounding_box_3d.dimensions.y = y_size;
+    detection_msg.bounding_box_3d.dimensions.z = z_size;
 
-    bbox.center = pose;
-    bbox.size.x = x_size;
-    bbox.size.y = y_size;
-    bbox.size.z = z_size;
+    double half_x = x_size / 2.0;
+    double half_y = y_size / 2.0;
+    double half_z = z_size / 2.0;
+    for (int index = 0; detection_msg.bounding_box_3d.points.size(); index++) {
+        detection_msg.bounding_box_3d.points[index].x = _box_point_permutations[index][0] * half_x;
+        detection_msg.bounding_box_3d.points[index].y = _box_point_permutations[index][1] * half_y;
+        detection_msg.bounding_box_3d.points[index].z = _box_point_permutations[index][2] * half_z;
+    }
 
-    vision_msgs::Detection3D detection_3d_msg;
-    detection_3d_msg.header = detection_2d_msg.header;
-    detection_3d_msg.results = detection_2d_msg.results;
-
-    detection_3d_msg.results[0].pose.pose = bbox.center;
-    detection_3d_msg.bbox = bbox;
-
-    return detection_3d_msg;
+    detection_msg.pose = pose;
 }
 
-void TJ2Yolo::tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_msg)
+string TJ2Yolo::tf_detection_pose_to_robot(string detection_frame_id, tj2_interfaces::GameObject& detection_3d_msg)
 {
     geometry_msgs::TransformStamped transform_camera_to_target;
 
     try {
         transform_camera_to_target = tfBuffer.lookupTransform(
-            _target_frame, detection_3d_msg.header.frame_id,
-            detection_3d_msg.header.stamp, ros::Duration(1.0)
+            _target_frame, detection_frame_id, ros::Time(0), ros::Duration(_transform_tolerance)
         );
         geometry_msgs::PoseStamped pose_stamped;
-        pose_stamped.header = detection_3d_msg.header;
-        pose_stamped.pose = detection_3d_msg.bbox.center;
+        pose_stamped.header = detection_frame_id;
+        pose_stamped.pose = detection_3d_msg.pose;
         tf2::doTransform(pose_stamped, pose_stamped, transform_camera_to_target);
         // pose_stamped now contains the object position in the target frame
-        detection_3d_msg.header.frame_id = _target_frame;
-        detection_3d_msg.bbox.center = pose_stamped.pose;
-        detection_3d_msg.results[0].pose.pose = pose_stamped.pose;
+        detection_3d_msg.pose = pose_stamped.pose;
+        return _target_frame;
     }
     catch (tf2::TransformException &ex) {
         ROS_WARN_THROTTLE(0.5, "%s", ex.what());
-        return;
+        return detection_frame_id;
     }
 }
 
@@ -448,9 +461,9 @@ int TJ2Yolo::get_class_count(int obj_id)
     return obj_id >> 16;
 }
 
-vision_msgs::Detection2DArray TJ2Yolo::detections_to_msg(const std::vector<std::vector<Detection>>& detections)
+tj2_interfaces::GameObjectsStamped TJ2Yolo::detections_to_msg(const std::vector<std::vector<Detection>>& detections)
 {
-    vision_msgs::Detection2DArray detection_2d_arr_msg;
+    tj2_interfaces::GameObjectsStamped detection_msg;
     for (size_t index = 0; index < _obj_count.size(); index++) {
         _obj_count[index] = 0;
     }
@@ -466,27 +479,33 @@ vision_msgs::Detection2DArray TJ2Yolo::detections_to_msg(const std::vector<std::
         int class_count = _obj_count[class_idx];
         _obj_count[class_idx]++;
 
-        int obj_id = (class_count << 16) | class_idx;
+        tj2_interfaces::GameObject detection_msg;
 
-        vision_msgs::Detection2D detection_2d_msg;
+        detection_msg.bounding_box_2d.width = (double)box.width;
+        detection_msg.bounding_box_2d.height = (double)box.height;
 
-        detection_2d_msg.bbox.size_x = (double)box.width;
-        detection_2d_msg.bbox.size_y = (double)box.height;
+        int x_left = box.x - box.width / 2;
+        int x_right = box.x + box.width / 2;
+        int y_top = box.y - box.height / 2;
+        int y_bottom = box.y + box.height / 2;
 
-        detection_2d_msg.bbox.center.x = (double)box.x + (double)(box.width) / 2.0;
-        detection_2d_msg.bbox.center.y = (double)box.y + (double)(box.height) / 2.0;
+        detection_msg.bounding_box_2d.points[0].x = x_left;
+        detection_msg.bounding_box_2d.points[0].y = y_top;
+        detection_msg.bounding_box_2d.points[1].x = x_right;
+        detection_msg.bounding_box_2d.points[1].y = y_top;
+        detection_msg.bounding_box_2d.points[2].x = x_right;
+        detection_msg.bounding_box_2d.points[2].y = y_bottom;
+        detection_msg.bounding_box_2d.points[3].x = x_left;
+        detection_msg.bounding_box_2d.points[3].y = y_bottom;
 
-        detection_2d_msg.bbox.center.theta = 0.0;
+        detection_msg.class_index = class_idx;
+        detection_msg.object_index = class_count;
+        detection_msg.label = _class_names[class_idx];
+        detection_msg.confidence = score;
 
-        vision_msgs::ObjectHypothesisWithPose hyp;
-
-        hyp.id = obj_id;
-        hyp.score = score;
-
-        detection_2d_msg.results.push_back(hyp);
-        detection_2d_arr_msg.detections.push_back(detection_2d_msg);
+        detection_msg.objects.push_back(detection_msg);
     }
-    return detection_2d_arr_msg;
+    return detection_msg;
 }
 
 void TJ2Yolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>>& detections, cv::Mat debug_mask, bool label)
@@ -523,14 +542,14 @@ void TJ2Yolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>
     }
 }
 
-void TJ2Yolo::add_detection_to_marker_array(visualization_msgs::MarkerArray& marker_array, vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color)
+void TJ2Yolo::add_detection_to_marker_array(visualization_msgs::MarkerArray& marker_array, tj2_interfaces::GameObject detection_3d_msg, std_msgs::ColorRGBA color)
 {
     visualization_msgs::Marker cube_marker = make_marker(detection_3d_msg, color);
     visualization_msgs::Marker line_marker = make_marker(detection_3d_msg, color);
     visualization_msgs::Marker text_marker = make_marker(detection_3d_msg, color);
 
-    std::string label = get_class_name(detection_3d_msg.results[0].id);
-    int count = get_class_count(detection_3d_msg.results[0].id);
+    std::string label = detection_3d_msg.label;
+    int count = detection_3d_msg.object_index;
 
     cube_marker.type = visualization_msgs::Marker::CUBE;
     cube_marker.ns = "box_" + cube_marker.ns;
@@ -538,8 +557,8 @@ void TJ2Yolo::add_detection_to_marker_array(visualization_msgs::MarkerArray& mar
 
     line_marker.type = visualization_msgs::Marker::LINE_STRIP;
     line_marker.ns = "line_" + line_marker.ns;
-    double size_x = detection_3d_msg.bbox.size.x / 2.0;
-    double size_y = detection_3d_msg.bbox.size.y / 2.0;
+    double size_x = detection_3d_msg.bounding_box_3d.dimensions.x / 2.0;
+    double size_y = detection_3d_msg.bounding_box_3d.dimensions.y / 2.0;
     line_marker.points.push_back(make_point(size_x, size_y, 0.0));
     line_marker.points.push_back(make_point(-size_x, size_y, 0.0));
     line_marker.points.push_back(make_point(-size_x, -size_y, 0.0));
@@ -567,20 +586,20 @@ void TJ2Yolo::add_detection_to_marker_array(visualization_msgs::MarkerArray& mar
     marker_array.markers.push_back(text_marker);
 }
 
-visualization_msgs::Marker TJ2Yolo::make_marker(vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color)
+visualization_msgs::Marker TJ2Yolo::make_marker(string detection_frame_id, tj2_interfaces::GameObject detection_3d_msg, std_msgs::ColorRGBA color)
 {
-    std::string label = get_class_name(detection_3d_msg.results[0].id);
-    int count = get_class_count(detection_3d_msg.results[0].id);
+    std::string label = detection_3d_msg.label;
+    int count = detection_3d_msg.object_index;
 
     visualization_msgs::Marker marker;
     marker.action = visualization_msgs::Marker::ADD;
-    marker.pose = detection_3d_msg.bbox.center;
-    marker.header = detection_3d_msg.header;
+    marker.pose = detection_3d_msg.pose;
+    marker.header.frame_id = detection_frame_id;
     marker.lifetime = _marker_persistance;
     marker.ns = label;
     marker.id = count;
 
-    marker.scale = detection_3d_msg.bbox.size;
+    marker.scale = detection_3d_msg.bounding_box_3d.dimensions;
     marker.color = color;
 
     return marker;
