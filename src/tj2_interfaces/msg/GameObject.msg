@@ -1,6 +1,9 @@
 # object label
 string label
 
+# object index
+int32 object_index
+
 # object label index
 int16 class_index
 
