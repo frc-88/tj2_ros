@@ -50,12 +50,8 @@ find_package(catkin  REQUIRED COMPONENTS
 add_message_files(
   FILES
   NavX.msg
-  NTEntry.msg
-  NTEntryString.msg
   SwerveModule.msg
   SwerveMotor.msg
-  Hood.msg
-  Shooter.msg
   Zone.msg
   ZoneArray.msg
   ZoneInfo.msg
@@ -64,13 +60,13 @@ add_message_files(
   Waypoint.msg
   WaypointArray.msg
   Labels.msg
+  Match.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
   OdomReset.srv
-  StartVideo.srv
   DeleteWaypoint.srv
   GetAllWaypoints.srv
   GetWaypoint.srv
