@@ -13,7 +13,6 @@ from yolov5.utils.torch_utils import select_device
 from yolov5.utils.general import non_max_suppression, scale_boxes, check_img_size
 from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.augmentations import letterbox
-from .util import get_label, get_obj_id
 
 
 class YoloDetector:
@@ -92,7 +91,7 @@ class YoloDetector:
         )
         t2 = time.time()
 
-        detections = {}
+        detections = []
         overlay_image = None
 
         assert len(prediction) <= 1
@@ -123,11 +122,8 @@ class YoloDetector:
                 class_count[class_index] = 0
             else:
                 class_count[class_index] += 1
-
-            obj_id = self.get_obj_id(class_index, class_count[class_index])
             bndbox = torch.tensor(xyxy).view(1, 4).view(-1).tolist()
-
-            detections[obj_id] = bndbox, confidence
+            detections.append(bndbox, confidence, class_index, class_count[class_index])
         t5 = time.time()
 
         if self.report_loop_times:
@@ -145,9 +141,3 @@ class YoloDetector:
             self.timing_report += "\ttotal: %0.4fs (%0.2f fps)\n" % (t5 - t_start, 1.0 / (t5 - t_start))
 
         return detections, overlay_image
-
-    def get_obj_id(self, class_index, class_count):
-        return get_obj_id(class_index, class_count)
-
-    def get_label(self, obj_id):
-        return get_label(self.class_names, obj_id)

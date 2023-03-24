@@ -88,9 +88,10 @@ private:
     image_geometry::PinholeCameraModel _camera_model;
     std::vector<int> _obj_count;
     ros::Duration _marker_persistance;
+    ros::Duration _transform_tolerance;
     sensor_msgs::CameraInfo _camera_info;
     cv::Mat erode_element;
-    vector<vector<double>> _box_point_permutations;
+    std::vector<std::vector<double>> _box_point_permutations;
 
     // Subscribers
     ros::Subscriber _color_info_sub;
@@ -128,14 +129,14 @@ private:
     std_msgs::ColorRGBA get_detection_color(cv::Mat color_cv_image, cv::Mat mask);
     void get_depth_from_detection(cv::Mat depth_cv_image, tj2_interfaces::GameObject detection_msg, cv::Mat& out_mask, double& z_min, double& z_max);
     void detection_2d_to_3d(tj2_interfaces::GameObject& detection_msg, double z_min, double z_max);
-    string tf_detection_pose_to_robot(string detection_frame_id, tj2_interfaces::GameObject& detection_msg);
+    std::string tf_detection_pose_to_robot(std::string detection_frame_id, tj2_interfaces::GameObject& detection_msg);
     std::string get_class_name(int obj_id);
     int get_class_index(int obj_id);
     int get_class_count(int obj_id);
     tj2_interfaces::GameObjectsStamped detections_to_msg(const std::vector<std::vector<Detection>>& detections);
     void draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>>& detections, cv::Mat debug_mask, bool label = true);
-    void add_detection_to_marker_array(visualization_msgs::MarkerArray& marker_array, tj2_interfaces::GameObject detection_msg, std_msgs::ColorRGBA color);
-    visualization_msgs::Marker make_marker(string detection_frame_id, tj2_interfaces::GameObject detection_msg, std_msgs::ColorRGBA color);
+    void add_detection_to_marker_array(std::string detection_frame_id, visualization_msgs::MarkerArray& marker_array, tj2_interfaces::GameObject detection_msg, std_msgs::ColorRGBA color);
+    visualization_msgs::Marker make_marker(std::string detection_frame_id, tj2_interfaces::GameObject detection_msg, std_msgs::ColorRGBA color);
     double get_depth_conversion(std::string encoding);
 
 };
