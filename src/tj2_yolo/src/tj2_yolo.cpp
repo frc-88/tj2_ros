@@ -189,6 +189,8 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
     }
     tj2_interfaces::GameObjectsStamped detection_arr_msg;
     detection_arr_msg.header = color_image->header;
+    detection_arr_msg.width = color_cv_image.cols;
+    detection_arr_msg.height = color_cv_image.rows;
 
     if (result.empty()) {
         _detection_pub.publish(detection_arr_msg);

@@ -22,17 +22,10 @@
         /tj2/cmd_vel_nav
         /tj2/cmd_vel_teleop
         /tj2/imu
-        /tj2/is_autonomous
-        /tj2/match_time
+        /tj2/match
         /tj2/odom
         /tj2/ping
-        /tj2_zed/obj_det/detections
-        /tj2_zed/obj_det/yolo_objects
-        /tj2/team_color
-        /tj2/smart_dashboard
-        /tj2/cones/markers
-        /tj2/cones/detections
-        /tj2/cones/nearest
+        /tj2/detections
 
         --duration=300 --lz4
         " />

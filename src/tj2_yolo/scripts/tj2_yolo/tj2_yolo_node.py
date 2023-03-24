@@ -401,6 +401,8 @@ class Tj2Yolo:
         detection_arr_msg = GameObjectsStamped()
         detection_arr_msg.header.stamp = rospy.Time.now()
         detection_arr_msg.header.frame_id = self.camera_model.tfFrame()
+        detection_arr_msg.width = image.shape[1]
+        detection_arr_msg.height = image.shape[0]
         for bndbox, confidence, class_index, object_index in detections:
             detection_msg = GameObject()
             box_width = bndbox[2] - bndbox[0]
