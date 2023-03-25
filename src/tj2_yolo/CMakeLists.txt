@@ -30,7 +30,6 @@ find_package(catkin REQUIRED COMPONENTS
     message_generation
     message_filters
     visualization_msgs
-    vision_msgs
     image_transport
     image_geometry
     cv_bridge
@@ -161,7 +160,6 @@ catkin_package(
     std_msgs
     sensor_msgs
     visualization_msgs
-    vision_msgs
     image_transport
     image_geometry
     cv_bridge

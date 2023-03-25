@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="publish_odom_tf" default="true"/>
+    <arg name="compact_tf_ids_path" default="$(find tj2_comm)/config/default_frame_ids.yaml"/>
+
+    <group ns="tj2">
+        <node name="tj2_comm" pkg="tj2_comm" type="tj2_comm" output="screen" required="false">
+            <param name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
+            <rosparam param="tf_compact_ids" file="$(arg compact_tf_ids_path)" command="load"/>
+        </node>
+    </group>
+</launch>

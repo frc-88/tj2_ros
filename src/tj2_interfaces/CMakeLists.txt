@@ -49,30 +49,36 @@ find_package(catkin  REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  NavX.msg
+  ZoneInfo.msg
+  Labels.msg
+  ZoneInfoArray.msg
+  Waypoint.msg
+  ZoneArray.msg
+  GameObject.msg
+  WaypointArray.msg
   SwerveModule.msg
+  UVBoundingBox.msg
+  XYZBoundingBox.msg
   SwerveMotor.msg
   Zone.msg
-  ZoneArray.msg
-  ZoneInfo.msg
-  ZoneInfoArray.msg
+  XYZKeypoint.msg
+  UVKeypoint.msg
+  GameObjectsStamped.msg
   NoGoZones.msg
-  Waypoint.msg
-  WaypointArray.msg
-  Labels.msg
   Match.msg
+  NavX.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
   OdomReset.srv
-  DeleteWaypoint.srv
-  GetAllWaypoints.srv
-  GetWaypoint.srv
-  GetWaypoints.srv
-  SaveWaypoint.srv
   SaveTF.srv
+  GetWaypoints.srv
+  GetWaypoint.srv
+  GetAllWaypoints.srv
+  DeleteWaypoint.srv
+  SaveWaypoint.srv
 )
 
 ## Generate actions in the 'action' folder

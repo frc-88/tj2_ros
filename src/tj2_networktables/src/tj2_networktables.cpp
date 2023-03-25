@@ -93,9 +93,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
         add_joint(_joint_names.at(index));
     }
 
-    _match_time_pub = nh.advertise<std_msgs::Float64>("match_time", 10);
-    _autonomous_pub = nh.advertise<std_msgs::Bool>("is_autonomous", 10);
-    _team_color_pub = nh.advertise<std_msgs::String>("team_color", 10);
+    _match_pub = nh.advertise<tj2_interfaces::Match>("match", 10);
 
     _pose_estimate_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 10);
     _pose_reset_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("reset_pose", 10);  // for distiguishing between ROS and RIO requested resets
@@ -115,7 +113,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
         ROS_ERROR("Error loading class names! Not broadcasting detections");
     }
     else {
-        _detections_sub = nh.subscribe<vision_msgs::Detection3DArray>("detections", 50, &TJ2NetworkTables::detections_callback, this);
+        _detections_sub = nh.subscribe<tj2_interfaces::GameObjectsStamped>("detections", 50, &TJ2NetworkTables::detections_callback, this);
     }
 
     _prev_twist_timestamp = ros::Time(0);
@@ -182,6 +180,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _match_time_entry = nt::GetEntry(_nt, _base_key + "match/time");
     _is_auto_entry = nt::GetEntry(_nt, _base_key + "match/is_auto");
     _team_color_entry = nt::GetEntry(_nt, _base_key + "match/team_color");
+    _team_position_entry = nt::GetEntry(_nt, _base_key + "match/team_position");
     nt::AddEntryListener(_match_time_entry, boost::bind(&TJ2NetworkTables::match_callback, this, _1), nt::EntryListenerFlags::kNew | nt::EntryListenerFlags::kUpdate);
 
     _joint_states_entry = nt::GetEntry(_nt, _base_key + "joints/states");
@@ -452,7 +451,7 @@ void TJ2NetworkTables::zones_info_callback(const tj2_interfaces::ZoneInfoArrayCo
     nt::SetEntryValue(_zone_is_nogo_entry, nt::Value::MakeDoubleArray(is_nogos));
 }
 
-void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayConstPtr& msg)
+void TJ2NetworkTables::detections_callback(const tj2_interfaces::GameObjectsStampedConstPtr& msg)
 {
     if (_class_names.empty()) {
         ROS_ERROR("No class names loaded! Not broadcasting detections");
@@ -461,15 +460,13 @@ void TJ2NetworkTables::detections_callback(const vision_msgs::Detection3DArrayCo
     for (size_t index = 0; index < _class_names.size(); index++) {
         _detection_counter[_class_names.at(index)] = 0;
     }
-    for (size_t index = 0; index < msg->detections.size(); index++) {
-        vision_msgs::ObjectHypothesisWithPose hyp = msg->detections.at(index).results[0];
-        string name = get_label(hyp.id);
-        _detection_counter[name]++;
-        // int obj_index = get_index(hyp.id);
+    for (size_t index = 0; index < msg->objects.size(); index++) {
+        tj2_interfaces::GameObject obj = msg->objects.at(index);
+        _detection_counter[obj.label]++;
         geometry_msgs::PoseStamped pose;
-        pose.pose = hyp.pose.pose;
+        pose.pose = obj.pose;
         pose.header = msg->header;
-        publish_detection(name, index, pose);
+        publish_detection(obj.label, obj.object_index, pose);
     }
     for (size_t index = 0; index < _class_names.size(); index++) {
         publish_detection_count(_class_names.at(index), _detection_counter[_class_names.at(index)]);
@@ -560,17 +557,12 @@ void TJ2NetworkTables::publish_joint(size_t joint_index, double joint_position)
 
 void TJ2NetworkTables::match_callback(const nt::EntryNotification& event)
 {
-    std_msgs::Float64 timer_msg;
-    timer_msg.data = get_double(_match_time_entry, -1.0);
-    _match_time_pub.publish(timer_msg);
-
-    std_msgs::Bool is_auto_msg;
-    is_auto_msg.data = get_boolean(_is_auto_entry, false);
-    _autonomous_pub.publish(is_auto_msg);
-
-    std_msgs::String team_color_msg;
-    team_color_msg.data = get_string(_team_color_entry, "");
-    _team_color_pub.publish(team_color_msg);
+    tj2_interfaces::Match match_msg;
+    match_msg.match_time = get_double(_match_time_entry, -1.0);
+    match_msg.is_auto = get_boolean(_is_auto_entry, false);
+    match_msg.team_color = get_string(_team_color_entry, "");
+    match_msg.team_position = (int)get_double(_team_position_entry, 0.0);
+    _match_pub.publish(match_msg);
 }
 
 void TJ2NetworkTables::pose_estimate_callback(const nt::EntryNotification& event)
