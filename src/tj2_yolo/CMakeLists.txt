@@ -30,12 +30,14 @@ find_package(catkin REQUIRED COMPONENTS
     message_generation
     message_filters
     visualization_msgs
+    vision_msgs
     image_transport
     image_geometry
     cv_bridge
     tf2_ros
     dynamic_reconfigure
     tf2_geometry_msgs
+    tj2_interfaces
 )
 
 # # System dependencies are found with CMake's conventions
@@ -160,11 +162,13 @@ catkin_package(
     std_msgs
     sensor_msgs
     visualization_msgs
+    vision_msgs
     image_transport
     image_geometry
     cv_bridge
     tf2_ros
     tf2_geometry_msgs
+    tj2_interfaces
     DEPENDS OpenCV
 )
 

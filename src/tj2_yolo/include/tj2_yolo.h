@@ -23,12 +23,13 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
-#include <tj2_interfaces/GameObject.h>
-#include <tj2_interfaces/GameObjectsStamped.h>
+#include <vision_msgs/Detection2DArray.h>
+#include <vision_msgs/Detection2D.h>
+#include <vision_msgs/Detection3DArray.h>
+#include <vision_msgs/Detection3D.h>
 
 #include <std_msgs/ColorRGBA.h>
 
@@ -41,6 +42,9 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <tj2_yolo/YoloDetectionConfig.h>
+
+#include <tj2_interfaces/GameObjectsStamped.h>
+#include <tj2_interfaces/GameObject.h>
 
 #include "detector.h"
 
@@ -75,6 +79,7 @@ private:
     bool _publish_overlay;
     bool _report_loop_times;
     std::string _target_frame;
+    double _marker_persistance_s;
     double _message_delay_warning_ms, _long_loop_warning_ms;
     std::map<std::string, double> _z_depth_estimations;
     int _relative_threshold;
@@ -88,7 +93,6 @@ private:
     image_geometry::PinholeCameraModel _camera_model;
     std::vector<int> _obj_count;
     ros::Duration _marker_persistance;
-    ros::Duration _transform_tolerance;
     sensor_msgs::CameraInfo _camera_info;
     cv::Mat erode_element;
     std::vector<std::vector<double>> _box_point_permutations;
@@ -127,17 +131,23 @@ private:
 
     // Helpers
     std_msgs::ColorRGBA get_detection_color(cv::Mat color_cv_image, cv::Mat mask);
-    void get_depth_from_detection(cv::Mat depth_cv_image, tj2_interfaces::GameObject detection_msg, cv::Mat& out_mask, double& z_min, double& z_max);
-    void detection_2d_to_3d(tj2_interfaces::GameObject& detection_msg, double z_min, double z_max);
-    std::string tf_detection_pose_to_robot(std::string detection_frame_id, tj2_interfaces::GameObject& detection_msg);
+    void get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Detection2D detection_2d_msg, cv::Mat& out_mask, double& z_min, double& z_max);
+    vision_msgs::Detection3D detection_2d_to_3d(vision_msgs::Detection2D detection_2d_msg, double z_min, double z_max);
+    void tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_msg);
     std::string get_class_name(int obj_id);
     int get_class_index(int obj_id);
     int get_class_count(int obj_id);
-    tj2_interfaces::GameObjectsStamped detections_to_msg(const std::vector<std::vector<Detection>>& detections);
+    vision_msgs::Detection2DArray detections_to_msg(const std::vector<std::vector<Detection>>& detections);
     void draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>>& detections, cv::Mat debug_mask, bool label = true);
-    void add_detection_to_marker_array(std::string detection_frame_id, visualization_msgs::MarkerArray& marker_array, tj2_interfaces::GameObject detection_msg, std_msgs::ColorRGBA color);
-    visualization_msgs::Marker make_marker(std::string detection_frame_id, tj2_interfaces::GameObject detection_msg, std_msgs::ColorRGBA color);
+    void add_detection_to_marker_array(visualization_msgs::MarkerArray& marker_array, vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color);
+    visualization_msgs::Marker make_marker(vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color);
     double get_depth_conversion(std::string encoding);
+    tj2_interfaces::GameObjectsStamped convert_to_game_objects(
+        unsigned int width,
+        unsigned int height,
+        vision_msgs::Detection2DArray detection_2d_arr_msg,
+        vision_msgs::Detection3DArray detection_3d_arr_msg
+    );
 
 };
 
