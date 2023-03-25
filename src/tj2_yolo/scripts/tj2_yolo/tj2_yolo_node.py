@@ -462,6 +462,9 @@ class Tj2Yolo:
                 obj.bounding_box_3d.points[index].x = self.box_point_permutations[index][0] * half_x
                 obj.bounding_box_3d.points[index].y = self.box_point_permutations[index][1] * half_y
                 obj.bounding_box_3d.points[index].z = self.box_point_permutations[index][2] * half_z
+            obj.bounding_box_3d.dimensions.x = detection_3d_msg.bbox.size.x
+            obj.bounding_box_3d.dimensions.y = detection_3d_msg.bbox.size.y
+            obj.bounding_box_3d.dimensions.z = detection_3d_msg.bbox.size.z
 
             objects.objects.append(obj)
 

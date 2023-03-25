@@ -546,6 +546,9 @@ tj2_interfaces::GameObjectsStamped TJ2Yolo::convert_to_game_objects(
             obj.bounding_box_3d.points[index].y = _box_point_permutations[index][1] * half_y;
             obj.bounding_box_3d.points[index].z = _box_point_permutations[index][2] * half_z;
         }
+        obj.bounding_box_3d.dimensions.x = detection_3d_msg.bbox.size.x;
+        obj.bounding_box_3d.dimensions.y = detection_3d_msg.bbox.size.y;
+        obj.bounding_box_3d.dimensions.z = detection_3d_msg.bbox.size.z;
 
         objects.objects.push_back(obj);
     }
