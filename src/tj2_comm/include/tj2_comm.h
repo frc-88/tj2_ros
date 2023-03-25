@@ -53,7 +53,7 @@ private:
     // Members
     ros::Timer _ping_timer;
     ros::Duration _odom_timeout;
-    ros::Time _last_odom_time;
+    nav_msgs::Odometry _last_odom;
     
     // Publishers
     tf2_ros::TransformBroadcaster _tf_broadcaster;
@@ -76,6 +76,7 @@ private:
 
     // Helpers
     void publish_compact_tf();
+    void publish_odom_tf();
     void check_odom();
     double get_time();
     void update_compact_ids();

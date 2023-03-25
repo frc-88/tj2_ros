@@ -22,6 +22,7 @@ TJ2Comm::TJ2Comm(ros::NodeHandle* nodehandle) :
     ping_pub = nh.advertise<std_msgs::Float64>("ping", 10);
 
     ping_return_sub = nh.subscribe<std_msgs::Float64>("ping_return", 1, &TJ2Comm::ping_return_callback, this);
+    odom_sub = nh.subscribe<nav_msgs::Odometry>("odom", 1, &TJ2Comm::odom_callback, this);
 
     _ping_timer = nh.createTimer(ros::Duration(ping_interval), &TJ2Comm::ping_timer_callback, this);
 
@@ -34,27 +35,10 @@ TJ2Comm::TJ2Comm(ros::NodeHandle* nodehandle) :
 
 void TJ2Comm::odom_callback(const nav_msgs::OdometryConstPtr& msg)
 {
-    ros::Duration delta_time = ros::Time::now() - msg->header.stamp;
-    if (delta_time > _odom_timeout) {
-        ROS_WARN_THROTTLE(1.0, "Odometry is out of sync by %f seconds", delta_time.toSec());
-        return;
-    }
-    _last_odom_time = msg->header.stamp;
-
-    if (_publish_odom_tf)
-    {
-        geometry_msgs::TransformStamped tf_stamped;
-        tf_stamped.header.stamp = msg->header.stamp;
-        tf_stamped.header.frame_id = msg->header.frame_id;
-        tf_stamped.child_frame_id = msg->child_frame_id;
-        tf_stamped.transform.translation.x = msg->pose.pose.position.x;
-        tf_stamped.transform.translation.y = msg->pose.pose.position.y;
-        tf_stamped.transform.translation.z = msg->pose.pose.position.z;
-        tf_stamped.transform.rotation.w = msg->pose.pose.orientation.w;
-        tf_stamped.transform.rotation.x = msg->pose.pose.orientation.x;
-        tf_stamped.transform.rotation.y = msg->pose.pose.orientation.y;
-        tf_stamped.transform.rotation.z = msg->pose.pose.orientation.z;
-        _tf_broadcaster.sendTransform(tf_stamped);
+    _last_odom = *msg;
+    _last_odom.header.stamp = ros::Time::now();
+    if (_publish_odom_tf) {
+        publish_odom_tf();
     }
 }
 
@@ -138,9 +122,25 @@ void TJ2Comm::publish_compact_tf()
     tf_compact_pub.publish(compacted_tree);
 }
 
+void TJ2Comm::publish_odom_tf()
+{
+    geometry_msgs::TransformStamped tf_stamped;
+    tf_stamped.header.stamp = _last_odom.header.stamp;
+    tf_stamped.header.frame_id = _last_odom.header.frame_id;
+    tf_stamped.child_frame_id = _last_odom.child_frame_id;
+    tf_stamped.transform.translation.x = _last_odom.pose.pose.position.x;
+    tf_stamped.transform.translation.y = _last_odom.pose.pose.position.y;
+    tf_stamped.transform.translation.z = _last_odom.pose.pose.position.z;
+    tf_stamped.transform.rotation.w = _last_odom.pose.pose.orientation.w;
+    tf_stamped.transform.rotation.x = _last_odom.pose.pose.orientation.x;
+    tf_stamped.transform.rotation.y = _last_odom.pose.pose.orientation.y;
+    tf_stamped.transform.rotation.z = _last_odom.pose.pose.orientation.z;
+    _tf_broadcaster.sendTransform(tf_stamped);
+}
+
 void TJ2Comm::check_odom()
 {
-    ros::Duration delta_time = ros::Time::now() - _last_odom_time;
+    ros::Duration delta_time = ros::Time::now() - _last_odom.header.stamp;
     if (delta_time > _odom_timeout) {
         ROS_WARN_THROTTLE(1.0, "No odometry received for %f seconds", delta_time.toSec());
     }
@@ -153,6 +153,7 @@ int TJ2Comm::run()
     {
         clock_rate.sleep();
         publish_compact_tf();
+        check_odom();
         ros::spinOnce();
     }
     return 0;

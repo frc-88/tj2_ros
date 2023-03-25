@@ -13,8 +13,8 @@
             <param name="warmup_image_width" value="1280"/>
             <param name="warmup_image_height" value="720"/>
 
-            <param name="publish_overlay" value="false"/>
-            <param name="report_loop_times" value="false"/>
+            <param name="publish_overlay" value="true"/>
+            <param name="report_loop_times" value="true"/>
             <param name="marker_persistance" value="0.25"/>
             <param name="min_depth" value="0.1"/>
             <param name="max_depth" value="5.0"/>

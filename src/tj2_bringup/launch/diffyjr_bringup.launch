@@ -13,7 +13,7 @@
 
     <include file="$(find tj2_comm)/launch/tj2_comm.launch">
         <arg name="publish_odom_tf" value="true"/>
-        <arg name="compact_tf_ids" value="$(find tj2_bringup)/config/diffyjr/frame_ids.yaml"/>
+        <arg name="compact_tf_ids_path" value="$(find tj2_bringup)/config/diffyjr/frame_ids.yaml"/>
     </include>
 
     <include file="$(find tj2_networktables)/launch/twist_mux.launch"/>
@@ -95,7 +95,7 @@
         <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
     </include>
 
-    <include file="$(find tj2_webapp)/launch/tj2_webapp.launch"/>
+    <!-- <include file="$(find tj2_webapp)/launch/tj2_webapp.launch"/> -->
 
     <include file="$(find tj2_zones)/launch/tj2_zones.launch">
         <arg name="zones_path" value="$(find tj2_zones)/zones/$(arg map_name).bin"/>

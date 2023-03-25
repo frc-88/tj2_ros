@@ -188,11 +188,9 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
         );
     }
     tj2_interfaces::GameObjectsStamped detection_arr_msg;
-    detection_arr_msg.header = color_image->header;
-    detection_arr_msg.width = color_cv_image.cols;
-    detection_arr_msg.height = color_cv_image.rows;
-
-    if (result.empty()) {
+    if (result.empty())
+    {
+        detection_arr_msg.header = color_image->header;
         _detection_pub.publish(detection_arr_msg);
         return;
     }
@@ -206,6 +204,9 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
     auto t1 = std::chrono::high_resolution_clock::now();
 
     detection_arr_msg = detections_to_msg(result);
+    detection_arr_msg.header = color_image->header;
+    detection_arr_msg.width = color_cv_image.cols;
+    detection_arr_msg.height = color_cv_image.rows;
 
     visualization_msgs::MarkerArray marker_array;
 
@@ -422,7 +423,7 @@ void TJ2Yolo::detection_2d_to_3d(tj2_interfaces::GameObject& detection_msg, doub
     double half_x = x_size / 2.0;
     double half_y = y_size / 2.0;
     double half_z = z_size / 2.0;
-    for (int index = 0; detection_msg.bounding_box_3d.points.size(); index++) {
+    for (int index = 0; index < detection_msg.bounding_box_3d.points.size(); index++) {
         detection_msg.bounding_box_3d.points[index].x = _box_point_permutations[index][0] * half_x;
         detection_msg.bounding_box_3d.points[index].y = _box_point_permutations[index][1] * half_y;
         detection_msg.bounding_box_3d.points[index].z = _box_point_permutations[index][2] * half_z;
@@ -510,10 +511,10 @@ tj2_interfaces::GameObjectsStamped TJ2Yolo::detections_to_msg(const std::vector<
         detection_msg.bounding_box_2d.width = (double)box.width;
         detection_msg.bounding_box_2d.height = (double)box.height;
 
-        int x_left = box.x - box.width / 2;
-        int x_right = box.x + box.width / 2;
-        int y_top = box.y - box.height / 2;
-        int y_bottom = box.y + box.height / 2;
+        int x_left = box.x;
+        int x_right = box.x + box.width;
+        int y_top = box.y;
+        int y_bottom = box.y + box.height;
 
         detection_msg.bounding_box_2d.points[0].x = x_left;
         detection_msg.bounding_box_2d.points[0].y = y_top;
