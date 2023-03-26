@@ -8,7 +8,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~update_interval", _update_interval, 0.01);
 
     _send_topics = get_topics("send_topics");
-    _recv_topics = get_topics("recv_topics");
+    _recv_topics = get_topic_map("recv_topics");
 
     setup_nt_server();
     subscribe_to_send_topics(_send_topics);
@@ -30,7 +30,8 @@ void TJ2NetworkTables::send_topic_callback(const topic_tools::ShapeShifter::Cons
 
 void TJ2NetworkTables::recv_topic_callback(const nt::EntryNotification& notification)
 {
-
+    string topic_name = notification.name;
+    string value = get_entry_string(notification.entry);
 }
 
 // ---
@@ -66,10 +67,12 @@ void TJ2NetworkTables::subscribe_to_send_topics(set<string> topic_names)
     }
 }
 
-void TJ2NetworkTables::advertise_on_recv_topics(set<string> topic_names)
+void TJ2NetworkTables::advertise_on_recv_topics(map<string, TopicInfo_t> topic_info)
 {
-    for (const std::string& topic_name : topic_names)
-    {
+    for (auto iter = m.begin(); iter != topic_info.end(); iter++) {
+        string topic_name = iter->first();
+        TopicInfo_t info = iter->second();
+        
         entry = nt::GetEntry(_nt, topic_name);
         _nt_subscribers[topic_name] = entry;
         nt::AddEntryListener(entry, 
@@ -97,6 +100,49 @@ set<string> TJ2NetworkTables::get_topics(string param_name)
     return result;
 }
 
+map<string, TopicInfo_t> TJ2NetworkTables::get_topic_map(string param_name)
+{
+    XmlRpc::XmlRpcValue recv_topics_param;
+    string key;
+    if (!ros::param::search("recv_topics", key)) {
+        throw std::runtime_error("Failed to find recv_topics parameter");
+    }
+    nh.getParam(key, recv_topics_param);
+
+    if (recv_topics_param.getType() != XmlRpc::XmlRpcValue::Type::TypeArray ||
+        recv_topics_param.size() == 0) {
+        throw std::runtime_error("recv_topics is the wrong type or size");
+    }
+
+    map<string, TopicInfo_t> recv_topics;
+    for (int index = 0; index < recv_topics_param.size(); index++) {
+        if (recv_topics_param[index].getType() != XmlRpc::XmlRpcValue::TypeStruct) {
+            throw std::runtime_error("recv_topics element is not a struct");
+        }
+        TopicInfo_t info;
+        info.topic_name = recv_topics_param[index]["topic_name"];
+        info.queue_size = recv_topics_param[index]["queue_size"];
+        recv_topics[info.topic_name] = info;
+    }
+    return recv_topics;
+}
+
+string TJ2NetworkTables::get_entry_string(NT_Entry entry) {
+    auto value = nt::GetEntryValue(notification.entry);
+    string result = "";
+    if (value == nullptr) {
+        ROS_WARN_THROTTLE(1.0, "NT entry is NULL. Expected a string!");
+        return result;
+    }
+    else if (!value->IsString()) {
+        ROS_WARN_THROTTLE(1.0, "NT entry is not a string as expected! Got type %d", value->type());
+        return result;
+    }
+    else {
+        result = value->GetString();
+        return result;
+    }
+}
 
 int TJ2NetworkTables::run()
 {

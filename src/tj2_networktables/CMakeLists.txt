@@ -7,6 +7,7 @@ project(tj2_networktables)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(wpilib REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     std_msgs
@@ -15,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
     tf2_ros
     tf2_geometry_msgs
     tj2_interfaces
+    ros_type_introspection
+    topic_tools
 )
 
 ## System dependencies are found with CMake's conventions
@@ -115,6 +118,8 @@ catkin_package(
     tf2_ros
     tf2_geometry_msgs
     tj2_interfaces
+    ros_type_introspection
+    topic_tools
 )
 
 ###########
@@ -155,6 +160,7 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
     ${catkin_LIBRARIES}
+    ntcore wpiutil
 )
 
 #############
