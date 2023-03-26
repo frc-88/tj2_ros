@@ -3,6 +3,7 @@
 #include <ros/ros.h>
 #include <topic_tools/shape_shifter.h>
 #include "ros_type_introspection/ros_introspection.hpp"
+#include "ros/topic_manager.h"
 
 #include "ntcore.h"
 #include "networktables/EntryListenerFlags.h"
@@ -24,11 +25,15 @@ using namespace std;
 
 struct TopicInfo {
     string topic_name;
-    string topic_type;
     int queue_size;
 };
 typedef struct TopicInfo TopicInfo_t;
 
+
+template<typename M>
+inline ros::SerializedMessage serializeMessage(const M& message) {
+    return message;
+}
 
 class TJ2NetworkTables
 {
@@ -49,6 +54,7 @@ private:
     map<string, ros::Publisher> _publishers;
     map<string, NT_Entry> _nt_subscribers;
     map<string, NT_Entry> _nt_publishers;
+    topic_tools::ShapeShifter shape_shifter;
     
     // Sub callbacks
     void send_topic_callback(const topic_tools::ShapeShifter::ConstPtr& msg, const std::string &topic_name);
@@ -60,7 +66,7 @@ private:
     void subscribe_to_send_topics(set<string> topic_names);
     void advertise_on_recv_topics(map<string, TopicInfo_t> topic_info);
     void setup_nt_connection(string _nt_server, unsigned int _nt_port);
-    string get_entry_string(NT_Entry entry);
+    size_t get_entry_raw(NT_Entry entry, uint8_t** buffer);
 
 public:
     TJ2NetworkTables(ros::NodeHandle* nodehandle);

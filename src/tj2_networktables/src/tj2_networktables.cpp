@@ -23,19 +23,27 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
 // ---
 void TJ2NetworkTables::send_topic_callback(const topic_tools::ShapeShifter::ConstPtr& msg, const std::string &topic_name)
 {
+    // https://github.com/facontidavide/type_introspection_tests/blob/master/example/multi_subscriber.cpp
     static std::vector<uint8_t> buffer;
     buffer.resize(msg->size());
     ros::serialization::OStream stream(buffer.data(), buffer.size());
     msg->write(stream);
-    char const* data = (char*)stream.getData();
+    const char* data = (char*)stream.getData();
     nt::SetEntryValue(_nt_publishers[topic_name], nt::Value::MakeRaw(llvm::StringRef(data, stream.getLength())));
 }
 
 void TJ2NetworkTables::recv_topic_callback(const nt::EntryNotification& notification)
 {
+    static uint8_t* buffer;
+    boost::shared_array<uint8_t> array_buffer(buffer);
     string topic_name = notification.name;
-    string value = get_entry_string(notification.entry);
-    // TODO: make publisher
+    size_t length = get_entry_raw(notification.entry, &buffer);
+    if (!_publishers.count(topic_name)) {
+        _publishers[topic_name] = shape_shifter.advertise(nh, topic_name, _recv_topics[topic_name].queue_size);
+    }
+    ros::SerializedMessage msg(array_buffer, length);
+    ros::TopicManager::instance()->publish(topic_name, boost::bind(serializeMessage<ros::SerializedMessage>, boost::ref(msg)), msg);
+
 }
 
 // ---
@@ -73,6 +81,7 @@ void TJ2NetworkTables::subscribe_to_send_topics(set<string> topic_names)
 {
     for (const std::string& topic_name : topic_names)
     {
+        ROS_INFO("Subscribing to %s", topic_name.c_str());
         boost::function<void(const topic_tools::ShapeShifter::ConstPtr&)> callback;
         callback = [this, topic_name](const topic_tools::ShapeShifter::ConstPtr& msg) -> void {
             this->send_topic_callback(msg, topic_name);
@@ -86,6 +95,7 @@ void TJ2NetworkTables::advertise_on_recv_topics(map<string, TopicInfo_t> topic_i
 {
     for (auto iter = topic_info.begin(); iter != topic_info.end(); iter++) {
         string topic_name = iter->first;
+        ROS_INFO("Advertising on %s", topic_name.c_str());
         TopicInfo_t info = iter->second;
         
         NT_Entry entry = nt::GetEntry(_nt, topic_name);
@@ -136,39 +146,32 @@ map<string, TopicInfo_t> TJ2NetworkTables::get_topic_map(string param_name)
         }
         TopicInfo_t info;
         info.topic_name = (string)recv_topics_param[index]["topic_name"];
-        info.topic_type = (string)recv_topics_param[index]["topic_type"];
         info.queue_size = (int)recv_topics_param[index]["queue_size"];
         recv_topics[info.topic_name] = info;
     }
     return recv_topics;
 }
 
-string TJ2NetworkTables::get_entry_string(NT_Entry entry) {
+size_t TJ2NetworkTables::get_entry_raw(NT_Entry entry, uint8_t** buffer)
+{
     auto value = nt::GetEntryValue(entry);
-    string result = "";
     if (value == nullptr) {
         ROS_WARN_THROTTLE(1.0, "NT entry is NULL. Expected a string!");
-        return result;
+        return 0;
     }
-    else if (!value->IsString()) {
-        ROS_WARN_THROTTLE(1.0, "NT entry is not a string as expected! Got type %d", value->type());
-        return result;
+    else if (!value->IsRaw()) {
+        ROS_WARN_THROTTLE(1.0, "NT entry is not bytes as expected! Got type %d", value->type());
+        return 0;
     }
     else {
-        result = value->GetString();
-        return result;
+        llvm::StringRef ref = value->GetRaw();
+        *buffer = (uint8_t*)ref.data();
+        return ref.size();
     }
 }
 
 int TJ2NetworkTables::run()
 {
-    // ros::Rate clock_rate(_publish_rate);  // Hz
-    // while (ros::ok())
-    // {
-    //     clock_rate.sleep();
-        
-    //     ros::spinOnce();
-    // }
     ros::spin();
     return 0;
 }
