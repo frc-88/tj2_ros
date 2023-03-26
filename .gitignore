@@ -23,7 +23,11 @@ devel/
 src/CMakeLists.txt
 
 .bash_history
+
+# models
+*.pkl
 *.pt
+*.torchscript
 
 **/wandb/*
 .OutlineViewer/
