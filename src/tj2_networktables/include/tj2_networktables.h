@@ -6,6 +6,7 @@
 
 #include "ntcore.h"
 #include "networktables/EntryListenerFlags.h"
+#include <llvm/StringRef.h>
 
 #include <boost/assign/list_of.hpp>
 #include <boost/unordered_map.hpp>
@@ -35,6 +36,7 @@ private:
     ros::NodeHandle nh;  // ROS node handle
     
     // Parameters
+    string _nt_server;
     int _nt_port;
     double _update_interval;
     vector<vector<string>> compact_ids;
@@ -50,13 +52,14 @@ private:
     
     // Sub callbacks
     void send_topic_callback(const topic_tools::ShapeShifter::ConstPtr& msg, const std::string &topic_name);
+    void recv_topic_callback(const nt::EntryNotification& notification);
 
     // Helpers
     set<string> get_topics(string param_name);
     map<string, TopicInfo_t> get_topic_map(string param_name);
-    void subscribe_to_topics(set<string> topic_names);
+    void subscribe_to_send_topics(set<string> topic_names);
     void advertise_on_recv_topics(map<string, TopicInfo_t> topic_info);
-    void setup_nt_server();
+    void setup_nt_connection(string _nt_server, unsigned int _nt_port);
     string get_entry_string(NT_Entry entry);
 
 public:

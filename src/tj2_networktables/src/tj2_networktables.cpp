@@ -2,15 +2,16 @@
 #include "tj2_networktables.h"
 
 TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
-    nh(*nodehandle), _tf_listener(_tf_buffer)
+    nh(*nodehandle)
 {
+    ros::param::param<string>("~nt_server", _nt_server, "");
     ros::param::param<int>("~nt_port", _nt_port, 5800);
     ros::param::param<double>("~update_interval", _update_interval, 0.01);
 
     _send_topics = get_topics("send_topics");
     _recv_topics = get_topic_map("recv_topics");
 
-    setup_nt_server();
+    setup_nt_connection(_nt_server, _nt_port);
     subscribe_to_send_topics(_send_topics);
     advertise_on_recv_topics(_recv_topics);
 
@@ -22,24 +23,32 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
 // ---
 void TJ2NetworkTables::send_topic_callback(const topic_tools::ShapeShifter::ConstPtr& msg, const std::string &topic_name)
 {
-    std::stringstream ss;
-    msg->read(ss);
-    string send_string = ss.str();
-    nt::SetEntryValue(_nt_publishers[topic_name], nt::Value::MakeString(send_string));
+    static std::vector<uint8_t> buffer;
+    buffer.resize(msg->size());
+    ros::serialization::OStream stream(buffer.data(), buffer.size());
+    msg->write(stream);
+    char const* data = (char*)stream.getData();
+    nt::SetEntryValue(_nt_publishers[topic_name], nt::Value::MakeRaw(llvm::StringRef(data, stream.getLength())));
 }
 
 void TJ2NetworkTables::recv_topic_callback(const nt::EntryNotification& notification)
 {
     string topic_name = notification.name;
     string value = get_entry_string(notification.entry);
+    // TODO: make publisher
 }
 
 // ---
 // Helpers
 // ---
 
-void TJ2NetworkTables::setup_nt_server()
+void TJ2NetworkTables::setup_nt_connection(string server_name, unsigned int port)
 {
+    bool is_server = (
+        (server_name.compare("") == 0) ||
+        (server_name.compare("0.0.0.0") == 0) ||
+        (server_name.compare("127.0.0.1") == 0)
+    );
     _nt = nt::GetDefaultInstance();
     nt::AddLogger(_nt,
                 [](const nt::LogMessage& msg) {
@@ -49,9 +58,15 @@ void TJ2NetworkTables::setup_nt_server()
                 },
                 0, UINT_MAX
     );
-    nt::StartServer(_nt, "tj2_networktables.ini", "", _nt_port);
+    if (is_server) {
+        nt::StartServer(_nt, "tj2_networktables.ini", "", _nt_port);
+        ROS_INFO("Starting NT server on port %d", _nt_port);
+    }
+    else {
+        nt::StartClient(_nt, server_name.c_str(), port);
+        ROS_INFO("Connecting to NT server %s on port %d", server_name.c_str(), _nt_port);
+    }
     nt::SetUpdateRate(_nt, _update_interval);
-
 }
 
 void TJ2NetworkTables::subscribe_to_send_topics(set<string> topic_names)
@@ -59,21 +74,21 @@ void TJ2NetworkTables::subscribe_to_send_topics(set<string> topic_names)
     for (const std::string& topic_name : topic_names)
     {
         boost::function<void(const topic_tools::ShapeShifter::ConstPtr&)> callback;
-        callback = [topic_name](const topic_tools::ShapeShifter::ConstPtr& msg) -> void {
-            this.send_topic_callback(msg, topic_name);
+        callback = [this, topic_name](const topic_tools::ShapeShifter::ConstPtr& msg) -> void {
+            this->send_topic_callback(msg, topic_name);
         };
-        subscribers[topic_name] = nh.subscribe(topic_name, 10, callback);
+        _subscribers[topic_name] = nh.subscribe(topic_name, 10, callback);
         _nt_publishers[topic_name] = nt::GetEntry(_nt, topic_name);
     }
 }
 
 void TJ2NetworkTables::advertise_on_recv_topics(map<string, TopicInfo_t> topic_info)
 {
-    for (auto iter = m.begin(); iter != topic_info.end(); iter++) {
-        string topic_name = iter->first();
-        TopicInfo_t info = iter->second();
+    for (auto iter = topic_info.begin(); iter != topic_info.end(); iter++) {
+        string topic_name = iter->first;
+        TopicInfo_t info = iter->second;
         
-        entry = nt::GetEntry(_nt, topic_name);
+        NT_Entry entry = nt::GetEntry(_nt, topic_name);
         _nt_subscribers[topic_name] = entry;
         nt::AddEntryListener(entry, 
             boost::bind(&TJ2NetworkTables::recv_topic_callback, this, _1),
@@ -120,15 +135,16 @@ map<string, TopicInfo_t> TJ2NetworkTables::get_topic_map(string param_name)
             throw std::runtime_error("recv_topics element is not a struct");
         }
         TopicInfo_t info;
-        info.topic_name = recv_topics_param[index]["topic_name"];
-        info.queue_size = recv_topics_param[index]["queue_size"];
+        info.topic_name = (string)recv_topics_param[index]["topic_name"];
+        info.topic_type = (string)recv_topics_param[index]["topic_type"];
+        info.queue_size = (int)recv_topics_param[index]["queue_size"];
         recv_topics[info.topic_name] = info;
     }
     return recv_topics;
 }
 
 string TJ2NetworkTables::get_entry_string(NT_Entry entry) {
-    auto value = nt::GetEntryValue(notification.entry);
+    auto value = nt::GetEntryValue(entry);
     string result = "";
     if (value == nullptr) {
         ROS_WARN_THROTTLE(1.0, "NT entry is NULL. Expected a string!");
@@ -146,13 +162,14 @@ string TJ2NetworkTables::get_entry_string(NT_Entry entry) {
 
 int TJ2NetworkTables::run()
 {
-    ros::Rate clock_rate(_publish_rate);  // Hz
-    while (ros::ok())
-    {
-        clock_rate.sleep();
+    // ros::Rate clock_rate(_publish_rate);  // Hz
+    // while (ros::ok())
+    // {
+    //     clock_rate.sleep();
         
-        ros::spinOnce();
-    }
+    //     ros::spinOnce();
+    // }
+    ros::spin();
     return 0;
 }
 
