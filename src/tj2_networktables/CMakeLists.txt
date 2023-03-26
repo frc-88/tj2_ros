@@ -4,26 +4,17 @@ project(tj2_networktables)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
-find_package(wpilib REQUIRED)
-
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  rospy
-  roscpp
-  std_msgs
-  sensor_msgs
-  geometry_msgs
-  message_generation
-  genmsg
-  dynamic_reconfigure
-  tf
-  tf2
-  tf2_ros
-  tf2_geometry_msgs
-  nav_msgs
-  tj2_interfaces
+    roscpp
+    std_msgs
+    geometry_msgs
+    sensor_msgs
+    tf2_ros
+    tf2_geometry_msgs
+    tj2_interfaces
 )
 
 ## System dependencies are found with CMake's conventions
@@ -33,7 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-catkin_python_setup()
+# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -62,16 +53,15 @@ catkin_python_setup()
 ## Generate messages in the 'msg' folder
 # add_message_files(
 #   FILES
-#   SwerveModule.msg
-#   SwerveMotor.msg
-#   NTEntry.msg
-#   NavX.msg
+#   Message1.msg
+#   Message2.msg
 # )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
 #   FILES
-#   OdomReset.srv
+#   Service1.srv
+#   Service2.srv
 # )
 
 ## Generate actions in the 'action' folder
@@ -84,8 +74,7 @@ catkin_python_setup()
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
-#   geometry_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -104,7 +93,8 @@ catkin_python_setup()
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 # generate_dynamic_reconfigure_options(
-#   cfg/
+#   cfg/DynReconf1.cfg
+#   cfg/DynReconf2.cfg
 # )
 
 ###################################
@@ -117,19 +107,14 @@ catkin_python_setup()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES tj2_networktables diffyjr_networktables scorpion_networktables
-  CATKIN_DEPENDS 
-    rospy
-    std_msgs
+ INCLUDE_DIRS include
+ DEPENDS 
+    geometry_msgs 
+    roscpp 
     sensor_msgs
-    message_runtime
-    dynamic_reconfigure
-    tf2
-    nav_msgs
-    geometry_msgs
+    tf2_ros
+    tf2_geometry_msgs
     tj2_interfaces
-#  DEPENDS system_lib
 )
 
 ###########
@@ -139,69 +124,38 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
+    include
+    ${catkin_INCLUDE_DIRS}
 )
+
 link_directories(${catkin_LIBRARY_DIRS})
 
-add_library(tj2_networktables
-  src/tj2_networktables.cpp
-)
-
-add_library(diffyjr_networktables
-  src/diffyjr_networktables.cpp
-)
-
-add_library(scorpion_networktables
-  src/scorpion_networktables.cpp
-)
-
-
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-add_executable(tj2_networktables_node
-  src/tj2_networktables_node.cpp
-)
+## Declare a C++ library
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+add_executable(${PROJECT_NAME} src/${PROJECT_NAME}.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME node PREFIX "")
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(tj2_networktables
-    ${catkin_LIBRARIES}
-    ntcore wpiutil
-)
-
-target_link_libraries(diffyjr_networktables
-    ${catkin_LIBRARIES}
-    ntcore wpiutil tj2_networktables
-)
-
-target_link_libraries(scorpion_networktables
-    ${catkin_LIBRARIES}
-    ntcore wpiutil tj2_networktables
-)
-
-target_link_libraries(tj2_networktables_node
-    ${catkin_LIBRARIES}
-    ntcore wpiutil tj2_networktables diffyjr_networktables scorpion_networktables
-)
+# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(tj2_networktables ${tj2_networktables_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(diffyjr_networktables ${diffyjr_networktables_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(scorpion_networktables ${scorpion_networktables_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(tj2_networktables_node ${tj2_networktables_node_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -225,10 +179,11 @@ add_dependencies(tj2_networktables_node ${tj2_networktables_node_EXPORTED_TARGET
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS tj2_networktables_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+
+install(TARGETS ${PROJECT_NAME}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
 
 ## Mark cpp header files for installation
