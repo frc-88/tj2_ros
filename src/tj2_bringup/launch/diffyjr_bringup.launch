@@ -8,25 +8,24 @@
     <arg name="yolo_model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/> -->
     <arg name="laser_scan_topic" value="/laser/scan_filtered"/>
 
-    <rosparam file="$(find tj2_bringup)/config/diffyjr/networktables.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
-    <rosparam file="$(find tj2_bringup)/config/diffyjr/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
+    <!-- <rosparam file="$(find tj2_bringup)/config/diffyjr/networktables.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
+    <rosparam file="$(find tj2_bringup)/config/diffyjr/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" /> -->
 
-    <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
+    <!-- <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
         <arg name="interface_type" value="diffyjr"/>
         <arg name="publish_odom_tf" value="true"/>
         <arg name="robot_address" value="$(arg robot_address)"/>
-        <!-- <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/> -->
         <arg name="detection_topic" value="/tj2/detections"/>
         <arg name="scan_topic" value="$(arg laser_scan_topic)"/>
         <arg name="tag_topic" value="/apriltag/rotated_detections"/>
         <arg name="classes_path" default="$(arg yolo_class_names)"/>
         <arg name="joint_names" value="$(find tj2_bringup)/config/diffyjr/joints.yaml"/>
-    </include>
+    </include> -->
 
-    <!-- <include file="$(find tj2_comm)/launch/tj2_comm.launch">
+    <include file="$(find tj2_comm)/launch/tj2_comm.launch">
         <arg name="publish_odom_tf" value="true"/>
         <arg name="compact_tf_ids_path" value="$(find tj2_bringup)/config/diffyjr/frame_ids.yaml"/>
-    </include> -->
+    </include>
 
     <include file="$(find tj2_networktables)/launch/twist_mux.launch"/>
 
