@@ -24,6 +24,4 @@
             <rosparam param="joint_names" file="$(arg joint_names)" command="load"/>
         </node>
     </group>
-
-    <include file="$(find tj2_networktables)/launch/twist_mux.launch"/>
 </launch>

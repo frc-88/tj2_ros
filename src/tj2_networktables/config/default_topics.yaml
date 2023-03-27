@@ -1,6 +1,0 @@
-send_topics:
-- "/tj2/cmd_vel"
-
-recv_topics:
-  - topic_name: /tj2/odom
-    queue_size: 10
