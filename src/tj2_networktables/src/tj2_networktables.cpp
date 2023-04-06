@@ -107,7 +107,7 @@ TJ2NetworkTables::TJ2NetworkTables(ros::NodeHandle* nodehandle) :
     _field_relative_sub = nh.subscribe<std_msgs::Bool>("field_relative", 10, &TJ2NetworkTables::field_relative_callback, this);
     _laser_sub = nh.subscribe<sensor_msgs::LaserScan>("scan", 10, &TJ2NetworkTables::scan_callback, this);
     _zones_sub = nh.subscribe<tj2_interfaces::ZoneInfoArray>("zones_info", 10, &TJ2NetworkTables::zones_info_callback, this);
-    _tags_sub = nh.subscribe<apriltag_ros::AprilTagDetectionArray>("tag_detections", 10, &TJ2NetworkTables::tags_callback, this);
+    // _tags_sub = nh.subscribe<apriltag_ros::AprilTagDetectionArray>("tag_detections", 10, &TJ2NetworkTables::tags_callback, this);
 
     if (_class_names.empty()) {
         ROS_ERROR("Error loading class names! Not broadcasting detections");
