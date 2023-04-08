@@ -1,3 +1,4 @@
+docs/
 dataset_builder/
 bags/
 logs/
