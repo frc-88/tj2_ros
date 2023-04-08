@@ -6,7 +6,7 @@ import cv2
 import yaml
 import ezdxf
 import argparse
-import shapely.geometry.polygon
+import rospkg
 from shapely.geometry import Polygon
 
 from tj2_tools.zone import ZoneManager
@@ -48,7 +48,17 @@ def main():
                         help="DXF directory to convert to zones")
     parser.add_argument("-o", "--output", default="zones.bin", help="Output path")
     parser.add_argument("-m", "--map", default="", help="Map to draw zones on for debugging (ex. map.yaml)")
+    parser.add_argument("-d", "--data", default=None, help="Path to tj2_data/data")
     args = parser.parse_args()
+    
+    if args.data is None:
+        rospack = rospkg.RosPack()
+        data_package = "tj2_data"
+        package_dir = rospack.get_path(data_package) + "/data"
+    else:
+        package_dir = args.data
+    if len(package_dir) > 0:
+        os.chdir(package_dir)
 
     out_path = args.output
     manager = ZoneManager("map")
@@ -73,7 +83,7 @@ def main():
         name = os.path.splitext(os.path.basename(path))[0]
         name = name.replace(" ", "_").replace("-", "_")
 
-        doc = ezdxf.readfile(path)
+        doc = ezdxf.readfile(path)  # type: ignore
         
         points = []
         

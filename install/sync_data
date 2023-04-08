@@ -3,14 +3,13 @@ BASE_DIR=$(realpath "$(dirname $0)")
 PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
-RESTART_SERVICE=$3
 
-SERVICE_NAME=tj2_ros
 LOCAL_PATH=${PARENT_DIR}
 DESTINATION_PATH=/home/tj2
 LOCAL_NAME=$(basename $LOCAL_PATH)
 DESTINATION_PATH=/home/tj2
 DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
+DATA_RELATIVE_DIR=src/tj2_data/data
 
 if [ -z ${DESTINATION_NAME} ]; then
     echo "Please set a destination IP or hostname"
@@ -24,7 +23,6 @@ fi
 
 SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
 
-OUTPUT=$( rsync -av --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY} -p 5810"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH} | tee /dev/tty)
-
-${BASE_DIR}/sync_data ${DESTINATION_NAME} ${REMOTE_KEY}
-${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} ${SERVICE_NAME}
+# sync both ways
+OUTPUT=$( rsync -rtuv -e "ssh -i ${REMOTE_KEY} -p 5810" ${LOCAL_PATH}/${DATA_RELATIVE_DIR} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}/${DATA_RELATIVE_DIR} | tee /dev/tty)
+OUTPUT=$( rsync -rtuv -e "ssh -i ${REMOTE_KEY} -p 5810" tj2@${DESTINATION_NAME}:${DESTINATION_PATH}/${DATA_RELATIVE_DIR} ${LOCAL_PATH}/${DATA_RELATIVE_DIR} | tee /dev/tty)
