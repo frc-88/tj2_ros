@@ -30,6 +30,7 @@ private:
     string _camera_parent_frame;
     string _camera_child_frame;
     string _base_imu_frame;
+    bool _enable_camera_tilt_tf;
 
     // Members
     geometry_msgs::Quaternion base_quat_msg, camera_quat_msg;

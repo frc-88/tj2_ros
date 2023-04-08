@@ -10,10 +10,14 @@ TJ2ImuJoint::TJ2ImuJoint(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~base_imu_frame", _base_imu_frame, "imu");
     ros::param::param<string>("~camera_parent_frame", _camera_parent_frame, "camera_tilt_link");
     ros::param::param<string>("~camera_child_frame", _camera_child_frame, "camera_link");
+    ros::param::param<bool>("~enable_camera_tilt_tf", _enable_camera_tilt_tf, true);
 
     _static_imu_tf_set = false;
     
-    _camera_imu_sub = nh.subscribe<sensor_msgs::Imu>("camera_imu", 10, &TJ2ImuJoint::camera_imu_callback, this);
+    if (_enable_camera_tilt_tf) {
+        _camera_imu_sub = nh.subscribe<sensor_msgs::Imu>("camera_imu", 10, &TJ2ImuJoint::camera_imu_callback, this);
+    }
+    
     if (_navx_as_base) {
         _base_imu_sub = nh.subscribe<tj2_interfaces::NavX>("base_imu", 10, &TJ2ImuJoint::base_navx_callback, this);
     }
@@ -141,7 +145,9 @@ int TJ2ImuJoint::run()
     {
         clock_rate.sleep();
         publish_base_tf();
-        publish_camera_tf();
+        if (_enable_camera_tilt_tf) {
+            publish_camera_tf();
+        }
         ros::spinOnce();
     }
     return 0;
