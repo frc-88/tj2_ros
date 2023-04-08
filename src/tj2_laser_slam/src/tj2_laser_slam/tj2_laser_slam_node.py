@@ -35,10 +35,11 @@ class TJ2LaserSlam:
         ]
 
         self.rospack = rospkg.RosPack()
-        self.data_package = "tj2_data"
-        self.package_dir = self.rospack.get_path(self.data_package)
-        self.default_maps_dir = self.package_dir + "/data/maps"
+        self.package_dir = self.rospack.get_path("tj2_laser_slam")
         self.default_launches_dir = self.package_dir + "/launch/sublaunch"
+
+        self.data_package_dir = self.rospack.get_path("tj2_data")
+        self.default_maps_dir = self.data_package_dir + "/data/maps"
 
         self.service_ns_name = rospy.get_param("~service_ns_name", "/tj2")
         self.start_mode = rospy.get_param("~mode", "mapping")
@@ -57,6 +58,7 @@ class TJ2LaserSlam:
 
         self.set_map_paths()
 
+        rospy.loginfo(f"Map directory is {self.map_dir}")
         if not os.path.isdir(self.map_dir):
             os.makedirs(self.map_dir)
             

@@ -11,7 +11,7 @@
         <arg name="compact_tf_ids_path" value="$(find tj2_bringup)/config/diffyjr/frame_ids.yaml"/>
     </include>
 
-    <include file="$(find tj2_networktables)/launch/twist_mux.launch"/>
+    <include file="$(find tj2_comm)/launch/twist_mux.launch"/>
 
     <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" /> -->
     <!-- <node pkg="tf" type="static_transform_publisher" name="camera_tilt_to_armature" args="0.0 0.0 0.0  0 0 0 1 camera_tilt_link camera_armature_link 20" /> -->
@@ -85,11 +85,11 @@
         <arg name="amcl_config" value="$(find tj2_bringup)/config/diffyjr/amcl.yaml"/>
     </include>
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
-        <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
+        <arg name="waypoints_path" value="$(find tj2_data)/data/waypoints/$(arg map_name)"/>
     </include>
 
     <include file="$(find tj2_zones)/launch/tj2_zones.launch">
-        <arg name="zones_path" value="$(find tj2_zones)/zones/$(arg map_name).bin"/>
+        <arg name="zones_path" value="$(find tj2_data)/data/zones/$(arg map_name).bin"/>
     </include>
 
     <include file="$(find tj2_camera)/launch/apriltags.launch">
