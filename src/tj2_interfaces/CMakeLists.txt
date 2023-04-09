@@ -53,6 +53,7 @@ add_message_files(
   Labels.msg
   ZoneInfoArray.msg
   Waypoint.msg
+  MatchPeriod.msg
   ZoneArray.msg
   GameObject.msg
   WaypointArray.msg

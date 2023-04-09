@@ -103,4 +103,10 @@
         <arg name="namespace" value="apriltag"/>
         <arg name="publish_tag_detections_image" value="false"/>
     </include>
+
+    <group ns="apriltag">
+        <node name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_data)/maps/$(arg map_name)">
+            <param name="frame_id" value="field"/>
+        </node>
+    </group>
 </launch>
