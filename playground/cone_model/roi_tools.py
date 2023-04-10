@@ -12,10 +12,10 @@ def get_iou(box, target):
     iou = area_of_overlap / area_of_union
     return iou
 
-
-def get_ious(box, features_boxes):
+# within means how much of the box is overlapped area
+def get_ious_withins(box, features_boxes):
     l, r, t, b = box
-    features_ious = []
+    features_ious, features_withins = [], []
     for feature_boxes in features_boxes:
         ols = np.maximum(l, feature_boxes[::, ::, ::, 0])
         ors = np.minimum(r, feature_boxes[::, ::, ::, 1])
@@ -28,5 +28,7 @@ def get_ious(box, features_boxes):
                 feature_boxes[::, ::, ::, 3] - feature_boxes[::, ::, ::, 2])
         areas_of_unions = areas_of_feature_boxes + area_of_box - areas_of_overlaps
         ious = areas_of_overlaps / areas_of_unions
+        withins = areas_of_overlaps / areas_of_feature_boxes
         features_ious.append(ious)
-    return features_ious
+        features_withins.append(withins)
+    return features_ious, features_withins

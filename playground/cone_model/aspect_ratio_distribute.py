@@ -5,10 +5,23 @@ import cv2
 from roi_params import *
 import numpy as np
 
-dirs = ['C:/FILES/TJ square/2023/data/scorpion_field_recording/scorpion_samples',
-'C:/FILES/TJ square/2023/data/game_pieces_2023_03_12',
-'C:/FILES/TJ square/2023/data/game_pieces_2023_03_12',
-'C:/FILES/TJ square/2023/data/train_'
+dirs = [
+        'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/scorpion_field_recording',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/train_refine',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/FIRST_bgs',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/game_pieces_2023_03_12',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_1',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_2',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_3',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_4',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_5',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_6',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_7',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_8',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_9',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_10',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_11',
+'C:/FILES/TJ square/2023/data/annotated/intact_samples_rmvhidden/Reading_12',
         ]
 
 img_json_pairs = []
