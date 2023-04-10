@@ -1,8 +1,13 @@
 #!/usr/bin/env python
-from importlib import import_module
 import rospy
 from networktables import NetworkTables, NetworkTable, NetworkTablesInstance, NetworkTableEntry
-from tj2_tools.networktables.ros_conversions import ros_msg_to_base64_json, base64_json_to_ros_msg, parse_nt_topic, convert_to_nt_topic
+from tj2_tools.networktables.ros_conversions import (
+    ros_msg_to_base64_json,
+    base64_json_to_ros_msg,
+    parse_nt_topic,
+    convert_to_nt_topic,
+    get_msg_class
+)
 
 
 NotifyFlags = NetworkTablesInstance.NotifyFlags
@@ -15,17 +20,8 @@ class GenericMessageSubscriber:
         self._callback = callback
         self.class_map = {}
 
-    def get_msg_class(self, msg_type_name: str):
-        if msg_type_name not in self.class_map:
-            connection_header = msg_type_name.split('/')
-            ros_pkg = connection_header[0] + '.msg'
-            msg_type = connection_header[1]
-            msg_class = getattr(import_module(ros_pkg), msg_type)
-            self.class_map[msg_type_name] = msg_class
-        return self.class_map[msg_type_name]
-
     def generic_message_callback(self, data):
-        msg_class = self.get_msg_class(data._connection_header['type'])
+        msg_class = get_msg_class(self.class_map, data._connection_header['type'])
         msg = msg_class().deserialize(data._buff)
         self._callback(msg)
 
