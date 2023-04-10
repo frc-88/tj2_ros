@@ -13,12 +13,19 @@ class GenericMessageSubscriber:
         self._binary_sub = rospy.Subscriber(
             topic_name, rospy.AnyMsg, self.generic_message_callback, **kwargs)
         self._callback = callback
+        self.class_map = {}
+
+    def get_msg_class(self, msg_type_name: str):
+        if msg_type_name not in self.class_map:
+            connection_header = msg_type_name.split('/')
+            ros_pkg = connection_header[0] + '.msg'
+            msg_type = connection_header[1]
+            msg_class = getattr(import_module(ros_pkg), msg_type)
+            self.class_map[msg_type_name] = msg_class
+        return self.class_map[msg_type_name]
 
     def generic_message_callback(self, data):
-        connection_header =  data._connection_header['type'].split('/')
-        ros_pkg = connection_header[0] + '.msg'
-        msg_type = connection_header[1]
-        msg_class = getattr(import_module(ros_pkg), msg_type)
+        msg_class = self.get_msg_class(data._connection_header['type'])
         msg = msg_class().deserialize(data._buff)
         self._callback(msg)
 

@@ -49,7 +49,7 @@ def base64_json_to_ros_msg(base64_json: str):
 
 
 def parse_nt_topic(nt_ros_topic: str) -> str:
-    return nt_ros_topic.replace(";", "/")
+    return nt_ros_topic.replace("\\", "/")
 
 def convert_to_nt_topic(ros_topic: str) -> str:
-    return ros_topic.replace("/", ";")
+    return ros_topic.replace("/", "\\")
