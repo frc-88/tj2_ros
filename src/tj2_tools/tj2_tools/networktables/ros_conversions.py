@@ -1,0 +1,55 @@
+import rospy
+import json
+import base64
+from rosbridge_library.internal import message_conversion
+from roslib.message import get_message_class
+
+
+def ros_msg_to_base64_json(msg):
+    msg_dict = message_conversion.extract_values(msg)
+    msg_dict['_type'] = getattr(msg, "_type", None)  # type: ignore
+    msg_json = json.dumps(msg_dict)
+    msg_base64 = base64.b64encode(msg_json.encode('utf-8')).decode('utf-8')
+    return msg_base64
+
+def base64_json_to_msg_dict(base64_json: str):
+    msg_json = base64.b64decode(base64_json.encode('utf-8')).decode('utf-8')
+    return json.loads(msg_json)
+
+def msg_dict_to_ros_type(msg_dict):
+    if '_type' not in msg_dict:
+        rospy.logerr("JSON message must include a '_type' field.")
+        return None
+
+    msg_type = msg_dict['_type']
+    del msg_dict['_type']
+    ros_msg_type = get_message_class(msg_type)
+
+    if ros_msg_type is None:
+        rospy.logerr("Invalid message type: %s", msg_type)
+        return None
+    
+    return ros_msg_type
+
+def msg_dict_to_ros_msg(msg_dict, msg_cls):
+    assert msg_cls is not None
+    msg = msg_cls()
+    message_conversion.populate_instance(msg_dict, msg)
+    return msg
+
+def base64_json_to_ros_msg(base64_json: str):
+    if len(base64_json) == 0:
+        return None, None
+    msg_dict = base64_json_to_msg_dict(base64_json)
+    ros_msg_type = msg_dict_to_ros_type(msg_dict)
+    if ros_msg_type is None:
+        return None, None
+    ros_msg = msg_dict_to_ros_msg(msg_dict, ros_msg_type)
+    return ros_msg, ros_msg_type
+
+
+def parse_nt_topic(nt_ros_topic: str) -> str:
+    return nt_ros_topic.replace(";", "/")
+
+def convert_to_nt_topic(ros_topic: str) -> str:
+    return ros_topic.replace("/", ";")
