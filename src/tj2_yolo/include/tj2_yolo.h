@@ -130,7 +130,7 @@ private:
     std_msgs::ColorRGBA get_detection_color(cv::Mat color_cv_image, cv::Mat mask);
     void get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Detection2D detection_2d_msg, cv::Mat& out_mask, double& z_min, double& z_max);
     vision_msgs::Detection3D detection_2d_to_3d(vision_msgs::Detection2D detection_2d_msg, double z_min, double z_max);
-    void tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_msg);
+    bool tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_msg);
     std::string get_class_name(int obj_id);
     int get_class_index(int obj_id);
     int get_class_count(int obj_id);

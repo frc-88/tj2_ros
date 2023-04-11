@@ -837,17 +837,22 @@ void TJ2NetworkTables::publish_imu()
 
 void TJ2NetworkTables::publish_detection(string name, int index, geometry_msgs::PoseStamped pose)
 {
-    geometry_msgs::TransformStamped transform;
-    try {
-        transform = _tf_buffer.lookupTransform(_base_frame, pose.header.frame_id, ros::Time(0));
-    }
-    catch (tf2::TransformException &ex) {
-        ROS_WARN_THROTTLE(1.0, "Failed to transform object to base frame: %s", ex.what());
-        return;
-    }
-
     geometry_msgs::PoseStamped base_pose;
-    tf2::doTransform(pose, base_pose, transform);
+    if (_base_frame.compare(pose.header.frame_id) == 0) {
+        base_pose = pose;
+    }
+    else {
+        geometry_msgs::TransformStamped transform;
+        try {
+            transform = _tf_buffer.lookupTransform(_base_frame, pose.header.frame_id, ros::Time(0));
+        }
+        catch (tf2::TransformException &ex) {
+            ROS_WARN_THROTTLE(1.0, "Failed to transform object to base frame: %s", ex.what());
+            return;
+        }
+
+        tf2::doTransform(pose, base_pose, transform);
+    }
 
     string key = _base_key + "detections/" + name + "/" + to_string(index);
     nt::SetEntryValue(nt::GetEntry(_nt, key + "/position/x"), nt::Value::MakeDouble(base_pose.pose.position.x));

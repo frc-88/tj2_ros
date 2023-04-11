@@ -209,7 +209,12 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
         vision_msgs::Detection3D detection_3d_msg = detection_2d_to_3d(detection_2d_msg, z_min, z_max);
         add_detection_to_marker_array(marker_array, detection_3d_msg, obj_color);
 
-        tf_detection_pose_to_robot(detection_3d_msg);
+        if (tf_detection_pose_to_robot(detection_3d_msg)) {
+            detection_3d_arr_msg.header.frame_id = _target_frame;
+        }
+        else {
+            return;
+        }
         detection_3d_arr_msg.detections.push_back(detection_3d_msg);
     }
     _detection_pub.publish(detection_3d_arr_msg);
@@ -409,8 +414,11 @@ vision_msgs::Detection3D TJ2Yolo::detection_2d_to_3d(vision_msgs::Detection2D de
     return detection_3d_msg;
 }
 
-void TJ2Yolo::tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_msg)
+bool TJ2Yolo::tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_msg)
 {
+    if (_target_frame.size() == 0) {
+        return true;
+    }
     geometry_msgs::TransformStamped transform_camera_to_target;
 
     try {
@@ -426,10 +434,11 @@ void TJ2Yolo::tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_
         detection_3d_msg.header.frame_id = _target_frame;
         detection_3d_msg.bbox.center = pose_stamped.pose;
         detection_3d_msg.results[0].pose.pose = pose_stamped.pose;
+        return true;
     }
     catch (tf2::TransformException &ex) {
         ROS_WARN_THROTTLE(0.5, "%s", ex.what());
-        return;
+        return false;
     }
 }
 
