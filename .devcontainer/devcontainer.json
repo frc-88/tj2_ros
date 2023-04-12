@@ -27,6 +27,7 @@
     "ms-toolsai.jupyter-keymap",
     "ms-vscode-remote.remote-containers",
     "alpha4.jsonl",
-    "hashicorp.terraform"
+    "hashicorp.terraform",
+    "zchrissirhcz.cmake-highlight"
   ]
 }

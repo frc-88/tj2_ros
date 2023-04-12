@@ -1,0 +1,3 @@
+[submodule "docs/tj2_ros.wiki"]
+	path = docs/tj2_ros.wiki
+	url = git@github.com:frc-88/tj2_ros.wiki.git

@@ -50,7 +50,8 @@
     </include>
     <include file="$(find tj2_yolo)/launch/tj2_yolo.launch">
         <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
-        <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
+        <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />  
+        <arg name="confidence_threshold"      default="0.6" />
     </include>
 
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch">

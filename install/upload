@@ -24,6 +24,7 @@ fi
 
 SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
 
-OUTPUT=$( rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY} -p 5810"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH} | tee /dev/tty)
+OUTPUT=$( rsync -av --delete --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY} -p 5810"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH} | tee /dev/tty)
 
+${BASE_DIR}/sync_data ${DESTINATION_NAME} ${REMOTE_KEY}
 ${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} ${SERVICE_NAME}

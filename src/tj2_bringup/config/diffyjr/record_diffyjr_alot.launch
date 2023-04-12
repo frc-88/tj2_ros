@@ -19,6 +19,7 @@
         /map_updates
         /particlecloud
         /tf
+        /tf_compact
         /tf_static
         /tj2/add_zone
         /tj2/bag_name
@@ -29,29 +30,20 @@
         /tj2/cmd_vel_teleop
         /tj2/field_relative
         /tj2/imu
-        /tj2/is_autonomous
         /tj2/joint/base_link_to_wheel_0_joint
         /tj2/joint/base_link_to_wheel_1_joint
         /tj2/joint/base_link_to_wheel_2_joint
         /tj2/joint/base_link_to_wheel_3_joint
-        /tj2/joint/command/base_link_to_wheel_0_joint
-        /tj2/joint/command/base_link_to_wheel_1_joint
-        /tj2/joint/command/base_link_to_wheel_2_joint
-        /tj2/joint/command/base_link_to_wheel_3_joint
         /tj2/joint_states
         /tj2/labels
-        /tj2/match_time
+        /tj2/match
         /tj2/nogo_zones
-        /tj2/nt_passthrough
-        /tj2/nt_passthrough_string
         /tj2/odom
         /tj2/ping
-        /tj2/reset_pose
+        /tj2/ping_send
+        /tj2/ping_return
         /tj2/robot_status
-        /tj2/robot_tag_pose
-        /tj2/smart_dashboard
         /tj2/swerve_modules
-        /tj2/team_color
         /tj2/twist_lock
         /tj2/update_zones
         /tj2/waypoint_markers

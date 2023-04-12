@@ -23,7 +23,6 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
@@ -43,6 +42,9 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <tj2_yolo/YoloDetectionConfig.h>
+
+#include <tj2_interfaces/GameObjectsStamped.h>
+#include <tj2_interfaces/GameObject.h>
 
 #include "detector.h"
 
@@ -93,6 +95,7 @@ private:
     ros::Duration _marker_persistance;
     sensor_msgs::CameraInfo _camera_info;
     cv::Mat erode_element;
+    std::vector<std::vector<double>> _box_point_permutations;
 
     // Subscribers
     ros::Subscriber _color_info_sub;
@@ -139,6 +142,12 @@ private:
     void add_detection_to_marker_array(visualization_msgs::MarkerArray& marker_array, vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color);
     visualization_msgs::Marker make_marker(vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color);
     double get_depth_conversion(std::string encoding);
+    tj2_interfaces::GameObjectsStamped convert_to_game_objects(
+        unsigned int width,
+        unsigned int height,
+        vision_msgs::Detection2DArray detection_2d_arr_msg,
+        vision_msgs::Detection3DArray detection_3d_arr_msg
+    );
 
 };
 

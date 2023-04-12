@@ -4,34 +4,25 @@
     <arg name="enable_driver_station" value="true"/>
     <arg name="yolo_class_names" value="$(find tj2_yolo)/models/charged_up_2023.names"/>
     <arg name="yolo_model_path" value="$(find tj2_yolo)/models/charged_up_2023-02-25.torchscript"/>
-    <!-- <arg name="yolo_class_names" value="$(find tj2_yolo)/models/powercell_2021.names"/>
-    <arg name="yolo_model_path" value="$(find tj2_yolo)/models/powercell_2021-01-30.torchscript"/> -->
     <arg name="laser_scan_topic" value="/laser/scan_filtered"/>
 
-    <rosparam file="$(find tj2_bringup)/config/diffyjr/networktables.yaml" command="load" ns="/tj2/tj2_networktables" subst_value="true" />
-    <rosparam file="$(find tj2_bringup)/config/diffyjr/nt_watchers.yaml" command="load" ns="/tj2/tj2_networktables_watcher" subst_value="true" />
-
-    <include file="$(find tj2_networktables)/launch/tj2_networktables.launch">
-        <arg name="interface_type" value="diffyjr"/>
+    <include file="$(find tj2_comm)/launch/tj2_comm.launch">
         <arg name="publish_odom_tf" value="true"/>
-        <arg name="robot_address" value="$(arg robot_address)"/>
-        <!-- <arg name="detection_topic" value="/tj2_zed/obj_det/detections"/> -->
-        <arg name="detection_topic" value="/tj2/detections"/>
-        <arg name="scan_topic" value="$(arg laser_scan_topic)"/>
-        <arg name="tag_topic" value="/apriltag/rotated_detections"/>
-        <arg name="classes_path" default="$(arg yolo_class_names)"/>
-        <arg name="joint_names" value="$(find tj2_bringup)/config/diffyjr/joints.yaml"/>
+        <arg name="compact_tf_ids_path" value="$(find tj2_bringup)/config/diffyjr/frame_ids.yaml"/>
     </include>
 
-    <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" /> -->
-    <!-- <node pkg="tf" type="static_transform_publisher" name="camera_tilt_to_armature" args="0.0 0.0 0.0  0 0 0 1 camera_tilt_link camera_armature_link 20" /> -->
+    <include file="$(find tj2_comm)/launch/twist_mux.launch"/>
+    <include file="$(find tj2_networktables)/launch/tj2_networktables.launch"/>
+
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.2032 0.0 0.254  0 0 0 1 base_tilt_link camera_tilt_link 20" />
     <node pkg="tf" type="static_transform_publisher" name="camera_armature_to_link" args="0.0 0.0 0.0  0 0 0 1 camera_armature_link camera_link 20" />
     <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_laser" args="-0.0553 0.116 0.253  0 0 1 0 base_tilt_link laser 20" />
     <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_imu" args="0.0634 0.0012 0.2039  0.0000  0.0000  0.7071  0.7071 base_tilt_link imu 33" />
     <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_limelight" args="0.2182 0.0 0.2188  0.0 0.0 0.0 1.0 base_tilt_link limelight_link 33" />
-    <!-- <node pkg="tf" type="static_transform_publisher" name="field_to_map" args="0.0 0.0 0.0  0 0 0 1 field map 20" /> -->
 
+    <!-- Enable these two TFs if imu_joint is disabled -->
+    <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" /> -->
+    <!-- <node pkg="tf" type="static_transform_publisher" name="camera_tilt_to_armature" args="0.0 0.0 0.0  0 0 0 1 camera_tilt_link camera_armature_link 20" /> -->
     <include file="$(find tj2_description)/launch/imu_joint.launch">
         <arg name="camera_imu_topic" value="/tj2_zed/imu/data"/>
         <arg name="base_imu_topic" value="/tj2/imu"/>
@@ -97,13 +88,11 @@
         <arg name="amcl_config" value="$(find tj2_bringup)/config/diffyjr/amcl.yaml"/>
     </include>
     <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
-        <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
+        <arg name="waypoints_path" value="$(find tj2_data)/data/waypoints/$(arg map_name)"/>
     </include>
 
-    <include file="$(find tj2_webapp)/launch/tj2_webapp.launch"/>
-
     <include file="$(find tj2_zones)/launch/tj2_zones.launch">
-        <arg name="zones_path" value="$(find tj2_zones)/zones/$(arg map_name).bin"/>
+        <arg name="zones_path" value="$(find tj2_data)/data/zones/$(arg map_name).bin"/>
     </include>
 
     <include file="$(find tj2_camera)/launch/apriltags.launch">
@@ -115,13 +104,10 @@
         <arg name="namespace" value="apriltag"/>
         <arg name="publish_tag_detections_image" value="false"/>
     </include>
-    <!-- <include file="$(find tj2_camera)/launch/cuda_apriltags.launch">
-        <arg name="apriltag_tags" value="$(find tj2_bringup)/config/diffyjr/tags/cuda_tags.yaml"/>
-        <arg name="camera_info_topic" value="/tj2_zed/rgb/camera_info"/>
-        <arg name="image_rect_topic" value="/tj2_zed/rgb/image_rect_color"/>
-        <arg name="node_name" value="cuda_apriltag"/>
-        <arg name="namespace" value="apriltag"/>
-    </include> -->
 
-    <!-- <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/> -->
+    <group ns="apriltag">
+        <node name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
+            <param name="frame_id" value="field"/>
+        </node>
+    </group>
 </launch>
