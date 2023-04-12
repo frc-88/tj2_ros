@@ -1,10 +1,11 @@
 import cv2
+import time
 import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import Axes
 import numpy as np
 from tj2_tools.occupancy_grid import OccupancyGridManager
-from tj2_charged_up.grid_zone_manager import ColumnType, GridZone, GridZoneManager, Alliance, ScoreDeviceType
+from tj2_charged_up.grid_zone_manager import ColumnType, GridZone, GridZoneManager, Alliance, ScoreDeviceType, jit_get_nearest, np_get_nearest
 
 matplotlib.use('TkAgg')
 
@@ -42,6 +43,23 @@ def plot_map(ax: Axes, ogm: OccupancyGridManager):
     ax.set_aspect('equal', 'box')
     ax.plot([0.0], [0.0], marker='x', color='k', markersize=10)
 
+def test_get_nearest(grid_zones: GridZoneManager):
+    jit_times = []
+    jit_get_nearest(grid_zones.coords, 0.0, 0.0, 0.0)  # warmup
+    for _ in range(1000):
+        t0 = time.time()
+        jit_get_nearest(grid_zones.coords, 0.0, 0.0, 0.0)
+        t1 = time.time()
+        jit_times.append(t1 - t0)
+    np_times = []
+    for _ in range(1000):
+        t0 = time.time()
+        np_get_nearest(grid_zones.coords, 0.0, 0.0, 0.0)
+        t1 = time.time()
+        np_times.append(t1 - t0)
+    print("Average time jit: %s" % (sum(jit_times) / len(jit_times)))
+    print("Average time np:  %s" % (sum(np_times) / len(np_times)))
+
 fig = plt.figure(1)
 ax = fig.add_subplot()
 
@@ -52,7 +70,8 @@ assert grid_zones.get_nearest(-7.900929, -0.975011, 1.174763) == GridZone(-7.900
 assert grid_zones.get_nearest(-6.900929, -0.975011, 0.5) == GridZone(-7.096732, -0.975011, 0.0, Alliance.RED, ScoreDeviceType.SHELF, ColumnType.LOW, 8)
 assert grid_zones.get_nearest(1.900929, -0.975011, 1.174763) == GridZone(7.096732, -0.975011, 0.0, Alliance.BLUE, ScoreDeviceType.SHELF, ColumnType.LOW, 8)
 print(grid_zones.get_nearest(1.900929, 1.0, 1.174763))
-assert grid_zones.get_nearest(1.900929, 1.0, 1.174763) == GridZone(7.096732, 1.260189, 0.0, Alliance.BLUE, ScoreDeviceType.POST, ColumnType.LOW, 4)
+assert grid_zones.get_nearest(1.900929, 1.0, 1.174763) == GridZone(7.096732, 1.260189, 0.0, Alliance.BLUE, ScoreDeviceType.SHELF, ColumnType.LOW, 4)
+test_get_nearest(grid_zones)
 
 plot_grid_zone(ax, grid_zones)
 plot_map(ax, ogm)

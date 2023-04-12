@@ -1,4 +1,5 @@
 import csv
+from numba import njit
 import numpy as np
 from typing import List
 from dataclasses import dataclass
@@ -36,6 +37,22 @@ class GridZone:
             if not isinstance(value, field.type):
                 setattr(self, field.name, field.type(value))
 
+@njit
+def jit_get_nearest(coords: np.ndarray, x: float, y: float, z: float) -> int:
+    point = np.array([x, y, z], dtype=np.float64)
+    delta = np.abs(coords - point)
+    # https://github.com/numba/numba/issues/2181
+    # distance = np.linalg.norm(delta, axis=1)
+    distance = np.sqrt(delta[:, 0] * delta[:, 0] + delta[:, 1] * delta[:, 1] + delta[:, 2] * delta[:, 2])
+    closest_index = int(np.argmin(distance))
+    return closest_index
+
+def np_get_nearest(coords: np.ndarray, x: float, y: float, z: float) -> int:
+    point = np.array([x, y, z], dtype=np.float64)
+    delta = np.abs(coords - point)
+    distance = np.linalg.norm(delta, axis=1)
+    closest_index = int(np.argmin(distance))
+    return closest_index
 
 class GridZoneManager:
     def __init__(self) -> None:
@@ -61,8 +78,5 @@ class GridZoneManager:
             self.coords = np.append(self.coords, coords, axis=0)
 
     def get_nearest(self, x: float, y: float, z: float) -> GridZone:
-        point = np.array([x, y, z], dtype=np.float64)
-        delta = np.abs(self.coords - point)
-        distance = np.linalg.norm(delta, axis=1)
-        closest_index = np.argmin(distance)
-        return self.zones[closest_index]
+        index = jit_get_nearest(self.coords, x, y, z)
+        return self.zones[index]
