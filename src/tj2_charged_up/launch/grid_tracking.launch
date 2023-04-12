@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2">
+        <node name="grid_tracker" pkg="tj2_charged_up" type="grid_tracker.py" output="screen" required="false">
+            <param name="grid_zones_path" value="$(find tj2_charged_up)/config/grid_zones.csv"/>
+            <param name="contact_threshold" value="1.0"/>
+            <param name="global_frame_id" value="field"/>
+            <param name="base_frame_id" value="base_link"/>
+        </node>
+    </group>
+</launch>
