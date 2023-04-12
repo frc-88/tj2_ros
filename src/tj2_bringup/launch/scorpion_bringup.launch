@@ -100,4 +100,6 @@
         <arg name="namespace" value="apriltag"/>
         <arg name="publish_tag_detections_image" value="false"/>
     </include>
+
+    <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/>
 </launch>
