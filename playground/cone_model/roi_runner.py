@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import torch
 import rospy
-from roi_model import Net
+from roi_long_model import Net
 from std_msgs.msg import ColorRGBA
 from image_geometry import PinholeCameraModel
 from sensor_msgs.msg import Image, CameraInfo
@@ -83,7 +83,7 @@ class RoiRunnerNode:
 
         # randomly select a certain amount of anchors as negative samples. For these anchors, calculate the iou of this anchor with all
         # objects, if the iou is greater than iou_neg_thresh, ignore that digit. Both yolo part and roi part need more neg samples.
-        self.model_path = rospy.get_param("~model_path", 'models/roi_deep_038000.pkl')
+        self.model_path = rospy.get_param("~model_path", 'models/long_281000.pkl')
         self.enable_debug_image = True
         self.enable_timing_report = True
         self.colors = np.array([[51, 174, 220], [164, 58, 71]], dtype=np.uint8)
