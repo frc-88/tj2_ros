@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from matplotlib.pyplot import Axes
 import numpy as np
 from tj2_tools.occupancy_grid import OccupancyGridManager
-from tj2_charged_up.grid_zone_manager import GridZoneManager, Alliance
+from tj2_charged_up.grid_zone_manager import ColumnType, GridZone, GridZoneManager, Alliance, ScoreDeviceType
 
 matplotlib.use('TkAgg')
 
@@ -47,6 +47,12 @@ ax = fig.add_subplot()
 
 ogm = OccupancyGridManager.from_map_file("/root/tj2_ros/src/tj2_data/data/maps/charged-up-2023.yaml")
 grid_zones = GridZoneManager.from_file("../config/grid_zones.csv")
+
+assert grid_zones.get_nearest(-7.900929, -0.975011, 1.174763) == GridZone(-7.900929, -0.975011, 1.174763, Alliance.RED, ScoreDeviceType.POST, ColumnType.HIGH, 8)
+assert grid_zones.get_nearest(-6.900929, -0.975011, 0.5) == GridZone(-7.096732, -0.975011, 0.0, Alliance.RED, ScoreDeviceType.SHELF, ColumnType.LOW, 8)
+assert grid_zones.get_nearest(1.900929, -0.975011, 1.174763) == GridZone(7.096732, -0.975011, 0.0, Alliance.BLUE, ScoreDeviceType.SHELF, ColumnType.LOW, 8)
+print(grid_zones.get_nearest(1.900929, 1.0, 1.174763))
+assert grid_zones.get_nearest(1.900929, 1.0, 1.174763) == GridZone(7.096732, 1.260189, 0.0, Alliance.BLUE, ScoreDeviceType.POST, ColumnType.LOW, 4)
 
 plot_grid_zone(ax, grid_zones)
 plot_map(ax, ogm)

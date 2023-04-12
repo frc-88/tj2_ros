@@ -1,4 +1,5 @@
 import rospy
+from grid_zone_manager import GridZoneManager
 
 
 class GridTracker:
@@ -9,3 +10,5 @@ class GridTracker:
             # disable_signals=True
             # log_level=rospy.DEBUG
         )
+        grid_zones_path = rospy.get_param("~grid_zones_path", "grid_zones.csv")
+        self.grid_zones = GridZoneManager.from_file(grid_zones_path)
