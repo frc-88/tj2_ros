@@ -12,15 +12,13 @@ def ros_msg_to_msg_dict(msg):
     return msg_dict
 
 
-def ros_msg_to_base64_json(msg):
+def ros_msg_to_string_json(msg):
     msg_dict = ros_msg_to_msg_dict(msg)
     msg_json = json.dumps(msg_dict)
-    msg_base64 = base64.b64encode(msg_json.encode("utf-8")).decode("utf-8")
-    return msg_base64
+    return msg_json
 
 
-def base64_json_to_msg_dict(base64_json: str):
-    msg_json = base64.b64decode(base64_json.encode("utf-8")).decode("utf-8")
+def string_json_to_msg_dict(msg_json: str):
     return json.loads(msg_json)
 
 
@@ -58,10 +56,10 @@ def msg_dict_to_ros_msg(msg_dict, msg_cls):
     return msg
 
 
-def base64_json_to_ros_msg(base64_json: str):
-    if len(base64_json) == 0:
+def string_json_to_ros_msg(string_json: str):
+    if len(string_json) == 0:
         return None, None
-    msg_dict = base64_json_to_msg_dict(base64_json)
+    msg_dict = string_json_to_msg_dict(string_json)
     ros_msg_type, msg_dict = msg_dict_to_ros_type(msg_dict)
     if ros_msg_type is None or msg_dict is None:
         return None, None

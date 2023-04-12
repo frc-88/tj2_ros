@@ -2,8 +2,8 @@
 import rospy
 from networktables import NetworkTables, NetworkTable, NetworkTablesInstance, NetworkTableEntry
 from tj2_tools.networktables.ros_conversions import (
-    ros_msg_to_base64_json,
-    base64_json_to_ros_msg,
+    ros_msg_to_string_json,
+    string_json_to_ros_msg,
     parse_nt_topic,
     convert_to_nt_topic,
     get_msg_class
@@ -64,8 +64,8 @@ class ROSNetworkTablesBridge:
 
     def ros_to_nt_callback(self, msg, topic_name: str):
         try:
-            base64_json_msg = ros_msg_to_base64_json(msg)
-            self.ros_to_nt_subtable.getEntry(convert_to_nt_topic(topic_name)).setString(base64_json_msg)
+            raw_msg = ros_msg_to_string_json(msg)
+            self.ros_to_nt_subtable.getEntry(convert_to_nt_topic(topic_name)).setString(raw_msg)
         except BaseException as e:
             rospy.logerr_throttle(1.0, f"Exception in ros_to_nt_callback: {e}", exc_info=e)
 
@@ -88,7 +88,7 @@ class ROSNetworkTablesBridge:
             if topic_name[0] != "/":
                 topic_name = "/" + topic_name
             
-            ros_msg, ros_msg_type = base64_json_to_ros_msg(value)
+            ros_msg, ros_msg_type = string_json_to_ros_msg(value)
             if ros_msg is None or ros_msg_type is None:
                 rospy.logwarn(f"Failed to parse message from {key}: {value}")
                 return
