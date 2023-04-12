@@ -67,7 +67,7 @@ class ROSNetworkTablesBridge:
             base64_json_msg = ros_msg_to_base64_json(msg)
             self.ros_to_nt_subtable.getEntry(convert_to_nt_topic(topic_name)).setString(base64_json_msg)
         except BaseException as e:
-            rospy.logerr(f"Exception in ros_to_nt_callback: {e}")
+            rospy.logerr_throttle(1.0, f"Exception in ros_to_nt_callback: {e}", exc_info=e)
 
     def create_nt_to_ros_publisher(self, topic_name, ros_msg_type):
         if topic_name in self.publishers:
@@ -98,7 +98,7 @@ class ROSNetworkTablesBridge:
             pub = self.publishers[topic_name]
             pub.publish(ros_msg)
         except BaseException as e:
-            rospy.logerr(f"Exception in nt_to_ros_callback: {e}")
+            rospy.logerr_throttle(1.0, f"Exception in nt_to_ros_callback: {e}. Received value: {value}", exc_info=e)
 
     def get_new_keys(self, keys: set, table: NetworkTable) -> set:
         nt_keys = set(table.getKeys())

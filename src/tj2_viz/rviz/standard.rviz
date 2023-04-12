@@ -137,16 +137,6 @@ Visualization Manager:
           Value: false
         tag1:
           Value: true
-        tag3:
-          Value: true
-        tag4:
-          Value: true
-        tag5:
-          Value: true
-        tag6:
-          Value: true
-        tag7:
-          Value: true
         tag8:
           Value: true
         zed2_baro_link:
@@ -197,16 +187,6 @@ Visualization Manager:
                                 {}
                               tag1:
                                 {}
-                              tag3:
-                                {}
-                              tag4:
-                                {}
-                              tag5:
-                                {}
-                              tag6:
-                                {}
-                              tag7:
-                                {}
                               tag8:
                                 {}
                             zed2_temp_left_link:
@@ -238,12 +218,12 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: true
-      Enabled: false
+      Enabled: true
       Name: Map
       Topic: /map
       Unreliable: false
       Use Timestamp: false
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -640,43 +620,18 @@ Visualization Manager:
       Namespaces:
         cube1: true
         cube1-2-3-4-5-6-7-8: true
-        cube3: true
-        cube4: true
-        cube5: true
-        cube6: true
-        cube7: true
         cube8: true
         posx1: true
         posx1-2-3-4-5-6-7-8: true
-        posx3: true
-        posx4: true
-        posx5: true
-        posx6: true
-        posx7: true
         posx8: true
         posy1: true
         posy1-2-3-4-5-6-7-8: true
-        posy3: true
-        posy4: true
-        posy5: true
-        posy6: true
-        posy7: true
         posy8: true
         posz1: true
         posz1-2-3-4-5-6-7-8: true
-        posz3: true
-        posz4: true
-        posz5: true
-        posz6: true
-        posz7: true
         posz8: true
         text1: true
         text1-2-3-4-5-6-7-8: true
-        text3: true
-        text4: true
-        text5: true
-        text6: true
-        text7: true
         text8: true
       Queue Size: 100
       Value: true
@@ -728,12 +683,12 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: true
+      Enabled: false
       Name: Tag Map
       Topic: /apriltag/map
       Unreliable: false
       Use Timestamp: false
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /tj2/detections/markers
@@ -795,7 +750,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.155299186706543
+      Distance: 15.979558944702148
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -811,9 +766,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6647970676422119
+      Pitch: 0.8247969150543213
       Target Frame: <Fixed Frame>
-      Yaw: 3.843092441558838
+      Yaw: 4.163095474243164
     Saved: ~
 Window Geometry:
   Displays:
