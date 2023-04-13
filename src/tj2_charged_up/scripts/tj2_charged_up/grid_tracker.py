@@ -194,9 +194,6 @@ class GridTracker:
         if self.should_skip_due_to_velocity():
             return
 
-        # Ensure the detections list in the message is not None
-        assert msg.detections is not None
-
         # Get the global transform
         global_tf = self.get_global_transform(msg)
         if global_tf is None:
@@ -292,6 +289,10 @@ class GridTracker:
             global_tf (TransformStamped): The global transform used to transform detection poses from their local
                                           coordinates to global coordinates.
         """
+        
+        # Ensure the detections list in the message is not None
+        assert msg.detections is not None
+
         # Iterate through all the detections in the message
         for detection in msg.detections:
             # Create a PoseStamped object for the detection's pose
@@ -431,6 +432,7 @@ class GridTracker:
 
         # Publish the MarkerArray containing the grid state markers
         self.markers_pub.publish(marker_array)
+
     def grid_zone_to_marker(self, grid_zone: GridZone) -> List[Marker]:
         """
         Convert a GridZone object into a list of visualization markers (sphere and text).
@@ -482,20 +484,35 @@ class GridTracker:
         # Return the list of generated markers (sphere and text)
         return [sphere_marker, text_marker]
 
-    def make_marker(self, name: str, pose: PoseStamped, color: Tuple[float, float, float, float]):
+    def make_marker(self, name: str, pose: PoseStamped, color: Tuple[float, float, float, float]) -> Marker:
+        """
+        Create a basic visualization marker with the given name, pose, and color.
+
+        Args:
+            name (str): The unique name of the marker.
+            pose (PoseStamped): The pose (position and orientation) of the marker.
+            color (Tuple[float, float, float, float]): A tuple representing the RGBA color of the marker.
+
+        Returns:
+            Marker: The created marker with the given properties.
+        """
+        # Initialize a new Marker object
         marker = Marker()
         marker.action = Marker.ADD
         marker.pose = copy.deepcopy(pose.pose)
         marker.header = pose.header
-        marker.lifetime = rospy.Duration(1.0)
+        marker.lifetime = rospy.Duration(1.0)  # type: ignore
         marker.ns = name
         marker.id = 0  # all waypoint names should be unique
 
+        # Set the scale of the marker
         scale_vector = Vector3()
         scale_vector.x = self.contact_threshold * 2
         scale_vector.y = self.contact_threshold * 2
         scale_vector.z = self.contact_threshold * 2
         marker.scale = scale_vector
+
+        # Set the color of the marker
         marker.color = ColorRGBA(
             r=color[0],
             g=color[1],
@@ -507,14 +524,34 @@ class GridTracker:
 
     @staticmethod
     def get_serial(zone: GridZone) -> str:
+        """
+        Generate a unique serial string for a given grid zone.
+
+        Args:
+            zone (GridZone): The grid zone for which to generate the serial string.
+
+        Returns:
+            str: The unique serial string for the given grid zone.
+        """
         return f"{zone.alliance.value}-{zone.column.value}-{zone.row}"
     
     def run(self):
+        """
+        The main loop of the GridTracker node. It continuously updates the global transform,
+        reports the state, publishes grid state markers, and sleeps at a specified rate.
+        """
+        # Set the loop rate to 10 Hz
         rate = rospy.Rate(10)
+        
+        # Keep running the loop until the ROS node is shut down
         while not rospy.is_shutdown():
+            # Update the global transform
             self.update_global_tf()
+            # Report the current state
             self.report_state()
+            # Publish grid state markers for visualization
             self.publish_grid_state_markers()
+            # Sleep for the specified rate
             rate.sleep()
 
 
