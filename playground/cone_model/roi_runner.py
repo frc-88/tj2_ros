@@ -115,12 +115,12 @@ class RoiRunnerNode:
         warmup_stop_time = time.time()
         rospy.loginfo(f"Model took {warmup_stop_time - warmup_start_time:0.4f} seconds to warmup.")
 
-        self.debug_image_pub = rospy.Publisher("debug_image", Image, queue_size=1)
-        self.depth_debug_image_pub = rospy.Publisher("depth_debug_image", Image, queue_size=1)
+        self.debug_image_pub = rospy.Publisher("roi_runner/debug_image", Image, queue_size=1)
+        self.depth_debug_image_pub = rospy.Publisher("roi_runner/depth_debug_image", Image, queue_size=1)
         self.camera_info_sub = rospy.Subscriber("/tj2_zed/depth/camera_info", CameraInfo, self.info_callback, queue_size=1)
         self.image_sub = rospy.Subscriber("/tj2_zed/rgb/image_rect_color", Image, self.image_callback, queue_size=1, buff_size=720 * 1280 * 3 * 256 + 1000)
         self.depth_sub = rospy.Subscriber("/tj2_zed/depth/depth_registered", Image, self.depth_callback, queue_size=1, buff_size=720 * 1280 * 8 * 256 + 1000)
-        self.markers_pub = rospy.Publisher("markers", MarkerArray, queue_size=10)
+        self.markers_pub = rospy.Publisher("roi_runner/markers", MarkerArray, queue_size=10)
 
     def info_callback(self, msg: CameraInfo):
         rospy.loginfo("Got camera model")
@@ -177,7 +177,7 @@ class RoiRunnerNode:
         data = data.reshape((-1,)+data.shape)
 
         self.timing_frame.resize = TimingFrame.now()
-        segments, mask_qs = self.model(data, mode='testing')  # run inference
+        segments = self.model(data, mode='testing')  # run inference
         self.timing_frame.inference = TimingFrame.now()
         
         if self.enable_debug_image:
@@ -186,8 +186,7 @@ class RoiRunnerNode:
             debug_image = None
         detections = []
         for index, segment in enumerate(segments):
-            img_idx, cls_idx, ct, cb, cl, cr, stand, l_r, angle, sub_mask = segment
-            sub_mask = sub_mask.cpu().detach().numpy()
+            img_idx, cls_idx, ct, cb, cl, cr, intact, stand, angle, sub_mask = segment
             confident_mask = sub_mask > self.mask_confidence
 
             if debug_image is not None:
@@ -195,8 +194,8 @@ class RoiRunnerNode:
                 cv2.rectangle(debug_image, (cr + 1, ct), (cl, cb + 1), self.colors[cls_idx].tolist(), thickness=1)
             angle = int(angle.item() * 180)
             
-            is_standing = stand > self.stand_confidence
-            is_left = l_r < self.left_confidence
+            is_standing = stand > self.stand_confidence 
+            is_left = intact < self.left_confidence
             if is_standing or self.classes[cls_idx] != 'cone':
                 angle = 0
             detection = Detection2d(
