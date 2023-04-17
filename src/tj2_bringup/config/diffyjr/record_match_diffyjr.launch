@@ -44,6 +44,7 @@
         /tj2_zed/imu/data
         /tj2_zed/obj_det/detections
         /tj2_zed/obj_det/yolo_objects
+        /tj2/grid_tracking/markers
        
         --duration=300 --lz4
         " />

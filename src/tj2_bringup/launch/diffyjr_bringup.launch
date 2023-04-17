@@ -110,4 +110,6 @@
             <param name="frame_id" value="field"/>
         </node>
     </group>
+    <!-- <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/> -->
+    <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/>
 </launch>

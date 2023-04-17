@@ -26,6 +26,14 @@
         /tj2/odom
         /tj2/ping
         /tj2/detections
+        /tj2_zed/obj_det/detections
+        /tj2_zed/obj_det/yolo_objects
+        /tj2/team_color
+        /tj2/smart_dashboard
+        /tj2/cones/markers
+        /tj2/cones/detections
+        /tj2/cones/nearest
+        /tj2/grid_tracking/markers
 
         --duration=300 --lz4
         " />
