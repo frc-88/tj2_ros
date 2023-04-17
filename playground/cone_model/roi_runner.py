@@ -245,11 +245,10 @@ class RoiRunnerNode:
         return debug_image, detections
 
     def draw_detection(self, image: np.ndarray, detection: Detection2d):
-        named = (
-            f"{detection.label}-{detection.index} "
-            f"{int(detection.angle_degrees)}deg "
-            f"{'S' if detection.is_standing else 'D'}{'-O' if detection.is_obstructed else ''}"
-        )
+        object_name = f"{detection.label}-{detection.index}"
+        angle_annotation = f"{int(detection.angle_degrees)}deg" if not detection.is_standing else "standing"
+        obstructed_annotation = "obstructed" if detection.is_obstructed else ""
+        named = " ".join([object_name, angle_annotation, obstructed_annotation])
         image = cv2.putText(
             image,
             named,
