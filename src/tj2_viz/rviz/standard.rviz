@@ -750,12 +750,7 @@ Visualization Manager:
       Marker Topic: /tj2/detections/markers
       Name: Detections
       Namespaces:
-        box_cone: true
-        box_cube: true
-        line_cone: true
-        line_cube: true
-        text_box_cone: true
-        text_box_cube: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Image
@@ -785,6 +780,8 @@ Visualization Manager:
       Namespaces:
         cone-ARROW: true
         cone-CUBE: true
+        cube-ARROW: true
+        cube-CUBE: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -815,7 +812,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.73097562789917
+      Distance: 3.56992769241333
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -823,17 +820,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -3.8540267944335938
-        Y: 0.3278678357601166
-        Z: -1.175036907196045
+        X: 1.7599073648452759
+        Y: 0.1349746286869049
+        Z: -0.5980513691902161
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6897966861724854
+      Pitch: 0.8347965478897095
       Target Frame: <Fixed Frame>
-      Yaw: 0.4880926311016083
+      Yaw: 2.543093204498291
     Saved: ~
 Window Geometry:
   Displays:

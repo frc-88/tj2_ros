@@ -20,8 +20,13 @@ from cv_bridge import CvBridge
 from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Quaternion, Pose
 
-from shallow_model import Net
-# from roi_model import Net
+from message_filters import (
+    TimeSynchronizer,
+    Subscriber,
+)
+
+# from shallow_model import Net
+from roi_model import Net
 # from roi_long_model import Net
 
 
@@ -48,9 +53,9 @@ class Detection2d:
     label: str
     index: int
     bounding_box: BoundingBox2d
-    angle_radians: float
+    angle_degrees: float
     is_standing: bool
-    is_left: bool
+    is_obstructed: bool
     mask: np.ndarray
 
 
@@ -91,8 +96,8 @@ class RoiRunnerNode:
         # randomly select a certain amount of anchors as negative samples. For these anchors, calculate the iou of this anchor with all
         # objects, if the iou is greater than iou_neg_thresh, ignore that digit. Both yolo part and roi part need more neg samples.
 
-        self.model_path = 'models/shallow_074000.pkl'  # shallow_model
-        # self.model_path = 'models/roi_079000.pkl'  # roi_model
+        # self.model_path = 'models/shallow_074000.pkl'  # shallow_model
+        self.model_path = 'models/roi_079000.pkl'  # roi_model
         # self.model_path = 'models/long_281000.pkl'  # roi_long_model
 
         self.enable_debug_image = True
@@ -102,7 +107,6 @@ class RoiRunnerNode:
         self.model_height = 256
         self.mask_confidence = 0.5
         self.stand_confidence = 0.5
-        self.left_confidence = 0.5
         self.classes = ['cone', 'cube']
         
         model_start_time = time.time()
@@ -129,9 +133,15 @@ class RoiRunnerNode:
         self.debug_image_pub = rospy.Publisher("roi_runner/debug_image", Image, queue_size=1)
         self.depth_debug_image_pub = rospy.Publisher("roi_runner/depth_debug_image", Image, queue_size=1)
         self.camera_info_sub = rospy.Subscriber("/tj2_zed/depth/camera_info", CameraInfo, self.info_callback, queue_size=1)
-        self.image_sub = rospy.Subscriber("/tj2_zed/rgb/image_rect_color", Image, self.image_callback, queue_size=1, buff_size=720 * 1280 * 3 * 256 + 1000)
-        self.depth_sub = rospy.Subscriber("/tj2_zed/depth/depth_registered", Image, self.depth_callback, queue_size=1, buff_size=720 * 1280 * 8 * 256 + 1000)
+        # self.image_sub = rospy.Subscriber("/tj2_zed/rgb/image_rect_color", Image, self.image_callback, queue_size=1, buff_size=720 * 1280 * 3 * 256 + 1000)
+        # self.depth_sub = rospy.Subscriber("/tj2_zed/depth/depth_registered", Image, self.depth_callback, queue_size=1, buff_size=720 * 1280 * 8 * 256 + 1000)
+        self.image_sub = Subscriber("/tj2_zed/rgb/image_rect_color", Image, buff_size=720 * 1280 * 3 * 256 + 1000)
+        self.depth_sub = Subscriber("/tj2_zed/depth/depth_registered", Image, buff_size=720 * 1280 * 8 * 256 + 1000)
+        self.time_sync = TimeSynchronizer([self.image_sub, self.depth_sub], queue_size=1)
+        self.time_sync.registerCallback(self.rgbd_callback)
         self.markers_pub = rospy.Publisher("roi_runner/markers", MarkerArray, queue_size=10)
+        
+        self.prev_time = rospy.Time.now()
 
     def info_callback(self, msg: CameraInfo):
         rospy.loginfo("Got camera model")
@@ -139,23 +149,28 @@ class RoiRunnerNode:
         self.camera_model = PinholeCameraModel()
         self.camera_model.fromCameraInfo(msg)
 
-    def image_callback(self, msg: Image):
+    def rgbd_callback(self, color_msg, depth_msg):
+        self.compute_detections(color_msg, depth_msg)
+
+    def image_callback(self, color_msg: Image):
         if self.depth_msg is None or self.camera_model is None:
             return
-        if msg.header.stamp - self.depth_msg.header.stamp > rospy.Duration(0.5):
+        if color_msg.header.stamp - self.depth_msg.header.stamp > rospy.Duration(0.5):
             self.depth_msg = None
             return
-        
+        self.compute_detections(color_msg, self.depth_msg)
+
+    def compute_detections(self, color_msg, depth_msg):
         self.timing_frame.start = TimingFrame.now()
-        color_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+        color_image = self.bridge.imgmsg_to_cv2(color_msg, desired_encoding="bgr8")
         debug_image, detections_2d = self.infer(color_image)
         if debug_image is not None:
-            self.debug_image_pub.publish(self.bridge.cv2_to_imgmsg(debug_image, encoding="bgr8", header=msg.header))
+            self.debug_image_pub.publish(self.bridge.cv2_to_imgmsg(debug_image, encoding="bgr8", header=color_msg.header))
 
-        depth_image = self.bridge.imgmsg_to_cv2(self.depth_msg, desired_encoding="passthrough")
+        depth_image = self.bridge.imgmsg_to_cv2(depth_msg, desired_encoding="passthrough")
         detections_3d = self.detections_2d_to_3d(depth_image, self.camera_model, detections_2d)
         self.timing_frame.to_3d = TimingFrame.now()
-        self.markers_pub.publish(self.detections_to_markers(self.depth_msg.header.frame_id, detections_3d))
+        self.markers_pub.publish(self.detections_to_markers(depth_msg.header.frame_id, detections_3d))
 
         self.timing_frame.stop = TimingFrame.now()
         self.timings.append(self.timing_frame.copy())
@@ -203,10 +218,10 @@ class RoiRunnerNode:
             if debug_image is not None:
                 debug_image[ct:cb + 1, cl:cr + 1][confident_mask] = self.colors[cls_idx]
                 cv2.rectangle(debug_image, (cr + 1, ct), (cl, cb + 1), self.colors[cls_idx].tolist(), thickness=1)
-            angle = angle.item() * np.pi / 180.0
+            angle = float(angle.item())
             
             is_standing = stand > self.stand_confidence 
-            is_left = intact < self.left_confidence
+            is_obstructed = not intact
             if is_standing or self.classes[cls_idx] != 'cone':
                 angle = 0
             detection = Detection2d(
@@ -220,7 +235,7 @@ class RoiRunnerNode:
                 ),
                 angle,
                 is_standing,
-                is_left,
+                is_obstructed,
                 confident_mask
             )
             detections.append(detection)
@@ -232,8 +247,8 @@ class RoiRunnerNode:
     def draw_detection(self, image: np.ndarray, detection: Detection2d):
         named = (
             f"{detection.label}-{detection.index} "
-            f"{math.degrees(detection.angle_radians)}deg "
-            f"{'S' if detection.is_standing else 'D'}-{'L' if detection.is_left else 'R'}"
+            f"{int(detection.angle_degrees)}deg "
+            f"{'S' if detection.is_standing else 'D'}{'-O' if detection.is_obstructed else ''}"
         )
         image = cv2.putText(
             image,
@@ -350,7 +365,8 @@ class RoiRunnerNode:
                 base_angle = 0.0
             else:
                 standing_angle = 0.0
-                base_angle = detection_2d.angle_radians
+                base_angle = 2 * math.pi - math.radians(detection_2d.angle_degrees)
+
             quat = tf_conversions.transformations.quaternion_from_euler(0.0, base_angle, standing_angle)
             bounding_box_3d = BoundingBox3d(x_dist, y_dist, z_dist, width, height, depth)
 
