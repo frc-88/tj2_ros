@@ -2,20 +2,27 @@
 import math
 import time
 import copy
+
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
+
 import cv2
 import numpy as np
 import torch
+
 import rospy
-from roi_long_model import Net
+import tf_conversions
+
 from std_msgs.msg import ColorRGBA
 from image_geometry import PinholeCameraModel
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge
 from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Quaternion, Pose
-import tf_conversions
+
+from shallow_model import Net
+# from roi_model import Net
+# from roi_long_model import Net
 
 
 @dataclass
@@ -41,7 +48,7 @@ class Detection2d:
     label: str
     index: int
     bounding_box: BoundingBox2d
-    angle_degrees: int
+    angle_radians: float
     is_standing: bool
     is_left: bool
     mask: np.ndarray
@@ -83,7 +90,11 @@ class RoiRunnerNode:
 
         # randomly select a certain amount of anchors as negative samples. For these anchors, calculate the iou of this anchor with all
         # objects, if the iou is greater than iou_neg_thresh, ignore that digit. Both yolo part and roi part need more neg samples.
-        self.model_path = rospy.get_param("~model_path", 'models/long_281000.pkl')
+
+        self.model_path = 'models/shallow_074000.pkl'  # shallow_model
+        # self.model_path = 'models/roi_079000.pkl'  # roi_model
+        # self.model_path = 'models/long_281000.pkl'  # roi_long_model
+
         self.enable_debug_image = True
         self.enable_timing_report = True
         self.colors = np.array([[51, 174, 220], [164, 58, 71]], dtype=np.uint8)
@@ -96,7 +107,7 @@ class RoiRunnerNode:
         
         model_start_time = time.time()
         self.device = torch.device('cuda')
-        self.model = Net().to(self.device)
+        self.model = Net(self.enable_timing_report).to(self.device)
         self.model.load_state_dict(torch.load(self.model_path))
         self.model.eval()
         model_stop_time = time.time()
@@ -192,7 +203,7 @@ class RoiRunnerNode:
             if debug_image is not None:
                 debug_image[ct:cb + 1, cl:cr + 1][confident_mask] = self.colors[cls_idx]
                 cv2.rectangle(debug_image, (cr + 1, ct), (cl, cb + 1), self.colors[cls_idx].tolist(), thickness=1)
-            angle = int(angle.item() * 180)
+            angle = angle.item() * np.pi / 180.0
             
             is_standing = stand > self.stand_confidence 
             is_left = intact < self.left_confidence
@@ -221,7 +232,7 @@ class RoiRunnerNode:
     def draw_detection(self, image: np.ndarray, detection: Detection2d):
         named = (
             f"{detection.label}-{detection.index} "
-            f"{detection.angle_degrees}deg "
+            f"{math.degrees(detection.angle_radians)}deg "
             f"{'S' if detection.is_standing else 'D'}-{'L' if detection.is_left else 'R'}"
         )
         image = cv2.putText(
@@ -334,16 +345,12 @@ class RoiRunnerNode:
             height = bottom_left_y_dist - top_right_y_dist
             depth = z_max - z_min
             
-            base_angle = math.radians(detection_2d.angle_degrees)
             if detection_2d.is_standing:
                 standing_angle = -math.pi / 2.0
                 base_angle = 0.0
             else:
                 standing_angle = 0.0
-                if detection_2d.is_left:
-                    base_angle = (3.0 * math.pi / 2.0) - base_angle
-                else:
-                    base_angle = base_angle - math.pi / 2.0
+                base_angle = detection_2d.angle_radians
             quat = tf_conversions.transformations.quaternion_from_euler(0.0, base_angle, standing_angle)
             bounding_box_3d = BoundingBox3d(x_dist, y_dist, z_dist, width, height, depth)
 

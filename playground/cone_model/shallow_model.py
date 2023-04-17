@@ -82,15 +82,15 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.conv_in = nn.Conv2d(n_ch[0], n_ch[1], 3, 1, padding=1)
         self.conv1a = BackboneConv(n_ch[1], n_ch[1])
-        self.conv1b = BackboneConv(n_ch[1], n_ch[1])
+        #self.conv1b = BackboneConv(n_ch[1], n_ch[1])
         self.conv2a = BackboneConv(n_ch[1], n_ch[2])
-        self.conv2b = BackboneConv(n_ch[2], n_ch[2])
+        #self.conv2b = BackboneConv(n_ch[2], n_ch[2])
         self.conv3a = BackboneConv(n_ch[2], n_ch[3])
-        self.conv3b = BackboneConv(n_ch[3], n_ch[3])
+        #self.conv3b = BackboneConv(n_ch[3], n_ch[3])
         self.conv4a = BackboneConv(n_ch[3], n_ch[4])
-        self.conv4b = BackboneConv(n_ch[4], n_ch[4])
+        #self.conv4b = BackboneConv(n_ch[4], n_ch[4])
         self.conv5a = BackboneConv(n_ch[4], n_ch[5])
-        self.conv5b = BackboneConv(n_ch[5], n_ch[5])
+        #self.conv5b = BackboneConv(n_ch[5], n_ch[5])
         self.upsample6 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
         self.up6 = nn.Conv2d(n_ch[5], n_ch[4], 3, 1, padding = 1)
         self.conv6a = BackboneConv(n_ch[4]*2, n_ch[4])
@@ -142,7 +142,7 @@ class Net(nn.Module):
         self.roi_fc2_Y2 = nn.Linear(1000, 2+18)
         
         self.test_time = test_time
-
+        
     def forward(self, imgs, mode='testing', objs = None, roi_samples=None):
         assert(mode in ['training', 'training_stage1', 'training_stage2', 'testing', 'testing_stage1'])
         def get_iou(box, obj):
@@ -189,19 +189,24 @@ class Net(nn.Module):
             A = time.time()
         conv_in = F.relu(self.conv_in(imgs))
         conv1a = F.relu(self.conv1a(conv_in))
-        conv1b = F.relu(self.conv1b(conv1a))
+        #conv1b = F.relu(self.conv1b(conv1a))
+        conv1b = conv1a
         pool1 =F.max_pool2d(conv1b, 2)
         conv2a = F.relu(self.conv2a(pool1))
-        conv2b = F.relu(self.conv2b(conv2a))
+        #conv2b = F.relu(self.conv2b(conv2a))
+        conv2b = conv2a
         pool2 =F.max_pool2d(conv2b, 2)
         conv3a = F.relu(self.conv3a(pool2))
-        conv3b = F.relu(self.conv3b(conv3a))
+        #conv3b = F.relu(self.conv3b(conv3a))
+        conv3b = conv3a
         pool3 = F.max_pool2d(conv3b, 2)
         conv4a = F.relu(self.conv4a(pool3))
-        conv4b = F.relu(self.conv4b(conv4a))
+        #conv4b = F.relu(self.conv4b(conv4a))
+        conv4b = conv4a
         pool4 = F.max_pool2d(conv4b, 2)
         conv5a = F.relu(self.conv5a(pool4))
-        conv5b = F.relu(self.conv5b(conv5a))
+        #conv5b = F.relu(self.conv5b(conv5a))
+        conv5b = conv5a
         up6 = F.relu(self.up6(self.upsample6(conv5b)))
         merge6 = torch.cat((conv4b, up6), 1)
         conv6a = F.relu(self.conv6a(merge6))
@@ -257,6 +262,7 @@ class Net(nn.Module):
         feature1 = convF1c.permute(0, 2, 3, 1)
         feature2 = convF2c.permute(0, 2, 3, 1)
         feature3 = convF3c.permute(0, 2, 3, 1)
+
         if 'training' in mode:
             segments = []
             for obj in objs:

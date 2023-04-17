@@ -77,7 +77,7 @@ class ParallelFC(nn.Module):
 BackboneConv = RegularConv2d
 
 class Net(nn.Module):
-    def __init__(self):
+    def __init__(self, test_time=False):
         super(Net, self).__init__()
         self.conv_in = nn.Conv2d(n_ch[0], n_ch[1], 3, 1, padding=1)
         self.conv1a = BackboneConv(n_ch[1], n_ch[1])
