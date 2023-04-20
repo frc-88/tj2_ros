@@ -27,7 +27,6 @@ RUN python -m pip install Cython
 RUN python -m pip install llvmlite==0.32.0
 RUN python -m pip install numba==0.49.0
 
-RUN python -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 
 
 # ---
@@ -120,12 +119,6 @@ WORKDIR /tmp
 RUN git clone https://github.com/wkentaro/labelme.git
 WORKDIR /tmp/labelme
 RUN python3 setup.py install
-
-RUN python -m pip install wandb
-RUN mkdir -p /opt/yolov5
-WORKDIR /opt/yolov5
-RUN git clone https://github.com/ultralytics/yolov5.git
-RUN cd yolov5 && python -m pip install -r requirements.txt
 
 WORKDIR /
 RUN ldconfig
