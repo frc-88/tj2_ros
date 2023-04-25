@@ -1,43 +1,15 @@
 FROM tj2_ros_workstation:latest
 
-RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
-    ros-noetic-catkin \
-    ros-noetic-tf \
+RUN apt-get update && apt-get install -y --ignore-missing \
     ros-noetic-robot-localization \
-    ros-noetic-rviz \
-    ros-noetic-apriltag-ros \
-    ros-noetic-topic-tools \
-    ros-noetic-joy \
-    ros-noetic-roscpp \
-    ros-noetic-std-msgs \
-    ros-noetic-sensor-msgs \
-    ros-noetic-geometry-msgs \
-    ros-noetic-tf2-ros \
-    ros-noetic-tf2-geometry-msgs \
-    ros-noetic-geometry2 \
     ros-noetic-xacro \
     ros-noetic-robot-state-publisher \
     ros-noetic-joint-state-publisher \
     ros-noetic-serial \
-    ros-noetic-tf2 \
-    ros-noetic-nav-msgs \
     ros-noetic-twist-mux \
-    ros-noetic-message-generation \
-    ros-noetic-roslaunch \
-    ros-noetic-message-runtime \
-    ros-noetic-message-filters \
-    ros-noetic-visualization-msgs \
-    ros-noetic-image-transport \
     ros-noetic-cv-bridge \
-    ros-noetic-vision-msgs \
     ros-noetic-image-geometry \
-    ros-noetic-camera-info-manager \
-    ros-noetic-dynamic-reconfigure \
-    ros-noetic-image-transport-plugins \
     ros-noetic-perception-pcl \
-    ros-noetic-pcl-msgs \
-    ros-noetic-image-pipeline \
-    ros-noetic-image-common \
     ros-noetic-amcl \
     ros-noetic-map-server \
     ros-noetic-gmapping \
@@ -53,7 +25,6 @@ RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-py-trees \
     ros-noetic-rqt-py-trees \
     ros-noetic-rosbridge-suite \
-    ros-noetic-marker-msgs \
     ros-noetic-ros-numpy
 
 RUN python -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116

@@ -59,6 +59,7 @@ RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-visualization-msgs \
     ros-noetic-image-transport \
     ros-noetic-vision-msgs \
+    ros-noetic-pcl-msgs \
     ros-noetic-camera-info-manager \
     ros-noetic-dynamic-reconfigure \
     ros-noetic-image-transport-plugins \
