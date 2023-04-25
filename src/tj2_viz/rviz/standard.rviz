@@ -14,8 +14,9 @@ Panels:
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
         - /Detections1
+        - /Grid Zones1
       Splitter Ratio: 0.4070473909378052
-    Tree Height: 331
+    Tree Height: 501
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -137,13 +138,7 @@ Visualization Manager:
           Value: false
         tag2:
           Value: true
-        tag4:
-          Value: true
-        tag6:
-          Value: true
-        tag7:
-          Value: true
-        tag8:
+        tag3:
           Value: true
         zed2_baro_link:
           Value: true
@@ -193,13 +188,7 @@ Visualization Manager:
                                 {}
                               tag2:
                                 {}
-                              tag4:
-                                {}
-                              tag6:
-                                {}
-                              tag7:
-                                {}
-                              tag8:
+                              tag3:
                                 {}
                             zed2_temp_left_link:
                               {}
@@ -487,6 +476,7 @@ Visualization Manager:
         Global Costmap: false
         Global Plan: true
         Grid: true
+        Grid Zones: true
         Image: true
         LaserScan: true
         Local Costmap: false
@@ -630,25 +620,20 @@ Visualization Manager:
       Name: Apriltags
       Namespaces:
         cube1-2-3-4-5-6-7-8: true
-        cube6: true
-        cube7: true
-        cube8: true
+        cube2: true
+        cube3: true
         posx1-2-3-4-5-6-7-8: true
-        posx6: true
-        posx7: true
-        posx8: true
+        posx2: true
+        posx3: true
         posy1-2-3-4-5-6-7-8: true
-        posy6: true
-        posy7: true
-        posy8: true
+        posy2: true
+        posy3: true
         posz1-2-3-4-5-6-7-8: true
-        posz6: true
-        posz7: true
-        posz8: true
+        posz2: true
+        posz3: true
         text1-2-3-4-5-6-7-8: true
-        text6: true
-        text7: true
-        text8: true
+        text2: true
+        text3: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -711,11 +696,8 @@ Visualization Manager:
       Name: Detections
       Namespaces:
         box_cone: true
-        box_cube: true
         line_cone: true
-        line_cube: true
         text_box_cone: true
-        text_box_cube: true
       Queue Size: 100
       Value: true
     - Class: rviz/Image
@@ -730,11 +712,126 @@ Visualization Manager:
       Transport Hint: compressed
       Unreliable: false
       Value: false
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /tj2/grid_tracking/markers
+      Name: Grid Zones
+      Namespaces:
+        sphereblue-high-0: true
+        sphereblue-high-1: true
+        sphereblue-high-2: true
+        sphereblue-high-3: true
+        sphereblue-high-4: true
+        sphereblue-high-5: true
+        sphereblue-high-6: true
+        sphereblue-high-7: true
+        sphereblue-high-8: true
+        sphereblue-low-0: true
+        sphereblue-low-1: true
+        sphereblue-low-2: true
+        sphereblue-low-3: true
+        sphereblue-low-4: true
+        sphereblue-low-5: true
+        sphereblue-low-6: true
+        sphereblue-low-7: true
+        sphereblue-low-8: true
+        sphereblue-mid-0: true
+        sphereblue-mid-1: true
+        sphereblue-mid-2: true
+        sphereblue-mid-3: true
+        sphereblue-mid-4: true
+        sphereblue-mid-5: true
+        sphereblue-mid-6: true
+        sphereblue-mid-7: true
+        sphereblue-mid-8: true
+        spherered-high-0: true
+        spherered-high-1: true
+        spherered-high-2: true
+        spherered-high-3: true
+        spherered-high-4: true
+        spherered-high-5: true
+        spherered-high-6: true
+        spherered-high-7: true
+        spherered-high-8: true
+        spherered-low-0: true
+        spherered-low-1: true
+        spherered-low-2: true
+        spherered-low-3: true
+        spherered-low-4: true
+        spherered-low-5: true
+        spherered-low-6: true
+        spherered-low-7: true
+        spherered-low-8: true
+        spherered-mid-0: true
+        spherered-mid-1: true
+        spherered-mid-2: true
+        spherered-mid-3: true
+        spherered-mid-4: true
+        spherered-mid-5: true
+        spherered-mid-6: true
+        spherered-mid-7: true
+        spherered-mid-8: true
+        textblue-high-0: true
+        textblue-high-1: true
+        textblue-high-2: true
+        textblue-high-3: true
+        textblue-high-4: true
+        textblue-high-5: true
+        textblue-high-6: true
+        textblue-high-7: true
+        textblue-high-8: true
+        textblue-low-0: true
+        textblue-low-1: true
+        textblue-low-2: true
+        textblue-low-3: true
+        textblue-low-4: true
+        textblue-low-5: true
+        textblue-low-6: true
+        textblue-low-7: true
+        textblue-low-8: true
+        textblue-mid-0: true
+        textblue-mid-1: true
+        textblue-mid-2: true
+        textblue-mid-3: true
+        textblue-mid-4: true
+        textblue-mid-5: true
+        textblue-mid-6: true
+        textblue-mid-7: true
+        textblue-mid-8: true
+        textred-high-0: true
+        textred-high-1: true
+        textred-high-2: true
+        textred-high-3: true
+        textred-high-4: true
+        textred-high-5: true
+        textred-high-6: true
+        textred-high-7: true
+        textred-high-8: true
+        textred-low-0: true
+        textred-low-1: true
+        textred-low-2: true
+        textred-low-3: true
+        textred-low-4: true
+        textred-low-5: true
+        textred-low-6: true
+        textred-low-7: true
+        textred-low-8: true
+        textred-mid-0: true
+        textred-mid-1: true
+        textred-mid-2: true
+        textred-mid-3: true
+        textred-mid-4: true
+        textred-mid-5: true
+        textred-mid-6: true
+        textred-mid-7: true
+        textred-mid-8: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: field
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -757,8 +854,8 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz/Orbit
-      Distance: 12.036476135253906
+      Class: rviz/ThirdPersonFollower
+      Distance: 7.835888385772705
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -766,27 +863,27 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 2.4694712162017822
-        Y: 0.9055013060569763
-        Z: -0.41831398010253906
-      Focal Shape Fixed Size: false
+        X: -4.244044303894043
+        Y: 1.7729089260101318
+        Z: -1.6689300537109375e-06
+      Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0447967052459717
+      Pitch: 0.9397964477539062
       Target Frame: <Fixed Frame>
-      Yaw: 4.663100719451904
+      Yaw: 2.060399055480957
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1016
+  Height: 1368
   Hide Left Dock: false
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000030e00000334fc020000001bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b000001df000000c700fffffffb00000012005200650061006c00530065006e0073006500000004bc0000028e0000000000000000fb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000001600fffffffb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000fb00000006005a0045004401000002200000014f0000001600fffffffb0000000c00430061006d0065007200610000000491000002b90000000000000000fb0000000e004f007600650072006c006100790000000467000002e30000000000000000fb0000000c00430061006d0065007200610000000365000002810000000000000000fb0000000a0049006d0061006700650000000393000001310000000000000000fb0000000a0049006d006100670065010000030a000001ba0000000000000000fb0000000a0049006d0061006700650100000311000001b30000000000000000000000010000024e00000334fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc0000003b000003340000000000fffffffa000000000100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730000000d4c000001b40000010000fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073800000068fc0100000002fb0000000800540069006d00650100000000000007380000030700fffffffb0000000800540069006d00650100000000000004500000000000000000000004240000033400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000030e00000478fc020000001bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000007600fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000004c0000029d0000010100fffffffb00000012005200650061006c00530065006e0073006500000004bc0000028e0000000000000000fb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000208000002930000001d00fffffffb0000000c00430061006d0065007200610100000483000002fd0000000000000000fb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000fb00000006005a0045004401000002f0000001d40000001d00fffffffb0000000c00430061006d0065007200610000000491000002b90000000000000000fb0000000e004f007600650072006c006100790000000467000002e30000000000000000fb0000000c00430061006d0065007200610000000365000002810000000000000000fb0000000a0049006d0061006700650000000393000001310000000000000000fb0000000a0049006d006100670065010000030a000001ba0000000000000000fb0000000a0049006d0061006700650100000311000001b30000000000000000000000010000024e00000478fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc0000004c000004780000000000fffffffa000000000100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730000000d4c000001b40000012200fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000009dc00000068fc0100000002fb0000000800540069006d00650100000000000009dc000004b400fffffffb0000000800540069006d00650100000000000004500000000000000000000006c70000047800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -795,8 +892,8 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1848
-  X: 72
-  Y: 27
+  Width: 2524
+  X: 2596
+  Y: 35
   ZED:
     collapsed: false

@@ -33,6 +33,7 @@
         /tj2/cones/markers
         /tj2/cones/detections
         /tj2/cones/nearest
+        /tj2/grid_tracking/markers
 
         --duration=300 --lz4
         " />
