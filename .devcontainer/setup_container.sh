@@ -18,3 +18,11 @@ else
 fi
 
 ln -sf docker-compose.gpu-${HAS_GPU}.yaml docker-compose.gpu.yaml
+
+docker image list | grep tj2_ros_training
+if [ -z $? ]; then
+	DEVCONTAINER_IMAGE=training
+else
+	DEVCONTAINER_IMAGE=workstation
+fi
+ln -sf docker-compose.${DEVCONTAINER_IMAGE}.yaml docker-compose.yaml
