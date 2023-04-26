@@ -274,7 +274,7 @@ ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 
 ENV FLASK_ENV=development
-ENV PYTHONPATH=${ROS_WS_SRC}/tj2_tools${PYTHONPATH:+:${PYTHONPATH}}
+ENV PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools${PYTHONPATH:+:${PYTHONPATH}}
 ENV PYTHONIOENCODING=utf-8
 
 COPY --chown=1000:1000 ./install/enable_tmux_logger.sh ${HOME}/install
