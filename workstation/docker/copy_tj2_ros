@@ -3,8 +3,8 @@ BASE_DIR=$(realpath "$(dirname $0)")
 
 TJ2_ROS_BASE=${BASE_DIR}/../..
 
-mkdir -p ${TJ2_ROS_BASE}/ros1/logs
-mkdir -p ${TJ2_ROS_BASE}/ros1/bags
+mkdir -p ${TJ2_ROS_BASE}/logs
+mkdir -p ${TJ2_ROS_BASE}/bags
 
 cd ${BASE_DIR}/resources
 

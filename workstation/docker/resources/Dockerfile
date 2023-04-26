@@ -16,7 +16,6 @@ RUN python -m pip install -U scipy==1.5.4 \
     dataclasses \
     pynetworktables==2021.0.0 \
     numpy==1.22.4 \
-    open3d \
     ezdxf \
     jsonlines \
     PyQt5==5.10.1

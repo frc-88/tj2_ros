@@ -19,7 +19,7 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get update && \
-    apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init
+    apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init rsync
 
 # ---
 # CMake
@@ -253,8 +253,8 @@ RUN apt-get clean
 # Environment setup
 # ---
 
-ENV ROS_WS_ROOT=${HOME}/tj2_ros
-ENV ROS_WS_SRC=${HOME}/tj2_ros/src
+ENV ROS_WS_ROOT=${HOME}/ros_ws
+ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 
 ENV FLASK_ENV=development
 ENV PYTHONPATH=${ROS_WS_SRC}/tj2_tools${PYTHONPATH:+:${PYTHONPATH}}

@@ -1,0 +1,21 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+VALUE=`docker volume ls -f name=tj2_ros_build`
+if ! echo ${VALUE} | grep -q "tj2_ros_build"; then
+    echo "Creating volume"
+    docker volume create tj2_ros_build
+fi
+
+docker run -it \
+    --name build_tj2_ros \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v=tj2_ros_build:/root/ros_ws:rw \
+    -v=/home/${USER}/tj2_ros:/root/tj2_ros:rw \
+    -v=/home/${USER}/tj2_ros/scripts:/root/scripts:rw \
+    --rm \
+    tj2_ros:latest \
+    /root/install/copy_tj2_ros.sh
