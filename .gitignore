@@ -17,13 +17,6 @@ playground/swerve/swerve_bag_plotter/data
 docker-compose.yaml
 docker-compose.gpu.yaml
 
-# catkin
-build/
-devel/
-.catkin_tools/
-.catkin_workspace
-src/CMakeLists.txt
-
 .bash_history
 
 # models

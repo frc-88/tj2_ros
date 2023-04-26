@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get update && \
     apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init \
-    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk
+    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk rsync
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
@@ -129,8 +129,8 @@ RUN catkin build
 # ROS build environment
 # ---
 
-ENV ROS_WS_ROOT=${HOME}/tj2_ros
-ENV ROS_WS_SRC=${HOME}/tj2_ros/src
+ENV ROS_WS_ROOT=${HOME}/ros_ws
+ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 
 ENV FLASK_ENV=development
 ENV PYTHONPATH=${ROS_WS_SRC}/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}

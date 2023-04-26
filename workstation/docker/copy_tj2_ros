@@ -3,11 +3,16 @@ BASE_DIR=$(realpath "$(dirname $0)")
 
 TJ2_ROS_BASE=${BASE_DIR}/../..
 
-${BASE_DIR}/copy_tj2_ros
+mkdir -p ${TJ2_ROS_BASE}/ros1/logs
+mkdir -p ${TJ2_ROS_BASE}/ros1/bags
 
 cd ${BASE_DIR}/resources
 
-${BASE_DIR}/stop_main_container
+VALUE=`docker volume ls -f name=tj2_ros_workstation_build`
+if ! echo ${VALUE} | grep -q "tj2_ros_workstation_build"; then
+    echo "Creating volume"
+    docker volume create tj2_ros_workstation_build
+fi
 
 docker run -it \
     --name workstation_build_tj2_ros \
@@ -20,4 +25,4 @@ docker run -it \
     -v=${TJ2_ROS_BASE}/scripts:/root/scripts:rw \
     --rm \
     tj2_ros_workstation:latest \
-    /root/install/build_tj2_ros.sh
+    /root/install/copy_tj2_ros.sh

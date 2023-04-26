@@ -16,8 +16,4 @@ workstation/
 .vscode/
 __pycache__
 .pytest_cache/
-build/
-devel/
-.catkin_tools/
 *.egg-info/
-tj2_ros/src/CMakeLists.txt
