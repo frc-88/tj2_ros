@@ -1,4 +1,8 @@
 version: "3"
+volumes:
+  tj2_ros_build:
+    name: tj2_ros_build
+    external: true
 
 services:
   tj2_ros:
@@ -14,8 +18,9 @@ services:
     group_add:
       - dialout
     volumes:
-      - /home/${USER}/tj2_ros:/root/tj2_ros:rw
-      - /home/${USER}/tj2_ros/scripts:/root/scripts:rw
+      - tj2_ros_build:/home/tj2/ros_ws:rw
+      - /home/${USER}/tj2_ros:/home/tj2/tj2_ros:rw
+      - /home/${USER}/tj2_ros/scripts:/home/tj2/scripts:rw
       - /home/${USER}/tj2_ros/docker/resources/configs/zed:/usr/local/zed/settings/:rw
       - /home/${USER}/zed-resources:/usr/local/zed/resources/:rw
       - /media/storage:/media/storage:rw

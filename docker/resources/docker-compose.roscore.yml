@@ -9,7 +9,7 @@ services:
     environment:
       - ROS_MASTER_INTERFACE=eth0
     volumes:
-      - /home/${USER}/tj2_ros/scripts:/root/scripts:rw
+      - /home/${USER}/tj2_ros/scripts:/home/tj2/scripts:rw
     privileged: true
     entrypoint: ["/roscore.sh"]
     stop_signal: SIGTERM

@@ -15,14 +15,15 @@ if ! echo ${VALUE} | grep -q "tj2_ros_workstation_build"; then
 fi
 
 docker run -it \
+    --user tj2 \
     --name workstation_build_tj2_ros \
     --restart="no" \
     --net="host" \
     --privileged \
     --stop-signal=SIGINT \
-    -v=tj2_ros_workstation_build:/root/ros_ws:rw \
-    -v=${TJ2_ROS_BASE}:/root/tj2_ros:rw \
-    -v=${TJ2_ROS_BASE}/scripts:/root/scripts:rw \
+    -v=tj2_ros_workstation_build:/home/tj2/ros_ws:rw \
+    -v=${TJ2_ROS_BASE}:/home/tj2/tj2_ros:rw \
+    -v=${TJ2_ROS_BASE}/scripts:/home/tj2/scripts:rw \
     --rm \
     tj2_ros_workstation:latest \
-    /root/install/copy_tj2_ros.sh
+    /home/tj2/scripts/copy_tj2_ros.sh

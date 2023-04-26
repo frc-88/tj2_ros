@@ -17,10 +17,10 @@ docker run -it \
     --net="host" \
     --privileged \
     --stop-signal=SIGINT \
-    -v=/home/${USER}/tj2_ros:/root/tj2_ros:rw \
-    -v=/home/${USER}/tj2_ros/src:/root/ros_ws/src/tj2_ros:rw \
-    -v=/home/${USER}/tj2_ros/workstation/docker/resources/scripts:/root/scripts:rw \
+    -v=/home/${USER}/tj2_ros:/home/tj2/tj2_ros:rw \
+    -v=/home/${USER}/tj2_ros/src:/home/tj2/ros_ws/src/tj2_ros:rw \
+    -v=/home/${USER}/tj2_ros/workstation/docker/resources/scripts:/home/tj2/scripts:rw \
     -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --rm \
     tj2_ros_workstation:latest \
-    /entrypoint.sh rviz -d /root/ros_ws/src/tj2_ros/tj2_viz/rviz/${CONFIG_FILE}
+    /entrypoint.sh rviz -d /home/tj2/ros_ws/src/tj2_ros/tj2_viz/rviz/${CONFIG_FILE}

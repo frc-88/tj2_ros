@@ -36,7 +36,7 @@ def convert_pc_msg_to_np(pc_msg):
 class ExperimentDetectionsPublisher:
     def __init__(self) -> None:
         rospy.init_node("experiment_detections_publisher")
-        self.annotation_search_dir = "/root/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces"
+        self.annotation_search_dir = "/home/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces"
         
         self.timezone = pytz.timezone('America/New_York')
         self.current_index = 0

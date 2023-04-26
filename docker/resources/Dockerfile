@@ -19,7 +19,7 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get update && \
-    apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init rsync
+    apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init rsync sudo
 
 # ---
 # CMake
@@ -198,12 +198,29 @@ RUN ldconfig
 RUN rm -r /tmp/*
 
 # ---
-# ROS evergreen dependency workspace
+# User setup
 # ---
 
-ENV USER=root
-ENV HOME=/${USER}
+ENV USER=tj2
+
+
+RUN groupadd -g 1000 ${USER} && \
+    useradd -r -u 1000 -m -s /bin/bash -g ${USER} \
+    -G dialout,plugdev,video,audio,sudo ${USER}
+
+ENV HOME=/home/${USER}
+RUN mkdir -p ${HOME}
 WORKDIR ${HOME}
+
+RUN chown -R ${USER} ${HOME} && \
+  adduser ${USER} sudo && \
+  echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+USER ${USER}
+
+# ---
+# ROS evergreen dependency workspace
+# ---
 
 RUN sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 RUN apt-get update && apt-get install -y \
@@ -217,8 +234,8 @@ ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 WORKDIR ${DEP_ROS_WS_SRC}
 RUN wstool init .
 
-COPY ./install/preferences /etc/apt/preferences
-COPY ./install/evergreen ${HOME}/install/evergreen
+COPY --chown=1000:1000 ./install/preferences /etc/apt/preferences
+COPY --chown=1000:1000 ./install/evergreen ${HOME}/install/evergreen
 
 WORKDIR ${DEP_ROS_WS_SRC}
 RUN wstool merge -t . ${HOME}/install/evergreen/tj2_ros_evergreen.rosinstall
@@ -226,7 +243,7 @@ RUN wstool update -t .
 RUN ${HOME}/install/evergreen/patch_evergreen_packages.sh
 
 WORKDIR ${DEP_ROS_WS_ROOT}
-COPY ./install/rosdep_install.sh ${HOME}/install
+COPY --chown=1000:1000 ./install/rosdep_install.sh ${HOME}/install
 RUN ${HOME}/install/rosdep_install.sh
 
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
@@ -236,7 +253,7 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
 # ROS overlay dependency workspace
 # ---
 
-COPY ./install/overlay ${HOME}/install/overlay
+COPY --chown=1000:1000 ./install/overlay ${HOME}/install/overlay
 
 WORKDIR ${DEP_ROS_WS_SRC}
 RUN wstool merge -t . ${HOME}/install/overlay/tj2_ros_overlay.rosinstall
@@ -260,13 +277,14 @@ ENV FLASK_ENV=development
 ENV PYTHONPATH=${ROS_WS_SRC}/tj2_tools${PYTHONPATH:+:${PYTHONPATH}}
 ENV PYTHONIOENCODING=utf-8
 
-COPY ./install/enable_tmux_logger.sh ${HOME}/install
-COPY ./install/bashrc ${HOME}/.bashrc
+COPY --chown=1000:1000 ./install/enable_tmux_logger.sh ${HOME}/install
+COPY --chown=1000:1000 ./install/bashrc ${HOME}/.bashrc
 
-COPY ./launch/entrypoint.sh /entrypoint.sh
-COPY ./launch/launch.sh /launch.sh
-COPY ./launch/roscore.sh /roscore.sh
+COPY --chown=1000:1000 ./launch/entrypoint.sh /entrypoint.sh
+COPY --chown=1000:1000 ./launch/launch.sh /launch.sh
+COPY --chown=1000:1000 ./launch/roscore.sh /roscore.sh
 
 WORKDIR ${ROS_WS_ROOT}
+RUN sudo chown -R 1000:1000 ${HOME}
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

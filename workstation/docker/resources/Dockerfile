@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get update && \
     apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init \
-    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk rsync
+    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk rsync sudo
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
@@ -96,9 +96,22 @@ RUN rm -r /tmp/*
 # User setup
 # ---
 
-ENV USER=root
-ENV HOME=/${USER}
+ENV USER=tj2
+
+
+RUN groupadd -g 1000 ${USER} && \
+    useradd -r -u 1000 -m -s /bin/bash -g ${USER} \
+    -G dialout,plugdev,video,audio,sudo ${USER}
+
+ENV HOME=/home/${USER}
+RUN mkdir -p ${HOME}
 WORKDIR ${HOME}
+
+RUN chown -R ${USER} ${HOME} && \
+  adduser ${USER} sudo && \
+  echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+USER ${USER}
 
 # ---
 # Build temporary workspace
@@ -107,13 +120,14 @@ WORKDIR ${HOME}
 ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
 ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 
-COPY ./workstation/docker/resources/install ${HOME}/install
+COPY --chown=1000:1000 ./workstation/docker/resources/install ${HOME}/install
 
 WORKDIR ${DEP_ROS_WS_SRC}
 RUN wstool init .
 RUN wstool merge -t . ${HOME}/install/tj2_ros.rosinstall
 RUN wstool update -t .
 
+RUN rosdep update
 RUN rosdep install -y --from-paths . --ignore-src --rosdistro noetic
 
 RUN rm -r ${DEP_ROS_WS_SRC}/zed-ros-wrapper/zed_nodelets
@@ -142,10 +156,11 @@ ENV PYTHONPATH=${ROS_WS_SRC}/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
 RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
 RUN rm ${HOME}/install/bashrc
 
-COPY ./workstation/docker/resources/launch/entrypoint.sh /entrypoint.sh
-COPY ./workstation/docker/resources/launch/launch.sh /launch.sh
-COPY ./workstation/docker/resources/launch/roscore.sh /roscore.sh
+COPY --chown=1000:1000 ./workstation/docker/resources/launch/entrypoint.sh /entrypoint.sh
+COPY --chown=1000:1000 ./workstation/docker/resources/launch/launch.sh /launch.sh
+COPY --chown=1000:1000 ./workstation/docker/resources/launch/roscore.sh /roscore.sh
 
 WORKDIR ${HOME}
+RUN sudo chown -R 1000:1000 ${HOME}
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

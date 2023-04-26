@@ -3,7 +3,7 @@
   "service": "tj2_ros_devcontainer",
   "dockerComposeFile": ["docker-compose.yaml", "docker-compose.gpu.yaml"],
   "initializeCommand": ".devcontainer/setup_container.sh",
-  "workspaceFolder": "/root/tj2_ros",
+  "workspaceFolder": "/home/tj2/tj2_ros",
   "shutdownAction": "stopCompose",
   "postCreateCommand": ".devcontainer/post_create.sh",
   "extensions": [

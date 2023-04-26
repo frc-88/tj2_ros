@@ -17,11 +17,11 @@ docker run -it \
     --net="host" \
     --privileged \
     --stop-signal=SIGINT \
-    -v=/home/${USER}/tj2_ros:/root:rw \
-    -v=/home/${USER}/tj2_ros/workstation/docker/resources/scripts:/root/scripts:rw \
-    -v=/home/${USER}/tj2_ros/workstation/docker/resources/configs/default_config.yaml:/root/default_config.yaml:rw \
-    -v="${DATASET}":/root/dataset \
+    -v=/home/${USER}/tj2_ros:/home/tj2:rw \
+    -v=/home/${USER}/tj2_ros/workstation/docker/resources/scripts:/home/tj2/scripts:rw \
+    -v=/home/${USER}/tj2_ros/workstation/docker/resources/configs/default_config.yaml:/home/tj2/default_config.yaml:rw \
+    -v="${DATASET}":/home/tj2/dataset \
     -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --rm \
     tj2_ros_workstation:latest \
-    /entrypoint.sh labelme /root/dataset --labels /root/dataset/labels.txt --config /root/default_config.yaml
+    /entrypoint.sh labelme /home/tj2/dataset --labels /home/tj2/dataset/labels.txt --config /home/tj2/default_config.yaml
