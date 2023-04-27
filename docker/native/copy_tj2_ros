@@ -7,6 +7,7 @@ if ! echo ${VALUE} | grep -q "tj2_ros_build"; then
     docker volume create tj2_ros_build
 fi
 
+export TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
 docker run -it \
     --user tj2 \
     --name build_tj2_ros \
@@ -18,5 +19,5 @@ docker run -it \
     -v=/home/${USER}/tj2_ros:/home/tj2/tj2_ros:rw \
     -v=/home/${USER}/tj2_ros/scripts:/home/tj2/scripts:rw \
     --rm \
-    tj2_ros:latest \
-    /home/tj2/install/copy_tj2_ros.sh
+    $(${BASE_DIR}/../get_image_tag) \
+    /home/tj2/scripts/copy_tj2_ros.sh

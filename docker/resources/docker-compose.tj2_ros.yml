@@ -6,7 +6,7 @@ volumes:
 
 services:
   tj2_ros:
-    image: tj2_ros:latest
+    image: ${TJ2_IMAGE_VERSION}
     container_name: tj2_ros
     restart: "no"
     network_mode: "host"
@@ -28,10 +28,10 @@ services:
       - /dev:/dev:rw
       # Allow container to control NetworkManager
       - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket
-    command: [ "/launch.sh" ]
+    command: ["/launch.sh"]
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              capabilities: [ gpu ]
+              capabilities: [gpu]

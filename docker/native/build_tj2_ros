@@ -5,6 +5,7 @@ ${BASE_DIR}/copy_tj2_ros
 
 cd ${BASE_DIR}/../resources
 
+export TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
 docker-compose -f docker-compose.tj2_ros.yml stop
 docker run \
     --user tj2 \
@@ -12,9 +13,10 @@ docker run \
     --net="host" \
     --privileged \
     --stop-signal=SIGINT \
+    -v=tj2_ros_build:/home/tj2/ros_ws:rw \
     -v /home/${USER}/tj2_ros:/home/tj2/tj2_ros:rw \
     -v /home/${USER}/tj2_ros/scripts:/home/tj2/scripts:rw \
     --rm \
     --gpus all \
-    tj2_ros:latest \
-    /home/tj2/scripts/build_tj2_ros.sh
+    $(${BASE_DIR}/../get_image_tag) \
+    bash -x /home/tj2/scripts/build_tj2_ros.sh
