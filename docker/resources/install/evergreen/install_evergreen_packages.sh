@@ -9,12 +9,13 @@ apt-get install -y \
     python3-wstool \
     python3-catkin-pkg
 
+mkdir -p ${DEP_ROS_WS_SRC}
 cd ${DEP_ROS_WS_SRC}
 wstool init .
-wstool merge -t . ${HOME}/install/evergreen/tj2_ros_evergreen.rosinstall
+wstool merge -t . /root/install/evergreen/tj2_ros_evergreen.rosinstall
 wstool update -t .
-${HOME}/install/evergreen/patch_evergreen_packages.sh
+/root/install/evergreen/patch_evergreen_packages.sh
 
-${HOME}/install/rosdep_install.sh
+/root/install/rosdep_install.sh
 source /opt/ros/${ROS_DISTRO}/setup.bash
 catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF

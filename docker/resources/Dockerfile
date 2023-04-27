@@ -83,8 +83,6 @@ RUN bash /root/install/evergreen/install_evergreen_packages.sh
 # ---
 
 COPY ./install/overlay /root/install/overlay
-
-WORKDIR ${DEP_ROS_WS_ROOT}
 RUN bash /root/install/overlay/install_overlay_packages.sh
 
 # ---
