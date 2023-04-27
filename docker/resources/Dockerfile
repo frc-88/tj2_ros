@@ -43,7 +43,7 @@ RUN bash /root/install/upgrade_cmake.sh
 # ---
 
 ENV LD_LIBRARY_PATH=/usr/local/lib/python3.6/dist-packages/torch/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} \
-    CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/lib/python3.6/dist-packages/torch/share/cmake/Torch
+    CMAKE_PREFIX_PATH=/usr/local/lib/python3.6/dist-packages/torch/share/cmake/Torch${CMAKE_PREFIX_PATH:+:${CMAKE_PREFIX_PATH}}
 
 # ---
 # ZED
@@ -102,6 +102,8 @@ COPY --chown=1000:1000 \
     ./launch/launch.sh \
     ./launch/roscore.sh \
     /
+
+RUN chown ${USER} -R ${HOME}
 
 WORKDIR ${HOME}
 

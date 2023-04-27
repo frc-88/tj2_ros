@@ -23,3 +23,5 @@ python -m pip install scipy==1.5.4 \
 python -m pip install Cython
 python -m pip install llvmlite==0.32.0
 python -m pip install numba==0.49.0
+
+chown ${USER} -R /usr/local/lib/python3.6/dist-packages/
