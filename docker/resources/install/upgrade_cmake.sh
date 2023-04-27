@@ -10,3 +10,6 @@ mkdir /opt/cmake
 sh cmake.sh --prefix=/opt/cmake --exclude-subdir --skip-license
 mv /usr/bin/cmake /usr/bin/cmake-old
 ln -s /opt/cmake/bin/cmake /usr/bin/cmake
+
+echo "CMake upgrade script complete"
+

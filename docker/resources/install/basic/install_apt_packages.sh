@@ -47,3 +47,5 @@ apt-get install -y \
     python3-bson
 
 apt-get upgrade -y
+
+echo "Installed all basic apt packages"

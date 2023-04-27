@@ -79,3 +79,5 @@ make install
 # clean up
 ldconfig
 rm -r /tmp/*
+
+echo "Built and installed all basic libraries"

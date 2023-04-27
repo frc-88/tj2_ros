@@ -103,7 +103,8 @@ COPY --chown=1000:1000 \
     ./launch/roscore.sh \
     /
 
-RUN chown ${USER} -R ${HOME}
+RUN chown ${USER} -R ${HOME} /usr/local/zed /usr/local/bin /usr/local/sbin /usr/local/include /usr/local/lib /usr/local/share /usr/local/src
+RUN chgrp ${USER} -R ${HOME} /usr/local/zed /usr/local/bin /usr/local/sbin /usr/local/include /usr/local/lib /usr/local/share /usr/local/src
 
 WORKDIR ${HOME}
 
