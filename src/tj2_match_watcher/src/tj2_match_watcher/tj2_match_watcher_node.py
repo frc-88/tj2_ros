@@ -3,7 +3,7 @@ import os
 import rospy
 import rospkg
 
-from std_msgs.msg import Empty
+from std_msgs.msg import Time
 
 from tj2_tools.launch_manager import LaunchManager
 
@@ -46,7 +46,7 @@ class TJ2MatchWatcher(object):
 
         self.bag_launcher = LaunchManager(self.record_match_launch_path)
 
-        self.start_recording_sub = rospy.Subscriber("/tj2/start_bag", Empty, self.start_bag_callback, queue_size=10)
+        self.start_recording_sub = rospy.Subscriber("/tj2/start_bag", Time, self.start_bag_callback, queue_size=10)
 
         rospy.loginfo("%s init complete" % self.node_name)
 
@@ -70,7 +70,7 @@ class TJ2MatchWatcher(object):
         rospy.loginfo("%s service is ready" % name)
         return srv_obj
 
-    def start_bag_callback(self, msg):
+    def start_bag_callback(self, msg: Time):
         rospy.loginfo("Resuming match bag")
         self.resume_bag()
     
