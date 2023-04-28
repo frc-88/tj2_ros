@@ -12,11 +12,11 @@
     </include>
 
     <include file="$(find tj2_comm)/launch/twist_mux.launch"/>
-    <group ns="tj2">
+    <!-- <group ns="tj2">
         <include file="$(find ros_networktables_bridge_host)/launch/nt_client.launch">
             <arg name="nt_host" value="$(arg robot_address)"/>
         </include>
-    </group>
+    </group> -->
 
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.2032 0.0 0.254  0 0 0 1 base_tilt_link camera_tilt_link 20" />
     <node pkg="tf" type="static_transform_publisher" name="camera_armature_to_link" args="0.0 0.0 0.0  0 0 0 1 camera_armature_link camera_link 20" />

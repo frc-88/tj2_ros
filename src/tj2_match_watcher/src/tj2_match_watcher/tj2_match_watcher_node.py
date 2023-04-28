@@ -46,7 +46,6 @@ class TJ2MatchWatcher(object):
 
         self.bag_launcher = LaunchManager(self.record_match_launch_path)
 
-        self.start_time = 0.0
         self.start_recording_sub = rospy.Subscriber("/tj2/start_bag", Time, self.start_bag_callback, queue_size=10)
 
         rospy.loginfo("%s init complete" % self.node_name)
@@ -72,12 +71,8 @@ class TJ2MatchWatcher(object):
         return srv_obj
 
     def start_bag_callback(self, msg: Time):
-        if self.start_time == 0.0:
-            self.start_time = msg.data.to_sec()
-        else:
-            rospy.loginfo("Resuming match bag")
-            self.resume_bag()
-            self.start_time = 0.0
+        rospy.loginfo("Resuming match bag")
+        # self.resume_bag()
     
     def start_bag(self):
         rospy.loginfo("Starting match bag")
