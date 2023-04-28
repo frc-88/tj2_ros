@@ -8,7 +8,7 @@ if ! echo ${VALUE} | grep -q "tj2_ros_build"; then
 fi
 
 export TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
-docker run -it \
+docker run \
     --user tj2 \
     --name build_tj2_ros \
     --restart="no" \

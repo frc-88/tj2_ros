@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tj2_data)
 
-find_package(catkin REQUIRED COMPONENTS
-    rospy
-)
+find_package(catkin)
 
-catkin_python_setup() # added if there is a setup.py. In this case for the node
+# catkin_python_setup() # added if there is a setup.py. In this case for the node
 
 
 ## Specify additional locations of header files
@@ -20,7 +18,7 @@ catkin_python_setup() # added if there is a setup.py. In this case for the node
 # )
 
 catkin_package(
-    CATKIN_DEPENDS rospy
+    CATKIN_DEPENDS 
 )
 
 # catkin_install_python(PROGRAMS src/tj2_data_node.py

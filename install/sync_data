@@ -3,6 +3,7 @@ BASE_DIR=$(realpath "$(dirname $0)")
 PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
+UPLOAD=$3
 
 LOCAL_PATH=${PARENT_DIR}
 DESTINATION_PATH=/home/tj2
@@ -24,5 +25,8 @@ fi
 SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
 
 # sync both ways
-OUTPUT=$( rsync -rtuv -e "ssh -i ${REMOTE_KEY} -p 5810" ${LOCAL_PATH}/${DATA_RELATIVE_DIR}/* tj2@${DESTINATION_NAME}:${DEST_FULL_PATH}/${DATA_RELATIVE_DIR} | tee /dev/tty)
-OUTPUT=$( rsync -rtuv -e "ssh -i ${REMOTE_KEY} -p 5810" tj2@${DESTINATION_NAME}:${DEST_FULL_PATH}/${DATA_RELATIVE_DIR}/* ${LOCAL_PATH}/${DATA_RELATIVE_DIR} | tee /dev/tty)
+if [ ${UPLOAD} = y ]; then
+    rsync -rtuv -e "ssh -i ${REMOTE_KEY} -p 5810" ${LOCAL_PATH}/${DATA_RELATIVE_DIR}/* tj2@${DESTINATION_NAME}:${DEST_FULL_PATH}/${DATA_RELATIVE_DIR}
+else
+    rsync -rtuv -e "ssh -i ${REMOTE_KEY} -p 5810" tj2@${DESTINATION_NAME}:${DEST_FULL_PATH}/${DATA_RELATIVE_DIR}/* ${LOCAL_PATH}/${DATA_RELATIVE_DIR}
+fi

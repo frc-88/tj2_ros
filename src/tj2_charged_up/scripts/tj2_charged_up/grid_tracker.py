@@ -19,7 +19,7 @@ from tj2_interfaces.msg import GameObjectsStamped
 from tj2_tools.robot_state import Pose2d, Velocity
 from tj2_tools.transforms import lookup_transform
 
-from grid_zone_manager import Alliance, ColumnType, GridZone, GridZoneManager
+from grid_zone_manager import Alliance, ColumnType, GridZone, GridZoneManager, ZoneFilledState
 
 class GridTracker:
     """
@@ -276,7 +276,7 @@ class GridTracker:
 
             # If the zone is in view and both timeouts have passed, set the zone's filled property to False
             if zone.in_view and did_fill_timeout and did_not_in_view_timeout:
-                zone.filled = False
+                zone.set_filled(ZoneFilledState.EMPTY)
 
     def process_detections(self, msg: GameObjectsStamped, global_tf: TransformStamped) -> None:
         """
@@ -312,7 +312,11 @@ class GridTracker:
             )
 
             # Set the filled property of the nearest grid zone based on the distance
-            nearest_zone.set_filled(distance < self.contact_threshold)
+            if distance > self.contact_threshold:
+                filled_state = ZoneFilledState.EMPTY
+            else:
+                filled_state = ZoneFilledState.CONE if obj.label == "cone" else ZoneFilledState.CUBE
+            nearest_zone.set_filled(filled_state)
 
     def is_zone_in_view(self, reverse_tf: TransformStamped, zone: GridZone) -> bool:
         """
@@ -402,7 +406,7 @@ class GridTracker:
             
             # Update the status dictionary with the filled status of each zone in the row
             for zone in row:
-                status[zone.column] = zone.filled
+                status[zone.column] = zone.filled != ZoneFilledState.EMPTY
             
             # Update the NetworkTables entries for each column type with their filled status
             for column_type, filled in status.items():

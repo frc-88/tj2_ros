@@ -40,6 +40,18 @@ class ColumnType(Enum):
     LOW = 'low'
 
 
+class ZoneFilledState(Enum):
+    """
+    Enumeration representing a grid zone state
+    - EMPTY: nothing in the grid zone
+    - CONE: a cone game object is in the grid zone
+    - CUBE: a cube game object is in the grid zone
+    """
+    EMPTY = 'empty'
+    CONE = 'cone'
+    CUBE = 'cube'
+
+
 # Type alias for representing the row number of a grid zone.
 RowType = int
 
@@ -58,7 +70,7 @@ class GridZone:
         type (ScoreDeviceType): The type of scoring device used in the grid zone.
         column (ColumnType): The column type of the grid zone.
         row (RowType): The row number of the grid zone.
-        filled (bool): Whether the grid zone is filled with a game object.
+        filled (ZoneFilledState): Whether the grid zone is filled with a game object.
         filled_time (float): The monotonic time when the grid zone was last filled.
         in_view (bool): Whether the grid zone is in the camera's view.
         not_in_view_time (float): The monotonic time when the grid zone was last not in view.
@@ -70,7 +82,7 @@ class GridZone:
     type: ScoreDeviceType
     column: ColumnType
     row: RowType
-    filled: bool = False
+    filled: ZoneFilledState = ZoneFilledState.EMPTY
     filled_time: float = 0.0
     in_view: bool = False
     not_in_view_time: float = 0.0
@@ -89,7 +101,7 @@ class GridZone:
             if not isinstance(value, field.type):
                 setattr(self, field.name, field.type(value))
 
-    def set_filled(self, filled: bool) -> None:
+    def set_filled(self, filled: ZoneFilledState) -> None:
         """
         Set the filled state of the grid zone and update the filled_time if the grid zone is filled.
 

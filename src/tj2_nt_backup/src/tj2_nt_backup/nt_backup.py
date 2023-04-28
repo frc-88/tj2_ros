@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+import os
 import rospkg
 import rospy
 import datetime
@@ -13,6 +15,7 @@ class NTBackup:
             # disable_signals=True
             # log_level=rospy.DEBUG
         )
+        self.robot = rospy.get_param("~robot", "diffyjr")
         self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
         self.startup_delay = rospy.get_param("~startup_delay", 0.0)
         self.backup_interval = rospy.get_param("~backup_interval", 0.0)  # 0.0 == once then exit
@@ -21,21 +24,26 @@ class NTBackup:
         self.rospack = rospkg.RosPack()
         self.data_package = "tj2_data"
         self.package_dir = self.rospack.get_path(self.data_package)
-        self.default_backups_dir = self.package_dir + "/data/preferences"
+        self.default_backups_dir = self.package_dir + f"/data/preferences/{self.robot}"
         self.backups_dir = rospy.get_param("~backups_dir", self.default_backups_dir)
 
         NetworkTables.initialize(server=self.nt_host)
-        self.nt = NetworkTables.getTable("")
         self.root_key = "Preferences"
+        self.nt = NetworkTables.getTable(self.root_key)
 
     def get_backup_path(self) -> str:
         now = datetime.datetime.now()
         filename = now.strftime(self.name_format)
-        path = self.backups_dir + "/" + filename
+        if not os.path.isdir(self.backups_dir):
+            os.makedirs(self.backups_dir)
+        path = os.path.join(self.backups_dir, filename)
         return path
 
     def run(self) -> None:
-        rospy.sleep(self.startup_delay)
+        rospy.sleep(2.0)  # Wait for NT to populate
+        if self.startup_delay > 0.0:
+            rospy.loginfo("Waiting for %0.1f seconds" % self.startup_delay)
+            rospy.sleep(self.startup_delay)
         
         if self.backup_interval == 0.0:
             rate = None
@@ -43,7 +51,7 @@ class NTBackup:
             rate = rospy.Rate(1.0 / self.backup_interval)
         
         while not rospy.is_shutdown():
-            table = Backups.get_full_table(self.nt.getSubTable(self.root_key))
+            table = Backups.get_full_table(self.nt)
             path = self.get_backup_path()
             Backups.write_backup(path, table)
             rospy.loginfo(f"Wrote backup to {path}")
