@@ -31,7 +31,7 @@ class TJ2MatchWatcher(object):
 
     def start_bag_callback(self, msg: Time):
         rospy.loginfo("Resuming match bag")
-        # self.start_bag()
+        self.start_bag()
     
     def start_bag(self):
         rospy.loginfo("Resuming match bag")

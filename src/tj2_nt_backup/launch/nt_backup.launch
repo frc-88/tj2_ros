@@ -6,7 +6,7 @@
         <node name="nt_backup" pkg="tj2_nt_backup" type="nt_backup.py" output="screen" required="false">
             <param name="nt_host" value="$(arg nt_host)"/>
             <param name="robot" value="$(arg robot)"/>
-            <param name="startup_delay" value="1.0"/>
+            <param name="startup_delay" value="15.0"/>
         </node>
     </group>
 </launch>
