@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="tj2">
+        <node name="charged_up_perception" pkg="tj2_charged_up" type="charged_up_perception_node.py" output="screen" required="false">
+            <remap from="depth/camera_info" to="/tj2_zed/depth/camera_info" />
+            <remap from="depth/image" to="/tj2_zed/depth/depth_registered" />
+            <remap from="color/image" to="/tj2_zed/rgb/image_rect_color" />
+            <param name="model_path" value="$(find tj2_charged_up)/models/roi_079000.pkl"/>
+            <param name="enable_timing_report" value="false"/>
+            <param name="enable_debug_image" value="false"/>
+        </node>
+    </group>
+</launch>

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import cv2
 import math
 import time
@@ -33,8 +34,8 @@ from charged_up_perception.detection import (
     BoundingBox3d,
 )
 from charged_up_perception.parameters import ChargedUpPerceptionParameters
-from charged_up_perception.net import Net
 from charged_up_perception.marker_generator import MarkerGenerator
+from charged_up_perception.roi_model import Net
 
 
 class ChargedUpPerceptionNode:
@@ -52,7 +53,9 @@ class ChargedUpPerceptionNode:
         self.parameters = ChargedUpPerceptionParameters()
         self.classes = self.parameters.classes
         self.color_map = {"cone": (51, 174, 220), "cube": (164, 58, 71)}
-        self.colors = [self.color_map[label] for label in self.classes]
+        self.colors: List[Tuple[int, int, int]] = [
+            self.color_map[label] for label in self.classes
+        ]
         self.marker_generator = MarkerGenerator(self.color_map)
         self.report_generator = TimingReport(num_samples=10)
 
@@ -106,7 +109,7 @@ class ChargedUpPerceptionNode:
     def _load_model(self) -> None:
         model_start_time = time.time()
         self.device = torch.device("cuda")
-        self.model = Net(self.parameters, self.enable_timing_report).to(self.device)
+        self.model = Net(self.enable_timing_report).to(self.device)
         self.model.load_state_dict(torch.load(self.model_path))
         self.model.eval()
         model_stop_time = time.time()
@@ -218,7 +221,7 @@ class ChargedUpPerceptionNode:
                     debug_image,
                     (cr + 1, ct),
                     (cl, cb + 1),
-                    self.colors[cls_idx].tolist(),
+                    self.colors[cls_idx],
                     thickness=1,
                 )
             angle = float(angle.item())

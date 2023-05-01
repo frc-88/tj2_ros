@@ -47,3 +47,4 @@ RUN rm -r /tmp/*
 
 USER ${USER}
 RUN sudo chown -R 1000:1000 ${HOME}
+WORKDIR ${HOME}
