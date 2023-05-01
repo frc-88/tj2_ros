@@ -7,39 +7,30 @@ import tf2_ros
 import cv2
 import numpy as np
 
-import torch
-from torch.backends import cudnn
-from yolov5.models.common import DetectMultiBackend
-from yolov5.utils.torch_utils import select_device
-from yolov5.utils.general import non_max_suppression, scale_coords, xyxy2xywh
-from yolov5.utils.plots import Annotator, colors
-from yolov5.utils.augmentations import letterbox
-
-from vision_msgs.msg import Detection2DArray
-from vision_msgs.msg import Detection2D
-from vision_msgs.msg import ObjectHypothesisWithPose
-from vision_msgs.msg import Detection3DArray
-from vision_msgs.msg import Detection3D
-
-from sensor_msgs.msg import Image
-from sensor_msgs.msg import CameraInfo
-from sensor_msgs.msg import CompressedImage
+from vision_msgs.msg import (
+    Detection2DArray,
+    Detection2D,
+    ObjectHypothesisWithPose,
+    Detection3DArray,
+    Detection3D,
+)
+from sensor_msgs.msg import (
+    Image,
+    CameraInfo,
+)
+import tf2_geometry_msgs
+from geometry_msgs.msg import Pose, PoseStamped
+from visualization_msgs.msg import MarkerArray, Marker
+from std_msgs.msg import ColorRGBA
+from tj2_interfaces.msg import GameObject, GameObjectsStamped
 
 from image_geometry import PinholeCameraModel
 
-from geometry_msgs.msg import Pose
-from geometry_msgs.msg import PoseStamped
-
-import tf2_geometry_msgs
-
-from visualization_msgs.msg import MarkerArray
-from visualization_msgs.msg import Marker
-
-from std_msgs.msg import ColorRGBA
-
-from message_filters import ApproximateTimeSynchronizer
-from message_filters import TimeSynchronizer
-from message_filters import Subscriber
+from message_filters import ( 
+    ApproximateTimeSynchronizer,
+    TimeSynchronizer,
+    Subscriber,
+)
 
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -94,6 +85,17 @@ class Tj2Yolo:
 
         self.bridge = CvBridge()
 
+        self.box_point_permutations = [
+            [-1, -1,  1],
+            [ 1,  1,  1],
+            [ 1, -1,  1],
+            [-1, -1,  1],
+            [-1, -1, -1],
+            [ 1,  1, -1],
+            [ 1, -1, -1],
+            [-1, -1, -1],
+        ]
+
         if self.use_depth:
             if self.sync_method == "approx_sync":
                 rospy.loginfo("Synchronizing using approximate sync method")
@@ -120,7 +122,6 @@ class Tj2Yolo:
         self.color_info_sub = rospy.Subscriber("color/camera_info", CameraInfo, self.info_callback, queue_size=5)
         
         self.overlay_pub = rospy.Publisher("overlay", Image, queue_size=1)
-        # self.overlay_compressed_pub = rospy.Publisher("overlay/compressed", CompressedImage, queue_size=1)
         self.delayed_image_pub = rospy.Publisher("delayed_image", Image, queue_size=1)
         self.detections_pub = rospy.Publisher("detections", Detection3DArray, queue_size=25)
         self.markers_pub = rospy.Publisher("markers", MarkerArray, queue_size=25)
@@ -237,12 +238,6 @@ class Tj2Yolo:
         detection_arr_msg, overlay_image = self.detect(color_image)
         if self.publish_overlay and overlay_image is not None:
             try:
-                # compressed_msg = CompressedImage()
-                # compressed_msg.header.stamp = rospy.Time.now()
-                # compressed_msg.format = "jpeg"
-                # compressed_msg.data = np.array(cv2.imencode('.jpg', overlay_image)[1]).tobytes()
-                # self.overlay_compressed_pub.publish(compressed_msg)
-                
                 overlay_msg = self.bridge.cv2_to_imgmsg(overlay_image, encoding="bgr8")
                 self.overlay_pub.publish(overlay_msg)
             except TypeError as e:
@@ -257,7 +252,6 @@ class Tj2Yolo:
     def get_detection_color(self, color_image, detection_2d_msg):
         # return self.get_color_with_mask(color_image, detection_2d_msg)
         return self.get_color_with_center_px(color_image, detection_2d_msg)
-        # return ColorRGBA(1.0, 0.0, 0.0, 1.0)
     
     def get_color_with_center_px(self, color_image, detection_2d_msg):
         center_x = int(detection_2d_msg.bbox.center.x)
@@ -378,6 +372,15 @@ class Tj2Yolo:
     def get_detection_label(self, detection_msg):
         return self.yolo.get_label(detection_msg.results[0].id)
 
+    def get_class_name(self, detection_msg):
+        return self.get_detection_label(detection_msg)[0]
+
+    def get_class_count(self, detection_msg):
+        return self.get_detection_label(detection_msg)[1]
+
+    def get_class_index(self, detection_msg):
+        return self.yolo.get_class_index(detection_msg.results[0].id)
+
     def get_detection_3d_box(self, detection_msg, z_dist):
         if self.camera_model is None:
             rospy.logerr_throttle(0.5, "No camera model has been loaded! Is the info topic publish messages?")
@@ -421,6 +424,51 @@ class Tj2Yolo:
 
         return detection_arr_msg, overlay_image
 
+    def convert_to_game_objects(self, width, height, detection_2d_arr_msg, detection_3d_arr_msg) -> GameObjectsStamped:
+        objects = GameObjectsStamped()
+        objects.header = detection_3d_arr_msg.header
+        objects.width = width
+        objects.height = height
+
+        for index in range(len(detection_2d_arr_msg.detections)):
+            detection_2d_msg = detection_2d_arr_msg.detections[index]
+            detection_3d_msg = detection_3d_arr_msg.detections[index]
+
+            obj = GameObject()
+            obj.label = self.get_class_name(detection_2d_msg.results[0].id)
+            obj.object_index = self.get_class_count(detection_2d_msg.results[0].id)
+            obj.class_index = self.get_class_index(detection_2d_msg.results[0].id)
+            obj.confidence = detection_2d_msg.results[0].score
+            obj.pose = detection_3d_msg.results[0].pose.pose
+
+            x_left = int(detection_2d_msg.bbox.center.x - detection_2d_msg.bbox.size_x / 2.0)
+            x_right = int(detection_2d_msg.bbox.center.x + detection_2d_msg.bbox.size_x / 2.0)
+            y_top = int(detection_2d_msg.bbox.center.y - detection_2d_msg.bbox.size_y / 2.0)
+            y_bottom = int(detection_2d_msg.bbox.center.y + detection_2d_msg.bbox.size_y / 2.0)
+
+            obj.bounding_box_2d.points[0].x = x_left
+            obj.bounding_box_2d.points[0].y = y_top
+            obj.bounding_box_2d.points[1].x = x_right
+            obj.bounding_box_2d.points[1].y = y_top
+            obj.bounding_box_2d.points[2].x = x_right
+            obj.bounding_box_2d.points[2].y = y_bottom
+            obj.bounding_box_2d.points[3].x = x_left
+            obj.bounding_box_2d.points[3].y = y_bottom
+
+            half_x = detection_3d_msg.bbox.size.x / 2.0
+            half_y = detection_3d_msg.bbox.size.y / 2.0
+            half_z = detection_3d_msg.bbox.size.z / 2.0
+            for index in range(len(obj.bounding_box_3d.points)):
+                obj.bounding_box_3d.points[index].x = self.box_point_permutations[index][0] * half_x
+                obj.bounding_box_3d.points[index].y = self.box_point_permutations[index][1] * half_y
+                obj.bounding_box_3d.points[index].z = self.box_point_permutations[index][2] * half_z
+            obj.bounding_box_3d.dimensions.x = detection_3d_msg.bbox.size.x
+            obj.bounding_box_3d.dimensions.y = detection_3d_msg.bbox.size.y
+            obj.bounding_box_3d.dimensions.z = detection_3d_msg.bbox.size.z
+
+            objects.objects.append(obj)
+
+        return objects
 
     def run(self):
         clock_rate = rospy.Rate(30)

@@ -109,7 +109,7 @@ def to_corner_coordinates(x, y):
 fig = plt.figure(1)
 ax = fig.add_subplot()
 
-ogm = OccupancyGridManager.from_map_file("/root/tj2_ros/src/tj2_laser_slam/maps/charged-up-2023.yaml")
+ogm = OccupancyGridManager.from_map_file("/home/tj2/tj2_ros/src/tj2_laser_slam/maps/charged-up-2023.yaml")
 image = ogm.to_debug_image()
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 x0, y0 = to_corner_coordinates(*ogm.get_world_x_y(0, 0))

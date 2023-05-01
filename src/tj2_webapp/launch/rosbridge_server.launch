@@ -1,6 +1,0 @@
-<launch>
-    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
-        <arg name="port" value="5803" />
-        <arg name="address" value="0.0.0.0" />
-    </include>
-</launch>

@@ -4,7 +4,7 @@
     <arg name="map_name" default="map-{date}"/>
     <arg name="bag_name" default=""/>
     <arg name="mode" default="mapping"/> <!-- "mapping", "localize", or "idle" -->
-    <node if="$(eval len(bag_name) > 0)" pkg="rosbag" type="play" name="player" output="screen" args="--pause --clock /root/bags/$(arg bag_name)"/>
+    <node if="$(eval len(bag_name) > 0)" pkg="rosbag" type="play" name="player" output="screen" args="--pause --clock /home/tj2/bags/$(arg bag_name)"/>
 
     <node pkg="tj2_laser_slam" type="odom_bag_publisher.py" name="odom_bag_publisher" output="screen">
         <remap from="odom" to="/tj2/odom"/>

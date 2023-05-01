@@ -19,3 +19,5 @@ git apply /root/install/evergreen/fix-imu-tools.patch --reject --whitespace=fix
 
 cd ${DEP_ROS_WS_SRC}/zed-ros-wrapper/
 touch rviz-plugin-zed-od/CATKIN_IGNORE
+
+echo "Patched ROS evergreen packages"

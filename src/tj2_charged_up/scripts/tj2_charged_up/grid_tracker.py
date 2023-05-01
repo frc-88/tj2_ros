@@ -9,17 +9,17 @@ import tf2_geometry_msgs
 from networktables import NetworkTables
 
 from std_msgs.msg import ColorRGBA
-from vision_msgs.msg import Detection3DArray
 from geometry_msgs.msg import PoseStamped, Vector3, TransformStamped
 from visualization_msgs.msg import Marker, MarkerArray
 from image_geometry import PinholeCameraModel
 from sensor_msgs.msg import CameraInfo
 from nav_msgs.msg import Odometry
+from tj2_interfaces.msg import GameObjectsStamped
 
 from tj2_tools.robot_state import Pose2d, Velocity
 from tj2_tools.transforms import lookup_transform
 
-from grid_zone_manager import Alliance, ColumnType, GridZone, GridZoneManager
+from grid_zone_manager import Alliance, ColumnType, GridZone, GridZoneManager, ZoneFilledState
 
 class GridTracker:
     """
@@ -120,10 +120,10 @@ class GridTracker:
             "grid_tracking/markers", MarkerArray, queue_size=10
         )
 
-        # Create a Subscriber to listen for Detection3DArray messages containing information about
+        # Create a Subscriber to listen for GameObjectsStamped messages containing information about
         # the currently visible game objects
         self.detections_sub = rospy.Subscriber(
-            "detections", Detection3DArray, self.detections_callback, queue_size=10
+            "detections", GameObjectsStamped, self.detections_callback, queue_size=10
         )
 
         # Create a Subscriber to listen for Odometry messages containing the robot's current position,
@@ -181,21 +181,22 @@ class GridTracker:
         # Update the robot's velocity using the linear and angular velocities from the received Odometry message
         self.robot_velocity = Velocity.from_ros_twist(msg.twist.twist)
 
-    def detections_callback(self, msg: Detection3DArray) -> None:
+    def detections_callback(self, msg: GameObjectsStamped) -> None:
         """
         Callback function for the "detections" subscriber. Processes the received Detection3DArray
         message to update the grid zone states, utilizing helper functions to manage the process.
 
         Args:
-            msg (Detection3DArray): The received Detection3DArray message containing information about
-                                    the currently visible game objects in the grid zones.
+            msg (GameObjectsStamped): The received GameObjectsStamped message containing 
+                                      information about the currently visible game objects in the 
+                                      grid zones.
         """
         # Return without updating the grid zones if the robot's linear or angular velocity is above the respective thresholds
         if self.should_skip_due_to_velocity():
             return
 
         # Get the global transform
-        global_tf = self.get_global_transform(msg)
+        global_tf = self.get_global_transform(msg.header.frame_id)
         if global_tf is None:
             return
 
@@ -222,21 +223,21 @@ class GridTracker:
             or abs(self.robot_velocity.theta) > self.angular_velocity_threshold
         )
 
-    def get_global_transform(self, msg: Detection3DArray) -> Optional[TransformStamped]:
+    def get_global_transform(self, child_frame_id: str) -> Optional[TransformStamped]:
         """
-        Get the global transform based on the header frame_id of the received Detection3DArray message.
+        Get the global transform based on the header frame_id
 
         Args:
-            msg (Detection3DArray): The received Detection3DArray message.
+            child_frame_id (str): frame id to find relative to the global frame id
 
         Returns:
             Optional[TransformStamped]: The global transform if available, None otherwise.
         """
-        if msg.header.frame_id == self.base_link:
+        if child_frame_id == self.base_link:
             self.update_global_tf()
             return self.global_tf
         else:
-            return lookup_transform(self.tf_buffer, self.map_link, msg.header.frame_id)
+            return lookup_transform(self.tf_buffer, self.map_link, child_frame_id)
 
     def get_reverse_transform(self) -> Optional[TransformStamped]:
         """
@@ -275,30 +276,30 @@ class GridTracker:
 
             # If the zone is in view and both timeouts have passed, set the zone's filled property to False
             if zone.in_view and did_fill_timeout and did_not_in_view_timeout:
-                zone.filled = False
+                zone.set_filled(ZoneFilledState.EMPTY)
 
-    def process_detections(self, msg: Detection3DArray, global_tf: TransformStamped) -> None:
+    def process_detections(self, msg: GameObjectsStamped, global_tf: TransformStamped) -> None:
         """
-        Process each detection in the received Detection3DArray message and update the nearest grid zone's filled property.
+        Process each detection in the received GameObjectsStamped message and update the nearest grid zone's filled property.
         This function iterates through all the detections, transforms their poses to global coordinates, and then finds the
         nearest grid zone. If the distance to the nearest grid zone is less than the contact threshold, the grid zone is
         considered filled with a game object.
 
         Args:
-            msg (Detection3DArray): The received Detection3DArray message containing information about the game objects.
+            msg (GameObjectsStamped): The received GameObjectsStamped message containing information about the game objects.
             global_tf (TransformStamped): The global transform used to transform detection poses from their local
                                           coordinates to global coordinates.
         """
         
         # Ensure the detections list in the message is not None
-        assert msg.detections is not None
+        assert msg.objects is not None
 
         # Iterate through all the detections in the message
-        for detection in msg.detections:
+        for obj in msg.objects:
             # Create a PoseStamped object for the detection's pose
             detection_pose = PoseStamped()
             detection_pose.header.frame_id = msg.header.frame_id
-            detection_pose.pose = detection.bbox.center
+            detection_pose.pose = obj.pose
 
             # Transform the detection pose from local to global coordinates
             global_pose = tf2_geometry_msgs.do_transform_pose(detection_pose, global_tf)
@@ -311,7 +312,11 @@ class GridTracker:
             )
 
             # Set the filled property of the nearest grid zone based on the distance
-            nearest_zone.set_filled(distance < self.contact_threshold)
+            if distance > self.contact_threshold:
+                filled_state = ZoneFilledState.EMPTY
+            else:
+                filled_state = ZoneFilledState.CONE if obj.label == "cone" else ZoneFilledState.CUBE
+            nearest_zone.set_filled(filled_state)
 
     def is_zone_in_view(self, reverse_tf: TransformStamped, zone: GridZone) -> bool:
         """
@@ -401,7 +406,7 @@ class GridTracker:
             
             # Update the status dictionary with the filled status of each zone in the row
             for zone in row:
-                status[zone.column] = zone.filled
+                status[zone.column] = zone.filled != ZoneFilledState.EMPTY
             
             # Update the NetworkTables entries for each column type with their filled status
             for column_type, filled in status.items():

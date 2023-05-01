@@ -13,7 +13,7 @@ from yolov5.utils.torch_utils import select_device
 from yolov5.utils.general import non_max_suppression, scale_boxes, check_img_size
 from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.augmentations import letterbox
-from .util import get_label, get_obj_id
+from .util import get_label, get_obj_id, get_class_index
 
 
 class YoloDetector:
@@ -151,3 +151,6 @@ class YoloDetector:
 
     def get_label(self, obj_id):
         return get_label(self.class_names, obj_id)
+
+    def get_class_index(self, obj_id):
+        return get_class_index(obj_id)
