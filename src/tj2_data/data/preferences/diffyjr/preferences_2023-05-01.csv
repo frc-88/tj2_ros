@@ -15,4 +15,6 @@
 /Preferences/TrajectoryAngularPID tolerance,float,1,0.0
 /Preferences/joystick,float,1,0.0
 /Preferences/auto,str,1,backwards
+/Preferences/distanceStartThreshold,float,1,0.25
+/Preferences/angleStartThreshold,float,1,0.2
 /Preferences/.type,str,1,RobotPreferences
