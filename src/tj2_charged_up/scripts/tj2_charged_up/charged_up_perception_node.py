@@ -1,118 +1,112 @@
-#!/usr/bin/env python
+import cv2
 import math
 import time
-import copy
-
-from dataclasses import dataclass
-from typing import List, Optional, Tuple
-
-import cv2
-import numpy as np
-import torch
-
 import rospy
+import torch
 import tf_conversions
+import numpy as np
+import tf2_ros
 
-from std_msgs.msg import ColorRGBA
-from image_geometry import PinholeCameraModel
-from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge
-from visualization_msgs.msg import MarkerArray, Marker
-from geometry_msgs.msg import Quaternion, Pose
+from typing import Optional, List, Tuple
+from image_geometry import PinholeCameraModel
 
-from message_filters import (
-    TimeSynchronizer,
-    Subscriber,
+from sensor_msgs.msg import Image, CameraInfo
+from visualization_msgs.msg import MarkerArray
+from geometry_msgs.msg import Quaternion, Pose, PoseStamped
+from message_filters import TimeSynchronizer, Subscriber
+
+from tj2_interfaces.msg import (
+    GameObjectsStamped,
+    GameObject,
+    UVBoundingBox,
+    XYZBoundingBox,
 )
+from tj2_tools.transforms import transform_pose
 
-# from shallow_model import Net
-from roi_model import Net
-
-# from roi_long_model import Net
-
-
-@dataclass
-class BoundingBox2d:
-    x_right: float
-    y_top: float
-    x_left: float
-    y_bottom: float
-
-
-@dataclass
-class BoundingBox3d:
-    x: float
-    y: float
-    z: float
-    width: float
-    height: float
-    depth: float
+from charged_up_perception.timing_frame import TimingFrame
+from charged_up_perception.timing_report import TimingReport
+from charged_up_perception.detection import (
+    Detection2d,
+    BoundingBox2d,
+    Detection3d,
+    BoundingBox3d,
+)
+from charged_up_perception.parameters import ChargedUpPerceptionParameters
+from charged_up_perception.net import Net
+from charged_up_perception.marker_generator import MarkerGenerator
 
 
-@dataclass
-class Detection2d:
-    label: str
-    index: int
-    bounding_box: BoundingBox2d
-    angle_degrees: float
-    is_standing: bool
-    is_obstructed: bool
-    mask: np.ndarray
-
-
-@dataclass
-class Detection3d:
-    label: str
-    index: int
-    orientation: Quaternion
-    bounding_box: BoundingBox3d
-
-
-class TimingFrame:
+class ChargedUpPerceptionNode:
     def __init__(self) -> None:
-        self.start = 0.0
-        self.resize = 0.0
-        self.inference = 0.0
-        self.detect2d_prep = 0.0
-        self.to_3d = 0.0
-        self.stop = 0.0
+        self.node_name = "charged_up_perception"
+        rospy.init_node(self.node_name)
 
-    def copy(self):
-        return copy.copy(self)
+        self.model_path = rospy.get_param("~model_path", "models/roi_079000.pkl")
+        self.enable_debug_image = rospy.get_param("~enable_debug_image", False)
+        self.enable_timing_report = rospy.get_param("~enable_timing_report", False)
+        self.base_frame = rospy.get_param("~base_frame", "base_link")
 
-    @classmethod
-    def now(cls):
-        return time.time()
-
-
-class RoiRunnerNode:
-    def __init__(self) -> None:
-        self.node_name = "roi_runner"
-        rospy.init_node(
-            self.node_name
-            # disable_signals=True
-            # log_level=rospy.DEBUG
-        )
-
-        # randomly select a certain amount of anchors as negative samples. For these anchors, calculate the iou of this anchor with all
-        # objects, if the iou is greater than iou_neg_thresh, ignore that digit. Both yolo part and roi part need more neg samples.
-
-        # self.model_path = 'models/shallow_074000.pkl'  # shallow_model
-        self.model_path = "models/roi_079000.pkl"  # roi_model
-        # self.model_path = 'models/long_281000.pkl'  # roi_long_model
-
-        self.enable_debug_image = True
-        self.enable_timing_report = True
-        self.colors = np.array([[51, 174, 220], [164, 58, 71]], dtype=np.uint8)
-        self.model_width = 512
-        self.model_height = 256
         self.mask_confidence = 0.5
         self.stand_confidence = 0.5
-        self.classes = ["cone", "cube"]
+        self.parameters = ChargedUpPerceptionParameters()
+        self.classes = self.parameters.classes
+        self.color_map = {"cone": (51, 174, 220), "cube": (164, 58, 71)}
+        self.colors = [self.color_map[label] for label in self.classes]
+        self.marker_generator = MarkerGenerator(self.color_map)
+        self.report_generator = TimingReport(num_samples=10)
 
+        self.camera_model: Optional[PinholeCameraModel] = None
+        self.bridge = CvBridge()
+        self.timings: List[TimingFrame] = []
+        self.timing_frame = TimingFrame()
+
+        self._load_model()
+        self._warmup_model()
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+
+        self.debug_image_pub = rospy.Publisher(
+            "charged_up_perception/debug_image", Image, queue_size=1
+        )
+        self.depth_debug_image_pub = rospy.Publisher(
+            "charged_up_perception/depth_debug_image", Image, queue_size=1
+        )
+        self.markers_pub = rospy.Publisher(
+            "charged_up_perception/markers", MarkerArray, queue_size=10
+        )
+        self.objects_pub = rospy.Publisher(
+            "detections", GameObjectsStamped, queue_size=10
+        )
+        self.nearest_cone_pub = rospy.Publisher(
+            "nearest_cone", PoseStamped, queue_size=10
+        )
+
+        self.camera_info_sub = rospy.Subscriber(
+            "depth/camera_info", CameraInfo, self.info_callback, queue_size=1
+        )
+        self.image_sub = Subscriber(
+            "color/image",
+            Image,
+            buff_size=720 * 1280 * 3 * 256 + 1000,
+        )
+        self.depth_sub = Subscriber(
+            "depth/image",
+            Image,
+            buff_size=720 * 1280 * 8 * 256 + 1000,
+        )
+        self.time_sync = TimeSynchronizer(
+            [self.image_sub, self.depth_sub], queue_size=1
+        )
+        self.time_sync.registerCallback(self.rgbd_callback)
+
+        self.prev_time = rospy.Time.now()
+
+    def _load_model(self) -> None:
         model_start_time = time.time()
         self.device = torch.device("cuda")
-        self.model = Net(self.enable_timing_report).to(self.device)
+        self.model = Net(self.parameters, self.enable_timing_report).to(self.device)
         self.model.load_state_dict(torch.load(self.model_path))
         self.model.eval()
         model_stop_time = time.time()
@@ -120,16 +114,7 @@ class RoiRunnerNode:
             f"Model took {model_stop_time - model_start_time:0.4f} seconds to load."
         )
 
-        self.color_map = {
-            self.classes[index]: self.colors[index]
-            for index in range(len(self.classes))
-        }
-        self.depth_msg: Optional[Image] = None
-        self.camera_model: Optional[PinholeCameraModel] = None
-        self.bridge = CvBridge()
-        self.timings: List[TimingFrame] = []
-        self.timing_frame = TimingFrame()
-
+    def _warmup_model(self) -> None:
         rospy.loginfo("Warming up net.")
         warmup_start_time = time.time()
         self.infer(np.random.randint(0, 255, size=(720, 1280, 3), dtype=np.uint8))
@@ -138,55 +123,19 @@ class RoiRunnerNode:
             f"Model took {warmup_stop_time - warmup_start_time:0.4f} seconds to warmup."
         )
 
-        self.debug_image_pub = rospy.Publisher(
-            "roi_runner/debug_image", Image, queue_size=1
-        )
-        self.depth_debug_image_pub = rospy.Publisher(
-            "roi_runner/depth_debug_image", Image, queue_size=1
-        )
-        self.camera_info_sub = rospy.Subscriber(
-            "/tj2_zed/depth/camera_info", CameraInfo, self.info_callback, queue_size=1
-        )
-        # self.image_sub = rospy.Subscriber("/tj2_zed/rgb/image_rect_color", Image, self.image_callback, queue_size=1, buff_size=720 * 1280 * 3 * 256 + 1000)
-        # self.depth_sub = rospy.Subscriber("/tj2_zed/depth/depth_registered", Image, self.depth_callback, queue_size=1, buff_size=720 * 1280 * 8 * 256 + 1000)
-        self.image_sub = Subscriber(
-            "/tj2_zed/rgb/image_rect_color",
-            Image,
-            buff_size=720 * 1280 * 3 * 256 + 1000,
-        )
-        self.depth_sub = Subscriber(
-            "/tj2_zed/depth/depth_registered",
-            Image,
-            buff_size=720 * 1280 * 8 * 256 + 1000,
-        )
-        self.time_sync = TimeSynchronizer(
-            [self.image_sub, self.depth_sub], queue_size=1
-        )
-        self.time_sync.registerCallback(self.rgbd_callback)
-        self.markers_pub = rospy.Publisher(
-            "roi_runner/markers", MarkerArray, queue_size=10
-        )
-
-        self.prev_time = rospy.Time.now()
-
-    def info_callback(self, msg: CameraInfo):
+    def info_callback(self, msg: CameraInfo) -> None:
         rospy.loginfo("Got camera model")
         self.camera_info_sub.unregister()
         self.camera_model = PinholeCameraModel()
         self.camera_model.fromCameraInfo(msg)
 
-    def rgbd_callback(self, color_msg, depth_msg):
+    def rgbd_callback(self, color_msg: Image, depth_msg: Image) -> None:
         self.compute_detections(color_msg, depth_msg)
 
-    def image_callback(self, color_msg: Image):
-        if self.depth_msg is None or self.camera_model is None:
+    def compute_detections(self, color_msg: Image, depth_msg: Image) -> None:
+        if self.camera_model is None:
+            rospy.logwarn("Camera model is not loaded! Not computing detections.")
             return
-        if color_msg.header.stamp - self.depth_msg.header.stamp > rospy.Duration(0.5):
-            self.depth_msg = None
-            return
-        self.compute_detections(color_msg, self.depth_msg)
-
-    def compute_detections(self, color_msg, depth_msg):
         self.timing_frame.start = TimingFrame.now()
         color_image = self.bridge.imgmsg_to_cv2(color_msg, desired_encoding="bgr8")
         debug_image, detections_2d = self.infer(color_image)
@@ -204,67 +153,46 @@ class RoiRunnerNode:
             depth_image, self.camera_model, detections_2d
         )
         self.timing_frame.to_3d = TimingFrame.now()
+
+        nearest_index = self.get_nearest_cone(detections_3d)
+        if nearest_index != -1:
+            nearest_cone = self.detection_to_game_object(
+                detections_2d[nearest_index], detections_3d[nearest_index]
+            )
+            pose_stamped = PoseStamped()
+            pose_stamped.pose = nearest_cone.pose
+            pose_stamped.header.frame_id = color_msg.header.frame_id
+            pose_stamped = transform_pose(self.tf_buffer, pose_stamped, self.base_frame)
+            if pose_stamped is not None:
+                self.nearest_cone_pub.publish(pose_stamped)
+
+        self.timing_frame.get_nearest = TimingFrame.now()
+
+        objects = self.detections_to_game_objects(
+            color_msg.header.frame_id, detections_2d, detections_3d
+        )
+
+        self.objects_pub.publish(objects)
+
         self.markers_pub.publish(
-            self.detections_to_markers(depth_msg.header.frame_id, detections_3d)
+            self.marker_generator.detections_to_markers(
+                depth_msg.header.frame_id, detections_3d
+            )
         )
 
         self.timing_frame.stop = TimingFrame.now()
-        self.timings.append(self.timing_frame.copy())
-
-        if len(self.timings) >= 10:
-            self.timings.pop(0)
 
         if self.enable_timing_report:
-            print(
-                "Callback FPS: %0.2f"
-                % (1.0 / np.mean(np.diff([frame.start for frame in self.timings])))
-            )
-            print(
-                "Overall: %0.4fs"
-                % (np.mean([frame.stop - frame.start for frame in self.timings]))
-            )
-            print(
-                "Resize: %0.4fs"
-                % (np.mean([frame.resize - frame.start for frame in self.timings]))
-            )
-            print(
-                "Infer: %0.4fs"
-                % (np.mean([frame.inference - frame.resize for frame in self.timings]))
-            )
-            print(
-                "Detect prep: %0.4fs"
-                % (
-                    np.mean(
-                        [
-                            frame.detect2d_prep - frame.inference
-                            for frame in self.timings
-                        ]
-                    )
-                )
-            )
-            print(
-                "2D to 3D: %0.4fs"
-                % (
-                    np.mean(
-                        [frame.to_3d - frame.detect2d_prep for frame in self.timings]
-                    )
-                )
-            )
-            object_counts = {name: 0 for name in self.classes}
-            for detection in detections_3d:
-                object_counts[detection.label] += 1
-            print("Object counts:")
-            for name, count in object_counts.items():
-                print(f"\t{name}: {count}")
-            print()
-
-    def depth_callback(self, msg: Image):
-        rospy.loginfo_once("Received depth image")
-        self.depth_msg = msg
+            report = self.report_generator.timing_report(self.timing_frame)
+            report += "\n"
+            report += self.report_generator.object_report(detections_3d, self.classes)
+            rospy.loginfo(report)
 
     def infer(self, img: np.ndarray) -> Tuple[Optional[np.ndarray], List[Detection2d]]:
         resized = cv2.resize(
-            img, (self.model_width, self.model_height), interpolation=cv2.INTER_NEAREST
+            img,
+            (self.parameters.IMG_W, self.parameters.IMG_H),
+            interpolation=cv2.INTER_NEAREST,
         )
         data = torch.tensor(resized.transpose(2, 0, 1)).to(self.device).float() / 255
         data = data.reshape((-1,) + data.shape)
@@ -314,6 +242,79 @@ class RoiRunnerNode:
         self.timing_frame.detect2d_prep = TimingFrame.now()
         return debug_image, detections
 
+    def detections_to_game_objects(
+        self,
+        frame_id: str,
+        detections_2d: List[Detection2d],
+        detections_3d: List[Detection3d],
+    ) -> GameObjectsStamped:
+        objects = GameObjectsStamped()
+        objects.width = self.parameters.IMG_W
+        objects.height = self.parameters.IMG_H
+        objects.header.frame_id = frame_id
+        assert objects.objects is not None
+        for det2d, det3d in zip(detections_2d, detections_3d):
+            objects.objects.append(self.detection_to_game_object(det2d, det3d))
+        return objects
+
+    def detection_to_game_object(
+        self, detection_2d: Detection2d, detection_3d: Detection3d
+    ) -> GameObject:
+        obj = GameObject()
+        obj.label = detection_3d.label
+        obj.object_index = detection_3d.index
+        obj.class_index = self.parameters.classes.index(detection_3d.label)
+        obj.confidence = float(np.average(detection_2d.mask))
+
+        pose = Pose()
+        pose.position.x = float(detection_3d.bounding_box.x)
+        pose.position.y = float(detection_3d.bounding_box.y)
+        pose.position.z = float(detection_3d.bounding_box.z)
+        pose.orientation = detection_3d.orientation
+        obj.pose = pose
+
+        obj.bounding_box_3d = self.detection_bbox_3d_to_object_bbox_3d(
+            detection_3d.bounding_box
+        )
+        obj.bounding_box_2d = self.detection_bbox_2d_to_object_bbox_2d(
+            detection_2d.bounding_box
+        )
+
+        return obj
+
+    def detection_bbox_2d_to_object_bbox_2d(self, bbox: BoundingBox2d) -> UVBoundingBox:
+        obj_bbox = UVBoundingBox()
+        obj_bbox.width = int(abs(bbox.x_left - bbox.x_right))
+        obj_bbox.height = int(abs(bbox.y_bottom - bbox.y_top))
+
+        assert obj_bbox.points is not None
+        obj_bbox.points[0].x = int(bbox.x_left)
+        obj_bbox.points[0].y = int(bbox.y_top)
+
+        obj_bbox.points[1].x = int(bbox.x_right)
+        obj_bbox.points[1].y = int(bbox.y_top)
+
+        obj_bbox.points[2].x = int(bbox.x_right)
+        obj_bbox.points[2].y = int(bbox.y_bottom)
+
+        obj_bbox.points[3].x = int(bbox.x_left)
+        obj_bbox.points[3].y = int(bbox.y_bottom)
+
+        return obj_bbox
+
+    def detection_bbox_3d_to_object_bbox_3d(
+        self, bbox: BoundingBox3d
+    ) -> XYZBoundingBox:
+        obj_bbox = XYZBoundingBox()
+
+        obj_bbox.dimensions.x = bbox.width
+        obj_bbox.dimensions.y = bbox.height
+        obj_bbox.dimensions.z = bbox.depth
+
+        # TODO: compute bounding box corners
+
+        return obj_bbox
+
     def draw_detection(self, image: np.ndarray, detection: Detection2d):
         object_name = f"{detection.label}-{detection.index}"
         angle_annotation = (
@@ -334,58 +335,11 @@ class RoiRunnerNode:
         )
         return image
 
-    def detections_to_markers(
-        self, frame_id: str, detections: List[Detection3d]
-    ) -> MarkerArray:
-        markers = MarkerArray()
-        for detection in detections:
-            pose_marker, box_marker = self.detection_to_marker(frame_id, detection)
-            markers.markers.append(pose_marker)
-            markers.markers.append(box_marker)
-        return markers
-
-    def detection_to_marker(
-        self, frame_id, detection: Detection3d
-    ) -> Tuple[Marker, Marker]:
-        pose_marker = self.make_base_marker(frame_id, detection)
-        box_marker = self.make_base_marker(frame_id, detection)
-
-        pose_marker.type = Marker.ARROW
-        pose_marker.ns += "-ARROW"
-        pose_marker.scale.x = 1.0
-        pose_marker.scale.y = 0.05
-        pose_marker.scale.z = 0.05
-
-        box_marker.type = Marker.CUBE
-        box_marker.ns += "-CUBE"
-        box_marker.scale.x = detection.bounding_box.width
-        box_marker.scale.y = detection.bounding_box.height
-        box_marker.scale.z = detection.bounding_box.depth
-        box_marker.color.a = 0.5
-        box_marker.pose.orientation = Quaternion(0.0, 0.0, 0.0, 1.0)
-
-        return pose_marker, box_marker
-
-    def make_base_marker(self, frame_id, detection: Detection3d):
-        pose = Pose()
-        pose.position.x = float(detection.bounding_box.x)
-        pose.position.y = float(detection.bounding_box.y)
-        pose.position.z = float(detection.bounding_box.z)
-        pose.orientation = detection.orientation
-
-        marker = Marker()
-        marker.action = Marker.ADD
-        marker.pose = pose
-        marker.header.frame_id = frame_id
-        marker.lifetime = rospy.Duration(1.0)
-        marker.ns = str(detection.label)
-        marker.id = int(detection.index)
-        color_array = self.color_map[detection.label] / 255.0
-        marker.color = ColorRGBA(color_array[2], color_array[1], color_array[0], 1.0)
-        return marker
-
     def scale_bounding_box(
-        self, bounding_box: BoundingBox2d, source_shape, dest_shape
+        self,
+        bounding_box: BoundingBox2d,
+        source_shape: Tuple[float, float],
+        dest_shape: Tuple[float, float],
     ) -> BoundingBox2d:
         source_y = source_shape[0]
         source_x = source_shape[1]
@@ -427,7 +381,7 @@ class RoiRunnerNode:
         detections_3d = []
         depth_image_resize = cv2.resize(
             depth_image,
-            (self.model_width, self.model_height),
+            (self.parameters.IMG_W, self.parameters.IMG_H),
             interpolation=cv2.INTER_NEAREST,
         )
         for detection_2d in detections_2d:
@@ -481,12 +435,31 @@ class RoiRunnerNode:
             detections_3d.append(detection_3d)
         return detections_3d
 
+    def get_nearest_cone(self, detections_3d: List[Detection3d]) -> int:
+        nearest_index = -1
+        nearest_distance = np.inf
+        for index, detection in enumerate(detections_3d):
+            if detection.label != "cone":
+                continue
+            distance = np.linalg.norm(
+                np.array(
+                    [
+                        detection.bounding_box.x,
+                        detection.bounding_box.y,
+                        detection.bounding_box.z,
+                    ]
+                )
+            )
+            if distance < nearest_distance:
+                nearest_index = index
+        return nearest_index
+
     def run(self):
         rospy.spin()
 
 
 def main():
-    node = RoiRunnerNode()
+    node = ChargedUpPerceptionNode()
     node.run()
 
 

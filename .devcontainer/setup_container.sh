@@ -20,7 +20,7 @@ fi
 ln -sf docker-compose.gpu-${HAS_GPU}.yaml docker-compose.gpu.yaml
 
 docker image list | grep -q tj2_ros_training
-if [ -z $? ]; then
+if [ $? -eq 0 ]; then
 	echo "training"
 	DEVCONTAINER_IMAGE=training
 else

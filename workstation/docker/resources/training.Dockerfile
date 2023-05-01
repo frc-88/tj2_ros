@@ -1,5 +1,7 @@
 FROM tj2_ros_workstation:latest
 
+USER root
+
 RUN apt-get update && apt-get install -y --ignore-missing \
     ros-noetic-robot-localization \
     ros-noetic-xacro \
@@ -42,3 +44,6 @@ WORKDIR /tmp/labelme
 RUN python3 setup.py install
 
 RUN rm -r /tmp/*
+
+USER ${USER}
+RUN sudo chown -R 1000:1000 ${HOME}
