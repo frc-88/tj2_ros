@@ -1,62 +1,94 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+    <!-- RoboRIO networktables address -->
     <arg name="robot_address" default="10.0.88.2"/>
+
+    <!-- YOLOv5 neural net class names path -->
     <arg name="yolo_class_names" value="$(find tj2_yolo)/models/charged_up_2023.names"/>
+
+    <!-- YOLOv5 neural net model path -->
     <arg name="yolo_model_path" value="$(find tj2_yolo)/models/charged_up_2023-01-23.torchscript"/>
+
+    <!-- Fused laser topic -->
     <arg name="laser_scan_topic" value="/laser/scan_filtered"/>
+
+    <!-- Laser localization map name -->
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
 
+    <!-- Formats topics so they are usable going to and coming from the RoboRIO -->
     <include file="$(find tj2_comm)/launch/tj2_comm.launch">
         <arg name="publish_odom_tf" value="true"/>
         <arg name="compact_tf_ids_path" value="$(find tj2_bringup)/config/diffyjr/frame_ids.yaml"/>
     </include>
 
+    <!-- Mux together velocity command topics (joystick vs. autonomous commands) -->
     <include file="$(find tj2_comm)/launch/twist_mux.launch"/>
+
+    <!-- Bridge NetworkTables and ROS topics to and from the RoboRIO -->
     <group ns="tj2">
         <include file="$(find ros_networktables_bridge_host)/launch/nt_client.launch">
             <arg name="nt_host" value="$(arg robot_address)"/>
         </include>
     </group>
 
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" />
-    <node pkg="tf" type="static_transform_publisher" name="camera_tilt_to_armature_link" args="0.0 0.0 0.0  0.0000  -0.1175  0.0000  0.9931 camera_tilt_link camera_armature_link 20" />
+    <!-- Robot center to camera pivot center (translation only) -->
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_base_link" args="-0.04899 -0.24130 0.40174  0 0 0 1 base_tilt_link camera_base_link 20" />
+
+    <!-- Camera pivot center rotation component -->
     <node pkg="tf" type="static_transform_publisher" name="camera_base_to_camera_link" args="0.0 0.0 0.0  0.0000 0.0000 1.0000 0.0000 camera_base_link camera_tilt_link 20" />
+
+    <!-- Camera pivot center to camera sensor center (armature) -->
     <node pkg="tf" type="static_transform_publisher" name="camera_armature_to_link" args="0.0 0.0 0.0  0 0 0 1 camera_armature_link camera_link 20" />
 
+    <!-- Robot center to laser center (translation only) -->
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser_base_link" args="0.03810 0.30540 0.17735  0 0 0 1 base_tilt_link laser_base_link 20" />
+
+    <!-- Laser center rotation component -->
     <node pkg="tf" type="static_transform_publisher" name="laser_base_to_laser_link" args="0.0 0.0 0.0  0.0000  0.0000  -0.7071  0.7071 laser_base_link laser 20" />
 
+    <!-- Robot center to IMU -->
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0.0 0.0 0.0  0.0000  0.0000  0.7071  -0.7071 base_tilt_link imu 20" />
 
-    <!-- Enable these two TFs if imu_joint is disabled -->
+    <!-- Robot center to limelight center (translation only) -->
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_limelight_base_link" args="0.32497 0.0 0.21506  0.0 0.0 0.0 1.0 base_tilt_link limelight_base_link 20" />
+
+    <!-- Limelight center rotation component -->
     <node pkg="tf" type="static_transform_publisher" name="limelight_base_to_limelight_link" args="0.0 0.0 0.0  0.0000  -0.1822  0.0000  0.9833 limelight_base_link limelight_link 20" />
 
+    <!-- Enable these two TFs if imu_joint is disabled -->
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="camera_tilt_to_armature_link" args="0.0 0.0 0.0  0.0000  -0.1175  0.0000  0.9931 camera_tilt_link camera_armature_link 20" />
+    <!-- Publishes base_link -> base_tilt_link (NavX IMU tilt) and camera_tilt_tilt -> camera_armature_link (camera tilt) -->
     <!-- <include file="$(find tj2_description)/launch/imu_joint.launch">
         <arg name="camera_imu_topic" value="/tj2_zed/imu/data"/>
         <arg name="base_imu_topic" value="/tj2/imu"/>
     </include> -->
 
+    <!-- Joint and bounding box descriptions of the robot (URDF) -->
     <include file="$(find tj2_description)/launch/tj2_description.launch">
         <arg name="model" value="$(find tj2_description)/urdf/scorpion.urdf.xml"/>
         <arg name="joint_names" value="$(find tj2_bringup)/config/scorpion/joints.yaml"/>
     </include>
 
+    <!-- ZED 2 camera -->
     <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
         <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
         <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
     </include>
+
+    <!-- YOLOv5 neural net -->
     <include file="$(find tj2_yolo)/launch/tj2_yolo.launch">
         <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
         <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />  
         <arg name="confidence_threshold"      default="0.6" />
     </include>
 
+    <!-- Bag recorder -->
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch">
         <arg name="record_launch_path" value="$(find tj2_bringup)/config/scorpion/record_match_scorpion.launch" />
     </include>
 
+    <!-- Laser sensor and filters -->
     <!-- <group ns="laser">
         <include file="$(find tj2_rplidar)/launch/tj2_rplidar_a2.launch">
             <arg name="serial_port" value="/dev/ttyUSB0"/>
@@ -69,6 +101,7 @@
         </node>
     </group> -->
 
+    <!-- Laser localization and SLAM -->
     <!-- <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="localize"/>
         <arg name="map_name" value="$(arg map_name)"/>
@@ -77,18 +110,23 @@
         <arg name="amcl_config" value="$(find tj2_bringup)/config/scorpion/amcl.yaml"/>
     </include> -->
 
-    <!-- <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
-        <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
-    </include>
-    <include file="$(find tj2_zones)/launch/tj2_zones.launch">
-        <arg name="zones_path" value="$(find tj2_zones)/zones/$(arg map_name).bin"/>
-    </include> -->
-
+    <!-- Enable map_to_odom and static_map_server if laser localization is disabled -->
     <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0.0 0.0 0.0  0.0 0.0 0.0 1.0 map odom 20" />
-    <node name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_laser_slam)/maps/$(arg map_name).yaml">
+    <node name="static_map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_laser_slam)/maps/$(arg map_name).yaml">
         <param name="frame_id" value="map"/>
     </node>
 
+    <!-- 2D map waypoints of interest -->
+    <!-- <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
+        <arg name="waypoints_path" value="$(find tj2_waypoints)/waypoints/$(arg map_name)"/>
+    </include> -->
+
+    <!-- 2D map zones of interest -->
+    <!-- <include file="$(find tj2_zones)/launch/tj2_zones.launch">
+        <arg name="zones_path" value="$(find tj2_zones)/zones/$(arg map_name).bin"/>
+    </include> -->
+
+    <!-- Apriltags -->
     <include file="$(find tj2_camera)/launch/apriltags.launch">
         <arg name="apriltag_settings" value="$(find tj2_bringup)/config/scorpion/tags/settings.yaml"/>
         <arg name="apriltag_tags" value="$(find tj2_bringup)/config/scorpion/tags/tags.yaml"/>
@@ -99,5 +137,6 @@
         <arg name="publish_tag_detections_image" value="false"/>
     </include>
 
+    <!-- Grid zone state tracker using the neural net -->
     <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/>
 </launch>
