@@ -1,5 +1,10 @@
 version: "3"
 
+volumes:
+  tj2_ros_workstation_build:
+    name: tj2_ros_workstation_build
+    external: true
+
 services:
   tj2_ros_workstation:
     image: tj2_ros_workstation:latest
@@ -16,8 +21,9 @@ services:
     # https://askubuntu.com/questions/1237400/how-to-fix-x-error-badaccess-baddrawable-badshmseg-while-running-graphical-ap
     ipc: host
     volumes:
-      - /home/${USER}/tj2_ros:/root/tj2_ros:rw
-      - /home/${USER}/tj2_ros/workstation/docker/resources/scripts:/root/scripts:rw
-      - /home/${USER}/tj2_ros/logs:/root/logs:rw
-      - /home/${USER}/tj2_ros/bags:/root/bags:rw
+      - tj2_ros_workstation_build:/home/tj2/ros_ws:rw
+      - /home/${USER}/tj2_ros:/home/tj2/tj2_ros:rw
+      - /home/${USER}/tj2_ros/workstation/docker/resources/scripts:/home/tj2/scripts:rw
+      - /home/${USER}/tj2_ros/logs:/home/tj2/logs:rw
+      - /home/${USER}/tj2_ros/bags:/home/tj2/bags:rw
     command: [ "/launch.sh" ]

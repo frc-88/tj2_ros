@@ -12,7 +12,11 @@
     </include>
 
     <include file="$(find tj2_comm)/launch/twist_mux.launch"/>
-    <include file="$(find tj2_networktables)/launch/tj2_networktables.launch"/>
+    <group ns="tj2">
+        <include file="$(find ros_networktables_bridge_host)/launch/nt_client.launch">
+            <arg name="nt_host" value="$(arg robot_address)"/>
+        </include>
+    </group>
 
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.2032 0.0 0.254  0 0 0 1 base_tilt_link camera_tilt_link 20" />
     <node pkg="tf" type="static_transform_publisher" name="camera_armature_to_link" args="0.0 0.0 0.0  0 0 0 1 camera_armature_link camera_link 20" />
@@ -95,7 +99,12 @@
         <arg name="zones_path" value="$(find tj2_data)/data/zones/$(arg map_name).bin"/>
     </include>
 
-    <include file="$(find tj2_camera)/launch/apriltags.launch">
+    <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
+        <arg name="nt_host" value="$(arg robot_address)"/>
+        <arg name="robot" default="$(env ROBOT)"/>
+    </include>
+
+    <!-- <include file="$(find tj2_camera)/launch/apriltags.launch">
         <arg name="apriltag_settings" value="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
         <arg name="apriltag_tags" value="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml"/>
         <arg name="camera_info_topic" value="/tj2_zed/rgb/camera_info"/>
@@ -103,11 +112,13 @@
         <arg name="node_name" value="apriltag"/>
         <arg name="namespace" value="apriltag"/>
         <arg name="publish_tag_detections_image" value="false"/>
-    </include>
+    </include> -->
 
-    <group ns="apriltag">
+    <!-- <group ns="apriltag">
         <node name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
             <param name="frame_id" value="field"/>
         </node>
-    </group>
+    </group> -->
+    <!-- <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/> -->
+    <!-- <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/> -->
 </launch>

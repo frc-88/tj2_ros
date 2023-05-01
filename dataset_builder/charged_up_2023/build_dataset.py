@@ -7,8 +7,8 @@ from util import get_labels
 def main():
     random.seed(2023)
     labels = get_labels()
-    base_path = "/root/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces"
-    output_path = "/root/tj2_ros/dataset_builder/data/charged_up_2023/game_pieces"
+    base_path = "/home/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces"
+    output_path = "/home/tj2/tj2_ros/dataset_builder/data/charged_up_2023/game_pieces"
     collector = ChargedUp2023Collector(base_path, labels)
     builder = YoloDatasetBuilder(
         output_path, collector, labels,

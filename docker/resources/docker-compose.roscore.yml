@@ -2,15 +2,14 @@ version: "3"
 
 services:
   roscore:
-    image: tj2_ros:latest
+    image: ${TJ2_IMAGE_VERSION}
     container_name: roscore
     restart: "no"
     network_mode: "host"
     environment:
       - ROS_MASTER_INTERFACE=eth0
     volumes:
-      - /home/${USER}/tj2_ros/scripts:/root/scripts:rw
+      - /home/${USER}/tj2_ros/scripts:/home/tj2/scripts:rw
     privileged: true
     entrypoint: ["/roscore.sh"]
     stop_signal: SIGTERM
-

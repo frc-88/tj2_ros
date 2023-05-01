@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="nt_host" default="10.0.88.2"/>
+    <arg name="robot" default="diffyjr"/>
+    <group ns="tj2">
+        <node name="nt_backup" pkg="tj2_nt_backup" type="nt_backup.py" output="screen" required="false">
+            <param name="nt_host" value="$(arg nt_host)"/>
+            <param name="robot" value="$(arg robot)"/>
+            <param name="startup_delay" value="15.0"/>
+        </node>
+    </group>
+</launch>

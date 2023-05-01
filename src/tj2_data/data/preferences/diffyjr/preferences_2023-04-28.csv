@@ -1,0 +1,15 @@
+/Preferences/Game Object Zone Radius,float,1,15.0
+/Preferences/TrajectoryLinearPID kP,float,1,0.0
+/Preferences/TrajectoryLinearPID kI,float,1,0.0
+/Preferences/TrajectoryLinearPID kD,float,1,0.0
+/Preferences/TrajectoryLinearPID kF,float,1,0.0
+/Preferences/TrajectoryLinearPID iZone,float,1,0.0
+/Preferences/TrajectoryLinearPID iMax,float,1,0.0
+/Preferences/TrajectoryLinearPID tolerance,float,1,0.0
+/Preferences/TrajectoryAngularPID kP,float,1,0.0
+/Preferences/TrajectoryAngularPID kI,float,1,0.0
+/Preferences/TrajectoryAngularPID kD,float,1,0.0
+/Preferences/TrajectoryAngularPID kF,float,1,0.0
+/Preferences/TrajectoryAngularPID iZone,float,1,0.0
+/Preferences/TrajectoryAngularPID iMax,float,1,0.0
+/Preferences/TrajectoryAngularPID tolerance,float,1,0.0

@@ -5,4 +5,4 @@ dataset_builder/charged_up_2023/wandb/
 playground/bounce_trajectories/data/
 playground/swerve/swerve_bag_plotter/data/
 src/tj2_match_watcher/bags/
-
+docs/

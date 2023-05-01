@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get update && \
     apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init \
-    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk
+    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk rsync sudo
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
@@ -16,7 +16,6 @@ RUN python -m pip install -U scipy==1.5.4 \
     dataclasses \
     pynetworktables==2021.0.0 \
     numpy==1.22.4 \
-    open3d \
     ezdxf \
     jsonlines \
     PyQt5==5.10.1
@@ -27,7 +26,6 @@ RUN python -m pip install Cython
 RUN python -m pip install llvmlite==0.32.0
 RUN python -m pip install numba==0.49.0
 
-RUN python -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 
 
 # ---
@@ -40,7 +38,6 @@ RUN sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -s
 RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-catkin \
     ros-noetic-tf \
-    ros-noetic-robot-localization \
     ros-noetic-rviz \
     ros-noetic-apriltag-ros \
     ros-noetic-topic-tools \
@@ -52,47 +49,22 @@ RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-tf2-ros \
     ros-noetic-tf2-geometry-msgs \
     ros-noetic-geometry2 \
-    ros-noetic-xacro \
-    ros-noetic-robot-state-publisher \
-    ros-noetic-joint-state-publisher \
-    ros-noetic-serial \
     ros-noetic-tf2 \
     ros-noetic-nav-msgs \
-    ros-noetic-twist-mux \
     ros-noetic-message-generation \
     ros-noetic-roslaunch \
     ros-noetic-message-runtime \
     ros-noetic-message-filters \
     ros-noetic-visualization-msgs \
     ros-noetic-image-transport \
-    ros-noetic-cv-bridge \
     ros-noetic-vision-msgs \
-    ros-noetic-image-geometry \
+    ros-noetic-pcl-msgs \
     ros-noetic-camera-info-manager \
     ros-noetic-dynamic-reconfigure \
     ros-noetic-image-transport-plugins \
-    ros-noetic-perception-pcl \
-    ros-noetic-pcl-msgs \
     ros-noetic-image-pipeline \
     ros-noetic-image-common \
-    ros-noetic-amcl \
-    ros-noetic-map-server \
-    ros-noetic-gmapping \
-    ros-noetic-rplidar-ros \
-    ros-noetic-laser-filters \
-    ros-noetic-move-base \
-    ros-noetic-teb-local-planner \
-    ros-noetic-global-planner \
-    ros-noetic-dwa-local-planner \
-    ros-noetic-base-local-planner \
-    ros-noetic-costmap-converter \
-    ros-noetic-py-trees-ros \
-    ros-noetic-py-trees-msgs \
-    ros-noetic-py-trees \
-    ros-noetic-rqt-py-trees \
-    ros-noetic-rosbridge-suite \
-    ros-noetic-marker-msgs \
-    ros-noetic-ros-numpy
+    ros-noetic-marker-msgs
 
 RUN sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 RUN apt-get update && apt-get install -y \
@@ -116,17 +88,6 @@ WORKDIR /tmp/CmakeWpilib/build
 RUN cmake .. -DWITHOUT_CSCORE=ON -DWITHOUT_JAVA=ON
 RUN make -j4 && make install
 
-WORKDIR /tmp
-RUN git clone https://github.com/wkentaro/labelme.git
-WORKDIR /tmp/labelme
-RUN python3 setup.py install
-
-RUN python -m pip install wandb
-RUN mkdir -p /opt/yolov5
-WORKDIR /opt/yolov5
-RUN git clone https://github.com/ultralytics/yolov5.git
-RUN cd yolov5 && python -m pip install -r requirements.txt
-
 WORKDIR /
 RUN ldconfig
 RUN rm -r /tmp/*
@@ -135,9 +96,22 @@ RUN rm -r /tmp/*
 # User setup
 # ---
 
-ENV USER=root
-ENV HOME=/${USER}
+ENV USER=tj2
+
+
+RUN groupadd -g 1000 ${USER} && \
+    useradd -r -u 1000 -m -s /bin/bash -g ${USER} \
+    -G dialout,plugdev,video,audio,sudo ${USER}
+
+ENV HOME=/home/${USER}
+RUN mkdir -p ${HOME}
 WORKDIR ${HOME}
+
+RUN chown -R ${USER} ${HOME} && \
+  adduser ${USER} sudo && \
+  echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+USER ${USER}
 
 # ---
 # Build temporary workspace
@@ -146,13 +120,14 @@ WORKDIR ${HOME}
 ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
 ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 
-COPY ./workstation/docker/resources/install ${HOME}/install
+COPY --chown=1000:1000 ./workstation/docker/resources/install ${HOME}/install
 
 WORKDIR ${DEP_ROS_WS_SRC}
 RUN wstool init .
 RUN wstool merge -t . ${HOME}/install/tj2_ros.rosinstall
 RUN wstool update -t .
 
+RUN rosdep update
 RUN rosdep install -y --from-paths . --ignore-src --rosdistro noetic
 
 RUN rm -r ${DEP_ROS_WS_SRC}/zed-ros-wrapper/zed_nodelets
@@ -167,11 +142,11 @@ RUN catkin build
 # ROS build environment
 # ---
 
-ENV ROS_WS_ROOT=${HOME}/tj2_ros
-ENV ROS_WS_SRC=${HOME}/tj2_ros/src
+ENV ROS_WS_ROOT=${HOME}/ros_ws
+ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 
 ENV FLASK_ENV=development
-ENV PYTHONPATH=${ROS_WS_SRC}/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
+ENV PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
 
 
 # ---
@@ -181,10 +156,11 @@ ENV PYTHONPATH=${ROS_WS_SRC}/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
 RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
 RUN rm ${HOME}/install/bashrc
 
-COPY ./workstation/docker/resources/launch/entrypoint.sh /entrypoint.sh
-COPY ./workstation/docker/resources/launch/launch.sh /launch.sh
-COPY ./workstation/docker/resources/launch/roscore.sh /roscore.sh
+COPY --chown=1000:1000 ./workstation/docker/resources/launch/entrypoint.sh /entrypoint.sh
+COPY --chown=1000:1000 ./workstation/docker/resources/launch/launch.sh /launch.sh
+COPY --chown=1000:1000 ./workstation/docker/resources/launch/roscore.sh /roscore.sh
 
 WORKDIR ${HOME}
+RUN sudo chown -R 1000:1000 ${HOME}
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

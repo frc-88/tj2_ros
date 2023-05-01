@@ -1,0 +1,8 @@
+tj2_tools/build/
+tj2_tools/dist/
+tj2_tools/tj2_tools.egg-info/
+tj2_data/data/
+__pycache__
+.pytest_cache/
+*.egg-info/
+*.pyc

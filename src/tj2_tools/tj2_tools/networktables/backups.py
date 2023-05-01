@@ -1,9 +1,12 @@
 import csv
 import time
-import tqdm
 import warnings
 from typing import Dict, Union, ByteString, Callable, Tuple, List
 from networktables import NetworkTable, NetworkTablesInstance, NetworkTableEntry
+try:
+    import tqdm
+except ImportError:
+    tqdm = None
 
 ConvertedNtValue = Union[float, str, bool, bytes, List[float], List[str], List[bool], List[bytes]]
 TableBackup = Dict[str, Tuple[str, ConvertedNtValue]]
@@ -98,21 +101,25 @@ class Backups:
     @classmethod
     def get_full_table(cls, root_table: NetworkTable) -> TableBackup:
         table: TableBackup = {}
-        recurse_nt(table, root_table.getPath(), root_table)
+        path = root_table.getPath()
+        if path.endswith("/"):
+            path = path[:-1]
+        recurse_nt(table, path, root_table)
         return table
 
     @classmethod
-    def write_full_table(cls, root_table: NetworkTable, table: TableBackup, write_delay: float = 0.0) -> bool:            
-        with tqdm.tqdm(total=len(table)) as pbar:
-            for path, (nt_type, value) in table.items():
-                nt_type_code = NT_TYPE_NAME_REVERSE_MAPPING[nt_type]
-                set_fn = NT_TYPE_SET_MAPPING[nt_type_code]
-                if not set_fn(root_table.getEntry(path), value):
-                    warnings.warn(f"Failed to set {path} with value {value}")
-                    return False
+    def write_full_table(cls, root_table: NetworkTable, table: TableBackup, write_delay: float = 0.0) -> bool:
+        pbar = None if tqdm is None else tqdm.tqdm(total=len(table))
+        for path, (nt_type, value) in table.items():
+            nt_type_code = NT_TYPE_NAME_REVERSE_MAPPING[nt_type]
+            set_fn = NT_TYPE_SET_MAPPING[nt_type_code]
+            if not set_fn(root_table.getEntry(path), value):
+                warnings.warn(f"Failed to set {path} with value {value}")
+                return False
+            if pbar is not None:
                 pbar.update(1)
-                if write_delay > 0.0:
-                    time.sleep(write_delay)
+            if write_delay > 0.0:
+                time.sleep(write_delay)
         return True
 
     @classmethod
