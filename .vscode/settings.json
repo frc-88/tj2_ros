@@ -1,0 +1,30 @@
+{
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true,
+            "source.fixAll": true,
+            "source.fixAll.unusedImports": false
+        }
+    },
+    "editor.codeActionsOnSave": {
+        "source.fixAll": true
+    },
+    "python.linting.mypyEnabled": true,
+    "python.linting.mypyArgs": [],
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": [
+        "--skip-string-normalization",
+        "--line-length",
+        "120"
+    ],
+    "python.languageServer": "Pylance",
+    "python.defaultInterpreterPath": "/usr/bin/python",
+    "python.terminal.activateEnvironment": false,
+}
