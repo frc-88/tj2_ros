@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
         - /Object Markers1/Namespaces1
@@ -77,10 +78,94 @@ Visualization Manager:
       Value: true
       Visual Enabled: true
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        arm1_base_link:
+          Value: false
+        arm1_link:
+          Value: false
+        arm2_base_link:
+          Value: false
+        arm2_link:
+          Value: false
+        arm3_base_link:
+          Value: false
+        arm3_link:
+          Value: false
+        base_link:
+          Value: true
+        base_tilt_link:
+          Value: false
+        camera_armature_link:
+          Value: false
+        camera_base_link:
+          Value: false
+        camera_link:
+          Value: false
+        camera_tilt_link:
+          Value: false
+        end_effector_base_link:
+          Value: false
+        end_effector_link:
+          Value: false
+        field:
+          Value: false
+        imu:
+          Value: false
+        intake_base_link:
+          Value: false
+        intake_link:
+          Value: false
+        laser:
+          Value: false
+        laser_base_link:
+          Value: false
+        limelight_base_link:
+          Value: false
+        limelight_link:
+          Value: false
+        odom:
+          Value: false
+        swerve_wheel_0:
+          Value: false
+        swerve_wheel_1:
+          Value: false
+        swerve_wheel_2:
+          Value: false
+        swerve_wheel_3:
+          Value: false
+        tag2:
+          Value: false
+        tag6:
+          Value: false
+        tag7:
+          Value: false
+        tag8:
+          Value: false
+        zed2_baro_link:
+          Value: false
+        zed2_base_link:
+          Value: false
+        zed2_camera_center:
+          Value: false
+        zed2_imu_link:
+          Value: false
+        zed2_left_camera_frame:
+          Value: false
+        zed2_left_camera_optical_frame:
+          Value: true
+        zed2_mag_link:
+          Value: false
+        zed2_right_camera_frame:
+          Value: false
+        zed2_right_camera_optical_frame:
+          Value: false
+        zed2_temp_left_link:
+          Value: false
+        zed2_temp_right_link:
+          Value: false
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -88,9 +173,61 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        odom:
+          base_link:
+            base_tilt_link:
+              arm1_base_link:
+                arm1_link:
+                  arm2_base_link:
+                    arm2_link:
+                      arm3_base_link:
+                        arm3_link:
+                          end_effector_base_link:
+                            end_effector_link:
+                              {}
+              camera_base_link:
+                camera_tilt_link:
+                  camera_armature_link:
+                    camera_link:
+                      zed2_base_link:
+                        zed2_camera_center:
+                          zed2_baro_link:
+                            {}
+                          zed2_left_camera_frame:
+                            zed2_imu_link:
+                              {}
+                            zed2_left_camera_optical_frame:
+                              {}
+                            zed2_temp_left_link:
+                              {}
+                          zed2_mag_link:
+                            {}
+                          zed2_right_camera_frame:
+                            zed2_right_camera_optical_frame:
+                              {}
+                            zed2_temp_right_link:
+                              {}
+              imu:
+                {}
+              intake_base_link:
+                intake_link:
+                  {}
+              laser_base_link:
+                laser:
+                  {}
+              limelight_base_link:
+                limelight_link:
+                  {}
+              swerve_wheel_0:
+                {}
+              swerve_wheel_1:
+                {}
+              swerve_wheel_2:
+                {}
+              swerve_wheel_3:
+                {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Alpha: 1
       Class: rviz/Map
       Color Scheme: map
@@ -602,7 +739,7 @@ Visualization Manager:
       Axes Radius: 0.10000000149011612
       Class: rviz/Pose
       Color: 255; 25; 0
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: Pose
@@ -612,7 +749,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /tj2/cones/nearest
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Arrow Length: 0.30000001192092896
       Axes Length: 0.30000001192092896
@@ -705,7 +842,7 @@ Window Geometry:
     collapsed: false
   Displays:
     collapsed: false
-  Height: 1368
+  Height: 1016
   Hide Left Dock: false
   Hide Right Dock: true
   Image:
@@ -719,8 +856,8 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 2524
-  X: 2596
-  Y: 35
+  Width: 1848
+  X: 72
+  Y: 27
   ZED:
     collapsed: false

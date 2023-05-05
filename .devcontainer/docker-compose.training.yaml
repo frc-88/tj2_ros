@@ -6,9 +6,9 @@ volumes:
     external: true
 
 services:
-  tj2_ros_training:
+  tj2_ros_devcontainer:
     image: tj2_ros_training:latest
-    container_name: tj2_ros_training
+    container_name: tj2_ros_devcontainer
     restart: "no"
     network_mode: "host"
     privileged: true
