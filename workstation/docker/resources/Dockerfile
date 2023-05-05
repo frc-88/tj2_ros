@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get update && \
     apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init \
-    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk rsync sudo
+    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk rsync sudo v4l-utils
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
@@ -19,7 +19,8 @@ RUN python -m pip install -U scipy==1.5.4 \
     ezdxf \
     jsonlines \
     PyQt5==5.10.1 \
-    mypy
+    mypy \
+    v4l2-fix
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin

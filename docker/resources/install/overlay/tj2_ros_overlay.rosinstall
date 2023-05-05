@@ -7,7 +7,3 @@
     local-name: rosauth
     uri: https://github.com/GT-RAIL/rosauth.git
     version: develop
-- git:
-    local-name:  ros_networktables_bridge_host
-    uri: https://github.com/frc-88/ros_networktables_bridge_host.git
-    version: v0.0.5-alpha

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import time
 import os
+import copy
 from typing import List, Optional
 
 import numpy as np
@@ -11,6 +11,16 @@ from sensor_msgs.msg import CameraInfo, Image, RegionOfInterest
 from utils import Arducam, ArduCamPixelFormat
 
 
+def copy_image_metadata(message: Image) -> Image:
+    image = Image()
+    image.height = message.height
+    image.width = message.width
+    image.header = copy.copy(message.header)
+    image.encoding = message.encoding
+    image.is_bigendian = message.is_bigendian
+    return image
+
+
 class ArduCamQuad:
     def __init__(self) -> None:
         rospy.init_node("ardu_cam_quad")
@@ -19,10 +29,8 @@ class ArduCamQuad:
         self.channel = int(rospy.get_param("~channel", -1))
         self.width = int(rospy.get_param("~width", -1))
         self.height = int(rospy.get_param("~height", -1))
-        rotations = rospy.get_param("~rotations", [0, 0, 0, 0])
+        self.publish_combined = bool(rospy.get_param("~publish_combined", False))
         self.pixel_format = ArduCamPixelFormat(rospy.get_param("~pixel_format", "raw8"))
-
-        self.rotations = [int(rotate) % 4 for rotate in rotations]
 
         self.bridge = CvBridge()
         self.open()
@@ -84,30 +92,29 @@ class ArduCamQuad:
 
     def run(self) -> None:
         while not rospy.is_shutdown():
-            combined_frame = self.arducam.get_combined_grey_frame()
+            combined_frame = self.arducam.get_combined()
             if combined_frame is None:
                 rospy.logerr("Failed to get arducam frame. Exiting.")
                 self.close()
                 break
-            self.combined_publisher.publish(self.numpy_to_ros_image(combined_frame))
-            # frames = self.arducam.get_grey_frames()
-            # if frames is None:
-            #     rospy.logerr("Failed to get arducam frame. Exiting.")
-            #     self.close()
-            #     break
-            # for index, frame in enumerate(frames):
-            #     rotation = self.rotations[index]
-            #     rotated = np.rot90(frame, rotation)
-            #     info = self.infos[index]
-            #     message = self.numpy_to_ros_image(rotated)
-            #     if message is None:
-            #         continue
-            #     message = Image()
-            #     self.image_publishers[index].publish(message)
-            #     if info is not None:
-            #         self.info_publishers[index].publish(info)
 
-    def numpy_to_ros_image(self, image: np.ndarray) -> Optional[Image]:
+            # combined_message = self.numpy_to_ros_image(combined_frame)
+            # if self.publish_combined:
+            #     self.combined_publisher.publish(combined_message)
+            frames = self.arducam.split_frame(combined_frame)
+
+            for index in range(self.arducam.NUM_CAMERAS):
+                # message = copy_image_metadata(combined_message)
+                # message.data = split_data[index]
+                # message.step = len(message.data) // message.height
+                message = self.numpy_to_ros_image(frames[index])
+                self.image_publishers[index].publish(message)
+
+                info = self.infos[index]
+                if info is not None:
+                    self.info_publishers[index].publish(info)
+
+    def numpy_to_ros_image(self, image: np.ndarray) -> Image:
         try:
             return self.bridge.cv2_to_imgmsg(image, "mono8")
         except CvBridgeError as e:

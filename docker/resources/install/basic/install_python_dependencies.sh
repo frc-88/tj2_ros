@@ -18,7 +18,8 @@ python -m pip install scipy==1.5.4 \
     flask==2.0.3 \
     py-trees==0.7.6 \
     open3d==0.15.1 \
-    psutil
+    psutil \
+    v4l2-fix
 
 python -m pip install Cython
 python -m pip install llvmlite==0.32.0

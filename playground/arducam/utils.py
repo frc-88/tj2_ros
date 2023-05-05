@@ -256,7 +256,7 @@ class Arducam:
         capture.set(cv2.CAP_PROP_FOURCC, code)
         return capture
 
-    def get_combined_grey_frame(self) -> Optional[np.ndarray]:
+    def get_combined(self) -> Optional[np.ndarray]:
         success, frame = self.cv_capture.read()
         if not success:
             return None
@@ -270,13 +270,7 @@ class Arducam:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         return frame
 
-    def get_grey_frames(
-        self, frame: Optional[np.ndarray] = None
-    ) -> Optional[Tuple[np.ndarray, ...]]:
-        if frame is None:
-            frame = self.get_combined_grey_frame()
-        if frame is None:
-            return None
+    def split_frame(self, frame: np.ndarray) -> Tuple[np.ndarray, ...]:
         height, width = frame.shape[0:2]
 
         split_frames = []
