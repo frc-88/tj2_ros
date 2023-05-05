@@ -1,7 +1,6 @@
-from enum import Enum
-from typing import Optional, Tuple
 import v4l2
 import fcntl
+import array
 import ctypes
 import cv2
 import numpy as np
@@ -73,32 +72,7 @@ VIDIOC_R_DEV = _IOWR("V", BASE_VIDIOC_PRIVATE + 2, arducam_dev)
 VIDIOC_W_DEV = _IOWR("V", BASE_VIDIOC_PRIVATE + 3, arducam_dev)
 
 
-def to_fourcc(a: str, b: str, c: str, d: str) -> int:
-    return ord(a) | (ord(b) << 8) | (ord(c) << 16) | (ord(d) << 24)
-
-
-def to_format_code(string: str) -> int:
-    if len(string) == 3:
-        return to_fourcc(string[0], string[1], string[2], " ")
-    elif len(string) == 4:
-        return to_fourcc(string[0], string[1], string[2], string[3])
-    else:
-        raise ValueError(f"{string} is not a pixel format")
-
-
-class ArduCamPixelFormat(Enum):
-    RAW8 = "raw8"
-    RAW10 = "raw10"
-
-
-FORMAT_FOURCC_MAPPING = {
-    "raw8": "GREY",
-    "raw10": "Y16",
-}
-
-
-class Arducam:
-    NUM_CAMERAS = 4
+class ArducamUtils(object):
     pixfmt_map = {
         v4l2.V4L2_PIX_FMT_SBGGR10: {
             "depth": 10,
@@ -209,37 +183,11 @@ class Arducam:
 
     DEVICE_ID = 0x0030
 
-    def __init__(
-        self,
-        device_num: int,
-        pixel_format: ArduCamPixelFormat,
-        width: int = -1,
-        height: int = -1,
-        channel: int = -1,
-    ):
+    def __init__(self, device_num):
         if self.is_nx():
-            Arducam.pixfmt_map = Arducam.pixfmt_map_xavier_nx
-
-        # set in refresh(), see __getattr__
-        self.depth = -1
-        self.cvt_code = -1
-        self.convert2rgb = 0
-
-        self.cv_capture = self.opencv_capture(device_num, pixel_format)
+            ArducamUtils.pixfmt_map = ArducamUtils.pixfmt_map_xavier_nx
         self.vd = open("/dev/video{}".format(device_num), "w")
         self.refresh()
-
-        if self.convert2rgb == 0:
-            self.cv_capture.set(cv2.CAP_PROP_CONVERT_RGB, self.convert2rgb)
-        # set width
-        if width > 0:
-            self.cv_capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        # set height
-        if height > 0:
-            self.cv_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
-        if channel in range(0, 4):
-            self.write_dev(Arducam.CHANNEL_SWITCH_REG, channel)
 
     def is_nx(self) -> bool:
         with open("/proc/device-tree/model", "r") as file:
@@ -247,52 +195,8 @@ class Arducam:
         assert "NVIDIA" in contents
         return "NX" in contents
 
-    def opencv_capture(
-        self, device_num: int, pixel_format: ArduCamPixelFormat
-    ) -> cv2.VideoCapture:
-        capture = cv2.VideoCapture(device_num, cv2.CAP_V4L2)
-
-        code = to_format_code(FORMAT_FOURCC_MAPPING[pixel_format.value])
-        capture.set(cv2.CAP_PROP_FOURCC, code)
-        return capture
-
-    def get_combined_grey_frame(self) -> Optional[np.ndarray]:
-        success, frame = self.cv_capture.read()
-        if not success:
-            return None
-
-        if self.convert2rgb == 0:
-            width = self.cv_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
-            height = self.cv_capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
-            frame = frame.reshape(int(height), int(width))
-
-        frame = self.convert(frame)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        return frame
-
-    def get_grey_frames(
-        self, frame: Optional[np.ndarray] = None
-    ) -> Optional[Tuple[np.ndarray, ...]]:
-        if frame is None:
-            frame = self.get_combined_grey_frame()
-        if frame is None:
-            return None
-        height, width = frame.shape[0:2]
-
-        split_frames = []
-        single_width = width // self.NUM_CAMERAS
-        for index in range(self.NUM_CAMERAS):
-            x0 = int(single_width * index)
-            x1 = int(single_width * (index + 1))
-            split_frames.append(frame[:, x0:x1])
-
-        return tuple(split_frames)
-
     def refresh(self):
-        config = self.get_pixfmt_cfg()
-        self.depth = int(config.get("depth"))
-        self.cvt_code = int(config.get("cvt_code"))
-        self.convert2rgb = int(config.get("convert2rgb"))
+        self.config = self.get_pixfmt_cfg()
 
     def read_sensor(self, reg):
         i2c = arducam_i2c()
@@ -319,28 +223,19 @@ class Arducam:
         return fcntl.ioctl(self.vd, VIDIOC_W_DEV, dev)
 
     def get_device_info(self):
-        return {
-            "fw_sensor_id": self.read_dev(Arducam.FIRMWARE_SENSOR_ID_REG),
-            "sensor_id": self.read_dev(Arducam.SENSOR_ID_REG),
-            "fw_version": self.read_dev(Arducam.FIRMWARE_VERSION_REG),
-            "serial_number": self.read_dev(Arducam.SERIAL_NUMBER_REG),
-        }
+        fw_sensor_id = self.read_dev(ArducamUtils.FIRMWARE_SENSOR_ID_REG)
+        sensor_id = self.read_dev(ArducamUtils.SENSOR_ID_REG)
+        fw_version = self.read_dev(ArducamUtils.FIRMWARE_VERSION_REG)
+        serial_number = self.read_dev(ArducamUtils.SERIAL_NUMBER_REG)
 
-    def show_info(self):
-        info = self.get_device_info()
-        _, firmware_version = info["fw_version"]
-        _, sensor_id = info["sensor_id"]
-        _, serial_number = info["serial_number"]
-        print("Firmware Version: {}".format(firmware_version))
-        print("Sensor ID: 0x{:04X}".format(sensor_id))
-        print("Serial Number: 0x{:08X}".format(serial_number))
+        pass
 
     def convert(self, frame):
         if self.convert2rgb == 1:
             return frame
 
         if self.depth != -1:
-            frame = cv2.convertScaleAbs(frame, alpha=256.0 / (1 << self.depth))
+            frame = cv2.convertScaleAbs(frame, None, 256.0 / (1 << self.depth))
             frame = frame.astype(np.uint8)
 
         if self.cvt_code != -1:
@@ -358,25 +253,25 @@ class Arducam:
     def get_pixfmt_cfg(self):
         ret, pixfmt = self.get_pixelformat()
 
-        pf = Arducam.pixfmt_map_raw8.get(pixfmt, None)
-        if pf is not None:
+        pf = ArducamUtils.pixfmt_map_raw8.get(pixfmt, None)
+        if pf != None:
             return pf
 
         if pixfmt != v4l2.V4L2_PIX_FMT_Y16:
-            return Arducam.AUTO_CONVERT_TO_RGB
+            return ArducamUtils.AUTO_CONVERT_TO_RGB
         fmtdesc = v4l2.v4l2_fmtdesc()
         fmtdesc.index = 0
         fmtdesc.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
         while True:
             try:
                 fcntl.ioctl(self.vd, v4l2.VIDIOC_ENUM_FMT, fmtdesc)
-                pixfmt = Arducam.pixfmt_map.get(fmtdesc.pixelformat, None)
-                if pixfmt is not None:
+                pixfmt = ArducamUtils.pixfmt_map.get(fmtdesc.pixelformat, None)
+                if pixfmt != None:
                     return pixfmt
                 fmtdesc.index += 1
-            except Exception:
+            except Exception as e:
                 break
-        return Arducam.AUTO_CONVERT_TO_RGB
+        return ArducamUtils.AUTO_CONVERT_TO_RGB
 
     def get_pixelformats(self):
         pixfmts = []
@@ -388,7 +283,7 @@ class Arducam:
                 fcntl.ioctl(self.vd, v4l2.VIDIOC_ENUM_FMT, fmtdesc)
                 pixfmts.append((fmtdesc.pixelformat, fmtdesc.description))
                 fmtdesc.index += 1
-            except Exception:
+            except Exception as e:
                 break
         return pixfmts
 
@@ -402,9 +297,9 @@ class Arducam:
                 fcntl.ioctl(self.vd, v4l2.VIDIOC_ENUM_FRAMESIZES, framesize)
                 framesizes.append((framesize.discrete.width, framesize.discrete.height))
                 framesize.index += 1
-            except Exception:
+            except Exception as e:
                 break
         return framesizes
 
-    def close(self):
-        self.cv_capture.release()
+    def __getattr__(self, key):
+        return self.config.get(key)

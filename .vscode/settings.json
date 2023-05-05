@@ -1,30 +1,51 @@
 {
-    "python.linting.pylintEnabled": false,
-    "python.linting.flake8Enabled": true,
-    "python.linting.enabled": true,
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "files.trimFinalNewlines": true,
-    "files.trimTrailingWhitespace": true,
-    "[python]": {
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": true,
-            "source.fixAll": true,
-            "source.fixAll.unusedImports": false
-        }
-    },
-    "editor.codeActionsOnSave": {
-        "source.fixAll": true
-    },
-    "python.linting.mypyEnabled": true,
-    "python.linting.mypyArgs": [],
-    "python.formatting.provider": "black",
-    "python.formatting.blackArgs": [
-        "--skip-string-normalization",
-        "--line-length",
-        "120"
-    ],
-    "python.languageServer": "Pylance",
-    "python.defaultInterpreterPath": "/usr/bin/python",
-    "python.terminal.activateEnvironment": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.confirmDelete": false,
+  "editor.suggestSelection": "first",
+  "python.languageServer": "Pylance",
+  "workbench.tree.indent": 15,
+  "workbench.editorAssociations": {
+    "*.ipynb": "jupyter-notebook"
+  },
+  "cmake.configureOnOpen": false,
+  "redhat.telemetry.enabled": false,
+  "notebook.cellToolbarLocation": {
+    "default": "right",
+    "jupyter-notebook": "left"
+  },
+  "[cpp]": {
+    "editor.defaultFormatter": "ms-iot.vscode-ros"
+  },
+  "omnisharp.monoPath": "/usr/bin/mono",
+  "omnisharp.useModernNet": false,
+  "omnisharp.dotnetPath": "/usr/bin/dotnet",
+  "editor.formatOnSave": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.formatting.provider": "none",
+  "python.linting.flake8CategorySeverity.E": "Hint",
+  "python.linting.flake8CategorySeverity.F": "Hint",
+  "python.linting.flake8CategorySeverity.W": "Hint",
+  "C_Cpp.formatting": "disabled",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "git.openRepositoryInParentFolders": "always",
+  "[python]": {
+    "editor.formatOnType": true,
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "editor.rulers": [120],
+  "python.linting.flake8Args": ["--max-line-length=120"],
+  "python.autoComplete.extraPaths": [
+    "/home/ben/ros_ws/devel/lib/python3.8/site-packages",
+    "/opt/ros/noetic/lib/python3/dist-packages"
+  ],
+  "python.analysis.extraPaths": [
+    "/home/ben/ros_ws/devel/lib/python3.8/site-packages",
+    "/opt/ros/noetic/lib/python3/dist-packages"
+  ]
 }

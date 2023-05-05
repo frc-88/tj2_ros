@@ -35,7 +35,8 @@
         "ms-python.isort",
         "ms-vscode.cpptools-extension-pack",
         "matangover.mypy",
-        "ms-python.flake8"
+        "ms-python.flake8",
+        "ms-azuretools.vscode-docker"
       ]
     }
   }

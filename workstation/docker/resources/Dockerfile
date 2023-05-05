@@ -18,7 +18,8 @@ RUN python -m pip install -U scipy==1.5.4 \
     numpy==1.22.4 \
     ezdxf \
     jsonlines \
-    PyQt5==5.10.1
+    PyQt5==5.10.1 \
+    mypy
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
@@ -134,7 +135,7 @@ RUN rm -r ${DEP_ROS_WS_SRC}/zed-ros-wrapper/zed_nodelets
 
 WORKDIR ${DEP_ROS_WS_ROOT}
 # https://github.com/ros/catkin/issues/863
-RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF 
+RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
 RUN catkin config --install
 RUN catkin build
 
@@ -147,6 +148,7 @@ ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 
 ENV FLASK_ENV=development
 ENV PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
+ENV PATH=${HOME}/.local/bin${PATH:+:${PATH}}
 
 
 # ---
