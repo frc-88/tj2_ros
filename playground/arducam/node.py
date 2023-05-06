@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import cv2
 import copy
 from typing import List, Optional
 
@@ -7,7 +8,7 @@ import numpy as np
 import rospy
 import yaml
 from cv_bridge import CvBridge, CvBridgeError
-from sensor_msgs.msg import CameraInfo, Image, RegionOfInterest
+from sensor_msgs.msg import CameraInfo, Image, CompressedImage, RegionOfInterest
 from utils import Arducam, ArduCamPixelFormat
 
 
@@ -36,6 +37,7 @@ class ArduCamQuad:
         self.open()
         self.infos: List[Optional[CameraInfo]] = []
         self.image_publishers: List[rospy.Publisher] = []
+        self.compressed_publishers: List[rospy.Publisher] = []
         self.info_publishers: List[rospy.Publisher] = []
 
         self.combined_publisher = rospy.Publisher(
@@ -49,10 +51,14 @@ class ArduCamQuad:
             image_publisher = rospy.Publisher(
                 f"camera_{index}/image_raw", Image, queue_size=1
             )
+            compressed_publisher = rospy.Publisher(
+                f"camera_{index}/image_raw/compressed", CompressedImage, queue_size=1
+            )
             info_publisher = rospy.Publisher(
                 f"camera_{index}/camera_info", CameraInfo, queue_size=1
             )
             self.image_publishers.append(image_publisher)
+            self.compressed_publishers.append(compressed_publisher)
             self.info_publishers.append(info_publisher)
 
     def open(self) -> None:
@@ -109,6 +115,9 @@ class ArduCamQuad:
                 # message.step = len(message.data) // message.height
                 message = self.numpy_to_ros_image(frames[index])
                 self.image_publishers[index].publish(message)
+                self.compressed_publishers[index].publish(
+                    self.image_to_compressed(frames[index])
+                )
 
                 info = self.infos[index]
                 if info is not None:
@@ -120,6 +129,13 @@ class ArduCamQuad:
         except CvBridgeError as e:
             rospy.logerr("Failed to convert arducam array to ROS image", exc_info=e)
             raise
+
+    def image_to_compressed(self, image: np.ndarray) -> CompressedImage:
+        msg = CompressedImage()
+        msg.header.stamp = rospy.Time.now()
+        msg.format = "jpeg"
+        msg.data = np.array(cv2.imencode(".jpg", image)[1]).tobytes()
+        return msg
 
 
 if __name__ == "__main__":
