@@ -38,6 +38,32 @@ def adjust_gamma(image, gamma=1.0):
     return cv2.LUT(image, table)
 
 
+def adjust_brightness(image, brightness):
+    brightness = max(min(brightness, 255), -255)
+    if brightness > 0:
+        shadow = brightness
+        highlight = 255
+    else:
+        shadow = 0
+        highlight = 255 + brightness
+
+    alpha = (highlight - shadow) / 255
+    gamma = shadow
+
+    # The function addWeighted calculates the weighted sum of two arrays
+    return cv2.addWeighted(image, alpha, image, 0, gamma)
+
+
+def adjust_contrast(image, contrast):
+    contrast = max(min(contrast, 127), -127)
+    alpha = float(131 * (contrast + 127)) / (127 * (131 - contrast))
+    gamma = 127 * (1 - alpha)
+
+    # The function addWeighted calculates
+    # the weighted sum of two arrays
+    return cv2.addWeighted(image, alpha, image, 0, gamma)
+
+
 def main():
     parser = argparse.ArgumentParser("record_calibration")
     parser.add_argument("camera_num", type=int)
@@ -76,7 +102,9 @@ def main():
                     frame = np.zeros((300, 300), np.uint8)
             if rospy.is_shutdown():
                 break
-            # frame = adjust_gamma(frame, 2.0)
+            # frame = adjust_brightness(frame, 80)
+            # frame = adjust_gamma(frame, 1.5)
+            # frame = adjust_contrast(frame, 30)
             success, corners = cv2.findChessboardCorners(
                 frame,
                 checkerboard,
@@ -84,8 +112,10 @@ def main():
                 + cv2.CALIB_CB_FAST_CHECK
                 + cv2.CALIB_CB_NORMALIZE_IMAGE,
             )
-            print(f"Found checkerboard: {success}, {corners}")
-            debug = cv2.drawChessboardCorners(frame, checkerboard, corners, success)
+            # print(f"Found checkerboard: {success}, {corners}")
+            debug = cv2.drawChessboardCorners(
+                np.copy(frame), checkerboard, corners, success
+            )
 
             cv2.imshow(window_name, debug)
             key = chr(cv2.waitKey(1) & 0xFF)

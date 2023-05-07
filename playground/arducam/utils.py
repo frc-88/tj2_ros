@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 from typing import Optional, Tuple
 import v4l2
@@ -217,6 +218,7 @@ class Arducam:
         height: int = -1,
         channel: int = -1,
     ):
+        self.device_num = device_num
         if self.is_nx():
             Arducam.pixfmt_map = Arducam.pixfmt_map_xavier_nx
 
@@ -225,8 +227,8 @@ class Arducam:
         self.cvt_code = -1
         self.convert2rgb = 0
 
-        self.cv_capture = self.opencv_capture(device_num, pixel_format)
-        self.vd = open("/dev/video{}".format(device_num), "w")
+        self.cv_capture = self.opencv_capture(self.device_num, pixel_format)
+        self.vd = open("/dev/video{}".format(self.device_num), "w")
         self.refresh()
 
         if self.convert2rgb == 0:
@@ -399,6 +401,14 @@ class Arducam:
             except Exception:
                 break
         return framesizes
+
+    def set_focus(self, value: float) -> None:
+        if not (0.0 <= value <= 1.0):
+            raise ValueError("Focus value must be between 0.0 and 1.0")
+        focus_value = int(value * 1000.0)
+        os.system(
+            f"v4l2-ctl -d /dev/v4l-subdev{self.device_num} -c focus_absolute={focus_value}"
+        )
 
     def close(self):
         self.cv_capture.release()

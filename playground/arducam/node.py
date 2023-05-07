@@ -8,7 +8,10 @@ import numpy as np
 import rospy
 import yaml
 from cv_bridge import CvBridge, CvBridgeError
+
+from std_msgs.msg import Header
 from sensor_msgs.msg import CameraInfo, Image, CompressedImage, RegionOfInterest
+
 from utils import Arducam, ArduCamPixelFormat
 
 
@@ -32,6 +35,7 @@ class ArduCamQuad:
         self.height = int(rospy.get_param("~height", -1))
         self.publish_combined = bool(rospy.get_param("~publish_combined", False))
         self.pixel_format = ArduCamPixelFormat(rospy.get_param("~pixel_format", "raw8"))
+        self.camera_prefix = rospy.get_param("~camera_prefix", "camera")
 
         self.bridge = CvBridge()
         self.open()
@@ -49,13 +53,15 @@ class ArduCamQuad:
             self.infos.append(info)
 
             image_publisher = rospy.Publisher(
-                f"camera_{index}/image_raw", Image, queue_size=1
+                f"{self.camera_prefix}_{index}/image_raw", Image, queue_size=1
             )
             compressed_publisher = rospy.Publisher(
-                f"camera_{index}/image_raw/compressed", CompressedImage, queue_size=1
+                f"{self.camera_prefix}_{index}/image_raw/compressed",
+                CompressedImage,
+                queue_size=1,
             )
             info_publisher = rospy.Publisher(
-                f"camera_{index}/camera_info", CameraInfo, queue_size=1
+                f"{self.camera_prefix}_{index}/camera_info", CameraInfo, queue_size=1
             )
             self.image_publishers.append(image_publisher)
             self.compressed_publishers.append(compressed_publisher)
@@ -96,6 +102,20 @@ class ArduCamQuad:
             )
         return info
 
+    def numpy_to_ros_image(self, image: np.ndarray) -> Image:
+        try:
+            return self.bridge.cv2_to_imgmsg(image, "mono8")
+        except CvBridgeError as e:
+            rospy.logerr("Failed to convert arducam array to ROS image", exc_info=e)
+            raise
+
+    def image_to_compressed(self, image: np.ndarray) -> CompressedImage:
+        msg = CompressedImage()
+        msg.header.stamp = rospy.Time.now()
+        msg.format = "jpeg"
+        msg.data = np.array(cv2.imencode(".jpg", image)[1]).tobytes()
+        return msg
+
     def run(self) -> None:
         while not rospy.is_shutdown():
             combined_frame = self.arducam.get_combined()
@@ -113,29 +133,23 @@ class ArduCamQuad:
                 # message = copy_image_metadata(combined_message)
                 # message.data = split_data[index]
                 # message.step = len(message.data) // message.height
+                frame_id = f"{self.camera_prefix}_{index}"
+                header = Header()
+                header.frame_id = frame_id
+                header.stamp = rospy.Time.now()
+
                 message = self.numpy_to_ros_image(frames[index])
+                message.header = header
                 self.image_publishers[index].publish(message)
-                self.compressed_publishers[index].publish(
-                    self.image_to_compressed(frames[index])
-                )
+
+                compressed = self.image_to_compressed(frames[index])
+                compressed.header = header
+                self.compressed_publishers[index].publish(compressed)
 
                 info = self.infos[index]
                 if info is not None:
+                    info.header = header
                     self.info_publishers[index].publish(info)
-
-    def numpy_to_ros_image(self, image: np.ndarray) -> Image:
-        try:
-            return self.bridge.cv2_to_imgmsg(image, "mono8")
-        except CvBridgeError as e:
-            rospy.logerr("Failed to convert arducam array to ROS image", exc_info=e)
-            raise
-
-    def image_to_compressed(self, image: np.ndarray) -> CompressedImage:
-        msg = CompressedImage()
-        msg.header.stamp = rospy.Time.now()
-        msg.format = "jpeg"
-        msg.data = np.array(cv2.imencode(".jpg", image)[1]).tobytes()
-        return msg
 
 
 if __name__ == "__main__":

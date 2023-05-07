@@ -1,18 +1,43 @@
 #!/usr/bin/env python3
+import os
 import cv2
+import yaml
 import glob
 import argparse
 import numpy as np
 
 
+def adjust_gamma(image, gamma=1.0):
+    # build a lookup table mapping the pixel values [0, 255] to
+    # their adjusted gamma values
+    invGamma = 1.0 / gamma
+    table = np.array(
+        [((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]
+    ).astype("uint8")
+    # apply gamma correction using the lookup table
+    return cv2.LUT(image, table)
+
+
+def write_parameters(path, parameters):
+    print(f"Wrote to {path}")
+    with open(path, "w") as file:
+        yaml.dump(parameters, file)
+
+
 def main():
     parser = argparse.ArgumentParser("calibrate")
     parser.add_argument("directory", type=str)
-    parser.add_argument("board_width", type=int)
-    parser.add_argument("board_height", type=int)
+    parser.add_argument(
+        "board_width", type=int, help="Number of internal width corners"
+    )
+    parser.add_argument(
+        "board_height", type=int, help="Number of internal height corners"
+    )
+    parser.add_argument("square_size", type=float, help="Size of square in meters")
     args = parser.parse_args()
 
     read_directory = args.directory
+    square_size = args.square_size
 
     # Define the dimensions of checkerboard
     checkerboard = (args.board_width, args.board_height)
@@ -31,12 +56,18 @@ def main():
     # Defining the world coordinates for 3D points
     objp = np.zeros((1, checkerboard[0] * checkerboard[1], 3), np.float32)
     objp[0, :, :2] = np.mgrid[0 : checkerboard[0], 0 : checkerboard[1]].T.reshape(-1, 2)
+    objp *= square_size
 
     gray = None
+    shape = None
     images = glob.glob(f"./{read_directory}/*.jpg")
     for filename in images:
         image = cv2.imread(filename)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if shape is None:
+            shape = gray.shape
+        else:
+            assert shape == gray.shape, "Images are not all the same size!"
         # Find the chess board corners
         # If desired number of corners are found in the image then ret = true
         success, corners = cv2.findChessboardCorners(
@@ -58,17 +89,32 @@ def main():
             print(f"Failed to find checkerboard in {filename}")
 
     assert gray is not None
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+    assert shape is not None
+    success, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
         obj_points, img_points, gray.shape[::-1], None, None
     )
-    print("Camera matrix : \n")
-    print(mtx)
-    print("dist : \n")
-    print(dist)
-    print("rvecs : \n")
-    print(rvecs)
-    print("tvecs : \n")
-    print(tvecs)
+
+    if success:
+        distortion_coeffs = dist[0].tolist()
+        camera_matrix = mtx.flatten().tolist()
+        rectification_matrix = np.eye(3).flatten().tolist()
+        projection = np.zeros((3, 4))
+        projection[0:3, 0:3] = mtx
+        projection_matrix = projection.flatten().tolist()
+
+        parameters = {
+            "height": shape[0],
+            "width": shape[1],
+            "distortion_model": "plumb_bob",
+            "D": distortion_coeffs,
+            "K": camera_matrix,
+            "R": rectification_matrix,
+            "P": projection_matrix,
+        }
+        write_parameters(os.path.join(read_directory, "camera.yaml"), parameters)
+
+    else:
+        print("Failed to compute camera parameters!")
 
 
 if __name__ == "__main__":
