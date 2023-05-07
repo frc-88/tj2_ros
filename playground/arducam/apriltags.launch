@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <rosparam command="load" file="data/tags/settings.yaml" ns="camera_0_tags"/>
-    <rosparam command="load" file="data/tags/tags.yaml" ns="camera_0_tags"/>
-    <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="camera_0_tags" required="false" output="screen">
-        <param name="publish_tag_detections_image" type="bool" value="true" />
-        <remap from="camera_info" to="camera_0/camera_info"/>
-        <remap from="image_rect" to="camera_0/image_raw"/>
-    </node>
-    <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen"/>
+    <arg name="camera_index" default="0"/>
+    <group ns="camera_$(arg camera_index)">
+        <rosparam command="load" file="data/tags/settings.yaml" ns="camera_tags"/>
+        <rosparam command="load" file="data/tags/tags.yaml" ns="camera_tags"/>
+        <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="camera_tags" required="false" output="screen">
+            <param name="publish_tag_detections_image" type="bool" value="true" />
+            <remap from="camera_info" to="camera_info"/>
+            <remap from="image_rect" to="image_raw"/>
+        </node>
+        <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen"/>
+    </group>
 </launch>

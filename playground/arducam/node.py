@@ -48,7 +48,7 @@ class ArduCamQuad:
             "combined_camera/image_raw", Image, queue_size=1
         )
         for index in range(Arducam.NUM_CAMERAS):
-            path = os.path.join(self.camera_info_directory, f"camera-{index}.yaml")
+            path = os.path.join(self.camera_info_directory, f"camera_{index}.yaml")
             info = self.load_camera_info(path)
             self.infos.append(info)
 
@@ -120,9 +120,12 @@ class ArduCamQuad:
         while not rospy.is_shutdown():
             combined_frame = self.arducam.get_combined()
             if combined_frame is None:
-                rospy.logerr("Failed to get arducam frame. Exiting.")
+                rospy.logerr("Failed to get arducam frame. Re-opening.")
                 self.close()
-                break
+                rospy.sleep(0.25)
+                self.open()
+                rospy.sleep(1.0)
+                continue
 
             # combined_message = self.numpy_to_ros_image(combined_frame)
             # if self.publish_combined:
