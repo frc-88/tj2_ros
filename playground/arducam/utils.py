@@ -244,10 +244,12 @@ class Arducam:
             self.write_dev(Arducam.CHANNEL_SWITCH_REG, channel)
 
     def is_nx(self) -> bool:
-        with open("/proc/device-tree/model", "r") as file:
+        path = "/proc/device-tree/model"
+        if not os.path.isfile(path):
+            return False
+        with open(path, "r") as file:
             contents = file.read()
-        assert "NVIDIA" in contents
-        return "NX" in contents
+        return "NVIDIA" in contents and "NX" in contents
 
     def opencv_capture(
         self, device_num: int, pixel_format: ArduCamPixelFormat
@@ -286,9 +288,9 @@ class Arducam:
 
     def refresh(self):
         config = self.get_pixfmt_cfg()
-        self.depth = int(config.get("depth"))
-        self.cvt_code = int(config.get("cvt_code"))
-        self.convert2rgb = int(config.get("convert2rgb"))
+        self.depth = int(config.get("depth"))  # type: ignore
+        self.cvt_code = int(config.get("cvt_code"))  # type: ignore
+        self.convert2rgb = int(config.get("convert2rgb"))  # type: ignore
 
     def read_sensor(self, reg):
         i2c = arducam_i2c()
