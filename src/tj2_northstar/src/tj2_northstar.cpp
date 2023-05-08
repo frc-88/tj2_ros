@@ -5,12 +5,14 @@ SplitCam::SplitCam(
     std::string prefix,
     int index,
     ros::NodeHandle* nodehandle,
-    image_transport::ImageTransport* transport)
+    image_transport::ImageTransport* transport,
+    apriltag_ros::TagDetector* tag_detector)
 {
     nh = nodehandle;
     _prefix = prefix;
     _index = index;
     _transport = transport;
+    _tag_detector = tag_detector;
     _pub = _transport->advertiseCamera(get_serial() + "/image_raw", 1);
 
     std::string path = info_directory + "/" + get_serial() + ".yaml";
@@ -81,17 +83,20 @@ bool SplitCam::load_camera_info(std::string path)
     return true;
 }
 
-void SplitCam::publish(cv::Mat image, ros::Time timestamp)
+apriltag_ros::AprilTagDetectionArray SplitCam::process_image(cv::Mat image, ros::Time timestamp)
 {
     std_msgs::Header header;
     header.frame_id = get_serial();
     header.stamp = timestamp;
     _info.header = header;
+    _image_msg = cv_bridge::CvImage(header, "mono8", image).toImageMsg();
+    _bridge_msg = cv_bridge::toCvCopy(_image_msg, _image_msg->encoding);
 
     if (_pub.getNumSubscribers() > 0) {
-        sensor_msgs::ImagePtr msg = cv_bridge::CvImage(header, "mono8", image).toImageMsg();
-        _pub.publish(*msg, _info);
+        _pub.publish(*_image_msg, _info);
     }
+
+    return _tag_detector->detectTags(_bridge_msg, sensor_msgs::CameraInfoConstPtr(new sensor_msgs::CameraInfo(_info)));
 }
 
 SplitCam::~SplitCam()
@@ -99,8 +104,9 @@ SplitCam::~SplitCam()
     
 }
 
-TJ2Northstar::TJ2Northstar(ros::NodeHandle* nodehandle) :
-    nh(*nodehandle),
+TJ2Northstar::TJ2Northstar(ros::NodeHandle* node_handle, ros::NodeHandle* private_node_handle) :
+    nh(*node_handle),
+    pnh(*private_node_handle),
     _image_transport(nh)
 {
     ros::param::param<std::string>("~topic_prefix", _prefix, "camera");
@@ -123,10 +129,13 @@ TJ2Northstar::TJ2Northstar(ros::NodeHandle* nodehandle) :
     _arducam = new Arducam(device_num, fourcc_code, width, height);
 
     _combined_pub = _image_transport.advertiseCamera(_prefix + "/combined", 1);
+    _tag_detector = std::shared_ptr<apriltag_ros::TagDetector>(new apriltag_ros::TagDetector(pnh));
+    _tag_detections_publisher = nh.advertise<apriltag_ros::AprilTagDetectionArray>("tag_detections", 1);
 
     for (int index = 0; index < NUM_CAMERAS; index++) {
-        cameras[index] = new SplitCam(info_directory, _prefix, index, nodehandle, &_image_transport);
+        cameras[index] = new SplitCam(info_directory, _prefix, index, node_handle, &_image_transport, _tag_detector.get());
     }
+    
 }
 
 TJ2Northstar::~TJ2Northstar()
@@ -157,7 +166,7 @@ int TJ2Northstar::run() {
         int sub_width = size.width / NUM_CAMERAS;
         for (int index = 0; index < NUM_CAMERAS; index++) {
             cv::Rect split(sub_width * index, 0, sub_width, size.height);
-            cameras[index]->publish(image(split), now);
+            _tag_detections_publisher.publish(cameras[index]->process_image(image(split), now));
         }
     }
     return 0;
@@ -168,6 +177,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "tj2_northstar");
     ros::NodeHandle nh;
-    TJ2Northstar node(&nh);
+    ros::NodeHandle pnh("~");
+    TJ2Northstar node(&nh, &pnh);
     return node.run();
 }
