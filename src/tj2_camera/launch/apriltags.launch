@@ -6,20 +6,13 @@
     <arg name="depth_rect_topic" default="/tj2_zed/depth/depth_registered"/>
     <arg name="node_name" default="apriltag"/>
     <arg name="namespace" default="apriltag"/>
-    <arg name="map_name" default="charged-up-2023.yaml"/>
     <arg name="publish_tag_detections_image" default="false"/>
 
     <group ns="$(arg namespace)">
         <rosparam command="load" file="$(arg apriltag_settings)" ns="$(arg node_name)"/>
         <rosparam command="load" file="$(arg apriltag_tags)" ns="$(arg node_name)"/>
         <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="$(arg node_name)" required="false" output="screen">
-            <!-- <param name="nodelet_name" type="string" value="apriltag_ros/ContinuousDepthDetector" /> -->
             <param name="publish_tag_detections_image" type="bool" value="$(arg publish_tag_detections_image)" />
-            <!-- <param name="depth_min_range" type="double" value="0.25" /> -->
-            <!-- <param name="depth_max_range" type="double" value="10.0" /> -->
-            <!-- <remap from="color/camera_info" to="$(arg camera_info_topic)"/> -->
-            <!-- <remap from="color/image_rect" to="$(arg image_rect_topic)"/> -->
-            <!-- <remap from="depth/image_rect" to="$(arg depth_rect_topic)"/> -->
             <remap from="camera_info" to="$(arg camera_info_topic)"/>
             <remap from="image_rect" to="$(arg image_rect_topic)"/>
         </node>

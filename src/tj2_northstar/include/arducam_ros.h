@@ -53,12 +53,12 @@ class ArducamROS
 {
 private:
     ros::NodeHandle nh;
-    ros::NodeHandle pnh;
     static const int NUM_CAMERAS = 4;
     SplitCam* cameras[NUM_CAMERAS];
     Arducam* _arducam;
     std::string _prefix;
     tj2_interfaces::CameraInfoArray _info_array;
+    double _publish_rate;
 
     image_transport::ImageTransport _image_transport;
     image_transport::Publisher _combined_pub;

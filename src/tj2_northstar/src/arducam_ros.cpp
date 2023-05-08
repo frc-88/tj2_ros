@@ -120,6 +120,8 @@ ArducamROS::ArducamROS(ros::NodeHandle* node_handle) :
     std::string fourcc_code;
     ros::param::param<std::string>("~fourcc_code", fourcc_code, "GREY");  // "GREY", "Y16"
 
+    ros::param::param<double>("~publish_rate", _publish_rate, 20.0);
+
     _arducam = new Arducam(device_num, fourcc_code, -1, -1);
 
     _combined_pub = _image_transport.advertise(_prefix + "/image_raw", 1);
@@ -138,8 +140,10 @@ ArducamROS::~ArducamROS()
 
 int ArducamROS::run() {
     _arducam->start();
+    ros::Rate clock_rate(_publish_rate);  // Hz
     while (ros::ok()) {
         ros::spinOnce();
+        clock_rate.sleep();
         cv::Mat image;
         ros::Time now = ros::Time::now();
         if (!_arducam->read(image)) {

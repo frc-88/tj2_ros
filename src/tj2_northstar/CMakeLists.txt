@@ -120,7 +120,6 @@ catkin_package(
     sensor_msgs
     tf2_ros
     tf2_geometry_msgs
-    tj2_interfaces
     camera_info_manager
     cv_bridge
     visualization_msgs
@@ -131,6 +130,10 @@ catkin_package(
 ###########
 ## Build ##
 ###########
+
+set(ARDUCAM_PROJECT_NAME arducam)
+set(ARDUCAM_ROS_PROJECT_NAME arducam_ros)
+set(APRILTAG_PROJECT_NAME apriltag_cam_array)
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
@@ -144,8 +147,6 @@ include_directories(
 link_directories(${catkin_LIBRARY_DIRS})
 
 ## Declare a C++ library
-set(ARDUCAM_PROJECT_NAME arducam)
-set(ARDUCAM_ROS_PROJECT_NAME arducam_ros)
 add_library(${ARDUCAM_PROJECT_NAME}
   src/${ARDUCAM_PROJECT_NAME}.cpp
 )
@@ -159,6 +160,7 @@ add_library(${ARDUCAM_PROJECT_NAME}
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${ARDUCAM_ROS_PROJECT_NAME} src/${ARDUCAM_ROS_PROJECT_NAME}.cpp)
+add_executable(${APRILTAG_PROJECT_NAME} src/${APRILTAG_PROJECT_NAME}.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -170,18 +172,21 @@ add_executable(${ARDUCAM_ROS_PROJECT_NAME} src/${ARDUCAM_ROS_PROJECT_NAME}.cpp)
 ## same as for the library above
 add_dependencies(${ARDUCAM_PROJECT_NAME} ${${ARDUCAM_PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${ARDUCAM_ROS_PROJECT_NAME} ${${ARDUCAM_ROS_PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${APRILTAG_PROJECT_NAME} ${${APRILTAG_PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${ARDUCAM_ROS_PROJECT_NAME}
     ${ARDUCAM_PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
-    ${YAML_CPP_LIBRARIES}
 )
 target_link_libraries(${ARDUCAM_PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     ${YAML_CPP_LIBRARIES}
+)
+target_link_libraries(${APRILTAG_PROJECT_NAME}
+    ${catkin_LIBRARIES}
 )
 
 #############
@@ -217,7 +222,11 @@ install(TARGETS ${ARDUCAM_PROJECT_NAME}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
-
+install(TARGETS ${APRILTAG_PROJECT_NAME}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
 #   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
