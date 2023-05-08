@@ -6,9 +6,9 @@
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
-#include <apriltag_ros/common_functions.h>
 
 #include <sensor_msgs/CameraInfo.h>
+#include <tj2_interfaces/CameraInfoArray.h>
 
 #include "arducam.h"
 
@@ -16,7 +16,6 @@ template<size_t Size, class Container>
 boost::array<typename Container::value_type, Size> as_array(const Container &cont);
 
 bool does_file_exist(const std::string& path);
-sensor_msgs::CompressedImagePtr image_to_compressed_message(cv::Mat image);
 
 class SplitCam
 {
@@ -27,7 +26,6 @@ private:
     image_transport::ImageTransport *_transport;
     sensor_msgs::CameraInfo _info;
     bool _info_did_load;
-    apriltag_ros::TagDetector* _tag_detector;
 
     sensor_msgs::ImagePtr _image_msg;
     cv_bridge::CvImagePtr _bridge_msg;
@@ -36,6 +34,7 @@ private:
 
     bool load_camera_info(std::string path);
     std::string get_serial();
+    std::string get_optical_frame();
 
 public:
     SplitCam(
@@ -43,14 +42,14 @@ public:
         std::string prefix,
         int index,
         ros::NodeHandle* nodehandle,
-        image_transport::ImageTransport* transport,
-        apriltag_ros::TagDetector* tag_detector);
-    apriltag_ros::AprilTagDetectionArray process_image(cv::Mat image, ros::Time timestamp);
+        image_transport::ImageTransport* transport);
+    void process_image(cv::Mat image, ros::Time timestamp);
+    sensor_msgs::CameraInfo get_info() { return _info; }
     ~SplitCam();
 };
 
 
-class TJ2Northstar
+class ArducamROS
 {
 private:
     ros::NodeHandle nh;
@@ -58,15 +57,15 @@ private:
     static const int NUM_CAMERAS = 4;
     SplitCam* cameras[NUM_CAMERAS];
     Arducam* _arducam;
-    std::shared_ptr<apriltag_ros::TagDetector> _tag_detector;
     std::string _prefix;
+    tj2_interfaces::CameraInfoArray _info_array;
 
     image_transport::ImageTransport _image_transport;
-    image_transport::CameraPublisher _combined_pub;
-    ros::Publisher _tag_detections_publisher;
+    image_transport::Publisher _combined_pub;
+    ros::Publisher _info_array_pub;
     
 public:
-    TJ2Northstar(ros::NodeHandle* node_handle, ros::NodeHandle* private_node_handle);
+    ArducamROS(ros::NodeHandle* node_handle);
     int run();
-    ~TJ2Northstar();
+    ~ArducamROS();
 };

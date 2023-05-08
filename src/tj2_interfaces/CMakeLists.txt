@@ -10,6 +10,7 @@ project(tj2_interfaces)
 find_package(catkin  REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
+  sensor_msgs
   message_generation
 )
 
@@ -68,6 +69,7 @@ add_message_files(
   NoGoZones.msg
   Match.msg
   NavX.msg
+  CameraInfoArray.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -94,6 +96,7 @@ generate_messages(
   DEPENDENCIES
   std_msgs  # Or other packages containing msgs
   geometry_msgs
+  sensor_msgs
 )
 
 ################################################
@@ -129,9 +132,10 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES tj2_interfaces
   CATKIN_DEPENDS 
-    message_generation 
-    std_msgs 
-    geometry_msgs 
+    message_generation
+    std_msgs
+    geometry_msgs
+    sensor_msgs
 #  DEPENDS system_lib
 )
 

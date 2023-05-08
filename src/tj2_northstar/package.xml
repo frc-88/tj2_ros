@@ -61,6 +61,7 @@
   <depend>cv_bridge</depend>
   <depend>visualization_msgs</depend>
   <depend>apriltag_ros</depend>
+  <depend>tj2_interfaces</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

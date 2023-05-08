@@ -9,7 +9,6 @@
 #include <linux/videodev2.h>
 
 #include <sys/stat.h>
-#include <ros/ros.h>
 #include <opencv2/opencv.hpp>
 
 

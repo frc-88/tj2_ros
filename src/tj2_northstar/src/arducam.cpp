@@ -41,7 +41,7 @@ int to_format_value(std::string code)
         code += " ";
     }
     if (code.size() > 4) {
-        ROS_ERROR("Invalid format code: %s", code.c_str());
+        std::cerr << "Invalid format code: " << code;
         throw std::runtime_error("Invalid format code");
     }
     return to_fourcc(code.at(0), code.at(1), code.at(2), code.at(3));
@@ -51,7 +51,7 @@ int open_video_device(int device_num) {
     std::string device_path = "/dev/video" + std::to_string(device_num);
     int vd = open(device_path.c_str(), O_RDWR);
     if (vd < 0) {
-        ROS_ERROR("Error opening video device: %s", device_path.c_str());
+        std::cerr << "Error opening video device: " << device_path;
         throw std::runtime_error("Error opening video device");
     }
     return vd;
@@ -98,12 +98,13 @@ int get_pixel_format(int vd, uint32_t &pixel_format) {
 
 bool Arducam::start() {
     if (is_open) {
-        ROS_WARN("Arducam is already started");
+        std::cout << "Arducam is already started";
         return false;
     }
+    std::cout << "Opening video device " << this->device_num;
     this->capture = cv::VideoCapture(this->device_num, cv::CAP_V4L2);
     if (!this->capture.isOpened()){
-        ROS_ERROR("Error opening video capture: %d", this->device_num);
+        std::cerr << "Error opening video capture: " << this->device_num;
         throw std::runtime_error("Error opening video capture");
         return -1;
     }
@@ -126,14 +127,16 @@ bool Arducam::start() {
         write_dev(this->video_device, CHANNEL_SWITCH_REG, channel);
     }
     is_open = true;
+    std::cout << "Opened device " << this->device_num << " successfully";
     return true;
 }
 
 bool Arducam::stop() {
     if (!is_open) {
-        ROS_WARN("Arducam is already stop");
+        std::cerr << "Arducam is already stopped\n";
         return false;
     }
+    std::cout << "Closing video device " << this->device_num;
     this->capture.release();
     if (this->video_device >= 0) {
         close(this->video_device);
