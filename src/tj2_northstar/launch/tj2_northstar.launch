@@ -16,10 +16,10 @@
     </group>
 
     <node pkg="tf" type="static_transform_publisher" name="base_to_siren_center" args="0.1577 0.0 0.2867  0 0 0 1 base_tilt_link siren_center 20" />
-    <node pkg="tf" type="static_transform_publisher" name="siren_center_to_pivot_0" args="0.0 0.0 0.0  0.9962  -0.0000  0.0872  0.0000 siren_center pivot_0 20" />
-    <node pkg="tf" type="static_transform_publisher" name="siren_center_to_pivot_1" args="0.0 0.0 0.0  0.7044  0.7044  0.0616  -0.0616 siren_center pivot_1 20" />
-    <node pkg="tf" type="static_transform_publisher" name="siren_center_to_pivot_2" args="0.0 0.0 0.0  0.0000  0.9962  0.0000  -0.0872 siren_center pivot_2 20" />
-    <node pkg="tf" type="static_transform_publisher" name="siren_center_to_pivot_3" args="0.0 0.0 0.0  -0.7044  0.7044  -0.0616  -0.0616 siren_center pivot_3 20" />
+    <node pkg="tf" type="static_transform_publisher" name="siren_center_to_pivot_0" args="0.0 0.0 0.0  0.9969  -0.0000  0.0785  0.0000 siren_center pivot_0 20" />
+    <node pkg="tf" type="static_transform_publisher" name="siren_center_to_pivot_1" args="0.0 0.0 0.0  0.7049  0.7049  0.0555  -0.0555 siren_center pivot_1 20" />
+    <node pkg="tf" type="static_transform_publisher" name="siren_center_to_pivot_2" args="0.0 0.0 0.0  0.0000  0.9969  0.0000  -0.0785 siren_center pivot_2 20" />
+    <node pkg="tf" type="static_transform_publisher" name="siren_center_to_pivot_3" args="0.0 0.0 0.0  -0.7049  0.7049  -0.0555  -0.0555 siren_center pivot_3 20" />
 
     <node pkg="tf" type="static_transform_publisher" name="pivot_to_camera_0" args="0.0411 0.0 0.0033  0 0 0 1 pivot_0 camera_0 20" />
     <node pkg="tf" type="static_transform_publisher" name="pivot_to_camera_1" args="0.0411 0.0 0.0033  0 0 0 1 pivot_1 camera_1 20" />

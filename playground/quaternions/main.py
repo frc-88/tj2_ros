@@ -49,9 +49,9 @@ camera_optical_rotation = (0.5, -0.5, -0.5, -0.5)
 
 
 # print(quaternion_multiply((0.5, 0.5, 0.5, 0.5), quaternion_from_euler(0.0, 180.0, 0.0)))
-print_quaternion(quaternion_from_euler(180.0000, -10.0, 0.0000))
-print_quaternion(quaternion_from_euler(180.0000, -10.0, 90.0000))
-print_quaternion(quaternion_from_euler(180.0000, -10.0, 180.0000))
-print_quaternion(quaternion_from_euler(180.0000, -10.0, 270.0000))
+print_quaternion(quaternion_from_euler(180.0000, -9.0, 0.0000))
+print_quaternion(quaternion_from_euler(180.0000, -9.0, 90.0000))
+print_quaternion(quaternion_from_euler(180.0000, -9.0, 180.0000))
+print_quaternion(quaternion_from_euler(180.0000, -9.0, 270.0000))
 
 # print_quaternion(quaternion_from_euler(-90.0000, 0.0000, -90.0000))
