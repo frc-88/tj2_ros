@@ -3,22 +3,16 @@ project(tj2_match_watcher)
 
 find_package(catkin REQUIRED COMPONENTS
     rospy
-    geometry_msgs
     std_msgs
-    message_generation
-    genmsg
-    actionlib_msgs
-    actionlib
 )
 
 catkin_python_setup() # added if there is a setup.py. In this case for the node
 
 
 ## Generate services in the 'srv' folder
-add_service_files(
-    FILES
-    TriggerBag.srv
-)
+# add_service_files(
+#     FILES
+# )
 
 # add_action_files(
 #     DIRECTORY action
@@ -26,12 +20,12 @@ add_service_files(
 
 # )
 
-generate_messages(
-    DEPENDENCIES
-    std_msgs
-    geometry_msgs
-    actionlib_msgs
-)
+# generate_messages(
+#     DEPENDENCIES
+#     std_msgs
+#     geometry_msgs
+#     actionlib_msgs
+# )
 
 
 ## Specify additional locations of header files

@@ -19,28 +19,34 @@ class TJ2MatchWatcher(object):
             self.rospack = rospkg.RosPack()
             self.package_dir = self.rospack.get_path(self.node_name)
             self.default_launches_dir = self.package_dir + "/launch"
-            self.record_match_launch_path = self.default_launches_dir + "/record_match.launch"
+            self.record_match_launch_path = (
+                self.default_launches_dir + "/record_match.launch"
+            )
         if not os.path.isfile(self.record_match_launch_path):
-            raise RuntimeError("Record launch path does not exist: %s" % self.record_match_launch_path)
+            raise RuntimeError(
+                "Record launch path does not exist: %s" % self.record_match_launch_path
+            )
 
         self.bag_launcher = LaunchManager(self.record_match_launch_path)
 
-        self.start_recording_sub = rospy.Subscriber("/tj2/start_bag", Time, self.start_bag_callback, queue_size=10)
+        self.start_recording_sub = rospy.Subscriber(
+            "/tj2/start_bag", Time, self.start_bag_callback, queue_size=10
+        )
 
         rospy.loginfo("%s init complete" % self.node_name)
 
     def start_bag_callback(self, msg: Time):
         rospy.loginfo("Resuming match bag")
         self.start_bag()
-    
+
     def start_bag(self):
         rospy.loginfo("Resuming match bag")
         self.bag_launcher.start()
-    
+
     def stop_bag(self):
         rospy.loginfo("Stopping match bag")
         self.bag_launcher.stop()
-    
+
     def run(self):
         rospy.spin()
 

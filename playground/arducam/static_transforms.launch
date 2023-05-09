@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<launch>
-    <node pkg="tf" type="static_transform_publisher" name="base_to_camera_0" args="0.0 0.0 0.0  0 0 0 1 base_tilt_link camera_0 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_to_camera_1" args="0.0 0.0 0.0  0 0 0 1 base_tilt_link camera_1 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_to_camera_2" args="0.0 0.0 0.0  0 0 0 1 base_tilt_link camera_2 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_to_camera_3" args="0.0 0.0 0.0  0 0 0 1 base_tilt_link camera_3 20" />
-</launch>

@@ -1,0 +1,87 @@
+base_link_to_camera_tilt:
+  parent: base_tilt_link
+  child: camera_tilt_link
+  translate: [0.1983, 0.0, 0.229]
+  rotate: [0, 0, 0, 1]
+
+camera_armature_to_link:
+  parent: camera_armature_link
+  child: camera_link
+  translate: [0.0, 0.0, 0.0]
+  rotate: [0, 0, 0, 1]
+base_tilt_link_to_laser:
+  parent: base_tilt_link
+  child: laser
+  translate: [-0.0553, 0.116, 0.253]
+  rotate: [0, 0, 1, 0]
+base_tilt_link_to_imu:
+  parent: base_tilt_link
+  child: imu
+  translate: [0.0634, 0.0012, 0.2039]
+  rotate: [0.0000, 0.0000, 0.7071, 0.7071]
+
+base_to_siren_center:
+  parent: base_tilt_link
+  child: siren_center
+  translate: [0.1577, 0.0, 0.2867]
+  rotate: [0, 0, 0, 1]
+siren_center_to_pivot_0:
+  parent: siren_center
+  child: pivot_0
+  translate: [0.0, 0.0, 0.0]
+  rotate: [0.9969, -0.0000, 0.0785, 0.0000]
+siren_center_to_pivot_1:
+  parent: siren_center
+  child: pivot_1
+  translate: [0.0, 0.0, 0.0]
+  rotate: [0.7049, 0.7049, 0.0555, -0.0555]
+siren_center_to_pivot_2:
+  parent: siren_center
+  child: pivot_2
+  translate: [0.0, 0.0, 0.0]
+  rotate: [0.0000, 0.9969, 0.0000, -0.0785]
+siren_center_to_pivot_3:
+  parent: siren_center
+  child: pivot_3
+  translate: [0.0, 0.0, 0.0]
+  rotate: [-0.7049, 0.7049, -0.0555, -0.0555]
+pivot_to_camera_0:
+  parent: pivot_0
+  child: camera_0
+  translate: [0.0411, 0.0, 0.0033]
+  rotate: [0, 0, 0, 1]
+pivot_to_camera_1:
+  parent: pivot_1
+  child: camera_1
+  translate: [0.0411, 0.0, 0.0033]
+  rotate: [0, 0, 0, 1]
+pivot_to_camera_2:
+  parent: pivot_2
+  child: camera_2
+  translate: [0.0411, 0.0, 0.0033]
+  rotate: [0, 0, 0, 1]
+pivot_to_camera_3:
+  parent: pivot_3
+  child: camera_3
+  translate: [0.0411, 0.0, 0.0033]
+  rotate: [0, 0, 0, 1]
+camera_to_optical_0:
+  parent: camera_0
+  child: camera_optical_0
+  translate: [0.0, 0.0, 0.0]
+  rotate: [-0.5000, 0.5000, -0.5000, 0.5000]
+camera_to_optical_1:
+  parent: camera_1
+  child: camera_optical_1
+  translate: [0.0, 0.0, 0.0]
+  rotate: [-0.5000, 0.5000, -0.5000, 0.5000]
+camera_to_optical_2:
+  parent: camera_2
+  child: camera_optical_2
+  translate: [0.0, 0.0, 0.0]
+  rotate: [-0.5000, 0.5000, -0.5000, 0.5000]
+camera_to_optical_3:
+  parent: camera_3
+  child: camera_optical_3
+  translate: [0.0, 0.0, 0.0]
+  rotate: [-0.5000, 0.5000, -0.5000, 0.5000]

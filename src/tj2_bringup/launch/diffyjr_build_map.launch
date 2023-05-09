@@ -21,9 +21,9 @@
         <arg name="joint_names" value="$(find tj2_bringup)/config/diffyjr/joints.yaml"/>
     </include>
 
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_laser" args="-0.0553 0.116 0.253  0 0 1 0 base_tilt_link laser 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_imu" args="0.0634 0.0012 0.2039  0.0000  0.0000  0.7071  0.7071 base_tilt_link imu 33" />
+    <node pkg="tj2_description" type="static_transforms.py" name="static_transforms">
+        <rosparam file="$(find tj2_bringup)/config/diffyjr/static_transforms_build_map.yaml" command="load" ns="transforms"/>
+    </node>
 
     <include file="$(find tj2_description)/launch/tj2_description.launch">
         <arg name="model" value="$(find tj2_description)/urdf/diffyjr.urdf.xml"/>
