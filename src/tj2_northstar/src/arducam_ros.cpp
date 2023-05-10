@@ -128,7 +128,11 @@ ArducamROS::ArducamROS(ros::NodeHandle* node_handle) :
     ros::param::param<int>("~exposure", _exposure, 50);
     ros::param::param<int>("~analogue_gain", _analogue_gain, 1000);
 
-    _arducam = new Arducam(device_num, fourcc_code, -1, -1);
+    int size_param;
+    ros::param::param<int>("~size", size_param, 0);
+    ArducamResolution size = static_cast<ArducamResolution>(size_param);
+
+    _arducam = new Arducam(device_num, fourcc_code, size);
     
     _combined_pub = _image_transport.advertise(_prefix + "/image_raw", 1);
     _info_array_pub = nh.advertise<tj2_interfaces::CameraInfoArray>(_prefix + "/camera_info", 1);

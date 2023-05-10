@@ -1,0 +1,21 @@
+<launch>
+    <arg name="camera_num" default="0"/>
+    <arg name="board_width" default="5"/>
+    <arg name="board_height" default="8"/>
+
+    <group ns="northstar">
+        <node name="decompress_arducam" pkg="image_transport" type="republish" output="screen" required="false" args="
+            compressed
+            in:=camera_$(arg camera_num)/image_raw
+            raw
+            out:=calibration_image
+        "/>
+        <node pkg="tj2_northstar" type="record_calibration.py" name="arducam_record_calibration" required="true" output="screen">
+            <param name="camera_num" value="$(arg camera_num)"/>
+            <param name="board_width" value="$(arg board_width)"/>
+            <param name="board_height" value="$(arg board_height)"/>
+            <param name="directory" value="$(find tj2_bringup)/config/diffyjr/config/northstar/calibration"/>
+            <remap from="image_raw" to="calibration_image"/>
+        </node>
+    </group>
+</launch>

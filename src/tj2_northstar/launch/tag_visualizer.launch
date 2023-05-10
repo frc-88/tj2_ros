@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <group ns="northstar">
-        <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen"/>
+        <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen">
+            <param name="marker_publish_rate" value="50"/>
+        </node>
     </group>
 </launch>

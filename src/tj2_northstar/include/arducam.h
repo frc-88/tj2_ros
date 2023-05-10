@@ -13,6 +13,11 @@
 #include <linux/videodev2.h>
 #include <opencv2/opencv.hpp>
 
+typedef enum {
+    SIZE_5120x800=0,
+    SIZE_5120x720=1,
+    SIZE_2560x400=2
+} ArducamResolution;
 
 const int IOC_NRBITS = 8;
 const int IOC_TYPEBITS = 8;
@@ -97,6 +102,7 @@ int to_format_value(std::string code);
 class Arducam
 {
 private:
+    ArducamResolution size;
     int width, height, depth;
     int convert_code;
     bool convert_to_rgb;
@@ -115,7 +121,7 @@ private:
     bool is_nvidia_nx();
     cv::Mat convert(const cv::Mat &frame);
 public:
-    Arducam(int device_num, std::string fourcc_code, int width = -1, int height = -1, int channel = -1);
+    Arducam(int device_num, std::string fourcc_code, ArducamResolution size = SIZE_5120x800, int channel = -1);
     ~Arducam();
     bool start();
     bool stop();

@@ -1,10 +1,9 @@
 #include <arducam.h>
 
-Arducam::Arducam(int device_num, std::string fourcc_code, int width, int height, int channel)
+Arducam::Arducam(int device_num, std::string fourcc_code, ArducamResolution size, int channel)
 {
     this->device_num = device_num;
-    this->width = width;
-    this->height = height;
+    this->size = size;
     this->channel = channel;
     this->is_open = false;
     this->depth = 0;
@@ -116,14 +115,14 @@ bool Arducam::start() {
         this->capture.set(cv::CAP_PROP_CONVERT_RGB, 0);
     }
     if (width > 0) {
-        this->capture.set(cv::CAP_PROP_FRAME_WIDTH, width);
+        this->capture.set(cv::CAP_PROP_FRAME_WIDTH, this->width);
     }
     if (height > 0) {
-        this->capture.set(cv::CAP_PROP_FRAME_HEIGHT, height);
+        this->capture.set(cv::CAP_PROP_FRAME_HEIGHT, this->height);
     }
 
     if (0 <= channel && channel < 4) {
-        write_dev(this->video_device, CHANNEL_SWITCH_REG, channel);
+        write_dev(this->video_device, CHANNEL_SWITCH_REG, this->channel);
     }
 
     is_open = true;
@@ -236,6 +235,23 @@ void Arducam::update_pixel_format()
         else {
             depth = 10;
         }
+    }
+
+    switch (this->size)
+    {
+    case SIZE_5120x720:
+        this->width = 5120;
+        this->height = 720;
+        break;
+    case SIZE_2560x400:
+        this->width = 2560;
+        this->height = 400;
+        break;
+    case SIZE_5120x800:
+    default:
+        this->width = 5120;
+        this->height = 800;
+        break;
     }
 }
 
