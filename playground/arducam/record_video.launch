@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_record_arducam" output="screen"
+       args="record -o /media/storage/bags/arducam
+            /northstar/camera/image_raw
+            /tj2_zed/rgb/image_rect_color
+            " />
+</launch>

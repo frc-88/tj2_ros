@@ -118,5 +118,14 @@
     "variant": "cpp",
     "bit": "cpp",
     "*.ipp": "cpp"
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/*/**": true,
+    "**/dataset_builder/data/*/**": true,
+    "**/dataset_builder/charged_up_2023/wandb/*/**": true,
+    "**/playground/bounce_trajectories/data/*/**": true,
+    "**/playground/swerve/swerve_bag_plotter/data/*/**": true
   }
 }

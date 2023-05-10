@@ -1,14 +1,16 @@
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <linux/videodev2.h>
+#include <sstream>
 
-#include <sys/stat.h>
+#include <linux/videodev2.h>
 #include <opencv2/opencv.hpp>
 
 
@@ -107,6 +109,8 @@ private:
     cv::VideoCapture capture;
     int video_device;
 
+    void set_parameter(std::string name, int value);
+    
     void update_pixel_format();
     bool is_nvidia_nx();
     cv::Mat convert(const cv::Mat &frame);
@@ -116,4 +120,10 @@ public:
     bool start();
     bool stop();
     bool read(cv::Mat &result_frame);
+
+    void set_frame_rate(int frame_rate);
+    void set_frame_timeout(int frame_timeout);
+    void set_low_latency_mode(bool low_latency_mode);
+    void set_exposure(int exposure);
+    void set_analogue_gain(int analogue_gain);
 };

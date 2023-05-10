@@ -8,6 +8,7 @@
             <param name="topic_prefix" value="camera" />
             <param name="info_directory" value="$(find tj2_bringup)/config/diffyjr/northstar/calibration" />
             <param name="device_num" value="0" />
+            <param name="publish_rate" value="40.0" />
             <param name="publish_tag_detections_image" type="bool" value="$(arg publish_tag_detections_image)" />
         </node>
 
@@ -18,7 +19,7 @@
             <remap from="image_raw" to="camera/image_raw"/>
         </node> -->
 
-        <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
+        <!-- <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
             <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>
             <arg name="apriltag_tags" value="$(arg apriltag_tags)"/>
             <arg name="node_name" value="apriltag_camera_0"/>
@@ -45,7 +46,7 @@
             <arg name="node_name" value="apriltag_camera_3"/>
             <arg name="camera_info_topic" value="camera_3/camera_info"/>
             <arg name="image_rect_topic" value="camera_3/image_raw"/>
-        </include>
+        </include> -->
     </group>
 
 </launch>

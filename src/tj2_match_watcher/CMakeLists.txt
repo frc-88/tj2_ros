@@ -40,7 +40,7 @@ include_directories(
 # )
 
 catkin_package(
-    CATKIN_DEPENDS rospy std_msgs message_runtime
+    CATKIN_DEPENDS rospy std_msgs
 )
 
 # catkin_install_python(PROGRAMS src/tj2_match_watcher/central_planning.py

@@ -28,7 +28,5 @@
         <arg name="amcl_config" value="$(find tj2_bringup)/config/diffyjr/amcl.yaml"/>
     </include>
 
-    <node pkg="tj2_description" type="static_transforms.py" name="static_transforms">
-        <rosparam file="$(find tj2_bringup)/config/diffyjr/static_transforms_build_map.yaml" command="load" ns="transforms"/>
-    </node>
+    <include file="$(find tj2_bringup)/config/diffyjr/static_transforms_diffyjr.launch"/>
 </launch>

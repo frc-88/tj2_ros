@@ -60,9 +60,17 @@ private:
     tj2_interfaces::CameraInfoArray _info_array;
     double _publish_rate;
 
+    int _frame_rate;
+    int _frame_timeout;
+    bool _low_latency_mode;
+    int _exposure;
+    int _analogue_gain;
+
     image_transport::ImageTransport _image_transport;
     image_transport::Publisher _combined_pub;
     ros::Publisher _info_array_pub;
+
+    void set_camera_parameters();
     
 public:
     ArducamROS(ros::NodeHandle* node_handle);

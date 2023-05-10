@@ -41,7 +41,7 @@ int to_format_value(std::string code)
         code += " ";
     }
     if (code.size() > 4) {
-        std::cerr << "Invalid format code: " << code;
+        std::cerr << "Invalid format code: " << code << std::endl;
         throw std::runtime_error("Invalid format code");
     }
     return to_fourcc(code.at(0), code.at(1), code.at(2), code.at(3));
@@ -51,7 +51,7 @@ int open_video_device(int device_num) {
     std::string device_path = "/dev/video" + std::to_string(device_num);
     int vd = open(device_path.c_str(), O_RDWR);
     if (vd < 0) {
-        std::cerr << "Error opening video device: " << device_path;
+        std::cerr << "Error opening video device: " << device_path << std::endl;
         throw std::runtime_error("Error opening video device");
     }
     return vd;
@@ -95,16 +95,15 @@ int get_pixel_format(int vd, uint32_t &pixel_format) {
     return ret;
 }
 
-
 bool Arducam::start() {
     if (is_open) {
-        std::cout << "Arducam is already started";
+        std::cout << "Arducam is already started" << std::endl;
         return false;
     }
-    std::cout << "Opening video device " << this->device_num;
+    std::cout << "Opening video device " << this->device_num << std::endl;
     this->capture = cv::VideoCapture(this->device_num, cv::CAP_V4L2);
     if (!this->capture.isOpened()){
-        std::cerr << "Error opening video capture: " << this->device_num;
+        std::cerr << "Error opening video capture: " << this->device_num << std::endl;
         throw std::runtime_error("Error opening video capture");
         return -1;
     }
@@ -126,17 +125,44 @@ bool Arducam::start() {
     if (0 <= channel && channel < 4) {
         write_dev(this->video_device, CHANNEL_SWITCH_REG, channel);
     }
+
     is_open = true;
-    std::cout << "Opened device " << this->device_num << " successfully";
+    std::cout << "Opened device " << this->device_num << " successfully" << std::endl;
     return true;
+}
+
+void Arducam::set_parameter(std::string name, int value) {
+    std::stringstream command;
+    command << "/usr/bin/v4l2-ctl -d /dev/video" << this->device_num << " -c " << name << "=" << value;
+    std::system(command.str().c_str());
+}
+
+void Arducam::set_frame_rate(int frame_rate) {
+    set_parameter("frame_rate", frame_rate);
+}
+
+void Arducam::set_frame_timeout(int frame_timeout) {
+    set_parameter("frame_timeout", frame_timeout);
+}
+
+void Arducam::set_low_latency_mode(bool low_latency_mode) {
+    set_parameter("low_latency_mode", (int)low_latency_mode);
+}
+
+void Arducam::set_exposure(int exposure) {
+    set_parameter("exposure", exposure);
+}
+
+void Arducam::set_analogue_gain(int analogue_gain) {
+    set_parameter("analogue_gain", analogue_gain);
 }
 
 bool Arducam::stop() {
     if (!is_open) {
-        std::cerr << "Arducam is already stopped\n";
+        std::cerr << "Arducam is already stopped" << std::endl;
         return false;
     }
-    std::cout << "Closing video device " << this->device_num;
+    std::cout << "Closing video device " << this->device_num << std::endl;
     this->capture.release();
     if (this->video_device >= 0) {
         close(this->video_device);

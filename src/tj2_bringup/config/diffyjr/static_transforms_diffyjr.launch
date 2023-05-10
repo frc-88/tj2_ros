@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.1983 0.0 0.229  0 0 0 1 base_tilt_link camera_tilt_link" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_armature_to_link" args="0.0 0.0 0.0  0 0 0 1 camera_armature_link camera_link" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_tilt_link_to_laser" args="-0.0553 0.116 0.253  0 0 1 0 base_tilt_link laser" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_tilt_link_to_imu" args="0.0634 0.0012 0.2039  0.0000  0.0000  0.7071  0.7071 base_tilt_link imu" />
+    <!-- Enable these two TFs if imu_joint is disabled -->
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" -->
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="camera_tilt_to_armature" args="0.0 0.0 0.0  0 0 0 1 camera_tilt_link camera_armature_link 20" -->
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_siren_center" args="0.1577 0.0 0.2867  0 0 0 1 base_tilt_link siren_center" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="siren_center_to_pivot_0" args="0.0 0.0 0.0  0.9969  -0.0000  0.0785  0.0000 siren_center pivot_0" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="siren_center_to_pivot_1" args="0.0 0.0 0.0  0.7049  0.7049  0.0555  -0.0555 siren_center pivot_1" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="siren_center_to_pivot_2" args="0.0 0.0 0.0  0.0000  0.9969  0.0000  -0.0785 siren_center pivot_2" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="siren_center_to_pivot_3" args="0.0 0.0 0.0  -0.7049  0.7049  -0.0555  -0.0555 siren_center pivot_3" />
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="pivot_to_camera_0" args="0.0411 0.0 0.0033  0 0 0 1 pivot_0 camera_0" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="pivot_to_camera_1" args="0.0411 0.0 0.0033  0 0 0 1 pivot_1 camera_1" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="pivot_to_camera_2" args="0.0411 0.0 0.0033  0 0 0 1 pivot_2 camera_2" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="pivot_to_camera_3" args="0.0411 0.0 0.0033  0 0 0 1 pivot_3 camera_3" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_optical_0" args="0.0 0.0 0.0  -0.5000  0.5000  -0.5000  0.5000 camera_0 camera_optical_0" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_optical_1" args="0.0 0.0 0.0  -0.5000  0.5000  -0.5000  0.5000 camera_1 camera_optical_1" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_optical_2" args="0.0 0.0 0.0  -0.5000  0.5000  -0.5000  0.5000 camera_2 camera_optical_2" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_optical_3" args="0.0 0.0 0.0  -0.5000  0.5000  -0.5000  0.5000 camera_3 camera_optical_3" />
+</launch>

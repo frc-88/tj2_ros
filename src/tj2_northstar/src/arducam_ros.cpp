@@ -122,8 +122,14 @@ ArducamROS::ArducamROS(ros::NodeHandle* node_handle) :
 
     ros::param::param<double>("~publish_rate", _publish_rate, 20.0);
 
-    _arducam = new Arducam(device_num, fourcc_code, -1, -1);
+    ros::param::param<int>("~frame_rate", _frame_rate, 60);
+    ros::param::param<int>("~frame_timeout_ms", _frame_timeout, 200);
+    ros::param::param<bool>("~low_latency_mode", _low_latency_mode, true);
+    ros::param::param<int>("~exposure", _exposure, 50);
+    ros::param::param<int>("~analogue_gain", _analogue_gain, 1000);
 
+    _arducam = new Arducam(device_num, fourcc_code, -1, -1);
+    
     _combined_pub = _image_transport.advertise(_prefix + "/image_raw", 1);
     _info_array_pub = nh.advertise<tj2_interfaces::CameraInfoArray>(_prefix + "/camera_info", 1);
     _info_array.cameras.resize(NUM_CAMERAS);
@@ -140,7 +146,10 @@ ArducamROS::~ArducamROS()
 
 int ArducamROS::run() {
     _arducam->start();
+    ros::Time reset_timer = ros::Time::now();
+    bool parameters_set = false;
     ros::Rate clock_rate(_publish_rate);  // Hz
+
     while (ros::ok()) {
         ros::spinOnce();
         clock_rate.sleep();
@@ -152,7 +161,13 @@ int ArducamROS::run() {
             ros::Duration(0.25).sleep();
             _arducam->start();
             ros::Duration(0.25).sleep();
+            parameters_set = false;
+            reset_timer = ros::Time::now();
             continue;
+        }
+        if (!parameters_set && ros::Time::now() - reset_timer > ros::Duration(3.0)) {
+            set_camera_parameters();
+            parameters_set = true;
         }
         if (_combined_pub.getNumSubscribers() > 0) {
             sensor_msgs::ImagePtr combined_msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", image).toImageMsg();
@@ -171,6 +186,14 @@ int ArducamROS::run() {
         }
     }
     return 0;
+}
+
+void ArducamROS::set_camera_parameters() {
+    _arducam->set_frame_rate(_frame_rate);
+    _arducam->set_frame_timeout(_frame_timeout);
+    _arducam->set_low_latency_mode(_low_latency_mode);
+    _arducam->set_exposure(_exposure);
+    _arducam->set_analogue_gain(_analogue_gain);
 }
 
 
