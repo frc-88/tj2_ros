@@ -20,7 +20,9 @@ RUN python -m pip install -U scipy==1.5.4 \
     jsonlines \
     PyQt5==5.10.1 \
     mypy \
-    v4l2-fix
+    v4l2-fix \
+    tqdm \
+    pynput
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
