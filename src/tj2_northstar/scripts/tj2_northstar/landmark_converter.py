@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+from typing import List, Optional
+import numpy as np
+import rospy
+import tf2_ros
+import tf2_geometry_msgs
+import tf.transformations
+
+from apriltag_ros.msg import AprilTagDetectionArray
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseStamped
+
+from tj2_tools.transforms import lookup_transform
+
+
+class LandmarkConverter:
+    def __init__(self) -> None:
+        rospy.init_node("landmark_converter")
+
+        self.base_frame = str(rospy.get_param("~base_frame", "base_link"))
+        self.landmark_frame = str(rospy.get_param("~landmark_frame", "landmark_link"))
+        self.landmark_ids = frozenset(rospy.get_param("~landmark_ids", [0]))
+        base_covariance = rospy.get_param(
+            "~covariance", np.eye(6, dtype=np.float64).flatten().tolist()
+        )
+        assert (
+            len(base_covariance) == 36
+        ), f"Invalid covariance. Length is {len(base_covariance)}: {base_covariance}"
+        self.base_covariance = np.array(base_covariance).reshape((6, 6))
+
+        self.landmark = Odometry()
+        self.landmark.header.frame_id = self.landmark_frame
+        self.landmark.child_frame_id = self.base_frame
+
+        self.buffer = tf2_ros.Buffer()
+        self.transform_listener = tf2_ros.TransformListener(self.buffer)
+
+        self.tag_sub = rospy.Subscriber(
+            "tag_detections", AprilTagDetectionArray, self.tags_callback, queue_size=10
+        )
+        self.landmark_pub = rospy.Publisher("landmark", Odometry, queue_size=10)
+
+    def tags_callback(self, msg: AprilTagDetectionArray) -> None:
+        assert msg.detections is not None
+        landmark_pose: Optional[PoseStamped] = None
+        individual_measurements = []
+        for detection in msg.detections:
+            ids = frozenset(detection.id)
+            detection_pose = PoseStamped()
+            detection_pose.header = detection.pose.header
+            detection_pose.pose = detection.pose.pose.pose
+            if self.landmark_ids == ids:
+                landmark_pose = detection_pose
+            elif len(ids) == 1:
+                individual_measurements.append(detection_pose)
+        if landmark_pose is not None:
+            self.publish_landmark(landmark_pose)
+        if len(individual_measurements) > 0:
+            self.update_covariance(individual_measurements)
+
+    def publish_landmark(self, pose: PoseStamped) -> None:
+        transform = lookup_transform(self.buffer, self.base_frame, pose.header.frame_id)
+        if transform is None:
+            return
+        reverse_pose = tf2_geometry_msgs.do_transform_pose(pose, transform)
+        translation = (
+            reverse_pose.pose.position.x,
+            reverse_pose.pose.position.y,
+            reverse_pose.pose.position.z,
+        )
+        rotation = (
+            reverse_pose.pose.orientation.x,
+            reverse_pose.pose.orientation.y,
+            reverse_pose.pose.orientation.z,
+            reverse_pose.pose.orientation.w,
+        )
+        transform_mat = tf.transformations.concatenate_matrices(
+            tf.transformations.translation_matrix(translation),
+            tf.transformations.quaternion_matrix(rotation),
+        )
+        inverse_mat = tf.transformations.inverse_matrix(transform_mat)
+
+        forward_translation = tf.transformations.translation_from_matrix(inverse_mat)
+        forward_rotation = tf.transformations.quaternion_from_matrix(inverse_mat)
+        self.landmark.header.stamp = pose.header.stamp
+        self.landmark.pose.pose.position.x = forward_translation[0]
+        self.landmark.pose.pose.position.y = forward_translation[1]
+        self.landmark.pose.pose.position.z = forward_translation[2]
+        self.landmark.pose.pose.orientation.x = forward_rotation[0]
+        self.landmark.pose.pose.orientation.y = forward_rotation[1]
+        self.landmark.pose.pose.orientation.z = forward_rotation[2]
+        self.landmark.pose.pose.orientation.w = forward_rotation[3]
+
+        self.landmark_pub.publish(self.landmark)
+
+    def num_tags_covariance_scale(self, num_tags: int) -> float:
+        if num_tags == 0:
+            raise ValueError("Can't compute covariance with no measurements!")
+        # 1 -> 1
+        # 2 -> 0.5
+        # 3 -> 0.25
+        # 4 -> 0.125
+        scale = 1.0 / (2 ** (num_tags - 1))
+        return scale
+
+    def pose_distance_covariance_scale(self, distance: float) -> float:
+        if distance < 0.5:
+            return 10.0
+        return 0.25 * distance**2.0
+
+    def get_pose_distance(self, pose: PoseStamped) -> float:
+        return float(
+            np.linalg.norm(
+                [
+                    pose.pose.position.x,
+                    pose.pose.position.y,
+                    pose.pose.position.z,
+                ]
+            )
+        )
+
+    def update_covariance(self, poses: List[PoseStamped]) -> None:
+        distances = [self.get_pose_distance(pose) for pose in poses]
+        aggregate_distance = float(np.median(distances))
+
+        covariance = self.base_covariance * self.num_tags_covariance_scale(len(poses))
+        covariance *= self.pose_distance_covariance_scale(aggregate_distance)
+        self.landmark.pose.covariance = covariance.flatten().tolist()
+
+    def run(self) -> None:
+        rospy.spin()
+
+
+if __name__ == "__main__":
+    node = LandmarkConverter()
+    node.run()

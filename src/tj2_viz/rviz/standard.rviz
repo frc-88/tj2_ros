@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /RobotModel1
-        - /TF1
         - /TF1/Frames1
         - /Object Markers1/Namespaces1
         - /ZED1/Visibility1
@@ -133,6 +132,8 @@ Visualization Manager:
           Value: true
         camera_tilt_link:
           Value: false
+        field:
+          Value: true
         imu:
           Value: false
         laser:
@@ -159,6 +160,16 @@ Visualization Manager:
           Value: false
         swerve_wheel_3:
           Value: false
+        tag1:
+          Value: true
+        tag3:
+          Value: true
+        tag4:
+          Value: true
+        tag5:
+          Value: true
+        tag8:
+          Value: true
         zed2_baro_link:
           Value: false
         zed2_base_link:
@@ -221,19 +232,27 @@ Visualization Manager:
                   pivot_0:
                     camera_0:
                       camera_optical_0:
-                        {}
+                        field:
+                          {}
+                        tag1:
+                          {}
+                        tag5:
+                          {}
                   pivot_1:
                     camera_1:
                       camera_optical_1:
-                        {}
+                        tag8:
+                          {}
                   pivot_2:
                     camera_2:
                       camera_optical_2:
-                        {}
+                        tag4:
+                          {}
                   pivot_3:
                     camera_3:
                       camera_optical_3:
-                        {}
+                        tag3:
+                          {}
                 swerve_wheel_0:
                   {}
                 swerve_wheel_1:
@@ -792,10 +811,7 @@ Visualization Manager:
       Marker Topic: /tj2/charged_up_perception/markers
       Name: Perception Markers
       Namespaces:
-        cone-ARROW: true
-        cone-CUBE: true
-        cube-ARROW: true
-        cube-CUBE: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -888,7 +904,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.925660610198975
+      Distance: 11.082743644714355
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -896,17 +912,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.6813120245933533
-        Y: -1.0295484066009521
-        Z: 0.48548293113708496
+        X: -5.484234809875488
+        Y: 3.7157561779022217
+        Z: -0.38561955094337463
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5347979664802551
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 0.9580695629119873
+      Yaw: 1.1312522888183594
     Saved: ~
 Window Geometry:
   Camera:

@@ -65,10 +65,11 @@ class TagMarkerPublisher:
     def tag_callback(self, msg: AprilTagDetectionArray):
         base_detections = AprilTagDetectionArray()
         for detection in msg.detections:
-            pose: Pose = detection.pose.pose.pose
-            detection.pose.pose.pose.orientation = self.rotate_tag_orientation(
-                pose.orientation, self.rotate_quat
-            )
+            if len(detection.id) == 1:
+                pose: Pose = detection.pose.pose.pose
+                detection.pose.pose.pose.orientation = self.rotate_tag_orientation(
+                    pose.orientation, self.rotate_quat
+                )
             new_detection = self.transform_tag_to_base(detection)
             if new_detection is None:
                 continue
@@ -132,13 +133,13 @@ class TagMarkerPublisher:
     ) -> Quaternion:
         rotate_mat = Rotation.from_quat(rotate_quat)  # type: ignore
         tag_mat = Rotation.from_quat(
-            (
+            (  # type: ignore
                 tag_orientation.x,
                 tag_orientation.y,
                 tag_orientation.z,
                 tag_orientation.w,
             )
-        )  # type: ignore
+        )
         rotated_tag = tag_mat * rotate_mat
         return Quaternion(*rotated_tag.as_quat())
 
@@ -186,7 +187,8 @@ class TagMarkerPublisher:
             markers.markers.append(y_position_marker)
             markers.markers.append(z_position_marker)
             markers.markers.append(text_marker)
-            markers.markers.append(square_marker)
+            if len(detection.id) == 1:
+                markers.markers.append(square_marker)
         self.marker_pub.publish(markers)
 
     def prep_position_marker(

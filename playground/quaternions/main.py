@@ -14,7 +14,7 @@ def quaternion_from_euler(roll, pitch, yaw):
     pitch = math.radians(pitch)
     yaw = math.radians(yaw)
     quat = tf_conversions.transformations.quaternion_from_euler(roll, pitch, yaw)
-    # print_quaternion(quat)
+    print_quaternion(quat)
     return quat
 
 
@@ -37,21 +37,14 @@ def quaternion_multiply(rotate_quat, quat):
     return rotated.as_quat()
 
 
-# euler_from_quaternion(0.0000, 0.0000, -0.7071, 0.7071)
-# euler_from_quaternion(-0.0145, -0.0063, 0.2245, 0.9743)
-# euler_from_quaternion(-0.0147, 0.0058, -0.5302, 0.8477)
-# euler_from_quaternion(0.0872,  -0.0000,  0.9962,  0.0000)
-# quaternion_from_euler(0.0000,  -13.5,  0.0000)
-# quaternion_from_euler(0.0, -42.5124239, 180.0)
-# quaternion_from_euler(90.0, 0.0, 90.0)
+# euler_from_quaternion(0.5, 0.5, 0.5, 0.5)
+quaternion_from_euler(-90.0, 0.0, 90.0)
 
-camera_optical_rotation = (0.5, -0.5, -0.5, -0.5)
+# camera_optical_rotation = (0.5, -0.5, -0.5, -0.5)
 
 
 # print(quaternion_multiply((0.5, 0.5, 0.5, 0.5), quaternion_from_euler(0.0, 180.0, 0.0)))
-print_quaternion(quaternion_from_euler(180.0000, -9.0, 0.0000))
-print_quaternion(quaternion_from_euler(180.0000, -9.0, 90.0000))
-print_quaternion(quaternion_from_euler(180.0000, -9.0, 180.0000))
-print_quaternion(quaternion_from_euler(180.0000, -9.0, 270.0000))
-
-# print_quaternion(quaternion_from_euler(-90.0000, 0.0000, -90.0000))
+# print_quaternion(quaternion_from_euler(180.0000, -9.0, 0.0000))
+# print_quaternion(quaternion_from_euler(180.0000, -9.0, 90.0000))
+# print_quaternion(quaternion_from_euler(180.0000, -9.0, 180.0000))
+# print_quaternion(quaternion_from_euler(180.0000, -9.0, 270.0000))
