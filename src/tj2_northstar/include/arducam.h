@@ -115,7 +115,7 @@ private:
     cv::VideoCapture capture;
     int video_device;
 
-    void set_parameter(std::string name, int value);
+    int set_parameter(std::string name, int value);
     
     void update_pixel_format();
     bool is_nvidia_nx();
@@ -127,9 +127,9 @@ public:
     bool stop();
     bool read(cv::Mat &result_frame);
 
-    void set_frame_rate(int frame_rate);
-    void set_frame_timeout(int frame_timeout);
-    void set_low_latency_mode(bool low_latency_mode);
-    void set_exposure(int exposure);
-    void set_analogue_gain(int analogue_gain);
+    int set_frame_rate(int frame_rate);
+    int set_frame_timeout(int frame_timeout);
+    int set_low_latency_mode(bool low_latency_mode);
+    int set_exposure(int exposure);
+    int set_analogue_gain(int analogue_gain);
 };

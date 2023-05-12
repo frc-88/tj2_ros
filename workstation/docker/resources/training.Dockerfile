@@ -1,4 +1,4 @@
-FROM tj2_ros_workstation:latest
+FROM tj2_ros_workstation:latest as tj2_ros_workstation
 
 USER root
 
@@ -45,6 +45,53 @@ RUN python3 setup.py install
 
 RUN rm -r /tmp/*
 
-USER ${USER}
-RUN sudo chown -R 1000:1000 ${HOME}
+FROM nvidia/cuda:12.1.1-devel-ubuntu20.04
+COPY --from=tj2_ros_workstation / /tmp/tj2_ros_workstation
+RUN apt-get update && apt-get install rsync -y
+RUN rm -r /tmp/tj2_ros_workstation/sys && \
+    rsync -rtul --ignore-existing /tmp/tj2_ros_workstation/* /
+RUN rm -r /tmp/*
+
+# ---
+# User setup
+# ---
+
+ENV USER=tj2
+
+
+RUN groupadd -g 1000 ${USER} && \
+    useradd -r -u 1000 -m -s /bin/bash -g ${USER} \
+    -G dialout,plugdev,video,audio,sudo ${USER}
+
+ENV HOME=/home/${USER}
+RUN mkdir -p ${HOME}
 WORKDIR ${HOME}
+
+RUN adduser ${USER} sudo && \
+  echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+RUN chown -R 1000:1000 ${HOME}
+
+# ---
+# ROS build environment
+# ---
+
+ENV ROS_DISTRO=noetic
+ENV ROS_WS_ROOT=${HOME}/ros_ws
+ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
+
+ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
+ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
+
+ENV FLASK_ENV=development
+ENV PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
+
+
+# ---
+# tj2_ros launch environment
+# ---
+
+WORKDIR ${HOME}
+USER ${USER}
+
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]

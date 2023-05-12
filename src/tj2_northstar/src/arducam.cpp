@@ -130,30 +130,30 @@ bool Arducam::start() {
     return true;
 }
 
-void Arducam::set_parameter(std::string name, int value) {
+int Arducam::set_parameter(std::string name, int value) {
     std::stringstream command;
     command << "/usr/bin/v4l2-ctl -d /dev/video" << this->device_num << " -c " << name << "=" << value;
-    std::system(command.str().c_str());
+    return std::system(command.str().c_str());
 }
 
-void Arducam::set_frame_rate(int frame_rate) {
-    set_parameter("frame_rate", frame_rate);
+int Arducam::set_frame_rate(int frame_rate) {
+    return set_parameter("frame_rate", frame_rate);
 }
 
-void Arducam::set_frame_timeout(int frame_timeout) {
-    set_parameter("frame_timeout", frame_timeout);
+int Arducam::set_frame_timeout(int frame_timeout) {
+    return set_parameter("frame_timeout", frame_timeout);
 }
 
-void Arducam::set_low_latency_mode(bool low_latency_mode) {
-    set_parameter("low_latency_mode", (int)low_latency_mode);
+int Arducam::set_low_latency_mode(bool low_latency_mode) {
+    return set_parameter("low_latency_mode", (int)low_latency_mode);
 }
 
-void Arducam::set_exposure(int exposure) {
-    set_parameter("exposure", exposure);
+int Arducam::set_exposure(int exposure) {
+    return set_parameter("exposure", exposure);
 }
 
-void Arducam::set_analogue_gain(int analogue_gain) {
-    set_parameter("analogue_gain", analogue_gain);
+int Arducam::set_analogue_gain(int analogue_gain) {
+    return set_parameter("analogue_gain", analogue_gain);
 }
 
 bool Arducam::stop() {

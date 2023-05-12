@@ -43,7 +43,6 @@ RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-catkin \
     ros-noetic-tf \
     ros-noetic-rviz \
-    ros-noetic-apriltag-ros \
     ros-noetic-topic-tools \
     ros-noetic-joy \
     ros-noetic-roscpp \
