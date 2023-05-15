@@ -7,8 +7,7 @@ import tf2_geometry_msgs
 import tf.transformations
 
 from apriltag_ros.msg import AprilTagDetectionArray
-from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 
 from tj2_tools.transforms import lookup_transform
 
@@ -18,7 +17,6 @@ class LandmarkConverter:
         rospy.init_node("landmark_converter")
 
         self.base_frame = str(rospy.get_param("~base_frame", "base_link"))
-        self.landmark_frame = str(rospy.get_param("~landmark_frame", "landmark_link"))
         self.landmark_ids = frozenset(rospy.get_param("~landmark_ids", [0]))
         base_covariance = rospy.get_param(
             "~covariance", np.eye(6, dtype=np.float64).flatten().tolist()
@@ -28,9 +26,8 @@ class LandmarkConverter:
         ), f"Invalid covariance. Length is {len(base_covariance)}: {base_covariance}"
         self.base_covariance = np.array(base_covariance).reshape((6, 6))
 
-        self.landmark = Odometry()
-        self.landmark.header.frame_id = self.landmark_frame
-        self.landmark.child_frame_id = self.base_frame
+        self.landmark = PoseWithCovarianceStamped()
+        self.landmark.header.frame_id = self.base_frame
 
         self.buffer = tf2_ros.Buffer()
         self.transform_listener = tf2_ros.TransformListener(self.buffer)
@@ -38,7 +35,9 @@ class LandmarkConverter:
         self.tag_sub = rospy.Subscriber(
             "tag_detections", AprilTagDetectionArray, self.tags_callback, queue_size=10
         )
-        self.landmark_pub = rospy.Publisher("landmark", Odometry, queue_size=10)
+        self.landmark_pub = rospy.Publisher(
+            "landmark", PoseWithCovarianceStamped, queue_size=10
+        )
 
     def tags_callback(self, msg: AprilTagDetectionArray) -> None:
         assert msg.detections is not None
@@ -59,9 +58,15 @@ class LandmarkConverter:
             self.update_covariance(individual_measurements)
 
     def publish_landmark(self, pose: PoseStamped) -> None:
+        # pose = self.invert_transform_pose(pose)
+        self.landmark.header = pose.header
+        self.landmark.pose.pose = pose.pose
+        self.landmark_pub.publish(self.landmark)
+
+    def invert_transform_pose(self, pose: PoseStamped) -> Optional[PoseStamped]:
         transform = lookup_transform(self.buffer, self.base_frame, pose.header.frame_id)
         if transform is None:
-            return
+            return None
         reverse_pose = tf2_geometry_msgs.do_transform_pose(pose, transform)
         translation = (
             reverse_pose.pose.position.x,
@@ -82,16 +87,16 @@ class LandmarkConverter:
 
         forward_translation = tf.transformations.translation_from_matrix(inverse_mat)
         forward_rotation = tf.transformations.quaternion_from_matrix(inverse_mat)
-        self.landmark.header.stamp = pose.header.stamp
-        self.landmark.pose.pose.position.x = forward_translation[0]
-        self.landmark.pose.pose.position.y = forward_translation[1]
-        self.landmark.pose.pose.position.z = forward_translation[2]
-        self.landmark.pose.pose.orientation.x = forward_rotation[0]
-        self.landmark.pose.pose.orientation.y = forward_rotation[1]
-        self.landmark.pose.pose.orientation.z = forward_rotation[2]
-        self.landmark.pose.pose.orientation.w = forward_rotation[3]
-
-        self.landmark_pub.publish(self.landmark)
+        inverse_pose = PoseStamped()
+        inverse_pose.header.stamp = pose.header.stamp
+        inverse_pose.pose.position.x = forward_translation[0]
+        inverse_pose.pose.position.y = forward_translation[1]
+        inverse_pose.pose.position.z = forward_translation[2]
+        inverse_pose.pose.orientation.x = forward_rotation[0]
+        inverse_pose.pose.orientation.y = forward_rotation[1]
+        inverse_pose.pose.orientation.z = forward_rotation[2]
+        inverse_pose.pose.orientation.w = forward_rotation[3]
+        return inverse_pose
 
     def num_tags_covariance_scale(self, num_tags: int) -> float:
         if num_tags == 0:

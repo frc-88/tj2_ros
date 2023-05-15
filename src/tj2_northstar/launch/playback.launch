@@ -9,6 +9,7 @@
     <group ns="northstar">
         <node pkg="tj2_northstar" type="playback.py" name="arducam_playback" required="false" output="screen">
             <param name="info_directory" value="$(find tj2_bringup)/config/diffyjr/northstar/calibration" />
+            <param name="bag_name" value="arducam_2023-05-15-16-30-52" />
         </node>
 
         <rosparam command="load" file="$(arg apriltag_settings)" ns="apriltag_cam_array"/>
@@ -17,6 +18,23 @@
             <remap from="info" to="camera/camera_info"/>
             <remap from="image_raw" to="camera/image_raw"/>
         </node>
+
+
+        <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen">
+            <rosparam param="landmark_ids">[1, 2, 3, 4, 5, 6, 7, 8]</rosparam>
+            <rosparam param="covariance">[
+                0.0001, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+                0.0000, 0.0001, 0.0000, 0.0000, 0.0000, 0.0000,
+                0.0000, 0.0000, 0.0010, 0.0000, 0.0000, 0.0000,
+                0.0000, 0.0000, 0.0000, 0.0050, 0.0000, 0.0000,
+                0.0000, 0.0000, 0.0000, 0.0000, 0.0050, 0.0000,
+                0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0050,
+            ]</rosparam>
+        </node>
+
+        <!-- <node pkg="robot_localization" type="ukf_localization_node" name="northstar_kalman_filter" clear_params="true">
+            <rosparam command="load" file="$(find tj2_northstar)/config/ukf.yaml" />
+        </node> -->
 
         <!-- <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
             <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>
@@ -53,6 +71,7 @@
     </group>
 
     <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link" />
+
     <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_siren_center" args="0.1577 0.0 0.2867  0 0 0 1 base_tilt_link siren_center" />
     <node pkg="tf2_ros" type="static_transform_publisher" name="siren_center_to_pivot_0" args="0.0 0.0 0.0  0.9969  -0.0000  0.0785  0.0000 siren_center pivot_0" />
     <node pkg="tf2_ros" type="static_transform_publisher" name="siren_center_to_pivot_1" args="0.0 0.0 0.0  0.7049  0.7049  0.0555  -0.0555 siren_center pivot_1" />

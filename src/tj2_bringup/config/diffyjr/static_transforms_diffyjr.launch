@@ -5,8 +5,8 @@
     <node pkg="tf2_ros" type="static_transform_publisher" name="base_tilt_link_to_laser" args="-0.0553 0.116 0.253  0 0 1 0 base_tilt_link laser" />
     <node pkg="tf2_ros" type="static_transform_publisher" name="base_tilt_link_to_imu" args="0.0634 0.0012 0.2039  0.0000  0.0000  0.7071  0.7071 base_tilt_link imu" />
     <!-- Enable these two TFs if imu_joint is disabled -->
-    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" -->
-    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="camera_tilt_to_armature" args="0.0 0.0 0.0  0 0 0 1 camera_tilt_link camera_armature_link 20" -->
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link" /> -->
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="camera_tilt_to_armature" args="0.0 0.0 0.0  0 0 0 1 camera_tilt_link camera_armature_link" /> -->
 
     <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_siren_center" args="0.1577 0.0 0.2867  0 0 0 1 base_tilt_link siren_center" />
     <node pkg="tf2_ros" type="static_transform_publisher" name="siren_center_to_pivot_0" args="0.0 0.0 0.0  0.9969  -0.0000  0.0785  0.0000 siren_center pivot_0" />

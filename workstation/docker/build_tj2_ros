@@ -31,4 +31,4 @@ docker run -it \
     -v=${TJ2_ROS_BASE}/scripts:/home/tj2/scripts:rw \
     --rm \
     tj2_ros_${IMAGE_PREFIX}:latest \
-    /home/tj2/scripts/build_tj2_ros.sh ${BUILD_FLAGS} -DARCHITECTURE=x86_64
+    /home/tj2/scripts/build_tj2_ros.sh ${BUILD_FLAGS}

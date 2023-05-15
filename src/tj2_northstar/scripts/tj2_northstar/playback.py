@@ -9,7 +9,9 @@ from rosbag import Bag
 from std_msgs.msg import Header
 from sensor_msgs.msg import Image, CameraInfo, RegionOfInterest
 from tj2_interfaces.msg import CameraInfoArray
+from nav_msgs.msg import Odometry
 from cv_bridge import CvBridge
+import tf2_ros
 
 
 @dataclass
@@ -76,8 +78,9 @@ def main():
     rospy.init_node("arducam_playback")
 
     camera_info_directory = str(rospy.get_param("~info_directory", "."))
+    bag_name = str(rospy.get_param("~bag_name", ""))
 
-    bag_path = "/home/tj2/tj2_ros/bags/arducam_2023-05-10-14-32-51.bag"
+    bag_path = f"/home/tj2/tj2_ros/bags/{bag_name}.bag"
     bag = Bag(bag_path)
 
     NUM_CAMERAS = 4
@@ -106,6 +109,8 @@ def main():
     combined_info_pub = rospy.Publisher(
         "/northstar/camera/camera_info", CameraInfoArray, queue_size=1
     )
+    odom_pub = rospy.Publisher("/tj2/odom", Odometry, queue_size=10)
+    tf_broadcaster = tf2_ros.TransformBroadcaster()
     bridge = CvBridge()
     paused = False
     data = AppData(image_pubs, info_pubs, bridge)
@@ -159,6 +164,14 @@ def main():
                     combined_info_pub.publish(combined_info_msg)
                     for index in range(NUM_CAMERAS):
                         info_pubs[index].publish(info_msgs[index])
+                elif topic == "/tj2/odom":
+                    odom_pub.publish(msg)
+                elif topic == "/tf":
+                    for transform_msg in msg.transforms:
+                        parent = transform_msg.header.frame_id
+                        child = transform_msg.child_frame_id
+                        if parent == "odom" and child == "base_link":
+                            tf_broadcaster.sendTransform(transform_msg)
 
             messages = bag.read_messages()
             if rospy.is_shutdown():

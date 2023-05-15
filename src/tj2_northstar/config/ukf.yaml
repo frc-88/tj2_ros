@@ -122,23 +122,23 @@ odom0_relative: false
 
 
 # IMU input parameters
-imu0: /tj2/imu
-# The order of the values is x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az.
-imu0_config: [false, false, false,
-              true,  true,  true,
-              false, false, false,
-              false, false, false,
-              false, false, false]
-imu0_differential: true
-imu0_relative: false
-imu0_queue_size: 50
-# imu0_pose_rejection_threshold: 2
-# imu0_twist_rejection_threshold: 0.2
-imu0_nodelay: true
+# imu0: /tj2/imu
+# # The order of the values is x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az.
+# imu0_config: [false, false, false,
+#               true,  true,  true,
+#               false, false, false,
+#               false, false, false,
+#               false, false, false]
+# imu0_differential: true
+# imu0_relative: false
+# imu0_queue_size: 50
+# # imu0_pose_rejection_threshold: 2
+# # imu0_twist_rejection_threshold: 0.2
+# imu0_nodelay: true
 
 
 # Landmark input parameters
-odom1: /northstar/landmark
+pose0: /northstar/landmark
 
 # Each sensor reading updates some or all of the filter's state. These options give you greater control over which
 # values from each measurement are fed to the filter. For example, if you have an odometry message as input, but only
@@ -147,7 +147,7 @@ odom1: /northstar/landmark
 # do not provide some of the state variables estimated by the filter. For example, a TwistWithCovarianceStamped message
 # has no pose information, so the first six values would be meaningless in that case. Each vector defaults to all false
 # if unspecified, effectively making this parameter required for each sensor.
-odom1_config: [true,  true,  true,
+pose0_config: [true,  true,  true,
                true,  true,  true,
                false, false, false,
                false, false, false,
@@ -155,12 +155,12 @@ odom1_config: [true,  true,  true,
 
 # If you have high-frequency data or are running with a low frequency parameter value, then you may want to increase
 # the size of the subscription queue so that more measurements are fused.
-odom1_queue_size: 50
+pose0_queue_size: 50
 
 # [ADVANCED] Large messages in ROS can exhibit strange behavior when they arrive at a high frequency. This is a result
 # of Nagle's algorithm. This option tells the ROS subscriber to use the tcpNoDelay option, which disables Nagle's
 # algorithm.
-odom1_nodelay: false
+pose0_nodelay: false
 
 # [ADVANCED] When measuring one pose variable with two sensors, a situation can arise in which both sensors under-
 # report their covariances. This can lead to the filter rapidly jumping back and forth between each measurement as they
@@ -170,13 +170,13 @@ odom1_nodelay: false
 # data is converted to velocity data by differentiating the absolute pose measurements. These velocities are then
 # integrated as usual. NOTE: this only applies to sensors that provide pose measurements; setting differential to true
 # for twist measurements has no effect.
-odom1_differential: false
+pose0_differential: false
 
 # [ADVANCED] When the node starts, if this parameter is true, then the first measurement is treated as a "zero point"
 # for all future measurements. While you can achieve the same effect with the differential paremeter, the key
 # difference is that the relative parameter doesn't cause the measurement to be converted to a velocity before
 # integrating it. If you simply want your measurements to start at 0 for a given sensor, set this to true.
-odom1_relative: false
+pose0_relative: false
 
 
 # [ADVANCED]  The EKF and UKF models follow a standard predict/correct cycle. During prediction, if there is no

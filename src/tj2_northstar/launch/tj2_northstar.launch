@@ -25,9 +25,9 @@
             ]</rosparam>
         </node>
 
-        <node pkg="robot_localization" type="ukf_localization_node" name="northstar_kalman_filter" clear_params="true">
+        <!-- <node pkg="robot_localization" type="ukf_localization_node" name="northstar_kalman_filter" clear_params="true">
             <rosparam command="load" file="$(find tj2_northstar)/config/ukf.yaml" />
-        </node>
+        </node> -->
 
 
         <rosparam command="load" file="$(arg apriltag_settings)" ns="apriltag_cam_array"/>
@@ -37,6 +37,13 @@
             <remap from="image_raw" to="camera/image_raw"/>
         </node>
 
+        <!-- <rosparam command="load" file="$(arg apriltag_settings)" ns="apriltag_camera_0"/>
+        <rosparam command="load" file="$(arg apriltag_tags)" ns="apriltag_camera_0"/>
+        <node pkg="cuda_apriltag_ros" type="cuda_apriltag_ros_continuous_node" name="apriltag_camera_0" required="false" output="screen">
+            <param name="publish_tag_detections_image" type="bool" value="false" />
+            <remap from="camera_info" to="camera_0/camera_info"/>
+            <remap from="image_rect" to="camera_0/image_raw"/>
+        </node> -->
         <!-- <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
             <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>
             <arg name="apriltag_tags" value="$(arg apriltag_tags)"/>

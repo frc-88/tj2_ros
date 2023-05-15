@@ -4,10 +4,10 @@
         <node pkg="rosbag" type="record" name="rosbag_record_arducam" output="screen"
        args="record -o /media/storage/bags/arducam -b 4096 --lz4
             /northstar/camera/image_raw
-            /northstar/camera_0/camera_info
-            /northstar/camera_1/camera_info
-            /northstar/camera_2/camera_info
-            /northstar/camera_3/camera_info
+            /northstar/camera/camera_info
+            /tj2/odom
+            /tj2/imu
+            /tf
             " />
     </group>
 </launch>
