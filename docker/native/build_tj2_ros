@@ -1,12 +1,10 @@
 #!/bin/bash
 BASE_DIR=$(realpath "$(dirname $0)")
 
+${BASE_DIR}/../stop_all_containers
 ${BASE_DIR}/copy_tj2_ros
-
 cd ${BASE_DIR}/../resources
-
-export TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
-docker-compose -f docker-compose.tj2_ros.yml stop
+TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
 docker run \
     --user tj2 \
     --restart="no" \
@@ -18,5 +16,5 @@ docker run \
     -v /home/${USER}/tj2_ros/scripts:/home/tj2/scripts:rw \
     --rm \
     --gpus all \
-    $(${BASE_DIR}/../get_image_tag) \
+    ${TJ2_IMAGE_VERSION} \
     /home/tj2/scripts/build_tj2_ros.sh

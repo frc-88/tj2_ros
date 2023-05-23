@@ -114,4 +114,10 @@
 
     <!-- Grid zone state tracker using the neural net -->
     <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/>
+
+    <!-- PreferenceConstants backup -->
+    <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
+        <arg name="nt_host" value="$(arg robot_address)"/>
+        <arg name="robot" default="$(env ROBOT)"/>
+    </include>
 </launch>

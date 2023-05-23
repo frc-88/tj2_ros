@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+
+BASE_DIR=$(realpath "$(dirname $0)")
+IMAGE_TAG=$(${BASE_DIR}/../get_image_tag)
+FILENAME=$(${BASE_DIR}/../get_archive_filename)
+docker tag woz4tetra/${IMAGE_TAG} ${IMAGE_TAG}
+docker load < $FILENAME
+echo "Loaded ${IMAGE_TAG} from ${FILENAME}"

@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+BASE_DIR=$(realpath "$(dirname $0)")
+IMAGE_TAG=woz4tetra/$(${BASE_DIR}/../get_image_tag)
+docker images
+echo "Paste in image ID to push (tag: will be ${IMAGE_TAG}): "
+read TAG_IMAGE_ID
+docker tag ${TAG_IMAGE_ID} ${IMAGE_TAG}
+docker push ${IMAGE_TAG}
+echo "Pushed ${IMAGE_TAG}"

@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+BASE_DIR=$(realpath "$(dirname $0)")
+export IMAGE_TAG=woz4tetra/$(${BASE_DIR}/../get_image_tag)
+docker images
+echo "Paste in image ID to push (will be tagged as ${IMAGE_TAG}): "
+read TAG_IMAGE_ID
+docker tag ${TAG_IMAGE_ID} ${IMAGE_TAG}
+FILENAME=$(${BASE_DIR}/../get_archive_filename)
+docker save ${IMAGE_TAG} | gzip > ${FILENAME}
+echo "Saved ${IMAGE_TAG} to ${FILENAME}"
