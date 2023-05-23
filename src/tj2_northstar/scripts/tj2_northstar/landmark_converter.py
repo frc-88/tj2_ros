@@ -88,6 +88,7 @@ class LandmarkConverter:
         forward_translation = tf.transformations.translation_from_matrix(inverse_mat)
         forward_rotation = tf.transformations.quaternion_from_matrix(inverse_mat)
         inverse_pose = PoseStamped()
+        inverse_pose.header.frame_id = self.base_frame
         inverse_pose.header.stamp = pose.header.stamp
         inverse_pose.pose.position.x = forward_translation[0]
         inverse_pose.pose.position.y = forward_translation[1]
