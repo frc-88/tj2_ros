@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import yaml
+import time
 import rospy
 import tqdm
 from pynput.keyboard import Listener, Key
@@ -12,6 +13,7 @@ from tj2_interfaces.msg import CameraInfoArray
 from nav_msgs.msg import Odometry
 from cv_bridge import CvBridge
 import tf2_ros
+from rosgraph_msgs.msg import Clock
 
 
 @dataclass
@@ -110,10 +112,14 @@ def main():
         "/northstar/camera/camera_info", CameraInfoArray, queue_size=1
     )
     odom_pub = rospy.Publisher("/tj2/odom", Odometry, queue_size=10)
+    # clock_pub = rospy.Publisher("clock", Clock, queue_size=10)
+
     tf_broadcaster = tf2_ros.TransformBroadcaster()
     bridge = CvBridge()
     paused = False
     data = AppData(image_pubs, info_pubs, bridge)
+
+    sim_clock = Clock()
 
     def on_press(key):
         nonlocal paused
@@ -133,30 +139,30 @@ def main():
         pbar = tqdm.tqdm(total=length)
 
         while True:
-            start_real_time = rospy.Time.now()
+            start_real_time = time.monotonic()
             start_bag_time = None
             for topic, msg, timestamp in messages:
                 if start_bag_time is None:
                     start_bag_time = timestamp
-                real_time = rospy.Time.now()
+                real_time = time.monotonic()
                 relative_real_duration = real_time - start_real_time
-                relative_bag_duration = timestamp - start_bag_time
+                relative_bag_duration = (timestamp - start_bag_time).to_sec()
+                now = rospy.Time.now()
 
                 if relative_bag_duration > relative_real_duration:
-                    rospy.sleep(
-                        (relative_bag_duration - relative_real_duration).to_sec()
-                    )
+                    time.sleep(relative_bag_duration - relative_real_duration)
+                sim_clock.clock = timestamp
 
                 while paused:
                     if rospy.is_shutdown():
                         break
-                    rospy.sleep(0.25)
+                    time.sleep(0.25)
                 pbar.update(1)
                 if rospy.is_shutdown():
                     break
 
                 for index in range(NUM_CAMERAS):
-                    info_msgs[index].header.stamp = timestamp
+                    info_msgs[index].header.stamp = now
 
                 if topic == "/northstar/camera/image_raw":
                     process_image(data, msg)
@@ -165,13 +171,16 @@ def main():
                     for index in range(NUM_CAMERAS):
                         info_pubs[index].publish(info_msgs[index])
                 elif topic == "/tj2/odom":
+                    msg.header.stamp = now
                     odom_pub.publish(msg)
-                elif topic == "/tf":
-                    for transform_msg in msg.transforms:
-                        parent = transform_msg.header.frame_id
-                        child = transform_msg.child_frame_id
-                        if parent == "odom" and child == "base_link":
-                            tf_broadcaster.sendTransform(transform_msg)
+                # elif topic == "/tf":
+                #     for transform_msg in msg.transforms:
+                #         transform_msg.header.stamp = now
+                #         parent = transform_msg.header.frame_id
+                #         child = transform_msg.child_frame_id
+                #         if parent == "odom" and child == "base_link":
+                #             tf_broadcaster.sendTransform(transform_msg)
+                # clock_pub.publish(sim_clock)
 
             messages = bag.read_messages()
             if rospy.is_shutdown():

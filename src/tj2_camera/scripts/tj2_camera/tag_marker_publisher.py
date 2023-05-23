@@ -63,6 +63,8 @@ class TagMarkerPublisher:
         rospy.loginfo("%s init complete" % self.name)
 
     def tag_callback(self, msg: AprilTagDetectionArray):
+        if not self.is_topic_active():
+            return
         base_detections = AprilTagDetectionArray()
         for detection in msg.detections:
             if len(detection.id) == 1:
@@ -81,6 +83,14 @@ class TagMarkerPublisher:
         self.rotated_tag_pub.publish(self.tag_msg)
         if self.debug:
             self.publish_debug_rotation(self.tag_msg)
+
+    def is_topic_active(self):
+        num_subscriptions = (
+            self.marker_pub.get_num_connections()
+            + self.rotated_tag_pub.get_num_connections()
+            + self.rotated_debug_pub.get_num_connections()
+        )
+        return num_subscriptions > 0
 
     def publish_debug_rotation(self, msg: AprilTagDetectionArray):
         pose_array = PoseArray()
@@ -144,6 +154,8 @@ class TagMarkerPublisher:
         return Quaternion(*rotated_tag.as_quat())
 
     def publish_marker(self, msg: AprilTagDetectionArray):
+        if not self.is_topic_active():
+            return
         markers = MarkerArray()
         for detection in msg.detections:
             pose: Pose = detection.pose.pose.pose

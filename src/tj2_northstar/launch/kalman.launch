@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="robot_localization" type="ukf_localization_node" name="northstar_kalman_filter" clear_params="true">
+        <rosparam command="load" file="$(find tj2_northstar)/config/ukf.yaml" />
+    </node>
+</launch>

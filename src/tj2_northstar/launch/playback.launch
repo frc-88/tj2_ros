@@ -6,6 +6,10 @@
 
     <param name="use_sim_time" value="false" />
 
+    <!-- <node pkg="robot_localization" type="ukf_localization_node" name="northstar_kalman_filter" clear_params="true">
+        <rosparam command="load" file="$(find tj2_northstar)/config/ukf.yaml" />
+    </node> -->
+
     <group ns="northstar">
         <node pkg="tj2_northstar" type="playback.py" name="arducam_playback" required="false" output="screen">
             <param name="info_directory" value="$(find tj2_bringup)/config/diffyjr/northstar/calibration" />
@@ -31,10 +35,6 @@
                 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0050,
             ]</rosparam>
         </node>
-
-        <!-- <node pkg="robot_localization" type="ukf_localization_node" name="northstar_kalman_filter" clear_params="true">
-            <rosparam command="load" file="$(find tj2_northstar)/config/ukf.yaml" />
-        </node> -->
 
         <!-- <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
             <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>

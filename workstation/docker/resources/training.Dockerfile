@@ -90,6 +90,9 @@ ENV PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHO
 # ---
 # tj2_ros launch environment
 # ---
+USER root
+RUN chown root:root /usr/bin/sudo && \
+    chmod 4755 /usr/bin/sudo
 
 WORKDIR ${HOME}
 USER ${USER}
