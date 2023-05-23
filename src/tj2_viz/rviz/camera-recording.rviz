@@ -11,6 +11,7 @@ Panels:
         - /Camera1/Visibility1
         - /Camera3
         - /Camera4
+        - /Odometry1
       Splitter Ratio: 0.4070473909378052
     Tree Height: 440
   - Class: rviz/Selection
@@ -130,14 +131,44 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         cube1: true
+        cube2: true
+        cube3: true
+        cube4: true
+        cube5: true
+        cube6: true
+        cube7: true
         posx1: true
         posx1-2-3-4-5-6-7-8: true
+        posx2: true
+        posx3: true
+        posx4: true
+        posx5: true
+        posx6: true
+        posx7: true
         posy1: true
         posy1-2-3-4-5-6-7-8: true
+        posy2: true
+        posy3: true
+        posy4: true
+        posy5: true
+        posy6: true
+        posy7: true
         posz1: true
         posz1-2-3-4-5-6-7-8: true
+        posz2: true
+        posz3: true
+        posz4: true
+        posz5: true
+        posz6: true
+        posz7: true
         text1: true
         text1-2-3-4-5-6-7-8: true
+        text2: true
+        text3: true
+        text4: true
+        text5: true
+        text6: true
+        text7: true
       Queue Size: 100
       Value: true
     - Class: rviz/Camera
@@ -151,6 +182,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         Camera: true
         Grid: false
         MarkerArray: true
@@ -168,6 +200,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         Camera: true
         Grid: false
         MarkerArray: true
@@ -185,6 +218,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         Camera: true
         Grid: false
         MarkerArray: true
@@ -205,9 +239,45 @@ Visualization Manager:
         Camera: true
         Grid: false
         MarkerArray: true
+        Odometry: true
         TF: false
         Value: true
       Zoom Factor: 1
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /odometry/filtered
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -236,7 +306,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 7.61293363571167
+      Distance: 24.81426239013672
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -244,9 +314,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -1.5544134378433228
-        Y: -0.8941004276275635
-        Z: 8.659126251586713e-06
+        X: -2.7549386024475098
+        Y: -4.51749324798584
+        Z: 1.0566474884399213e-05
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
