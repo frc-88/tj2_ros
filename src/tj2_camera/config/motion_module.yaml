@@ -1,3 +1,0 @@
-enable_motion_correction: true
-frames_queue_size: 16
-global_time_enabled: true

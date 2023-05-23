@@ -33,20 +33,11 @@
         "hashicorp.terraform",
         "zchrissirhcz.cmake-highlight",
         "ms-python.isort",
-        "ms-vscode.cpptools-extension-pack"
-      ],
-      "editor.formatOnSave": true,
-      "python.pythonPath": "/usr/bin/python",
-      "python.formatting.blackArgs": ["--line-length=120"],
-      "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter",
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-          "source.organizeImports": true
-        }
-      },
-      "isort.args": ["--profile", "black"],
-      "editor.rulers": [120]
+        "ms-vscode.cpptools-extension-pack",
+        "matangover.mypy",
+        "ms-python.flake8",
+        "ms-azuretools.vscode-docker"
+      ]
     }
   }
 }

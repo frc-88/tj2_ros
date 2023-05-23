@@ -1,3 +1,0 @@
-<launch>
-    <!-- <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_laser" args="-0.0553 0.116 0.253 0 0 1 0 base_tilt_link laser 20" /> -->
-</launch>

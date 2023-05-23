@@ -19,15 +19,8 @@
         </include>
     </group>
 
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.2032 0.0 0.254  0 0 0 1 base_tilt_link camera_tilt_link 20" />
-    <node pkg="tf" type="static_transform_publisher" name="camera_armature_to_link" args="0.0 0.0 0.0  0 0 0 1 camera_armature_link camera_link 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_laser" args="-0.0553 0.116 0.253  0 0 1 0 base_tilt_link laser 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_imu" args="0.0634 0.0012 0.2039  0.0000  0.0000  0.7071  0.7071 base_tilt_link imu 33" />
-    <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_limelight" args="0.2182 0.0 0.2188  0.0 0.0 0.0 1.0 base_tilt_link limelight_link 33" />
+    <include file="$(find tj2_bringup)/config/diffyjr/static_transforms_diffyjr.launch"/>
 
-    <!-- Enable these two TFs if imu_joint is disabled -->
-    <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" /> -->
-    <!-- <node pkg="tf" type="static_transform_publisher" name="camera_tilt_to_armature" args="0.0 0.0 0.0  0 0 0 1 camera_tilt_link camera_armature_link 20" /> -->
     <include file="$(find tj2_description)/launch/imu_joint.launch">
         <arg name="camera_imu_topic" value="/tj2_zed/imu/data"/>
         <arg name="base_imu_topic" value="/tj2/imu"/>
@@ -67,7 +60,7 @@
     <include if="$(arg enable_driver_station)" file="$(find tj2_driver_station)/launch/tj2_driver_station.launch"/>
     <include if="$(arg enable_driver_station)" file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/>
 
-    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <!-- <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
         <remap from="/cmd_vel" to="/tj2/cmd_vel_nav"/>
         <remap from="/odom" to="/tj2/odom"/>
         <remap from="/map" to="/tj2/zone_map"/>
@@ -83,7 +76,7 @@
 
         <rosparam file="$(find tj2_bringup)/config/diffyjr/move_base/costmap_common_params.yaml" command="load" ns="global_costmap"/>
         <rosparam file="$(find tj2_bringup)/config/diffyjr/move_base/costmap_global_params.yaml" command="load" ns="global_costmap"/>
-    </node>
+    </node> -->
 
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="localize"/>
@@ -92,34 +85,20 @@
         <arg name="gmapping_config" value="$(find tj2_bringup)/config/diffyjr/gmapping.yaml"/>
         <arg name="amcl_config" value="$(find tj2_bringup)/config/diffyjr/amcl.yaml"/>
     </include>
-    <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
+    <!-- <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_data)/data/waypoints/$(arg map_name)"/>
-    </include>
+    </include> -->
 
-    <include file="$(find tj2_zones)/launch/tj2_zones.launch">
+    <!-- <include file="$(find tj2_zones)/launch/tj2_zones.launch">
         <arg name="zones_path" value="$(find tj2_data)/data/zones/$(arg map_name).bin"/>
-    </include>
+    </include> -->
 
     <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
         <arg name="nt_host" value="$(arg robot_address)"/>
         <arg name="robot" default="$(env ROBOT)"/>
     </include>
 
-    <!-- <include file="$(find tj2_camera)/launch/apriltags.launch">
-        <arg name="apriltag_settings" value="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
-        <arg name="apriltag_tags" value="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml"/>
-        <arg name="camera_info_topic" value="/tj2_zed/rgb/camera_info"/>
-        <arg name="image_rect_topic" value="/tj2_zed/rgb/image_rect_color"/>
-        <arg name="node_name" value="apriltag"/>
-        <arg name="namespace" value="apriltag"/>
-        <arg name="publish_tag_detections_image" value="false"/>
-    </include> -->
-
-    <!-- <group ns="apriltag">
-        <node name="map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
-            <param name="frame_id" value="field"/>
-        </node>
-    </group> -->
     <!-- <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/> -->
     <!-- <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/> -->
+    <!-- <include file="$(find tj2_northstar)/launch/tj2_northstar.launch"/> -->
 </launch>

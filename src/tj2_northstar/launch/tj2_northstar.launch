@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="apriltag_settings" default="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
+    <arg name="apriltag_tags" default="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml"/>
+    <arg name="publish_tag_detections_image" default="false"/>
+    <group ns="northstar">
+        <node pkg="tj2_northstar" type="arducam_ros" name="arducam_ros" required="false" output="screen" respawn="true">
+            <param name="topic_prefix" value="camera" />
+            <param name="info_directory" value="$(find tj2_bringup)/config/diffyjr/northstar/calibration" />
+            <param name="device_num" value="0" />
+            <param name="size" value="0" /> <!-- 0 = 5120x800, 1 = 5120x720, 2 = 2560x400 -->
+            <param name="publish_rate" value="20.0" />
+            <param name="publish_tag_detections_image" type="bool" value="$(arg publish_tag_detections_image)" />
+        </node>
+
+        <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen">
+            <rosparam param="landmark_ids">[1, 2, 3, 4, 5, 6, 7, 8]</rosparam>
+            <rosparam param="covariance">[
+                0.0001, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+                0.0000, 0.0001, 0.0000, 0.0000, 0.0000, 0.0000,
+                0.0000, 0.0000, 0.0010, 0.0000, 0.0000, 0.0000,
+                0.0000, 0.0000, 0.0000, 0.0050, 0.0000, 0.0000,
+                0.0000, 0.0000, 0.0000, 0.0000, 0.0050, 0.0000,
+                0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0050,
+            ]</rosparam>
+        </node>
+
+        <!-- <node pkg="robot_localization" type="ukf_localization_node" name="northstar_kalman_filter" clear_params="true">
+            <rosparam command="load" file="$(find tj2_northstar)/config/ukf.yaml" />
+        </node> -->
+
+
+        <rosparam command="load" file="$(arg apriltag_settings)" ns="apriltag_cam_array"/>
+        <rosparam command="load" file="$(arg apriltag_tags)" ns="apriltag_cam_array"/>
+        <node pkg="tj2_northstar" type="apriltag_cam_array" name="apriltag_cam_array" required="false" output="screen">
+            <remap from="info" to="camera/camera_info"/>
+            <remap from="image_raw" to="camera/image_raw"/>
+        </node>
+
+        <!-- <rosparam command="load" file="$(arg apriltag_settings)" ns="apriltag_camera_0"/>
+        <rosparam command="load" file="$(arg apriltag_tags)" ns="apriltag_camera_0"/>
+        <node pkg="cuda_apriltag_ros" type="cuda_apriltag_ros_continuous_node" name="apriltag_camera_0" required="false" output="screen">
+            <param name="publish_tag_detections_image" type="bool" value="false" />
+            <remap from="camera_info" to="camera_0/camera_info"/>
+            <remap from="image_rect" to="camera_0/image_raw"/>
+        </node> -->
+        <!-- <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
+            <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>
+            <arg name="apriltag_tags" value="$(arg apriltag_tags)"/>
+            <arg name="node_name" value="apriltag_camera_0"/>
+            <arg name="camera_info_topic" value="camera_0/camera_info"/>
+            <arg name="image_rect_topic" value="camera_0/image_raw"/>
+        </include>
+        <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
+            <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>
+            <arg name="apriltag_tags" value="$(arg apriltag_tags)"/>
+            <arg name="node_name" value="apriltag_camera_1"/>
+            <arg name="camera_info_topic" value="camera_1/camera_info"/>
+            <arg name="image_rect_topic" value="camera_1/image_raw"/>
+        </include>
+        <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
+            <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>
+            <arg name="apriltag_tags" value="$(arg apriltag_tags)"/>
+            <arg name="node_name" value="apriltag_camera_2"/>
+            <arg name="camera_info_topic" value="camera_2/camera_info"/>
+            <arg name="image_rect_topic" value="camera_2/image_raw"/>
+        </include>
+        <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
+            <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>
+            <arg name="apriltag_tags" value="$(arg apriltag_tags)"/>
+            <arg name="node_name" value="apriltag_camera_3"/>
+            <arg name="camera_info_topic" value="camera_3/camera_info"/>
+            <arg name="image_rect_topic" value="camera_3/image_raw"/>
+        </include> -->
+    </group>
+
+</launch>

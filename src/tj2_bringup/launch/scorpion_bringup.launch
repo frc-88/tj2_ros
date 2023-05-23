@@ -31,33 +31,8 @@
         </include>
     </group>
 
-    <!-- Robot center to camera pivot center (translation only) -->
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_base_link" args="-0.04899 -0.24130 0.40174  0 0 0 1 base_tilt_link camera_base_link 20" />
+    <include file="$(find tj2_bringup)/config/scorpion/static_transforms_scorpion.launch"/>
 
-    <!-- Camera pivot center rotation component -->
-    <node pkg="tf" type="static_transform_publisher" name="camera_base_to_camera_link" args="0.0 0.0 0.0  0.0000 0.0000 1.0000 0.0000 camera_base_link camera_tilt_link 20" />
-
-    <!-- Camera pivot center to camera sensor center (armature) -->
-    <node pkg="tf" type="static_transform_publisher" name="camera_armature_to_link" args="0.0 0.0 0.0  0 0 0 1 camera_armature_link camera_link 20" />
-
-    <!-- Robot center to laser center (translation only) -->
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser_base_link" args="0.03810 0.30540 0.17735  0 0 0 1 base_tilt_link laser_base_link 20" />
-
-    <!-- Laser center rotation component -->
-    <node pkg="tf" type="static_transform_publisher" name="laser_base_to_laser_link" args="0.0 0.0 0.0  0.0000  0.0000  -0.7071  0.7071 laser_base_link laser 20" />
-
-    <!-- Robot center to IMU -->
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0.0 0.0 0.0  0.0000  0.0000  0.7071  -0.7071 base_tilt_link imu 20" />
-
-    <!-- Robot center to limelight center (translation only) -->
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_limelight_base_link" args="0.32497 0.0 0.21506  0.0 0.0 0.0 1.0 base_tilt_link limelight_base_link 20" />
-
-    <!-- Limelight center rotation component -->
-    <node pkg="tf" type="static_transform_publisher" name="limelight_base_to_limelight_link" args="0.0 0.0 0.0  0.0000  -0.1822  0.0000  0.9833 limelight_base_link limelight_link 20" />
-
-    <!-- Enable these two TFs if imu_joint is disabled -->
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_footprint" args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link 20" />
-    <node pkg="tf" type="static_transform_publisher" name="camera_tilt_to_armature_link" args="0.0 0.0 0.0  0.0000  -0.1175  0.0000  0.9931 camera_tilt_link camera_armature_link 20" />
     <!-- Publishes base_link -> base_tilt_link (NavX IMU tilt) and camera_tilt_tilt -> camera_armature_link (camera tilt) -->
     <!-- <include file="$(find tj2_description)/launch/imu_joint.launch">
         <arg name="camera_imu_topic" value="/tj2_zed/imu/data"/>
@@ -111,7 +86,7 @@
     </include> -->
 
     <!-- Enable map_to_odom and static_map_server if laser localization is disabled -->
-    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0.0 0.0 0.0  0.0 0.0 0.0 1.0 map odom 20" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom" args="0.0 0.0 0.0  0.0 0.0 0.0 1.0 map odom 20" />
     <node name="static_map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_laser_slam)/maps/$(arg map_name).yaml">
         <param name="frame_id" value="map"/>
     </node>

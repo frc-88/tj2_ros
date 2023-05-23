@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get update && \
     apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init \
-    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk rsync sudo
+    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk rsync sudo v4l-utils
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
@@ -18,7 +18,11 @@ RUN python -m pip install -U scipy==1.5.4 \
     numpy==1.22.4 \
     ezdxf \
     jsonlines \
-    PyQt5==5.10.1
+    PyQt5==5.10.1 \
+    mypy \
+    v4l2-fix \
+    tqdm \
+    pynput
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
@@ -39,7 +43,6 @@ RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-catkin \
     ros-noetic-tf \
     ros-noetic-rviz \
-    ros-noetic-apriltag-ros \
     ros-noetic-topic-tools \
     ros-noetic-joy \
     ros-noetic-roscpp \
@@ -134,7 +137,7 @@ RUN rm -r ${DEP_ROS_WS_SRC}/zed-ros-wrapper/zed_nodelets
 
 WORKDIR ${DEP_ROS_WS_ROOT}
 # https://github.com/ros/catkin/issues/863
-RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF 
+RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
 RUN catkin config --install
 RUN catkin build
 
@@ -147,6 +150,7 @@ ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 
 ENV FLASK_ENV=development
 ENV PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
+ENV PATH=${HOME}/.local/bin${PATH:+:${PATH}}
 
 
 # ---

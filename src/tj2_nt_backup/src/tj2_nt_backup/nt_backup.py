@@ -18,9 +18,11 @@ class NTBackup:
         self.robot = rospy.get_param("~robot", "diffyjr")
         self.nt_host = rospy.get_param("~nt_host", "10.0.88.2")
         self.startup_delay = rospy.get_param("~startup_delay", 0.0)
-        self.backup_interval = rospy.get_param("~backup_interval", 0.0)  # 0.0 == once then exit
+        self.backup_interval = rospy.get_param(
+            "~backup_interval", 0.0
+        )  # 0.0 == once then exit
         self.name_format = rospy.get_param("~name_format", "preferences_%Y-%m-%d.csv")
-        
+
         self.rospack = rospkg.RosPack()
         self.data_package = "tj2_data"
         self.package_dir = self.rospack.get_path(self.data_package)
@@ -44,18 +46,18 @@ class NTBackup:
         if self.startup_delay > 0.0:
             rospy.loginfo("Waiting for %0.1f seconds" % self.startup_delay)
             rospy.sleep(self.startup_delay)
-        
+
         if self.backup_interval == 0.0:
             rate = None
         else:
             rate = rospy.Rate(1.0 / self.backup_interval)
-        
+
         while not rospy.is_shutdown():
             table = Backups.get_full_table(self.nt)
             path = self.get_backup_path()
             Backups.write_backup(path, table)
             rospy.loginfo(f"Wrote backup to {path}")
-            
+
             if rate is None:
                 break
             else:
