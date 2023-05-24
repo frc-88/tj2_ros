@@ -25,15 +25,15 @@ int_handler() {
 }
 trap 'int_handler' SIGINT
 
-tmux send -t $SESSION 'source ${HOME}/scripts/enable_tmux_logger.sh tj2_ros' ENTER
-tmux send -t $SESSION 'source ${HOME}/scripts/set_master.sh ${ROS_MASTER_INTERFACE}' ENTER
+tmux send -t $SESSION 'source /opt/tj2/scripts/enable_tmux_logger.sh tj2_ros' ENTER
+tmux send -t $SESSION 'source /opt/tj2/scripts/set_master.sh ${ROS_MASTER_INTERFACE}' ENTER
 tmux send -t $SESSION 'source /opt/ros/${ROS_DISTRO}/setup.bash' ENTER
 tmux send -t $SESSION 'source ${DEP_ROS_WS_ROOT}/devel/setup.bash' ENTER
 tmux send -t $SESSION 'source ${ROS_WS_ROOT}/devel/setup.bash' ENTER
-tmux send -t $SESSION 'source ${HOME}/scripts/startup.sh' ENTER
+tmux send -t $SESSION 'source /opt/tj2/scripts/startup.sh' ENTER
 tmux send -t $SESSION 'roslaunch --wait tj2_bringup tj2_bringup.launch --screen &' ENTER
 tmux send -t $SESSION 'echo $! > /opt/tj2/roslaunch_pid' ENTER
 
 sleep 2
-${HOME}/scripts/tail-session.sh
+/opt/tj2/scripts/tail-session.sh
 sleep infinity

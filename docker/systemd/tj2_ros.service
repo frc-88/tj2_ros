@@ -7,8 +7,8 @@ Type=oneshot
 User=tj2
 Group=tj2
 RemainAfterExit=yes
-ExecStart=/usr/local/bin/run_containers /opt/tj2/tj2_ros/docker
-ExecStop=/usr/local/bin/stop_tj2_ros_container /opt/tj2/tj2_ros/docker
+ExecStart=/usr/local/bin/run_containers /home/tj2/tj2_ros/docker
+ExecStop=/usr/local/bin/stop_tj2_ros_container /home/tj2/tj2_ros/docker
 
 [Install]
 WantedBy=multi-user.target
