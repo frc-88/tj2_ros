@@ -1,0 +1,26 @@
+#!/bin/bash
+function cleanup {
+    xhost -local:root
+}
+trap cleanup EXIT
+
+HOST_MACHINE=$1
+JOYSTICK_DEVICE=$2
+
+xhost +local:root
+docker run -it \
+    --name workstation_joystick \
+    --env="DISPLAY" \
+    --env="QT_X11_NO_MITSHM=1" \
+    --env="HOST_MACHINE=$HOST_MACHINE" \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v=workstation_tj2_ros_build:/home/tj2/ros_ws:rw \
+    -v=/home/${USER}/tj2_ros:/opt/tj2/tj2_ros:rw \
+    -v=/home/${USER}/tj2_ros/workstation/docker/resources/scripts:/opt/tj2/scripts:rw \
+    -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+    --rm \
+    workstation_tj2_ros:latest \
+    /opt/tj2/entrypoint.sh roslaunch tj2_debug_joystick tj2_debug_joystick.launch topic_name:=joy_remote device:=$JOYSTICK_DEVICE

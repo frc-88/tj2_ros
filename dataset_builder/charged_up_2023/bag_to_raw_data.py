@@ -11,14 +11,14 @@ from util import get_labels
 parser = argparse.ArgumentParser(description="bag_to_raw_data", add_help=True)
 parser.add_argument("path", help="path to convert")
 parser.add_argument("--pre-label", action="store_true", help="use labels in the bag to label the images")
-parser.add_argument("-o", "--output", default="/home/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces/", help="output path")
+parser.add_argument("-o", "--output", default="/opt/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces/", help="output path")
 args = parser.parse_args()
 
-# bag_path = "/home/tj2/bags/diffyjr_alot_2023-01-21-20-42-10.bag"
+# bag_path = "/opt/tj2/bags/diffyjr_alot_2023-01-21-20-42-10.bag"
 
-# bag_path = "/home/tj2/bags/diffyjr_alot_2023-01-21-20-38-43.bag"
-# bag_path = "/home/tj2/bags/diffyjr_alot_2023-01-21-20-39-34.bag"
-# bag_path = "/home/tj2/bags/diffyjr_alot_2023-01-21-20-43-47.bag"
+# bag_path = "/opt/tj2/bags/diffyjr_alot_2023-01-21-20-38-43.bag"
+# bag_path = "/opt/tj2/bags/diffyjr_alot_2023-01-21-20-39-34.bag"
+# bag_path = "/opt/tj2/bags/diffyjr_alot_2023-01-21-20-43-47.bag"
 bag_path = args.path
 
 output_base_path = args.output

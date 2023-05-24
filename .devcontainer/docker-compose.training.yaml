@@ -1,13 +1,13 @@
 version: "3"
 
 volumes:
-  tj2_ros_workstation_build:
-    name: tj2_ros_workstation_build
+  workstation_tj2_ros_build:
+    name: workstation_tj2_ros_build
     external: true
 
 services:
   tj2_ros_devcontainer:
-    image: tj2_ros_training:latest
+    image: training_${TJ2_IMAGE_VERSION}
     container_name: tj2_ros_devcontainer
     restart: "no"
     network_mode: "host"
@@ -21,17 +21,17 @@ services:
     # https://askubuntu.com/questions/1237400/how-to-fix-x-error-badaccess-baddrawable-badshmseg-while-running-graphical-ap
     ipc: host
     volumes:
-      - tj2_ros_workstation_build:/home/tj2/ros_ws:rw
-      - /home/${USER}/tj2_ros:/home/tj2/tj2_ros:rw
+      - workstation_tj2_ros_build:/home/tj2/ros_ws:rw
+      - /home/${USER}/tj2_ros:/opt/tj2/tj2_ros:rw
       - /home/${USER}/tj2_ros/src:/home/tj2/ros_ws/src/tj2_ros:rw
-      - /home/${USER}/tj2_ros/workstation/docker/resources/scripts:/home/tj2/scripts:rw
-      - /media/storage/tj2_ros_training_data:/home/tj2/tj2_ros/dataset_builder/data:rw
-      - /home/${USER}/tj2_ros/logs:/home/tj2/logs:rw
-      - /media/storage/tj2_ros_bags/bags/:/home/tj2/bags:rw
+      - /home/${USER}/tj2_ros/workstation/docker/resources/scripts:/opt/tj2/scripts:rw
+      - /media/storage/training_tj2_ros_data:/opt/tj2/tj2_ros/dataset_builder/data:rw
+      - /home/${USER}/tj2_ros/logs:/opt/tj2/logs:rw
+      - /media/storage/tj2_ros_bags/bags/:/opt/tj2/bags:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority:rw
       # Allow container to control docker
-      - /home/${USER}/.docker:/home/tj2/.docker:rw # docker looks here inside a container
+      - /home/${USER}/.docker:/opt/tj2/.docker:rw # docker looks here inside a container
       - /var/run/docker.sock:/var/run/docker.sock
 
     # Overrides default command so things don't shut down after the process ends.

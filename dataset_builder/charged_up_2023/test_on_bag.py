@@ -36,7 +36,7 @@ class Tester:
         self.show_truth = True
         
         model_device = 0
-        model_dir = get_best_model("/home/tj2/tj2_ros/dataset_builder/data/outputs/charged_up_2023_train")
+        model_dir = get_best_model("/opt/tj2/tj2_ros/dataset_builder/data/outputs/charged_up_2023_train")
         model_path = os.path.join(model_dir, "weights/best.pt")
         print("Model:", model_path)
         self.image_width = 1280

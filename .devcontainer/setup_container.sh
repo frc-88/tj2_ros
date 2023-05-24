@@ -19,7 +19,7 @@ fi
 
 ln -sf docker-compose.gpu-${HAS_GPU}.yaml docker-compose.gpu.yaml
 
-docker image list | grep -q tj2_ros_training
+docker image list | grep -q training_tj2_ros
 if [ $? -eq 0 ]; then
 	echo "training"
 	DEVCONTAINER_IMAGE=training
@@ -28,3 +28,7 @@ else
 	DEVCONTAINER_IMAGE=workstation
 fi
 ln -sf docker-compose.${DEVCONTAINER_IMAGE}.yaml docker-compose.yaml
+
+cat <<EOT > ${DIR}/.env
+TJ2_IMAGE_VERSION=$(${DIR}/../docker/get_image_tag)
+EOT
