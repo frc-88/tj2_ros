@@ -68,7 +68,7 @@ USER root
 RUN chown root:root /usr/bin/sudo && \
     chmod 4755 /usr/bin/sudo
 
-COPY --chown=1000:1000 ./install/bashrc ${HOME}/.bashrc
+COPY --chown=1000:1000 ./install/client_bashrc ${HOME}/.bashrc
 
 RUN chown 1000:1000 ${HOME} && \
     chown -R 1000:1000 ${HOME}/.ros

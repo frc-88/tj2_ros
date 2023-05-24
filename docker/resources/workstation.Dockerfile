@@ -67,7 +67,7 @@ ENV FLASK_ENV=development \
     PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools${PYTHONPATH:+:${PYTHONPATH}} \
     PYTHONIOENCODING=utf-8
 
-COPY --chown=1000:1000 ./install/bashrc ${HOME}/.bashrc
+COPY --chown=1000:1000 ./install/client_bashrc ${HOME}/.bashrc
 
 COPY --chown=1000:1000 \
     ./launch/entrypoint.sh \
