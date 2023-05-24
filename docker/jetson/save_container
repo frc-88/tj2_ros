@@ -5,5 +5,5 @@ BASE_DIR=$(realpath "$(dirname $0)")
 IMAGE_TAG=$(${BASE_DIR}/../get_image_tag)
 FILENAME=$(${BASE_DIR}/../get_archive_filename)
 echo "Saving image ${IMAGE_TAG} to ${FILENAME}. This could take a while."
-docker save woz4tetra/${IMAGE_TAG} | gzip > ${FILENAME}
+docker save ${IMAGE_TAG} | gzip > ${FILENAME}
 echo "Saved ${IMAGE_TAG} to ${FILENAME}"
