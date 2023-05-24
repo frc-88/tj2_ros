@@ -8,5 +8,4 @@ IMAGE_TAG=$(${BASE_DIR}/../get_image_tag)
 FILENAME=$(${BASE_DIR}/../get_archive_filename)
 echo "Loading image ${IMAGE_TAG} from ${FILENAME}. This could take a while."
 docker load < ${SOURCE_DIR}/$FILENAME
-docker tag woz4tetra/${IMAGE_TAG} ${IMAGE_TAG}
 echo "Loaded ${IMAGE_TAG} from ${FILENAME}"

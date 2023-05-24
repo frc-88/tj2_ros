@@ -2,6 +2,7 @@
 set -e
 
 BASE_DIR=$(realpath "$(dirname $0)")
-IMAGE_TAG=woz4tetra/$(${BASE_DIR}/../get_image_tag)
-docker push ${IMAGE_TAG}
+IMAGE_TAG=$(${BASE_DIR}/../get_image_tag)
+docker tag ${IMAGE_TAG} woz4tetra/${IMAGE_TAG}
+docker push woz4tetra/${IMAGE_TAG}
 echo "Pushed ${IMAGE_TAG}"
