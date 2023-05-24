@@ -12,7 +12,7 @@ JOYSTICK_DEVICE=$2
 
 TJ2_ROS_BASE=${BASE_DIR}/../..
 TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
-IMAGE_PREFIX=workstation
+IMAGE_PREFIX=$(${BASE_DIR}/get_built_image)
 
 xhost +local:root
 docker run -it \

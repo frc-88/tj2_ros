@@ -1,8 +1,11 @@
-ARG SOURCE_image
+ARG SOURCE_IMAGE
 
-FROM $SOURCE_image as workstation_tj2_ros
+FROM $SOURCE_IMAGE as workstation_tj2_ros
 
-COPY --chown=1000:1000 ./install/training /opt/tj2/install/training
+COPY --chown=1000:1000 \
+    ./install/training/install_apt_packages.sh \
+    ./install/training/install_python_dependencies.sh \
+    /opt/tj2/install/training/
 RUN bash /opt/tj2/install/training/install_apt_packages.sh && \
     bash /opt/tj2/install/training/install_python_dependencies.sh
 
@@ -43,11 +46,11 @@ USER ${USER}
 # ---
 
 COPY --chown=1000:1000 --from=workstation_tj2_ros / /tmp/workstation_tj2_ros
-COPY --chown=1000:1000 ./install/training /opt/tj2/install/training
+COPY --chown=1000:1000 ./install/training/copy_over_multistage.sh /opt/tj2/install/training/
 RUN bash /opt/tj2/install/training/copy_over_multistage.sh
 
 # ---
-# ROS build environment
+# Environment variables
 # ---
 
 ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
@@ -57,8 +60,10 @@ ENV ROS_DISTRO=noetic
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 
-ENV FLASK_ENV=development
-ENV PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
+ENV FLASK_ENV=development \
+    PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools${PYTHONPATH:+:${PYTHONPATH}} \
+    PATH=${HOME}/.local/bin${PATH:+:${PATH}} \
+    PYTHONIOENCODING=utf-8
 
 # ---
 # tj2_ros launch environment
