@@ -1,7 +1,7 @@
 #!/bin/bash
 BASE_DIR=$(realpath "$(dirname $0)")
 
-${BASE_DIR}/stop_all_containers
+${BASE_DIR}/stop_tj2_ros_container
 ${BASE_DIR}/copy_tj2_ros
 cd ${BASE_DIR}/../resources
 TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
