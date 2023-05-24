@@ -6,6 +6,7 @@ SOURCE_DIR="${1:-.}"
 BASE_DIR=$(realpath "$(dirname $0)")
 IMAGE_TAG=$(${BASE_DIR}/../get_image_tag)
 FILENAME=$(${BASE_DIR}/../get_archive_filename)
-echo "Loading image ${IMAGE_TAG} from ${FILENAME}. This could take a while."
-docker load < ${SOURCE_DIR}/$FILENAME
-echo "Loaded ${IMAGE_TAG} from ${FILENAME}"
+INPUT=${SOURCE_DIR}/${FILENAME}
+echo "Loading image ${IMAGE_TAG} from ${INPUT}. This could take a while."
+docker load < ${INPUT}
+echo "Loaded ${IMAGE_TAG} from ${INPUT}"

@@ -3,4 +3,4 @@ BASE_DIR=$(realpath "$(dirname $0)")
 
 IP=`bash ${BASE_DIR}/lib/get-ip.sh ${1}`
 
-${BASE_DIR}/../workstation/docker/run_viz $IP $2
+${BASE_DIR}/../docker/workstation/run_viz $IP $2

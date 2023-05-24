@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
 
+SOURCE_DIR="${1:-.}"
+
 BASE_DIR=$(realpath "$(dirname $0)")
 IMAGE_TAG=$(${BASE_DIR}/../get_image_tag)
 FILENAME=$(${BASE_DIR}/../get_archive_filename)
-echo "Saving image ${IMAGE_TAG} to ${FILENAME}. This could take a while."
-docker save ${IMAGE_TAG} | gzip > ${FILENAME}
-echo "Saved ${IMAGE_TAG} to ${FILENAME}"
+OUTPUT=${SOURCE_DIR}/${FILENAME}
+echo "Saving image ${IMAGE_TAG} to ${OUTPUT}. This could take a while."
+docker save ${IMAGE_TAG} | gzip > ${OUTPUT}
+echo "Saved ${IMAGE_TAG} to ${OUTPUT}"
