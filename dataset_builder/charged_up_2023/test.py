@@ -18,8 +18,8 @@ matplotlib.use("TkAgg")
 class Tester:
     def __init__(self) -> None:
         self.labels = get_labels()
-        annotations_path = "/home/tj2/tj2_ros/dataset_builder/data/charged_up_2023/game_pieces/labels/test"
-        images_path = "/home/tj2/tj2_ros/dataset_builder/data/charged_up_2023/game_pieces/images/test"
+        annotations_path = "/opt/tj2/tj2_ros/dataset_builder/data/charged_up_2023/game_pieces/labels/test"
+        images_path = "/opt/tj2/tj2_ros/dataset_builder/data/charged_up_2023/game_pieces/images/test"
         self.frames = []
         self.collector = ChargedUp2023Collector(annotations_path, self.labels, images_path)
         self.pbar = tqdm.tqdm(desc="image", total=self.collector.get_length(), bar_format='Loading: {desc}{percentage:3.0f}%|{bar}|{n}/{total}')
@@ -40,7 +40,7 @@ class Tester:
         self.show_truth = True
         
         model_device = 0
-        model_dir = get_best_model("/home/tj2/tj2_ros/dataset_builder/data/outputs/charged_up_2023_train")
+        model_dir = get_best_model("/opt/tj2/tj2_ros/dataset_builder/data/outputs/charged_up_2023_train")
         model_path = os.path.join(model_dir, "weights/best.pt")
         self.image_width = 1280
         self.image_height = 720

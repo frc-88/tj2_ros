@@ -9,4 +9,3 @@ adduser ${USER} sudo
 echo "${USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 echo "Setup user script complete"
-

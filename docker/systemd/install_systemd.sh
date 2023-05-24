@@ -24,8 +24,8 @@ SERVICE_ROOT_DIR=/etc/systemd/system/
 mkdir -p ${SERVICE_ROOT_DIR}
 cp ${BASE_DIR}/${SERVICE_NAME} ${SERVICE_ROOT_DIR}
 
-cp ${BASE_DIR}/../${SCRIPT_NAME} ${BIN_INSTALL_DIR}
-cp ${BASE_DIR}/../${STOP_SCRIPT_NAME} ${BIN_INSTALL_DIR}
+cp ${BASE_DIR}/../jetson/${SCRIPT_NAME} ${BIN_INSTALL_DIR}
+cp ${BASE_DIR}/../jetson/${STOP_SCRIPT_NAME} ${BIN_INSTALL_DIR}
 
 echo "Enabling systemd services"
 systemctl daemon-reload

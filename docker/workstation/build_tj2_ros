@@ -1,0 +1,35 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+TJ2_ROS_BASE=${BASE_DIR}/../..
+
+${BASE_DIR}/copy_tj2_ros
+
+cd ${BASE_DIR}/../resources
+
+${BASE_DIR}/stop_main_container
+
+TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
+IMAGE_PREFIX=$(${BASE_DIR}/get_built_image)
+
+if [ "${IMAGE_PREFIX}" == "workstation" ]; then
+    BUILD_FLAGS='-DCATKIN_BLACKLIST_PACKAGES=tj2_yolo'
+else
+    # TODO: add cxx11 ABI library to docker
+    BUILD_FLAGS='-DCATKIN_BLACKLIST_PACKAGES=tj2_yolo'
+    # BUILD_FLAGS=-DCATKIN_BLACKLIST_PACKAGES=\'\'
+fi
+
+docker run -it \
+    --user tj2 \
+    --name workstation_build_tj2_ros \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v=workstation_tj2_ros_build:/home/tj2/ros_ws:rw \
+    -v=${TJ2_ROS_BASE}:/opt/tj2/tj2_ros:rw \
+    -v=${TJ2_ROS_BASE}/scripts:/opt/tj2/scripts:rw \
+    --rm \
+    ${IMAGE_PREFIX}_${TJ2_IMAGE_VERSION} \
+    /opt/tj2/scripts/build_tj2_ros.sh ${BUILD_FLAGS}

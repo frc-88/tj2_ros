@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  roscore:
+    image: workstation_tj2_ros:latest
+    container_name: roscore
+    restart: "no"
+    network_mode: "host"
+    privileged: true
+    entrypoint: ["/opt/tj2/roscore.sh"]
+    stop_signal: SIGTERM

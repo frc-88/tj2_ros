@@ -82,7 +82,7 @@ def main():
     camera_info_directory = str(rospy.get_param("~info_directory", "."))
     bag_name = str(rospy.get_param("~bag_name", ""))
 
-    bag_path = f"/home/tj2/tj2_ros/bags/{bag_name}.bag"
+    bag_path = f"/opt/tj2/tj2_ros/bags/{bag_name}.bag"
     bag = Bag(bag_path)
 
     NUM_CAMERAS = 4

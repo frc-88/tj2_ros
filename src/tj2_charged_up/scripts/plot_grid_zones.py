@@ -47,7 +47,7 @@ def plot_map(ax: Axes, ogm: OccupancyGridManager):
 fig = plt.figure(1)
 ax = fig.add_subplot()
 
-ogm = OccupancyGridManager.from_map_file("/home/tj2/tj2_ros/src/tj2_laser_slam/maps/charged-up-2023.yaml")
+ogm = OccupancyGridManager.from_map_file("/opt/tj2/tj2_ros/src/tj2_laser_slam/maps/charged-up-2023.yaml")
 grid_zones = GridZoneManager.from_file("../config/grid_zones.csv")
 
 assert grid_zones.get_nearest(-7.900929, -0.975011, 1.174763) == GridZone(-7.900929, -0.975011, 1.174763, Alliance.RED, ScoreDeviceType.POST, ColumnType.HIGH, 8)

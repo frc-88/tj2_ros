@@ -1,8 +1,0 @@
-#!/bin/bash
-set -e
-BASE_DIR=$(realpath "$(dirname $0)")
-
-${BASE_DIR}/build_container
-
-cd ${BASE_DIR}/../..
-docker build -f ./workstation/docker/resources/training.Dockerfile -t tj2_ros_training:latest .

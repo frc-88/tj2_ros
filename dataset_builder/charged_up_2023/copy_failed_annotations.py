@@ -3,8 +3,8 @@ import shutil
 from util import get_labels, load_validation_data
 
 def main():
-    validation_path = "/home/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces/validation.csv"
-    failed_path = "/home/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/quarantine"
+    validation_path = "/opt/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces/validation.csv"
+    failed_path = "/opt/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/quarantine"
     if not os.path.isdir(failed_path):
         os.makedirs(failed_path)
     
