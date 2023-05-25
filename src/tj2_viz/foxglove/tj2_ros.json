@@ -17,7 +17,8 @@
       "xAxisVal": "timestamp",
       "sidebarDimension": 240,
       "foxglovePanelTitle": "Plot",
-      "followingViewWidth": 60
+      "followingViewWidth": 60,
+      "title": "Plot"
     },
     "Plot!3z8gfei": {
       "paths": [
@@ -36,7 +37,8 @@
       "xAxisVal": "timestamp",
       "sidebarDimension": 240,
       "foxglovePanelTitle": "Plot",
-      "followingViewWidth": 30
+      "followingViewWidth": 30,
+      "title": "Plot"
     },
     "DiagnosticSummary!16i4g6j": {
       "minLevel": 0,
@@ -46,9 +48,9 @@
       "sortByLevel": true
     },
     "DiagnosticStatusPanel!4anbjtn": {
-      "selectedHardwareId": "none",
-      "selectedName": "joystick_finn_7_6302934813025848246: Joystick Driver Status",
       "topicToRender": "/diagnostics",
+      "selectedHardwareId": "None",
+      "selectedName": "amcl: Standard deviation",
       "collapsedSections": []
     },
     "RawMessages!2hs5hlt": {
@@ -119,18 +121,28 @@
             0,
             0
           ],
-          "order": 1
+          "order": 1,
+          "frameId": "map"
+        },
+        "43120c54-d2f5-4055-a669-f62856e70efb": {
+          "visible": true,
+          "frameLocked": true,
+          "label": "URDF",
+          "instanceId": "43120c54-d2f5-4055-a669-f62856e70efb",
+          "layerId": "foxglove.Urdf",
+          "url": "package://src/tj2_description",
+          "order": 2
         }
       },
       "cameraState": {
         "perspective": true,
-        "distance": 18.049999999957997,
-        "phi": 47.5258913258821,
-        "thetaOffset": 84.99337565371819,
+        "distance": 3.321667679742894,
+        "phi": 41.72524714242041,
+        "thetaOffset": 9.23607490641547,
         "targetOffset": [
-          -2.50246800389409,
-          1.2049338437924124,
-          3.589003757529877e-16
+          0.29378590678106253,
+          0.8196566041181876,
+          2.932214240538141e-16
         ],
         "target": [
           0,
@@ -152,7 +164,7 @@
       "scene": {
         "backgroundColor": "#425154",
         "enableStats": false,
-        "meshUpAxis": "y_up",
+        "meshUpAxis": "z_up",
         "transforms": {
           "editable": false,
           "axisScale": 0.5,
@@ -251,10 +263,11 @@
         "poseEstimateXDeviation": 0.5,
         "poseEstimateYDeviation": 0.5,
         "poseEstimateThetaDeviation": 0.26179939
-      }
+      },
+      "imageMode": {}
     },
     "Tab!45za3uy": {
-      "activeTabIdx": 0,
+      "activeTabIdx": 1,
       "tabs": [
         {
           "title": "Status",
@@ -296,7 +309,7 @@
             },
             "second": "3D!18i6zy7",
             "direction": "column",
-            "splitPercentage": 26.81918190096903
+            "splitPercentage": 26.746621600032068
           }
         }
       ]
