@@ -124,30 +124,29 @@
           "order": 1,
           "frameId": "map"
         },
-        "43120c54-d2f5-4055-a669-f62856e70efb": {
+        "178befd7-3ac4-4c64-8f9d-07f78eb9dbdd": {
           "visible": true,
           "frameLocked": true,
           "label": "URDF",
-          "instanceId": "43120c54-d2f5-4055-a669-f62856e70efb",
+          "instanceId": "178befd7-3ac4-4c64-8f9d-07f78eb9dbdd",
           "layerId": "foxglove.Urdf",
-          "url": "package://src/tj2_description",
+          "url": "package://tj2_description",
           "order": 2
         }
       },
       "cameraState": {
+        "distance": 4.078136514903717,
         "perspective": true,
-        "distance": 3.321667679742894,
-        "phi": 41.72524714242041,
-        "thetaOffset": 9.23607490641547,
-        "targetOffset": [
-          0.29378590678106253,
-          0.8196566041181876,
-          2.932214240538141e-16
-        ],
+        "phi": 40.87341974373938,
         "target": [
           0,
           0,
           0
+        ],
+        "targetOffset": [
+          1.4140364075157728,
+          3.253320038440563,
+          3.0311714814452643e-16
         ],
         "targetOrientation": [
           0,
@@ -155,6 +154,7 @@
           0,
           1
         ],
+        "thetaOffset": -7.00846661612806,
         "fovy": 45,
         "near": 0.5,
         "far": 5000
