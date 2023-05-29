@@ -1,0 +1,33 @@
+#!/bin/bash
+set -e
+BASE_DIR=$(realpath "$(dirname $0)")
+
+function cleanup {
+    xhost -local:root
+}
+trap cleanup EXIT
+
+REMOTE_MACHINE=$1
+JOYSTICK_DEVICE=$2
+
+TJ2_ROS_BASE=${BASE_DIR}/../..
+TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
+IMAGE_PREFIX=$(${BASE_DIR}/get_built_image)
+
+xhost +local:root
+docker run -it \
+    --name workstation_joystick \
+    --env="DISPLAY" \
+    --env="QT_X11_NO_MITSHM=1" \
+    --env="REMOTE_MACHINE=$REMOTE_MACHINE" \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v=workstation_tj2_ros_build:/home/tj2/ros_ws:rw \
+    -v=${TJ2_ROS_BASE}:/opt/tj2/tj2_ros:rw \
+    -v=${TJ2_ROS_BASE}/scripts:/opt/tj2/scripts:rw \
+    -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+    --rm \
+    ${IMAGE_PREFIX}_${TJ2_IMAGE_VERSION} \
+    /opt/tj2/entrypoint.sh roslaunch tj2_debug_joystick tj2_debug_joystick.launch topic_name:=joy_remote device:=$JOYSTICK_DEVICE

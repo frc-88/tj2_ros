@@ -1,0 +1,20 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+${BASE_DIR}/stop_tj2_ros_container
+${BASE_DIR}/copy_tj2_ros
+cd ${BASE_DIR}/../resources
+TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
+docker run \
+    --user tj2 \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v=tj2_ros_build:/home/tj2/ros_ws:rw \
+    -v /home/${USER}/tj2_ros:/opt/tj2/tj2_ros:rw \
+    -v /home/${USER}/tj2_ros/scripts:/opt/tj2/scripts:rw \
+    --rm \
+    --gpus all \
+    ${TJ2_IMAGE_VERSION} \
+    /opt/tj2/scripts/build_tj2_ros.sh

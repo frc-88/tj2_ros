@@ -86,8 +86,8 @@
     </include> -->
 
     <!-- Enable map_to_odom and static_map_server if laser localization is disabled -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom" args="0.0 0.0 0.0  0.0 0.0 0.0 1.0 map odom 20" />
-    <node name="static_map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_laser_slam)/maps/$(arg map_name).yaml">
+    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom" args="0.0 0.0 0.0  0.0 0.0 0.0 1.0 map odom" />
+    <node name="static_map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
         <param name="frame_id" value="map"/>
     </node>
 
@@ -114,4 +114,10 @@
 
     <!-- Grid zone state tracker using the neural net -->
     <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/>
+
+    <!-- PreferenceConstants backup -->
+    <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
+        <arg name="nt_host" value="$(arg robot_address)"/>
+        <arg name="robot" default="$(env ROBOT)"/>
+    </include>
 </launch>

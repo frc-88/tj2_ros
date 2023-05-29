@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+BASE_DIR=$(realpath "$(dirname $0)")
+
+${BASE_DIR}/build_container
+cd ${BASE_DIR}/../resources
+
+TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
+docker build -f ./training.Dockerfile --build-arg SOURCE_IMAGE=workstation_${TJ2_IMAGE_VERSION} -t training_${TJ2_IMAGE_VERSION} .

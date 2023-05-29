@@ -132,8 +132,6 @@ Visualization Manager:
           Value: true
         camera_tilt_link:
           Value: false
-        field:
-          Value: true
         imu:
           Value: false
         laser:
@@ -160,16 +158,6 @@ Visualization Manager:
           Value: false
         swerve_wheel_3:
           Value: false
-        tag1:
-          Value: true
-        tag3:
-          Value: true
-        tag4:
-          Value: true
-        tag5:
-          Value: true
-        tag8:
-          Value: true
         zed2_baro_link:
           Value: false
         zed2_base_link:
@@ -232,27 +220,19 @@ Visualization Manager:
                   pivot_0:
                     camera_0:
                       camera_optical_0:
-                        field:
-                          {}
-                        tag1:
-                          {}
-                        tag5:
-                          {}
+                        {}
                   pivot_1:
                     camera_1:
                       camera_optical_1:
-                        tag8:
-                          {}
+                        {}
                   pivot_2:
                     camera_2:
                       camera_optical_2:
-                        tag4:
-                          {}
+                        {}
                   pivot_3:
                     camera_3:
                       camera_optical_3:
-                        tag3:
-                          {}
+                        {}
                 swerve_wheel_0:
                   {}
                 swerve_wheel_1:
@@ -669,51 +649,7 @@ Visualization Manager:
       Marker Topic: /northstar/tag_markers
       Name: Apriltags
       Namespaces:
-        cube1: true
-        cube1-2-3-4-5-6-7-8: true
-        cube2: true
-        cube3: true
-        cube4: true
-        cube5: true
-        cube6: true
-        cube7: true
-        cube8: true
-        posx1: true
-        posx1-2-3-4-5-6-7-8: true
-        posx2: true
-        posx3: true
-        posx4: true
-        posx5: true
-        posx6: true
-        posx7: true
-        posx8: true
-        posy1: true
-        posy1-2-3-4-5-6-7-8: true
-        posy2: true
-        posy3: true
-        posy4: true
-        posy5: true
-        posy6: true
-        posy7: true
-        posy8: true
-        posz1: true
-        posz1-2-3-4-5-6-7-8: true
-        posz2: true
-        posz3: true
-        posz4: true
-        posz5: true
-        posz6: true
-        posz7: true
-        posz8: true
-        text1: true
-        text1-2-3-4-5-6-7-8: true
-        text2: true
-        text3: true
-        text4: true
-        text5: true
-        text6: true
-        text7: true
-        text8: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -811,7 +747,8 @@ Visualization Manager:
       Marker Topic: /tj2/charged_up_perception/markers
       Name: Perception Markers
       Namespaces:
-        {}
+        cone-ARROW: true
+        cone-CUBE: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -904,7 +841,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.082743644714355
+      Distance: 12.412672996520996
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -912,9 +849,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -5.484234809875488
-        Y: 3.7157561779022217
-        Z: -0.38561955094337463
+        X: -1.8246490955352783
+        Y: 3.6462857723236084
+        Z: -0.38711386919021606
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

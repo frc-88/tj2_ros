@@ -15,8 +15,8 @@ matplotlib.use("TkAgg")
 class Validator:
     def __init__(self) -> None:
         self.labels = get_labels()
-        base_path = "/home/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces"
-        self.output_path = "/home/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces/validation.csv"
+        base_path = "/opt/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces"
+        self.output_path = "/opt/tj2/tj2_ros/dataset_builder/data/charged_up_2023_raw/game_pieces/validation.csv"
         self.frames = []
         self.collector = ChargedUp2023Collector(base_path, self.labels)
         self.pbar = tqdm.tqdm(desc="image", total=self.collector.get_length(), bar_format='Loading: {desc}{percentage:3.0f}%|{bar}|{n}/{total}')

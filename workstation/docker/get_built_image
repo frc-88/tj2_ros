@@ -1,8 +1,0 @@
-
-docker image list | grep -q tj2_ros_training
-if [ $? -eq 0 ]; then
-	IMAGE_PREFIX=training
-else
-	IMAGE_PREFIX=workstation
-fi
-echo ${IMAGE_PREFIX}

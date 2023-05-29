@@ -31,7 +31,7 @@ echo "Uploading data"
 ${BASE_DIR}/sync_data ${DESTINATION_NAME} ${REMOTE_KEY} y
 
 echo "Copying into workspace"
-${SSH_COMMAND} "${DEST_FULL_PATH}/docker/native/copy_tj2_ros"
+${SSH_COMMAND} "${DEST_FULL_PATH}/docker/jetson/copy_tj2_ros"
 
 echo "Downloading data"
 ${BASE_DIR}/sync_data ${DESTINATION_NAME} ${REMOTE_KEY} n
