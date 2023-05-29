@@ -14,6 +14,7 @@
         <node pkg="tj2_northstar" type="playback.py" name="arducam_playback" required="false" output="screen">
             <param name="info_directory" value="$(find tj2_bringup)/config/diffyjr/northstar/calibration" />
             <param name="bag_name" value="arducam_2023-05-15-16-30-52" />
+            <!-- <param name="bag_name" value="arducam_2023-05-15-16-32-19" /> -->
         </node>
 
         <rosparam command="load" file="$(arg apriltag_settings)" ns="apriltag_cam_array"/>

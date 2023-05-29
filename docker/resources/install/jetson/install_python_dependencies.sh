@@ -21,7 +21,8 @@ python -m pip install --no-cache-dir scipy==1.5.4 \
     tqdm \
     v4l2-fix \
     jsonlines \
-    ezdxf
+    ezdxf \
+    filterpy
 
 python -m pip install Cython --no-cache-dir
 python -m pip install llvmlite==0.32.0 --no-cache-dir

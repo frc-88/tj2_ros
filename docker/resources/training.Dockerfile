@@ -61,8 +61,8 @@ ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 
 ENV FLASK_ENV=development \
+    PATH=${HOME}/.local/bin:/opt/tj2/scripts${PATH:+:${PATH}} \
     PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools${PYTHONPATH:+:${PYTHONPATH}} \
-    PATH=${HOME}/.local/bin${PATH:+:${PATH}} \
     PYTHONIOENCODING=utf-8
 
 # ---
