@@ -15,7 +15,7 @@ from geometry_msgs.msg import (
 )
 from typing import List, Optional, Generator, Tuple
 from tj2_tools.robot_state import Pose2d, Velocity
-from tj2_northstar.filter_model import FilterModel
+from filter_model import FilterModel
 
 
 class TJ2NorthstarFilter:
@@ -145,6 +145,11 @@ class TJ2NorthstarFilter:
             rate.sleep()
             with self.model_lock:
                 self.model.predict()
+                pose, velocity = self.model.get_state()
+                global_pose = PoseStamped()
+                global_pose.header.frame_id = self.map_frame
+                global_pose.pose = pose.to_ros_pose()
+                self.publish_transform(global_pose, "base_link")
 
 
 def main():

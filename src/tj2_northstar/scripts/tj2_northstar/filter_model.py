@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Tuple
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
@@ -75,4 +76,10 @@ class FilterModel:
         self.filter.update(
             np.array(pose.to_list()),
             R=measurement_noise,
+        )
+
+    def get_state(self) -> Tuple[Pose2d, Velocity]:
+        return (
+            Pose2d(x=self.filter.x[0], y=self.filter.x[1], theta=self.filter.x[2]),
+            Velocity(x=self.filter.x[3], y=self.filter.x[4], theta=self.filter.x[5]),
         )
