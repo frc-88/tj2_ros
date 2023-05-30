@@ -4,7 +4,7 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
 from tj2_tools.robot_state import Pose2d, Velocity
-from filterpy.kalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
+from filterpy.kalman import KalmanFilter
 from filterpy.common import Q_discrete_white_noise
 
 
@@ -13,73 +13,82 @@ class FilterModel:
         self,
         dt: float,
     ) -> None:
+        self.dt = dt
         self.num_states = 6
         self.num_measurements = 3
 
-        def fx(state, dt):
-            # # state transition function - predict next state based
-            state_out = np.zeros_like(state)
-            state_out[0:3] = state[3:6] * dt + state[0:3]
-            state_out[3:6] = state[3:6]
-            return state_out
-
-        def hx(state):
-            # measurement function - convert state into a measurement
-            return state[0:3]
-
-        points = MerweScaledSigmaPoints(self.num_states, alpha=0.1, beta=2.0, kappa=-1)
-        self.filter = UnscentedKalmanFilter(
-            dim_x=self.num_states,
-            dim_z=self.num_measurements,
-            dt=dt,
-            fx=fx,
-            hx=hx,
-            points=points,
-        )
+        self.filter = KalmanFilter(dim_x=self.num_states, dim_z=self.num_measurements)
         self.filter.x = np.zeros(self.num_states)  # initial state
-        self.filter.P = 0.2  # initial uncertainty
+
+        # initial uncertainty
+        self.filter.P = np.eye(self.num_states) * 0.2
+
+        # x' + vx * dt = x (vx is in the same frame as x). Same applies for y and theta
+        self.filter.F = np.eye(self.num_states)
+        self.filter.F[0:3, 3:6] = np.eye(3) * self.dt
+
+        # state uncertainty
         z_std = 0.1
-        self.filter.R = np.diag([z_std**2, z_std**2, z_std**2])
+        self.filter.R = np.eye(self.num_states) * z_std**2
+
+        # process uncertainty
         self.filter.Q = Q_discrete_white_noise(
-            dim=self.num_measurements, dt=dt, var=0.01**2, block_size=2
+            dim=self.num_measurements, dt=self.dt, var=0.01**2, block_size=2
         )
 
-        self.prev_odom_time = 0.0
+        # measurement function for landmarks. Use only position.
+        self.landmark_H = np.zeros((self.num_states, self.num_measurements))
+        self.landmark_H[0:3, 0:3] = np.eye(self.num_measurements)
+
+        # measurement function for odometry. Use only velocity.
+        self.odom_H = np.zeros((self.num_states, self.num_measurements))
+        self.odom_H[3:6, 0:3] = np.eye(self.num_measurements)
+
+        self.landmark_covariance_indices = {
+            (0, 0): 0 * 0,
+            (1, 1): 1 * 1,
+            (2, 2): 5 * 5,
+        }  # fmt: off
+        self.odom_covariance_indices = {
+            (0, 0): 0 * 0,
+            (1, 1): 1 * 1,
+            (2, 2): 5 * 5,
+        }  # fmt: off
 
     def predict(self) -> None:
         self.filter.predict()
 
     def update_landmark(self, msg: PoseWithCovarianceStamped) -> None:
         pose = Pose2d.from_ros_pose(msg.pose.pose)
-        covariance = np.array(msg.pose.covariance).reshape((6, 6))
         measurement_noise = np.eye(self.num_measurements)
-        measurement_noise[0, 0] = covariance[0, 0]
-        measurement_noise[1, 1] = covariance[1, 1]
-        measurement_noise[2, 2] = covariance[5, 5]
-        self.filter.update(np.array(pose.to_list()), R=measurement_noise)
+        for mat_index, msg_index in self.landmark_covariance_indices.items():
+            measurement_noise[mat_index] = msg.pose.covariance[msg_index]
+        self.filter.update(
+            np.array(pose.to_list()), R=measurement_noise, H=self.landmark_H
+        )
 
     def update_odometry(self, msg: Odometry) -> None:
-        if self.prev_odom_time == 0.0:
-            self.prev_odom_time = msg.header.stamp.to_sec()
-            return
-        delta_time = msg.header.stamp.to_sec() - self.prev_odom_time
+        relative_velocity = Velocity.from_ros_twist(msg.twist.twist)
+        prev_state = self.get_pose()
+        global_velocity = relative_velocity.rotate_by(prev_state.theta)
+        # extract only x, y from rotated velocity since theta is in global already
+        measurement = np.array([global_velocity.x, global_velocity.y, prev_state.theta])
 
-        velocity = Velocity.from_ros_twist(msg.twist.twist)
-        pose = Pose2d.from_ros_pose(msg.pose.pose)
-        pose = pose.project(velocity, delta_time)
-
-        covariance = np.array(msg.pose.covariance).reshape((6, 6))
         measurement_noise = np.eye(self.num_measurements)
-        measurement_noise[0, 0] = covariance[0, 0]
-        measurement_noise[1, 1] = covariance[1, 1]
-        measurement_noise[2, 2] = covariance[5, 5]
+        for mat_index, msg_index in self.odom_covariance_indices.items():
+            measurement_noise[mat_index] = msg.twist.covariance[msg_index]
+
         self.filter.update(
-            np.array(pose.to_list()),
+            measurement,
             R=measurement_noise,
+            H=self.odom_H,
         )
+
+    def get_pose(self) -> Pose2d:
+        return Pose2d(x=self.filter.x[0], y=self.filter.x[1], theta=self.filter.x[2])
+
+    def get_velocity(self) -> Velocity:
+        return Velocity(x=self.filter.x[3], y=self.filter.x[4], theta=self.filter.x[5])
 
     def get_state(self) -> Tuple[Pose2d, Velocity]:
-        return (
-            Pose2d(x=self.filter.x[0], y=self.filter.x[1], theta=self.filter.x[2]),
-            Velocity(x=self.filter.x[3], y=self.filter.x[4], theta=self.filter.x[5]),
-        )
+        return (self.get_pose(), self.get_velocity())

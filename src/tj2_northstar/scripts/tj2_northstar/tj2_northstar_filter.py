@@ -145,7 +145,7 @@ class TJ2NorthstarFilter:
             rate.sleep()
             with self.model_lock:
                 self.model.predict()
-                pose, velocity = self.model.get_state()
+                pose = self.model.get_pose()
                 global_pose = PoseStamped()
                 global_pose.header.frame_id = self.map_frame
                 global_pose.pose = pose.to_ros_pose()
