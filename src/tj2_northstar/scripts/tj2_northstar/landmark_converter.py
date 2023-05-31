@@ -17,6 +17,7 @@ class LandmarkConverter:
         rospy.init_node("landmark_converter")
 
         self.base_frame = str(rospy.get_param("~base_frame", "base_tilt_link"))
+        self.map_frame = str(rospy.get_param("~map_frame", "map"))
         self.field_frame = str(rospy.get_param("~field_frame", "field"))
         self.landmark_ids = frozenset(rospy.get_param("~landmark_ids", [0]))
         base_covariance = rospy.get_param(
@@ -55,7 +56,7 @@ class LandmarkConverter:
                 individual_measurements.append(detection_pose)
         if landmark_pose is not None:
             self.publish_landmark_from_tf()
-            # self.publish_landmark(landmark_pose)
+            # self.publish_inverted_landmark(landmark_pose)
         if len(individual_measurements) > 0:
             self.update_covariance(individual_measurements)
 
@@ -108,8 +109,7 @@ class LandmarkConverter:
         forward_translation = tf.transformations.translation_from_matrix(inverse_mat)
         forward_rotation = tf.transformations.quaternion_from_matrix(inverse_mat)
         inverse_pose = PoseStamped()
-        # frame is unassigned as the computed frame doesn't exist yet
-        inverse_pose.header.frame_id = ""
+        inverse_pose.header.frame_id = self.map_frame
         inverse_pose.header.stamp = pose.header.stamp
         inverse_pose.pose.position.x = forward_translation[0]
         inverse_pose.pose.position.y = forward_translation[1]

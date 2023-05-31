@@ -15,45 +15,56 @@ class FilterModel:
     ) -> None:
         self.dt = dt
         self.num_states = 6
+        self.num_states_1st_order = self.num_states // 2
         self.num_measurements = 3
 
-        self.filter = KalmanFilter(dim_x=self.num_states, dim_z=self.num_measurements)
-        self.filter.x = np.zeros(self.num_states)  # initial state
+        z_std = 0.001
+        measurement_var = 0.001**2
+
+        n = self.num_states
+        m = self.num_measurements
+        n_half = self.num_states_1st_order
+
+        self.filter = KalmanFilter(dim_x=n, dim_z=m)
+        self.filter.x = np.zeros(n)  # initial state
 
         # initial uncertainty
-        self.filter.P = np.eye(self.num_states) * 0.2
+        self.filter.P = np.eye(n) * 0.2
 
         # x' + vx * dt = x (vx is in the same frame as x). Same applies for y and theta
-        self.filter.F = np.eye(self.num_states)
-        self.filter.F[0:3, 3:6] = np.eye(3) * self.dt
+        self.filter.F = np.eye(n)
+        self.filter.F[0:n_half, n_half:n] = np.eye(n_half) * self.dt
 
         # state uncertainty
-        z_std = 0.1
-        self.filter.R = np.eye(self.num_states) * z_std**2
+        self.filter.R = np.eye(n) * z_std**2
 
         # process uncertainty
         self.filter.Q = Q_discrete_white_noise(
-            dim=self.num_measurements, dt=self.dt, var=0.01**2, block_size=2
+            dim=n_half, dt=self.dt, var=measurement_var, block_size=2
         )
 
         # measurement function for landmarks. Use only position.
-        self.landmark_H = np.zeros((self.num_states, self.num_measurements))
-        self.landmark_H[0:3, 0:3] = np.eye(self.num_measurements)
+        self.landmark_H = np.zeros((m, n))
+        self.landmark_H[0:n_half, 0:n_half] = np.eye(m)
 
         # measurement function for odometry. Use only velocity.
-        self.odom_H = np.zeros((self.num_states, self.num_measurements))
-        self.odom_H[3:6, 0:3] = np.eye(self.num_measurements)
+        self.odom_H = np.zeros((m, n))
+        self.odom_H[0:n_half, n_half:n] = np.eye(m)
 
         self.landmark_covariance_indices = {
-            (0, 0): 0 * 0,
-            (1, 1): 1 * 1,
-            (2, 2): 5 * 5,
+            (0, 0): self.get_index(0, 0, n),
+            (1, 1): self.get_index(1, 1, n),
+            (2, 2): self.get_index(5, 5, n),
         }  # fmt: off
         self.odom_covariance_indices = {
-            (0, 0): 0 * 0,
-            (1, 1): 1 * 1,
-            (2, 2): 5 * 5,
+            (0, 0): self.get_index(0, 0, n),
+            (1, 1): self.get_index(1, 1, n),
+            (2, 2): self.get_index(5, 5, n),
         }  # fmt: off
+
+    @staticmethod
+    def get_index(row: int, col: int, row_length: int) -> int:
+        return row * row_length + col
 
     def predict(self) -> None:
         self.filter.predict()
@@ -72,7 +83,10 @@ class FilterModel:
         prev_state = self.get_pose()
         global_velocity = relative_velocity.rotate_by(prev_state.theta)
         # extract only x, y from rotated velocity since theta is in global already
-        measurement = np.array([global_velocity.x, global_velocity.y, prev_state.theta])
+        measurement = np.array(
+            [global_velocity.x, global_velocity.y, relative_velocity.theta]
+        )
+        print(global_velocity, relative_velocity)
 
         measurement_noise = np.eye(self.num_measurements)
         for mat_index, msg_index in self.odom_covariance_indices.items():
@@ -92,3 +106,6 @@ class FilterModel:
 
     def get_state(self) -> Tuple[Pose2d, Velocity]:
         return (self.get_pose(), self.get_velocity())
+
+    def get_covariance(self) -> np.ndarray:
+        return self.filter.P

@@ -180,15 +180,26 @@ def main():
                         info_pubs[index].publish(info_msgs[index])
                 elif topic == "/tj2/odom":
                     msg.header.stamp = now
+
+                    # fmt: off
+                    msg.twist.covariance = [
+                        0.00010, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000,
+                        0.00000, 0.00010, 0.00000, 0.00000, 0.00000, 0.00000,
+                        0.00000, 0.00000, 0.00010, 0.00000, 0.00000, 0.00000,
+                        0.00000, 0.00000, 0.00000, 0.00010, 0.00000, 0.00000,
+                        0.00000, 0.00000, 0.00000, 0.00000, 0.00010, 0.00000,
+                        0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00010,
+                    ]
+                    # fmt: on
                     odom_pub.publish(msg)
-                # elif topic == "/tf":
-                #     tf_broadcaster.sendTransform(msg.transforms)
-                #     for transform_msg in msg.transforms:
-                #         transform_msg.header.stamp = now
-                #         parent = transform_msg.header.frame_id
-                #         child = transform_msg.child_frame_id
-                #         if parent == "odom" and child == "base_link":
-                #             tf_broadcaster.sendTransform(transform_msg)
+                elif topic == "/tf":
+                    # tf_broadcaster.sendTransform(msg.transforms)
+                    for transform_msg in msg.transforms:
+                        transform_msg.header.stamp = now
+                        parent = transform_msg.header.frame_id
+                        child = transform_msg.child_frame_id
+                        if parent == "odom" and child == "base_link":
+                            tf_broadcaster.sendTransform(transform_msg)
                 # clock_pub.publish(sim_clock)
 
             messages = bag.read_messages()
