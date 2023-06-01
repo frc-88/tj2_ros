@@ -12,14 +12,6 @@ class State:
         self.theta = theta  # radians
 
     @classmethod
-    def none_pose(cls):
-        self = cls()
-        self.x = None
-        self.y = None
-        self.theta = None
-        return self
-
-    @classmethod
     def from_xyt(cls, x=0.0, y=0.0, theta=0.0):
         self = cls()
         self.x = x
@@ -48,9 +40,6 @@ class State:
         return tf_conversions.transformations.euler_from_quaternion(
             (quaternion.x, quaternion.y, quaternion.z, quaternion.w)
         )[2]
-
-    def is_none(self):
-        return self.x is None and self.y is None and self.theta is None
 
     def get_theta_as_quat(self) -> Quaternion:
         quat = self.get_theta_as_quat_as_list()
@@ -245,10 +234,6 @@ class State:
             elif state == "t":
                 output.append(float(self.theta))
         return output
-
-    @classmethod
-    def to_array(cls, poses: list):
-        return np.array([pose.to_list() for pose in poses])
 
     def to_ros_pose(self):
         ros_pose = Pose()

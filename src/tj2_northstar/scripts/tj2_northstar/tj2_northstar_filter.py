@@ -3,13 +3,11 @@ from tf_conversions import transformations
 import numpy as np
 import tf2_ros
 import rospy
-from typing import List, Optional, Generator, Tuple
 from threading import Lock
 
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import (
     PoseWithCovarianceStamped,
-    Twist,
     Quaternion,
     TransformStamped,
     PoseStamped,
@@ -18,10 +16,7 @@ from geometry_msgs.msg import (
     Point,
 )
 
-from tj2_tools.robot_state import Pose2d, Velocity
-from tj2_tools.transforms import transform_pose
-
-from filter_model import FilterModel
+from filter_models import DriveUnscentedKalmanFilterModel, TagFastForward
 
 
 class TJ2NorthstarFilter:
@@ -32,24 +27,23 @@ class TJ2NorthstarFilter:
         self.base_frame = rospy.get_param("~base_frame", "base_link")
 
         self.play_forward_buffer_size = rospy.get_param("~play_forward_buffer_size", 20)
-        self.max_time_window = rospy.get_param("~max_time_window", 0.5)
-        self.update_rate = rospy.get_param("~update_rate", 50.0)
-        self.tf_broadcaster = tf2_ros.TransformBroadcaster()
-
-        self.timestamps = np.ascontiguousarray(
-            np.zeros(self.play_forward_buffer_size, dtype=np.float64)
+        self.tag_fast_forward_sample_window = rospy.get_param(
+            "~tag_fast_forward_sample_window", 0.1
         )
-        self.odom_messages: List[Optional[Odometry]] = [
-            None for _ in range(self.play_forward_buffer_size)
-        ]
-        self.prev_odom = Odometry()
-        self.current_index = 0
+        self.update_rate = rospy.get_param("~update_rate", 50.0)
 
+        self.prev_odom = Odometry()
+
+        self.model = DriveUnscentedKalmanFilterModel(1.0 / self.update_rate)
+        self.model_lock = Lock()
+
+        self.fast_forwarder = TagFastForward(
+            self.tag_fast_forward_sample_window, self.play_forward_buffer_size
+        )
+
+        self.tf_broadcaster = tf2_ros.TransformBroadcaster()
         self.buffer = tf2_ros.Buffer()
         self.transform_listener = tf2_ros.TransformListener(self.buffer)
-
-        self.model = FilterModel(1.0 / self.update_rate)
-        self.model_lock = Lock()
 
         self.odom_sub = rospy.Subscriber(
             "odom", Odometry, self.odom_callback, queue_size=10
@@ -57,46 +51,12 @@ class TJ2NorthstarFilter:
         self.landmark_sub = rospy.Subscriber(
             "landmark", PoseWithCovarianceStamped, self.landmark_callback, queue_size=10
         )
+        self.forwarded_landmark_pub = rospy.Publisher(
+            "landmark/forwarded", PoseWithCovarianceStamped, queue_size=10
+        )
         self.filter_state_pub = rospy.Publisher("filter_state", Odometry, queue_size=10)
 
-    def find_nearest_index(self, timestamp: float) -> int:
-        return np.argmin(np.abs(self.timestamps - timestamp))
-
-    def iterate_odom_forward(
-        self, past_timestamp: float
-    ) -> Generator[Tuple[Optional[Odometry], float], None, None]:
-        nearest_index = self.find_nearest_index(past_timestamp)
-        index = nearest_index
-        now = rospy.Time.now().to_sec()
-        while index != self.current_index:
-            next_index = (index + 1) % self.play_forward_buffer_size
-            odom_timestamp = self.timestamps[index]
-            forward_delta = odom_timestamp - past_timestamp
-            lag_delta = now - odom_timestamp
-            if forward_delta < 0.0 and lag_delta < self.max_time_window:
-                if next_index == index:
-                    next_timestamp = now
-                else:
-                    next_timestamp = self.timestamps[next_index]
-                yield self.odom_messages[index], next_timestamp
-            index = next_index
-
-    def get_last_odom(self) -> Optional[Pose]:
-        # zero_pose = PoseStamped()
-        # zero_pose.header.frame_id = self.base_frame
-        # zero_pose.pose.orientation.w = 1.0
-        # pose_stamped = transform_pose(self.buffer, zero_pose, self.odom_frame)
-        # if pose_stamped is None:
-        #     return None
-        # else:
-        #     return pose_stamped.pose
-
-        # odom = self.odom_messages[self.current_index]
-        # if odom is None:
-        #     return None
-        # else:
-        #     return odom.pose.pose
-
+    def get_last_pose(self) -> Pose:
         return self.prev_odom.pose.pose
 
     def odom_callback(self, msg: Odometry) -> None:
@@ -114,23 +74,10 @@ class TJ2NorthstarFilter:
                 "Odometry frame is inconsistent "
                 f"{msg.header.frame_id} != {self.odom_frame}"
             )
-        self.odom_messages[self.current_index] = msg
-        self.timestamps[self.current_index] = msg.header.stamp.to_sec()
-        self.current_index = (self.current_index + 1) % self.play_forward_buffer_size
-        self.prev_odom = msg
+
         with self.model_lock:
             self.model.update_odometry(msg)
-
-    def project_twist_forward(
-        self, pose2d: Pose2d, twist: Twist, time_delta: float
-    ) -> Pose2d:
-        velocity = Velocity.from_ros_twist(twist)
-        return pose2d.project(velocity, time_delta)
-
-    def get_rpy(self, quaternion: Quaternion):
-        return transformations.euler_from_quaternion(
-            (quaternion.x, quaternion.y, quaternion.z, quaternion.w)
-        )
+            self.fast_forwarder.record_odometry(msg)
 
     def publish_transform(self, pose: PoseStamped, child_frame: str) -> None:
         transform = TransformStamped()
@@ -201,34 +148,8 @@ class TJ2NorthstarFilter:
         return transformations.inverse_matrix(self.get_forward_transform_mat(pose))
 
     def landmark_callback(self, msg: PoseWithCovarianceStamped) -> None:
-        landmark_pose2d = Pose2d.from_ros_pose(msg.pose.pose)
-
-        # landmark_timestamp = msg.header.stamp.to_sec()
-        # start_pose2d = Pose2d.from_state(landmark_pose2d)
-        # num_forwards = 0
-        # for odom_msg, next_timestamp in self.iterate_odom_forward(landmark_timestamp):
-        #     if odom_msg is None:
-        #         continue
-        #     time_delta = next_timestamp - odom_msg.header.stamp.to_sec()
-        #     if time_delta < 0.0:
-        #         continue
-        #     landmark_pose2d = self.project_twist_forward(
-        #         landmark_pose2d, odom_msg.twist.twist, time_delta
-        #     )
-        #     num_forwards += 1
-        # rospy.loginfo(
-        #     f"Time delay: {rospy.Time.now().to_sec() - landmark_timestamp}. "
-        #     f"Num forwards: {num_forwards}. "
-        #     f"Delta distance: {landmark_pose2d.distance(start_pose2d)}"
-        # )
-
-        # Apply 3D states not calculated from odom
-        roll, pitch, yaw = self.get_rpy(msg.pose.pose.orientation)
-        msg.pose.pose.position.x = landmark_pose2d.x
-        msg.pose.pose.position.y = landmark_pose2d.y
-        msg.pose.pose.orientation = Quaternion(
-            *transformations.quaternion_from_euler(roll, pitch, landmark_pose2d.theta)
-        )
+        msg = self.fast_forwarder.fast_forward(msg)
+        self.forwarded_landmark_pub.publish(msg)
         with self.model_lock:
             self.model.update_landmark(msg)
 
@@ -240,7 +161,7 @@ class TJ2NorthstarFilter:
                 self.model.predict()
                 self.publish_filter_state()
                 global_pose = self.model.get_pose()
-                odom_pose = self.get_last_odom()
+                odom_pose = self.get_last_pose()
                 if odom_pose is not None:
                     tf_pose = PoseStamped()
                     tf_pose.header.frame_id = self.map_frame

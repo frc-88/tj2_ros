@@ -6,9 +6,11 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from tj2_tools.robot_state import Pose2d, Velocity
 from filterpy.kalman import KalmanFilter
 from filterpy.common import Q_discrete_white_noise
+from .filter_model import FilterModel
+from .helpers import landmark_to_measurement, odometry_to_measurement
 
 
-class FilterModel:
+class DriveKalmanFilterModel(FilterModel):
     def __init__(
         self,
         dt: float,
@@ -51,17 +53,6 @@ class FilterModel:
         self.odom_H = np.zeros((m, n))
         self.odom_H[0:n_half, n_half:n] = np.eye(m)
 
-        self.landmark_covariance_indices = {
-            (0, 0): self.get_index(0, 0, n),
-            (1, 1): self.get_index(1, 1, n),
-            (2, 2): self.get_index(5, 5, n),
-        }  # fmt: off
-        self.odom_covariance_indices = {
-            (0, 0): self.get_index(0, 0, n),
-            (1, 1): self.get_index(1, 1, n),
-            (2, 2): self.get_index(5, 5, n),
-        }  # fmt: off
-
     @staticmethod
     def get_index(row: int, col: int, row_length: int) -> int:
         return row * row_length + col
@@ -70,13 +61,8 @@ class FilterModel:
         self.filter.predict()
 
     def update_landmark(self, msg: PoseWithCovarianceStamped) -> None:
-        pose = Pose2d.from_ros_pose(msg.pose.pose)
-        measurement_noise = np.eye(self.num_measurements)
-        for mat_index, msg_index in self.landmark_covariance_indices.items():
-            measurement_noise[mat_index] = msg.pose.covariance[msg_index]
-        self.filter.update(
-            np.array(pose.to_list()), R=measurement_noise, H=self.landmark_H
-        )
+        measurement, measurement_noise = landmark_to_measurement(msg)
+        self.filter.update(measurement, R=measurement_noise, H=self.landmark_H)
 
     def update_odometry(self, msg: Odometry) -> None:
         relative_velocity = Velocity.from_ros_twist(msg.twist.twist)
@@ -86,11 +72,7 @@ class FilterModel:
         measurement = np.array(
             [global_velocity.x, global_velocity.y, relative_velocity.theta]
         )
-        print(global_velocity, relative_velocity)
-
-        measurement_noise = np.eye(self.num_measurements)
-        for mat_index, msg_index in self.odom_covariance_indices.items():
-            measurement_noise[mat_index] = msg.twist.covariance[msg_index]
+        _, measurement_noise = odometry_to_measurement(msg)
 
         self.filter.update(
             measurement,

@@ -84,6 +84,7 @@ def main():
 
     camera_info_directory = str(rospy.get_param("~info_directory", "."))
     bag_name = str(rospy.get_param("~bag_name", ""))
+    replay = bool(rospy.get_param("~replay", False))
 
     bag_path = f"/opt/tj2/tj2_ros/bags/{bag_name}.bag"
     bag = Bag(bag_path)
@@ -201,6 +202,8 @@ def main():
                         if parent == "odom" and child == "base_link":
                             tf_broadcaster.sendTransform(transform_msg)
                 # clock_pub.publish(sim_clock)
+            if not replay:
+                break
 
             messages = bag.read_messages()
             if rospy.is_shutdown():
