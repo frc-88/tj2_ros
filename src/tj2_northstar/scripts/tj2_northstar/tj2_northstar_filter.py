@@ -17,14 +17,15 @@ from geometry_msgs.msg import (
 )
 
 from filter_models import DriveUnscentedKalmanFilterModel, TagFastForward
+from tj2_tools.robot_state import Pose2d, Velocity
 
 
 class TJ2NorthstarFilter:
     def __init__(self) -> None:
         rospy.init_node("tj2_northstar_filter")
         self.map_frame = rospy.get_param("~map_frame", "map")
-        self.odom_frame = rospy.get_param("~odom_frame", "odom")
-        self.base_frame = rospy.get_param("~base_frame", "base_link")
+        self.odom_frame = ""
+        self.base_frame = ""
 
         self.play_forward_buffer_size = rospy.get_param("~play_forward_buffer_size", 20)
         self.tag_fast_forward_sample_window = rospy.get_param(
@@ -42,8 +43,6 @@ class TJ2NorthstarFilter:
         )
 
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
-        self.buffer = tf2_ros.Buffer()
-        self.transform_listener = tf2_ros.TransformListener(self.buffer)
 
         self.odom_sub = rospy.Subscriber(
             "odom", Odometry, self.odom_callback, queue_size=10
@@ -75,6 +74,7 @@ class TJ2NorthstarFilter:
                 f"{msg.header.frame_id} != {self.odom_frame}"
             )
 
+        self.prev_odom = msg
         with self.model_lock:
             self.model.update_odometry(msg)
             self.fast_forwarder.record_odometry(msg)
@@ -90,14 +90,15 @@ class TJ2NorthstarFilter:
         transform.transform.rotation = pose.pose.orientation
         self.tf_broadcaster.sendTransform(transform)
 
-    def publish_filter_state(self) -> None:
+    def publish_filter_state(
+        self, pose: Pose2d, velocity: Velocity, covariance: np.ndarray
+    ) -> None:
         msg = Odometry()
         msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = self.map_frame
         msg.child_frame_id = self.base_frame
-        msg.pose.pose = self.model.get_pose().to_ros_pose()
-        msg.twist.twist = self.model.get_velocity().to_ros_twist()
-        covariance = self.model.get_covariance()
+        msg.pose.pose = pose.to_ros_pose()
+        msg.twist.twist = velocity.to_ros_twist()
 
         pose_covariance = np.zeros((6, 6))
         pose_covariance[0, 0] = covariance[0, 0]
@@ -159,17 +160,21 @@ class TJ2NorthstarFilter:
             rate.sleep()
             with self.model_lock:
                 self.model.predict()
-                self.publish_filter_state()
+                self.publish_filter_state(
+                    self.model.get_pose(),
+                    self.model.get_velocity(),
+                    self.model.get_covariance(),
+                )
                 global_pose = self.model.get_pose()
-                odom_pose = self.get_last_pose()
-                if odom_pose is not None:
-                    tf_pose = PoseStamped()
-                    tf_pose.header.frame_id = self.map_frame
-                    tf_pose.pose = self.get_map_to_odom(
-                        global_pose.to_ros_pose(), odom_pose
-                    )
-                    self.publish_transform(tf_pose, self.odom_frame)
-                # self.publish_transform(global_pose.to_ros_pose(), self.base_frame)
+            odom_pose = self.get_last_pose()
+            if odom_pose is not None:
+                tf_pose = PoseStamped()
+                tf_pose.header.frame_id = self.map_frame
+                tf_pose.pose = self.get_map_to_odom(
+                    global_pose.to_ros_pose(), odom_pose
+                )
+                self.publish_transform(tf_pose, self.odom_frame)
+            # self.publish_transform(global_pose.to_ros_pose(), self.base_frame)
 
 
 def main():
