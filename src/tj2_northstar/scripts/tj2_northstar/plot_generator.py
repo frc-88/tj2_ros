@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import rospy
 import numpy as np
-import matplotlib
 from typing import List
+import matplotlib
+from matplotlib.axis import Axis
 from matplotlib import pyplot as plt
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -19,34 +20,73 @@ def odometries_to_array(msgs: List[Odometry]) -> np.ndarray:
 
 
 class OdometryLine:
-    def __init__(self, axis, prefix: str) -> None:
+    def __init__(self, axis: Axis, prefix: str, enabled="xyt") -> None:
         self.states = []
-        self.x_line = axis.plot([], [], label=f"{prefix}-x")[0]
-        self.y_line = axis.plot([], [], label=f"{prefix}-y")[0]
-        self.theta_line = axis.plot([], [], label=f"{prefix}-theta")[0]
+        self.enabled = enabled
+        self.x_line = (
+            axis.plot([], [], label=f"{prefix}-x")[0] if self.is_x_enabled() else None
+        )
+        self.y_line = (
+            axis.plot([], [], label=f"{prefix}-y")[0] if self.is_y_enabled() else None
+        )
+        self.theta_line = (
+            axis.plot([], [], label=f"{prefix}-theta")[0]
+            if self.is_theta_enabled()
+            else None
+        )
+        self.axis = axis
+
+    def is_x_enabled(self):
+        return "x" in self.enabled
+
+    def is_y_enabled(self):
+        return "y" in self.enabled
+
+    def is_theta_enabled(self):
+        return "theta" in self.enabled
+
+    def is_any_enabled(self):
+        return len(self.enabled) > 0
 
     def update(self, msg: Odometry):
+        if not self.is_any_enabled():
+            return
         self.states.append(msg)
         data = odometries_to_array(self.states)
-        self.x_line.set_xdata(data[:, 0])
-        self.x_line.set_ydata(data[:, 1])
-        self.y_line.set_xdata(data[:, 0])
-        self.y_line.set_ydata(data[:, 2])
-        self.theta_line.set_xdata(data[:, 0])
-        self.theta_line.set_ydata(data[:, 3])
+        x_data = data[:, 0]
+        self.axis.set_xlim(min(x_data), max(x_data))
+        flattened = data[:, 1:].flatten()
+        min_y = min(flattened)
+        max_y = max(flattened)
+        self.axis.set_ylim(min_y, max_y)
+        if self.is_x_enabled():
+            self.x_line.set_xdata(x_data)
+            self.x_line.set_ydata(data[:, 1])
+        if self.is_y_enabled():
+            self.y_line.set_xdata(x_data)
+            self.y_line.set_ydata(data[:, 2])
+        if self.is_theta_enabled():
+            self.theta_line.set_xdata(x_data)
+            self.theta_line.set_ydata(data[:, 3])
 
 
 class ScalarLine:
-    def __init__(self, axis, label: str) -> None:
+    def __init__(self, axis: Axis, label: str, enabled: bool = True) -> None:
+        self.enabled = enabled
         self.times = []
         self.states = []
         self.line = axis.plot([], [], label=label)[0]
+        self.axis = axis
 
     def update(self, timestamp: float, value: float):
+        if not self.enabled:
+            return
         self.times.append(timestamp)
         self.states.append(value)
         self.line.set_xdata(self.times)
         self.line.set_ydata(self.states)
+        self.axis.set_xlim(min(self.times), max(self.times))
+        self.axis.set_ylim(min(self.states), max(self.states))
 
 
 class Plotter:
@@ -56,9 +96,12 @@ class Plotter:
         self.plot_delay = 0.01
 
         self.init()
-        self.forwarded_dist_line = ScalarLine(self.error_over_time_plot, "error")
-        self.filter_line = OdometryLine(self.state_over_time_plot, "filter")
-        self.odom_line = OdometryLine(self.state_over_time_plot, "odom")
+        self.forwarded_dist_line = ScalarLine(self.error_over_time_plot, "distance")
+        self.forwarded_angle_line = ScalarLine(self.error_over_time_plot, "angle")
+        self.filter_line = OdometryLine(
+            self.state_over_time_plot, "filter", enabled="xy"
+        )
+        self.odom_line = OdometryLine(self.state_over_time_plot, "odom", enabled="")
 
         self.prev_landmark = None
 
@@ -78,7 +121,7 @@ class Plotter:
             "landmark", PoseWithCovarianceStamped, self.landmark_callback, queue_size=10
         )
         self.forwarded_landmark_sub = rospy.Subscriber(
-            "forwarded_landmark",
+            "landmark/forwarded",
             PoseWithCovarianceStamped,
             self.forwarded_landmark_callback,
             queue_size=10,
@@ -111,10 +154,12 @@ class Plotter:
     def forwarded_landmark_callback(self, msg: PoseWithCovarianceStamped) -> None:
         if self.prev_landmark is None:
             return
-        distance = Pose2d.from_ros_pose(msg.pose.pose).distance(
-            Pose2d.from_ros_pose(self.prev_landmark.pose.pose)
-        )
+        forwarded = Pose2d.from_ros_pose(msg.pose.pose)
+        landmark = Pose2d.from_ros_pose(self.prev_landmark.pose.pose)
+        distance = forwarded.distance(landmark)
+        angle = forwarded.theta - landmark.theta
         self.forwarded_dist_line.update(msg.header.stamp.to_sec(), distance)
+        self.forwarded_angle_line.update(msg.header.stamp.to_sec(), angle)
 
     def pause(self) -> None:
         backend = plt.rcParams["backend"]
