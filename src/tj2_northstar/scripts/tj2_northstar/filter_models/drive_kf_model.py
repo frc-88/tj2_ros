@@ -86,8 +86,5 @@ class DriveKalmanFilterModel(FilterModel):
     def get_velocity(self) -> Velocity:
         return Velocity(x=self.filter.x[3], y=self.filter.x[4], theta=self.filter.x[5])
 
-    def get_state(self) -> Tuple[Pose2d, Velocity]:
-        return (self.get_pose(), self.get_velocity())
-
     def get_covariance(self) -> np.ndarray:
         return self.filter.P

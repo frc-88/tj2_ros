@@ -28,9 +28,8 @@ class FilterModel:
     def get_velocity(self) -> Velocity:
         pass
 
-    @abstractmethod
     def get_state(self) -> Tuple[Pose2d, Velocity]:
-        pass
+        return self.get_pose(), self.get_velocity()
 
     @abstractmethod
     def get_covariance(self) -> np.ndarray:

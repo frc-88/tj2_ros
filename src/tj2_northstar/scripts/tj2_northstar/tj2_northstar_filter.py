@@ -16,7 +16,8 @@ from geometry_msgs.msg import (
     Point,
 )
 
-from filter_models import DriveUnscentedKalmanFilterModel, TagFastForward
+from filter_models import TagFastForward
+from filter_models import CustomDriveModel as FilterModel
 from tj2_tools.robot_state import Pose2d, Velocity
 
 
@@ -35,7 +36,7 @@ class TJ2NorthstarFilter:
 
         self.prev_odom = Odometry()
 
-        self.model = DriveUnscentedKalmanFilterModel(1.0 / self.update_rate)
+        self.model = FilterModel(1.0 / self.update_rate)
         self.model_lock = Lock()
 
         self.fast_forwarder = TagFastForward(
@@ -149,11 +150,7 @@ class TJ2NorthstarFilter:
         return transformations.inverse_matrix(self.get_forward_transform_mat(pose))
 
     def landmark_callback(self, msg: PoseWithCovarianceStamped) -> None:
-        # try:
-        #     msg = self.fast_forwarder.fast_forward(msg)
-        # except np.linalg.LinAlgError as e:
-        #     rospy.logwarn(f"Exception during fast forward: {e}")
-        #     return
+        msg = self.fast_forwarder.fast_forward(msg)
         self.forwarded_landmark_pub.publish(msg)
         with self.model_lock:
             self.model.update_landmark(msg)
@@ -163,11 +160,7 @@ class TJ2NorthstarFilter:
         while not rospy.is_shutdown():
             rate.sleep()
             with self.model_lock:
-                try:
-                    self.model.predict()
-                except np.linalg.LinAlgError as e:
-                    rospy.logwarn(f"Exception during model predict: {e}")
-                    continue
+                self.model.predict()
                 self.publish_filter_state(
                     self.model.get_pose(),
                     self.model.get_velocity(),
@@ -182,7 +175,10 @@ class TJ2NorthstarFilter:
                     global_pose.to_ros_pose(), odom_pose
                 )
                 self.publish_transform(tf_pose, self.odom_frame)
-            # self.publish_transform(global_pose.to_ros_pose(), self.base_frame)
+            # tf_pose = PoseStamped()
+            # tf_pose.header.frame_id = self.map_frame
+            # tf_pose.pose = global_pose.to_ros_pose()
+            # self.publish_transform(tf_pose, self.base_frame)
 
 
 def main():

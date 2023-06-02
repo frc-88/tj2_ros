@@ -9,6 +9,8 @@ Panels:
         - /TF1/Tree1
         - /Camera1/Visibility1
         - /Odometry1
+        - /Odometry2
+        - /Odometry2/Shape1
       Splitter Ratio: 0.4070473909378052
     Tree Height: 953
   - Class: rviz/Selection
@@ -73,6 +75,10 @@ Visualization Manager:
           Value: true
         camera_3:
           Value: true
+        camera_armature_link:
+          Value: true
+        camera_link:
+          Value: true
         camera_optical_0:
           Value: false
         camera_optical_1:
@@ -81,7 +87,13 @@ Visualization Manager:
           Value: false
         camera_optical_3:
           Value: false
+        camera_tilt_link:
+          Value: true
         field:
+          Value: true
+        imu:
+          Value: true
+        laser:
           Value: true
         map:
           Value: true
@@ -97,6 +109,14 @@ Visualization Manager:
           Value: false
         siren_center:
           Value: false
+        swerve_wheel_0:
+          Value: true
+        swerve_wheel_1:
+          Value: true
+        swerve_wheel_2:
+          Value: true
+        swerve_wheel_3:
+          Value: true
         tag1:
           Value: true
         tag3:
@@ -114,6 +134,14 @@ Visualization Manager:
           odom:
             base_link:
               base_tilt_link:
+                camera_tilt_link:
+                  camera_armature_link:
+                    camera_link:
+                      {}
+                imu:
+                  {}
+                laser:
+                  {}
                 siren_center:
                   pivot_0:
                     camera_0:
@@ -122,13 +150,14 @@ Visualization Manager:
                   pivot_1:
                     camera_1:
                       camera_optical_1:
+                        {}
+                  pivot_2:
+                    camera_2:
+                      camera_optical_2:
                         field:
                           {}
                         tag1:
                           {}
-                  pivot_2:
-                    camera_2:
-                      camera_optical_2:
                         tag3:
                           {}
                   pivot_3:
@@ -136,6 +165,14 @@ Visualization Manager:
                       camera_optical_3:
                         tag5:
                           {}
+                swerve_wheel_0:
+                  {}
+                swerve_wheel_1:
+                  {}
+                swerve_wheel_2:
+                  {}
+                swerve_wheel_3:
+                  {}
       Update Interval: 0
       Value: true
     - Class: rviz/MarkerArray
@@ -179,6 +216,7 @@ Visualization Manager:
         Camera: true
         Grid: false
         MarkerArray: true
+        Odometry: true
         PoseWithCovariance: true
         TF: false
         Value: true
@@ -198,6 +236,7 @@ Visualization Manager:
         Camera: true
         Grid: false
         MarkerArray: true
+        Odometry: true
         PoseWithCovariance: true
         TF: false
         Value: true
@@ -217,6 +256,7 @@ Visualization Manager:
         Camera: true
         Grid: false
         MarkerArray: true
+        Odometry: true
         PoseWithCovariance: true
         TF: false
         Value: true
@@ -236,6 +276,7 @@ Visualization Manager:
         Camera: true
         Grid: false
         MarkerArray: true
+        Odometry: true
         PoseWithCovariance: true
         TF: false
         Value: true
@@ -303,7 +344,42 @@ Visualization Manager:
         Shaft Length: 1
         Shaft Radius: 0.05000000074505806
         Value: Arrow
-      Topic: /filter_state
+      Topic: /northstar/filter_state
+      Unreliable: false
+      Value: true
+    - Angle Tolerance: 0.0010000000474974513
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 1
+      Name: Odometry
+      Position Tolerance: 0.0010000000474974513
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 0; 0; 255
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /tj2/odom
       Unreliable: false
       Value: true
   Enabled: true
@@ -334,7 +410,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 3.061208963394165
+      Distance: 7.897092342376709
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -342,17 +418,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -6.309934139251709
-        Y: 2.000606060028076
-        Z: -2.384185791015625e-07
+        X: -3.1590805053710938
+        Y: 0.2572515606880188
+        Z: -1.1920928955078125e-06
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.08479727804660797
+      Pitch: 1.4347968101501465
       Target Frame: <Fixed Frame>
-      Yaw: 4.938591957092285
+      Yaw: 4.488590717315674
     Saved: ~
 Window Geometry:
   Camera:

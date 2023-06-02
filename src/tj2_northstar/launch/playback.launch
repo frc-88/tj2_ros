@@ -23,19 +23,20 @@
             <param name="replay" value="true" />
             <!-- <param name="bag_name" value="arducam_2023-05-15-16-32-19" /> -->
         </node>
-        <node pkg="tj2_northstar" type="plot_generator.py" name="plot_generator" output="screen">
+        
+        <!-- <node pkg="tj2_northstar" type="plot_generator.py" name="plot_generator" output="screen">
             <remap from="odom" to="/tj2/odom" />
-        </node>
+        </node> -->
 
         <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen">
             <rosparam param="landmark_ids">[1, 2, 3, 4, 5, 6, 7, 8]</rosparam>
             <rosparam param="covariance">[
-                0.0010, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
-                0.0000, 0.0010, 0.0000, 0.0000, 0.0000, 0.0000,
-                0.0000, 0.0000, 0.0010, 0.0000, 0.0000, 0.0000,
-                0.0000, 0.0000, 0.0000, 0.0010, 0.0000, 0.0000,
-                0.0000, 0.0000, 0.0000, 0.0000, 0.0010, 0.0000,
-                0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0010,
+                0.1000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+                0.0000, 0.1000, 0.0000, 0.0000, 0.0000, 0.0000,
+                0.0000, 0.0000, 0.1000, 0.0000, 0.0000, 0.0000,
+                0.0000, 0.0000, 0.0000, 0.1000, 0.0000, 0.0000,
+                0.0000, 0.0000, 0.0000, 0.0000, 0.1000, 0.0000,
+                0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.1000,
             ]</rosparam>
         </node>
 
