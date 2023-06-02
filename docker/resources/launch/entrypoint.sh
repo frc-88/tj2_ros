@@ -7,7 +7,7 @@ source ${ROS_WS_ROOT}/devel/setup.bash
 source /opt/tj2/scripts/startup.sh
 
 if [ ! -z ${REMOTE_MACHINE} ]; then
-    source /opt/tj2/scripts/set_client.sh ${REMOTE_MACHINE}
+    source /opt/tj2/scripts/set_client ${REMOTE_MACHINE}
 fi
 
 exec "$@"

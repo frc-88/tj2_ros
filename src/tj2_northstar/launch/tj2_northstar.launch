@@ -3,7 +3,7 @@
     <arg name="apriltag_settings" default="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
     <arg name="apriltag_tags" default="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml"/>
     <arg name="publish_tag_detections_image" default="false"/>
-    <arg name="filter_params" default="$(find tj2_bringup)/config/diffyjr/filter/filter.yaml"/>
+    <arg name="filter_params" default="$(find tj2_bringup)/config/diffyjr/northstar/filter/filter.yaml"/>
     <arg name="calibration_params" default="$(find tj2_bringup)/config/diffyjr/northstar/calibration"/>
 
     <group ns="northstar">

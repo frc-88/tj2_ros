@@ -45,7 +45,7 @@
         <arg name="record_launch_path" value="$(find tj2_bringup)/config/diffyjr/record_match_diffyjr.launch" />
     </include>
 
-    <group ns="laser">
+    <!-- <group ns="laser">
         <include file="$(find tj2_rplidar)/launch/tj2_rplidar_a2.launch">
             <arg name="serial_port" value="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>
             <arg name="lidar_node_name" value="diffyjr_rplidar"/>
@@ -55,7 +55,7 @@
         <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
             <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/laser_filter.yaml" />
         </node>
-    </group>
+    </group> -->
 
     <include if="$(arg enable_driver_station)" file="$(find tj2_driver_station)/launch/tj2_driver_station.launch"/>
     <include if="$(arg enable_driver_station)" file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/>
@@ -78,13 +78,14 @@
         <rosparam file="$(find tj2_bringup)/config/diffyjr/move_base/costmap_global_params.yaml" command="load" ns="global_costmap"/>
     </node> -->
 
-    <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
+    <!-- <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="localize"/>
         <arg name="map_name" value="$(arg map_name)"/>
         <arg name="laser_scan_topic" value="$(arg laser_scan_topic)"/>
         <arg name="gmapping_config" value="$(find tj2_bringup)/config/diffyjr/gmapping.yaml"/>
         <arg name="amcl_config" value="$(find tj2_bringup)/config/diffyjr/amcl.yaml"/>
-    </include>
+    </include> -->
+
     <!-- <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_data)/data/waypoints/$(arg map_name)"/>
     </include> -->
@@ -100,5 +101,13 @@
 
     <!-- <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/> -->
     <!-- <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/> -->
-    <!-- <include file="$(find tj2_northstar)/launch/tj2_northstar.launch"/> -->
+    <include file="$(find tj2_northstar)/launch/tj2_northstar.launch">
+        <arg name="apriltag_settings" default="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
+        <arg name="apriltag_tags" default="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml"/>
+        <arg name="filter_params" default="$(find tj2_bringup)/config/diffyjr/northstar/filter/filter.yaml"/>
+        <arg name="calibration_params" default="$(find tj2_bringup)/config/diffyjr/northstar/calibration"/>
+    </include>
+    <node name="static_map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
+        <param name="frame_id" value="map"/>
+    </node>
 </launch>

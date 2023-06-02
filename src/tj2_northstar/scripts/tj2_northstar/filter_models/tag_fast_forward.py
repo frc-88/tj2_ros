@@ -38,7 +38,6 @@ class TagFastForward:
         if num_samples > 0:
             self._reset_filter_to_landmark(msg)
             self.current_index = 0
-            print(f"{num_samples=}")
             for forwarded_time in np.linspace(start_time, now, num_samples):
                 odom_msg = self._find_nearest_odom(forwarded_time)
                 if odom_msg is not None:

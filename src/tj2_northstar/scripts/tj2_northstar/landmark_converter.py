@@ -55,8 +55,8 @@ class LandmarkConverter:
             elif len(ids) == 1:
                 individual_measurements.append(detection_pose)
         if landmark_pose is not None:
-            self.publish_landmark_from_tf()
-            # self.publish_inverted_landmark(landmark_pose)
+            # self.publish_landmark_from_tf()
+            self.publish_inverted_landmark(landmark_pose)
         if len(individual_measurements) > 0:
             self.update_covariance(individual_measurements)
 
