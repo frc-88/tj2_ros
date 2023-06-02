@@ -3,42 +3,30 @@
     <arg name="apriltag_settings" default="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
     <arg name="apriltag_tags" default="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml"/>
     <arg name="publish_tag_detections_image" default="false"/>
+    <arg name="filter_params" default="$(find tj2_bringup)/config/diffyjr/northstar/filter/filter.yaml"/>
+    <arg name="calibration_params" default="$(find tj2_bringup)/config/diffyjr/northstar/calibration"/>
 
     <param name="use_sim_time" value="false" />
 
-    <!-- <node pkg="robot_localization" type="ukf_localization_node" name="northstar_kalman_filter" clear_params="true">
-        <rosparam command="load" file="$(find tj2_northstar)/config/ukf.yaml" />
-    </node> -->
-
     <group ns="northstar">
-        <!-- <node pkg="tj2_northstar" type="tj2_northstar_filter.py" name="tj2_northstar_filter" output="screen">
-            <rosparam command="load" file="$(find tj2_northstar)/config/tj2_northstar_filter.yaml" />
-            <param name="parent_frame" value="field"/>
+        <rosparam command="load" file="$(arg filter_params)" ns=""/>
+
+        <node pkg="tj2_northstar" type="tj2_northstar_filter.py" name="tj2_northstar" output="screen">
             <remap from="odom" to="/tj2/odom" />
-        </node> -->
+        </node>
 
         <node pkg="tj2_northstar" type="playback.py" name="arducam_playback" required="false" output="screen">
-            <param name="info_directory" value="$(find tj2_bringup)/config/diffyjr/northstar/calibration" />
+            <param name="info_directory" value="$(arg calibration_params)" />
             <param name="bag_name" value="arducam_2023-05-15-16-30-52" />
-            <param name="replay" value="true" />
             <!-- <param name="bag_name" value="arducam_2023-05-15-16-32-19" /> -->
+            <param name="replay" value="true" />
         </node>
         
         <!-- <node pkg="tj2_northstar" type="plot_generator.py" name="plot_generator" output="screen">
             <remap from="odom" to="/tj2/odom" />
         </node> -->
 
-        <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen">
-            <rosparam param="landmark_ids">[1, 2, 3, 4, 5, 6, 7, 8]</rosparam>
-            <rosparam param="covariance">[
-                0.1000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
-                0.0000, 0.1000, 0.0000, 0.0000, 0.0000, 0.0000,
-                0.0000, 0.0000, 0.1000, 0.0000, 0.0000, 0.0000,
-                0.0000, 0.0000, 0.0000, 0.1000, 0.0000, 0.0000,
-                0.0000, 0.0000, 0.0000, 0.0000, 0.1000, 0.0000,
-                0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.1000,
-            ]</rosparam>
-        </node>
+        <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen"/>
 
         <rosparam command="load" file="$(arg apriltag_settings)" ns="apriltag_cam_array"/>
         <rosparam command="load" file="$(arg apriltag_tags)" ns="apriltag_cam_array"/>
@@ -89,4 +77,9 @@
         <arg name="model" value="$(find tj2_description)/urdf/diffyjr.urdf.xml"/>
         <arg name="joint_names" value="$(find tj2_bringup)/config/diffyjr/joints.yaml"/>
     </include>
+
+    <arg name="map_name" default="charged-up-2023"/>
+    <node name="static_map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
+        <param name="frame_id" value="map"/>
+    </node>
 </launch>

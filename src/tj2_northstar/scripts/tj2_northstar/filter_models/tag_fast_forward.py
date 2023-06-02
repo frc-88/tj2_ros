@@ -12,14 +12,14 @@ from .helpers import (
     NUM_STATES_1ST_ORDER,
     LANDMARK_COVARIANCE_INDICES,
 )
-from .drive_custom_model import CustomDriveModel
+from .drive_kf_model import DriveKalmanModel
 
 
 class TagFastForward:
     def __init__(self, dt: float, play_forward_buffer_size: int) -> None:
         self.dt = dt
         self.play_forward_buffer_size = play_forward_buffer_size
-        self.model = CustomDriveModel(self.dt)
+        self.model = DriveKalmanModel(self.dt)
 
         self.current_index = 0
         self.odom_messages: List[Odometry] = []
@@ -38,6 +38,7 @@ class TagFastForward:
         if num_samples > 0:
             self._reset_filter_to_landmark(msg)
             self.current_index = 0
+            print(f"{num_samples=}")
             for forwarded_time in np.linspace(start_time, now, num_samples):
                 odom_msg = self._find_nearest_odom(forwarded_time)
                 if odom_msg is not None:

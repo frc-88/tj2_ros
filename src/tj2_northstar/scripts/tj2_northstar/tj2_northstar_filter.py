@@ -17,7 +17,7 @@ from geometry_msgs.msg import (
 )
 
 from filter_models import TagFastForward
-from filter_models import CustomDriveModel as FilterModel
+from filter_models import DriveKalmanModel as FilterModel
 from tj2_tools.robot_state import Pose2d, Velocity
 
 
@@ -175,10 +175,6 @@ class TJ2NorthstarFilter:
                     global_pose.to_ros_pose(), odom_pose
                 )
                 self.publish_transform(tf_pose, self.odom_frame)
-            # tf_pose = PoseStamped()
-            # tf_pose.header.frame_id = self.map_frame
-            # tf_pose.pose = global_pose.to_ros_pose()
-            # self.publish_transform(tf_pose, self.base_frame)
 
 
 def main():
