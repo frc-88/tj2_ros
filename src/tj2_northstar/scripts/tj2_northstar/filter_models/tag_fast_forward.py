@@ -13,6 +13,7 @@ from .helpers import (
     landmark_to_measurement,
     odometry_to_measurement,
     state_transition_fn,
+    sqrt_func,
     NUM_STATES,
     NUM_STATES_1ST_ORDER,
     NUM_MEASUREMENTS,
@@ -28,7 +29,9 @@ class TagFastForward:
         z_std = 0.001
         measurement_var = 0.001**2
 
-        points = MerweScaledSigmaPoints(4, alpha=0.1, beta=2.0, kappa=-1)
+        points = MerweScaledSigmaPoints(
+            NUM_STATES, alpha=0.3, beta=2.0, kappa=0.1, sqrt_method=sqrt_func
+        )
         self.filter = UnscentedKalmanFilter(
             dim_x=NUM_STATES,
             dim_z=NUM_MEASUREMENTS,
@@ -36,10 +39,11 @@ class TagFastForward:
             hx=None,
             fx=state_transition_fn,
             points=points,
+            sqrt_fn=sqrt_func,
         )
 
         # state uncertainty
-        self.filter.R = np.eye(NUM_STATES) * z_std**2
+        self.filter.R = np.eye(NUM_MEASUREMENTS) * z_std**2
 
         # process uncertainty
         self.filter.Q = Q_discrete_white_noise(
@@ -76,8 +80,10 @@ class TagFastForward:
             result.pose.pose.orientation = Quaternion(
                 *transformations.quaternion_from_euler(roll, pitch, self.filter.x[2])
             )
+            covariance = list(result.pose.covariance)
             for mat_index, msg_index in LANDMARK_COVARIANCE_INDICES.items():
-                result.pose.covariance[msg_index] = self.filter.P[mat_index]
+                covariance[msg_index] = self.filter.P[mat_index]
+            result.pose.covariance = covariance
             return result
         else:
             return msg

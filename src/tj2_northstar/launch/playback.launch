@@ -11,15 +11,16 @@
     </node> -->
 
     <group ns="northstar">
-        <node pkg="tj2_northstar" type="tj2_northstar_filter.py" name="tj2_northstar_filter" output="screen">
+        <!-- <node pkg="tj2_northstar" type="tj2_northstar_filter.py" name="tj2_northstar_filter" output="screen">
             <rosparam command="load" file="$(find tj2_northstar)/config/tj2_northstar_filter.yaml" />
             <param name="parent_frame" value="field"/>
             <remap from="odom" to="/tj2/odom" />
-        </node>
+        </node> -->
 
         <node pkg="tj2_northstar" type="playback.py" name="arducam_playback" required="false" output="screen">
             <param name="info_directory" value="$(find tj2_bringup)/config/diffyjr/northstar/calibration" />
             <param name="bag_name" value="arducam_2023-05-15-16-30-52" />
+            <param name="replay" value="true" />
             <!-- <param name="bag_name" value="arducam_2023-05-15-16-32-19" /> -->
         </node>
         <node pkg="tj2_northstar" type="plot_generator.py" name="plot_generator" output="screen">

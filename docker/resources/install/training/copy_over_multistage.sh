@@ -1,5 +1,5 @@
 #!/bin/bash
 
-rm -r /tmp/workstation_tj2_ros/sys
-sudo rsync -a /tmp/workstation_tj2_ros/* /
-rm -r /tmp/*
+sudo rm -r /tmp/workstation_tj2_ros/sys
+sudo rsync -az /tmp/workstation_tj2_ros/* /
+sudo rm -r /tmp/*

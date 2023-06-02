@@ -101,6 +101,7 @@ COPY --chown=1000:1000 \
     ./launch/launch.sh \
     ./launch/roscore.sh \
     /opt/tj2/
+RUN ln -s /opt/tj2/tj2_ros ${HOME}/tj2_ros
 
 RUN chown 1000:1000 ${HOME}
 

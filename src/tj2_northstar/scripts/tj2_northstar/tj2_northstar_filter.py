@@ -149,7 +149,11 @@ class TJ2NorthstarFilter:
         return transformations.inverse_matrix(self.get_forward_transform_mat(pose))
 
     def landmark_callback(self, msg: PoseWithCovarianceStamped) -> None:
-        msg = self.fast_forwarder.fast_forward(msg)
+        # try:
+        #     msg = self.fast_forwarder.fast_forward(msg)
+        # except np.linalg.LinAlgError as e:
+        #     rospy.logwarn(f"Exception during fast forward: {e}")
+        #     return
         self.forwarded_landmark_pub.publish(msg)
         with self.model_lock:
             self.model.update_landmark(msg)
@@ -159,7 +163,11 @@ class TJ2NorthstarFilter:
         while not rospy.is_shutdown():
             rate.sleep()
             with self.model_lock:
-                self.model.predict()
+                try:
+                    self.model.predict()
+                except np.linalg.LinAlgError as e:
+                    rospy.logwarn(f"Exception during model predict: {e}")
+                    continue
                 self.publish_filter_state(
                     self.model.get_pose(),
                     self.model.get_velocity(),

@@ -130,6 +130,7 @@ class Plotter:
     def run(self) -> None:
         while not rospy.is_shutdown():
             self.pause()
+            rospy.sleep(self.plot_delay)
 
 
 def main():

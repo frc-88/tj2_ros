@@ -11,6 +11,8 @@ sudo ln -s /usr/bin/python3 /usr/bin/python
 
 python -m pip install --no-cache-dir --upgrade pip setuptools
 python -m pip install --no-cache-dir scipy==1.5.4 \
+    numpy==1.19.5 \
+    matplotlib==3.4.3 \
     shapely==1.6.4 \
     dataclasses \
     pynetworktables==2021.0.0 \

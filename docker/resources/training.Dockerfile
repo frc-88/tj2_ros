@@ -45,7 +45,7 @@ USER ${USER}
 # Multistage copy
 # ---
 
-COPY --chown=1000:1000 --from=workstation_tj2_ros / /tmp/workstation_tj2_ros
+COPY --from=workstation_tj2_ros / /tmp/workstation_tj2_ros
 COPY --chown=1000:1000 ./install/training/copy_over_multistage.sh /opt/tj2/install/training/
 RUN bash /opt/tj2/install/training/copy_over_multistage.sh
 
@@ -68,10 +68,6 @@ ENV FLASK_ENV=development \
 # ---
 # tj2_ros launch environment
 # ---
-
-USER root
-RUN chown root:root /usr/bin/sudo && \
-    chmod 4755 /usr/bin/sudo
 
 COPY --chown=1000:1000 ./install/client_bashrc ${HOME}/.bashrc
 
