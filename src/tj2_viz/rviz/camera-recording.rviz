@@ -8,7 +8,8 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /Camera1/Visibility1
-        - /Odometry2/Shape1
+        - /Filter State1
+        - /Odometry1/Shape1
       Splitter Ratio: 0.4070473909378052
     Tree Height: 953
   - Class: rviz/Selection
@@ -87,8 +88,6 @@ Visualization Manager:
           Value: false
         camera_tilt_link:
           Value: true
-        field:
-          Value: true
         imu:
           Value: false
         laser:
@@ -115,12 +114,6 @@ Visualization Manager:
           Value: false
         swerve_wheel_3:
           Value: false
-        tag1:
-          Value: true
-        tag3:
-          Value: true
-        tag5:
-          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -152,17 +145,11 @@ Visualization Manager:
                   pivot_2:
                     camera_2:
                       camera_optical_2:
-                        tag3:
-                          {}
+                        {}
                   pivot_3:
                     camera_3:
                       camera_optical_3:
-                        field:
-                          {}
-                        tag1:
-                          {}
-                        tag5:
-                          {}
+                        {}
                 swerve_wheel_0:
                   {}
                 swerve_wheel_1:
@@ -220,24 +207,19 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         cube1: true
-        cube3: true
-        cube5: true
+        cube6: true
         posx1: true
         posx1-2-3-4-5-6-7-8: true
-        posx3: true
-        posx5: true
+        posx6: true
         posy1: true
         posy1-2-3-4-5-6-7-8: true
-        posy3: true
-        posy5: true
+        posy6: true
         posz1: true
         posz1-2-3-4-5-6-7-8: true
-        posz3: true
-        posz5: true
+        posz6: true
         text1: true
         text1-2-3-4-5-6-7-8: true
-        text3: true
-        text5: true
+        text6: true
       Queue Size: 100
       Value: true
     - Class: rviz/Camera
@@ -251,12 +233,14 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         Camera: true
+        Filter State: true
         Grid: false
+        Landmark: true
+        Landmark Forwarded: true
+        Map: true
         MarkerArray: true
         Odometry: true
-        PoseWithCovariance: true
         RobotModel: true
         TF: false
         Value: true
@@ -272,12 +256,14 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         Camera: true
+        Filter State: true
         Grid: false
+        Landmark: true
+        Landmark Forwarded: true
+        Map: true
         MarkerArray: true
         Odometry: true
-        PoseWithCovariance: true
         RobotModel: true
         TF: false
         Value: true
@@ -293,12 +279,14 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         Camera: true
+        Filter State: true
         Grid: false
+        Landmark: true
+        Landmark Forwarded: true
+        Map: true
         MarkerArray: true
         Odometry: true
-        PoseWithCovariance: true
         RobotModel: true
         TF: false
         Value: true
@@ -314,12 +302,14 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         Camera: true
+        Filter State: true
         Grid: false
+        Landmark: true
+        Landmark Forwarded: true
+        Map: true
         MarkerArray: true
         Odometry: true
-        PoseWithCovariance: true
         RobotModel: true
         TF: false
         Value: true
@@ -405,7 +395,7 @@ Visualization Manager:
         Value: true
       Enabled: false
       Keep: 1
-      Name: Odometry
+      Name: Filter State
       Position Tolerance: 0.0010000000474974513
       Queue Size: 10
       Shape:
@@ -493,20 +483,26 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0
-      Class: rviz/TopDownOrtho
+      Class: rviz/ThirdPersonFollower
+      Distance: 22.695951461791992
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
+      Field of View: 0.7853981852531433
+      Focal Point:
+        X: -2.71258544921875
+        Y: 4.13854455947876
+        Z: 0
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 113.69644165039062
+      Pitch: 0.9653980135917664
       Target Frame: <Fixed Frame>
-      X: -0.025562360882759094
-      Y: 0.17440256476402283
+      Yaw: 0.7653982043266296
     Saved: ~
 Window Geometry:
   Camera:

@@ -86,7 +86,7 @@ def main():
     bag_name = str(rospy.get_param("~bag_name", ""))
     replay = bool(rospy.get_param("~replay", False))
 
-    bag_path = f"/opt/tj2/tj2_ros/bags/{bag_name}.bag"
+    bag_path = f"/opt/tj2/tj2_ros/bags/{bag_name}"
     bag = Bag(bag_path)
 
     NUM_CAMERAS = 4

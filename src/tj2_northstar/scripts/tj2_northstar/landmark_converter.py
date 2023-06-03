@@ -31,6 +31,8 @@ class LandmarkConverter:
         self.landmark = PoseWithCovarianceStamped()
         self.landmark.header.frame_id = self.base_frame
 
+        self.prev_landmark = PoseStamped()
+
         self.buffer = tf2_ros.Buffer()
         self.transform_listener = tf2_ros.TransformListener(self.buffer)
 
@@ -57,8 +59,8 @@ class LandmarkConverter:
         if landmark_pose is not None:
             # self.publish_landmark_from_tf()
             self.publish_inverted_landmark(landmark_pose)
-        if len(individual_measurements) > 0:
-            self.update_covariance(individual_measurements)
+            if len(individual_measurements) > 0:
+                self.update_covariance(individual_measurements, landmark_pose)
 
     def publish_landmark_from_tf(self) -> None:
         transform = lookup_transform(self.buffer, self.field_frame, self.base_frame)
@@ -146,12 +148,38 @@ class LandmarkConverter:
             )
         )
 
-    def update_covariance(self, poses: List[PoseStamped]) -> None:
-        distances = [self.get_pose_distance(pose) for pose in poses]
+    def pose_stamped_to_vector(self, pose: PoseStamped) -> np.ndarray:
+        return np.array(
+            [
+                pose.pose.position.x,
+                pose.pose.position.y,
+                pose.pose.position.z,
+            ]
+        )
+
+    def delta_pose_covariance_scale(
+        self, current_pose: PoseStamped, prev_pose: PoseStamped
+    ) -> None:
+        distance = np.linalg.norm(
+            self.pose_stamped_to_vector(current_pose)
+            - self.pose_stamped_to_vector(prev_pose)
+        )
+        scale = 4 * distance + 1.0
+        return scale
+
+    def update_covariance(
+        self, tag_poses: List[PoseStamped], overall_pose: PoseStamped
+    ) -> None:
+        distances = [self.get_pose_distance(pose) for pose in tag_poses]
         aggregate_distance = float(np.median(distances))
 
-        covariance = self.base_covariance * self.num_tags_covariance_scale(len(poses))
+        covariance = self.base_covariance * self.num_tags_covariance_scale(
+            len(tag_poses)
+        )
         covariance *= self.pose_distance_covariance_scale(aggregate_distance)
+
+        covariance *= self.delta_pose_covariance_scale(overall_pose, self.prev_landmark)
+        self.prev_landmark = overall_pose
         self.landmark.pose.covariance = covariance.flatten().tolist()
 
     def run(self) -> None:

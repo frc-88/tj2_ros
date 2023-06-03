@@ -159,6 +159,8 @@ class TJ2NorthstarFilter:
         rate = rospy.Rate(self.update_rate)
         while not rospy.is_shutdown():
             rate.sleep()
+            if len(self.odom_frame) == 0 and len(self.base_frame) == 0:
+                continue
             with self.model_lock:
                 self.model.predict()
                 self.publish_filter_state(

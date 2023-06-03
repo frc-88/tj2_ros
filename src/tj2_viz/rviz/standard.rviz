@@ -134,13 +134,9 @@ Visualization Manager:
           Value: true
         camera_tilt_link:
           Value: false
-        field:
-          Value: true
         imu:
           Value: false
         laser:
-          Value: true
-        map:
           Value: true
         odom:
           Value: true
@@ -162,20 +158,6 @@ Visualization Manager:
           Value: false
         swerve_wheel_3:
           Value: false
-        tag1:
-          Value: true
-        tag2:
-          Value: true
-        tag3:
-          Value: true
-        tag4:
-          Value: true
-        tag6:
-          Value: true
-        tag7:
-          Value: true
-        tag8:
-          Value: true
         zed2_baro_link:
           Value: false
         zed2_base_link:
@@ -205,72 +187,59 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          odom:
-            base_link:
-              base_tilt_link:
-                camera_tilt_link:
-                  camera_armature_link:
-                    camera_link:
-                      zed2_base_link:
-                        zed2_camera_center:
-                          zed2_baro_link:
+        odom:
+          base_link:
+            base_tilt_link:
+              camera_tilt_link:
+                camera_armature_link:
+                  camera_link:
+                    zed2_base_link:
+                      zed2_camera_center:
+                        zed2_baro_link:
+                          {}
+                        zed2_left_camera_frame:
+                          zed2_imu_link:
                             {}
-                          zed2_left_camera_frame:
-                            zed2_imu_link:
-                              {}
-                            zed2_left_camera_optical_frame:
-                              {}
-                            zed2_temp_left_link:
-                              {}
-                          zed2_mag_link:
+                          zed2_left_camera_optical_frame:
                             {}
-                          zed2_right_camera_frame:
-                            zed2_right_camera_optical_frame:
-                              {}
-                            zed2_temp_right_link:
-                              {}
-                imu:
-                  {}
-                laser:
-                  {}
-                siren_center:
-                  pivot_0:
-                    camera_0:
-                      camera_optical_0:
-                        tag8:
+                          zed2_temp_left_link:
+                            {}
+                        zed2_mag_link:
                           {}
-                  pivot_1:
-                    camera_1:
-                      camera_optical_1:
-                        tag2:
-                          {}
-                  pivot_2:
-                    camera_2:
-                      camera_optical_2:
-                        field:
-                          {}
-                        tag1:
-                          {}
-                        tag3:
-                          {}
-                        tag4:
-                          {}
-                        tag6:
-                          {}
-                  pivot_3:
-                    camera_3:
-                      camera_optical_3:
-                        tag7:
-                          {}
-                swerve_wheel_0:
-                  {}
-                swerve_wheel_1:
-                  {}
-                swerve_wheel_2:
-                  {}
-                swerve_wheel_3:
-                  {}
+                        zed2_right_camera_frame:
+                          zed2_right_camera_optical_frame:
+                            {}
+                          zed2_temp_right_link:
+                            {}
+              imu:
+                {}
+              laser:
+                {}
+              siren_center:
+                pivot_0:
+                  camera_0:
+                    camera_optical_0:
+                      {}
+                pivot_1:
+                  camera_1:
+                    camera_optical_1:
+                      {}
+                pivot_2:
+                  camera_2:
+                    camera_optical_2:
+                      {}
+                pivot_3:
+                  camera_3:
+                    camera_optical_3:
+                      {}
+              swerve_wheel_0:
+                {}
+              swerve_wheel_1:
+                {}
+              swerve_wheel_2:
+                {}
+              swerve_wheel_3:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -779,10 +748,7 @@ Visualization Manager:
       Marker Topic: /tj2/charged_up_perception/markers
       Name: Perception Markers
       Namespaces:
-        cone-ARROW: true
-        cone-CUBE: true
-        cube-ARROW: true
-        cube-CUBE: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1

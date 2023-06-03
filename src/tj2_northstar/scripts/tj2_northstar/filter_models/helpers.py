@@ -55,10 +55,22 @@ def odometry_to_measurement(msg: Odometry) -> Tuple[np.ndarray, np.ndarray]:
 
 
 @njit
+def normalize_theta(theta):
+    # normalize theta to -pi..pi
+    theta = theta % (2 * math.pi)
+    if abs(theta) > math.pi:
+        if theta > 0:
+            return theta - 2 * math.pi
+        else:
+            return theta + 2 * math.pi
+    return theta
+
+
+@njit
 def state_transition_fn(state, dt):
     x = state[0]
     y = state[1]
-    theta = state[2]
+    theta = normalize_theta(state[2])
 
     vx_prev = state[3]
     vy_prev = state[4]
