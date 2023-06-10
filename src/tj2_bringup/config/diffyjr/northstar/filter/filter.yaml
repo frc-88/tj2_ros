@@ -13,4 +13,7 @@ tj2_northstar:
   parent_frame: field
 
 arducam_ros:
-  publish_rate: 20.0
+  exposure: 450
+  analogue_gain: 500
+  publish_rate: 15
+  frame_rate: 50

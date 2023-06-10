@@ -23,6 +23,9 @@ fi
 
 SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
 
+echo "Syncing time"
+${BASE_DIR}/sync_time ${DESTINATION_NAME} ${REMOTE_KEY}
+
 echo "Uploading package data"
 rsync -av --delete --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY} -p 5810"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}
 

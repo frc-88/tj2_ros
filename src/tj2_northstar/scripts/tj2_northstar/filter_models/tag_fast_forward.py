@@ -16,10 +16,16 @@ from .drive_kf_model import DriveKalmanModel
 
 
 class TagFastForward:
-    def __init__(self, dt: float, play_forward_buffer_size: int) -> None:
+    def __init__(
+        self,
+        dt: float,
+        play_forward_buffer_size: int,
+        lag_upper_threshold: float = 15.0,
+    ) -> None:
         self.dt = dt
         self.play_forward_buffer_size = play_forward_buffer_size
         self.model = DriveKalmanModel(self.dt)
+        self.lag_upper_threshold = lag_upper_threshold
 
         self.current_index = 0
         self.odom_messages: List[Odometry] = []
@@ -30,10 +36,15 @@ class TagFastForward:
             (quaternion.x, quaternion.y, quaternion.z, quaternion.w)
         )
 
-    def fast_forward(self, msg: PoseWithCovarianceStamped) -> PoseWithCovarianceStamped:
+    def fast_forward(
+        self, msg: PoseWithCovarianceStamped
+    ) -> Optional[PoseWithCovarianceStamped]:
         start_time = msg.header.stamp.to_sec()
         now = rospy.Time.now().to_sec()
         lag = now - start_time
+        if lag > self.lag_upper_threshold:
+            rospy.logwarn(f"Lag is too high ({lag}), ignoring message")
+            return None
         num_samples = round(lag / self.dt)
         if num_samples > 0:
             self._reset_filter_to_landmark(msg)

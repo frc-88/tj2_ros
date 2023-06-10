@@ -9,9 +9,9 @@
     <group ns="northstar">
         <rosparam command="load" file="$(arg filter_params)" ns=""/>
 
-        <!-- <node pkg="tj2_northstar" type="tj2_northstar_filter.py" name="tj2_northstar" output="screen">
+        <node pkg="tj2_northstar" type="tj2_northstar_filter.py" name="tj2_northstar" output="screen">
             <remap from="odom" to="/tj2/odom" />
-        </node> -->
+        </node>
 
         <node pkg="tj2_northstar" type="arducam_ros" name="arducam_ros" required="false" output="screen" respawn="true">
             <param name="topic_prefix" value="camera" />
@@ -21,13 +21,13 @@
             <param name="publish_tag_detections_image" type="bool" value="$(arg publish_tag_detections_image)" />
         </node>
 
-        <!-- <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen"/> -->
+        <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen"/>
 
-        <!-- <rosparam command="load" file="$(arg apriltag_settings)" ns="apriltag_cam_array"/>
+        <rosparam command="load" file="$(arg apriltag_settings)" ns="apriltag_cam_array"/>
         <rosparam command="load" file="$(arg apriltag_tags)" ns="apriltag_cam_array"/>
         <node pkg="tj2_northstar" type="apriltag_cam_array" name="apriltag_cam_array" required="false" output="screen">
             <remap from="info" to="camera/camera_info"/>
             <remap from="image_raw" to="camera/image_raw"/>
-        </node> -->
+        </node>
     </group>
 </launch>
