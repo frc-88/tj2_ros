@@ -155,7 +155,6 @@ class TJ2NorthstarFilter:
             self.forwarded_landmark_pub.publish(msg)
             with self.model_lock:
                 self.model.update_landmark(msg)
-                rospy.loginfo("Landmark updated")
 
     def run(self) -> None:
         rate = rospy.Rate(self.update_rate)
