@@ -105,7 +105,8 @@
         <arg name="apriltag_settings" default="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
         <arg name="apriltag_tags" default="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml"/>
         <arg name="filter_params" default="$(find tj2_bringup)/config/diffyjr/northstar/filter/filter.yaml"/>
-        <arg name="calibration_params" default="$(find tj2_bringup)/config/diffyjr/northstar/calibration"/>
+        <arg name="camera_0_params" default="$(find tj2_bringup)/config/diffyjr/northstar/camera/camera_0.yaml"/>
+        <arg name="camera_1_params" default="$(find tj2_bringup)/config/diffyjr/northstar/camera/camera_1.yaml"/>
     </include>
     <node name="static_map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
         <param name="frame_id" value="map"/>

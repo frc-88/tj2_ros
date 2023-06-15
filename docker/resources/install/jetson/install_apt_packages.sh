@@ -34,7 +34,6 @@ sudo apt-get install -y \
     lm-sensors  \
     python3-psutil  \
     libusb-1.0-0*  \
-    libswscale-dev \
     libsuitesparse-dev \
     python3-termcolor \
     i2c-tools \

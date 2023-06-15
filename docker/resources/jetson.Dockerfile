@@ -59,7 +59,11 @@ RUN bash /opt/tj2/install/zed_jetson_install.sh
 # Basic dependencies
 # ---
 
-COPY --chown=1000:1000 ./install/jetson /opt/tj2/install/basic
+COPY --chown=1000:1000 \
+    ./install/jetson/install_apt_packages.sh \
+    ./install/jetson/install_python_dependencies.sh \
+    ./install/jetson/install_libraries.sh \
+    /opt/tj2/install/basic/
 RUN bash /opt/tj2/install/basic/install_apt_packages.sh && \
     bash /opt/tj2/install/basic/install_python_dependencies.sh && \
     bash /opt/tj2/install/basic/install_libraries.sh
@@ -82,6 +86,16 @@ RUN bash /opt/tj2/install/evergreen/install_evergreen_packages.sh
 
 COPY --chown=1000:1000 ./install/overlay /opt/tj2/install/overlay
 RUN bash /opt/tj2/install/overlay/install_overlay_packages.sh
+
+# ---
+# Python extra packages
+# ---
+
+COPY --chown=1000:1000 \
+    ./install/jetson/requirements.txt \
+    ./install/jetson/install_python_extras.sh \
+    /opt/tj2/install/basic/
+RUN cd /opt/tj2/install/basic/ && bash ./install_python_extras.sh
 
 # ---
 # Environment setup

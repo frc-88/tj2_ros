@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <group ns="northstar">
+        <node name="camera_0" pkg="usb_cam" type="usb_cam_node" output="screen" >
+            <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/northstar/camera/camera_0.yaml" ns=""/>
+            <remap from="image" to="camera_0/image_raw"/>
+        </node>
+
+        <node name="camera_1" pkg="usb_cam" type="usb_cam_node" output="screen" >
+            <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/northstar/camera/camera_1.yaml" ns=""/>
+            <remap from="image" to="camera_1/image_raw"/>
+        </node>
+    </group>
+</launch>

@@ -1,0 +1,8 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+
+${BASE_DIR}/stop_all_containers
+docker rm tj2_ros
+docker volume rm tj2_ros_build
+${BASE_DIR}/build_tj2_ros

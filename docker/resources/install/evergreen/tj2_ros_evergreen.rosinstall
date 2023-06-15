@@ -153,7 +153,7 @@
 - git:
     local-name: usb_cam
     uri: https://github.com/ros-drivers/usb_cam.git
-    version: develop
+    version: 0.3.7
 - git:
     local-name: rosbag_snapshot
     uri: https://github.com/ros/rosbag_snapshot.git
