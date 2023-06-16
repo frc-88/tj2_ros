@@ -30,7 +30,7 @@ camera_transport_suffix: image_raw  # Suffix used by image_transport to generate
 camera_info_url: ""                 # URI for camera calibration data (likely a YML file obtained from camera_calibration)
 image_width: 1600                    # Frame dimensions, should be supported by camera hardware
 image_height: 1200
-framerate: 50                       # Camera polling frequency, Hz (integer)
+framerate: 5                       # Camera polling frequency, Hz (integer)
 
 autoexposure: false
 exposure: 25

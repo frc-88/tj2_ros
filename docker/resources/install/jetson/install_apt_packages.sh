@@ -9,6 +9,8 @@ sudo apt-get install -y \
     libsdl-image1.2-dev \
     libsdl-dev \
     libyaml-cpp-dev \
+    libpcl-dev  \
+    libvtk6-qt-dev  \
     libspnav-dev  \
     joystick  \
     liborocos-kdl-dev  \
@@ -39,7 +41,8 @@ sudo apt-get install -y \
     python3-tornado \
     python3-autobahn \
     python3-bson \
-    libv4l-dev
+    libv4l-dev \
+    libgeos-dev
 
 # ffmpeg dependencies
 sudo apt-get -y install \
@@ -77,6 +80,6 @@ sudo apt-get -y install \
 
 
 sudo apt-get upgrade -y
-sudo apt-get autoremove
+sudo apt-get autoremove -y
 
 echo "Installed all basic apt packages"
