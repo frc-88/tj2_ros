@@ -1,8 +1,8 @@
 # config/zed2_yaml
 # Parameters for Stereolabs ZED2 camera
 general:
-  camera_model: "zed2"
-  camera_name: "zed2"
+  camera_model: "zed2i"
+  camera_name: "zed2i"
   resolution: 2 # 0 - 2.2K, 1 - 1080p, 2 - 720p, 3 - WVGA
   pub_frame_rate: 15.0
   grab_frame_rate: 15

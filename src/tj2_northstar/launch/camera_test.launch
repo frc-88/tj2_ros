@@ -2,12 +2,18 @@
 <launch>
     <group ns="northstar">
         <node name="camera_0" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/northstar/camera/camera_0.yaml" ns=""/>
+            <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/northstar/ov2311.yaml" ns=""/>
+            <param name="video_device" value="/dev/v4l/by-path/platform-3610000.xhci-usb-0:2.1:1.0-video-index0"/>
+            <param name="camera_name" value="camera_0"/>
+            <param name="camera_frame_id" value="camera_0"/>
             <remap from="image" to="camera_0/image_raw"/>
         </node>
 
         <node name="camera_1" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/northstar/camera/camera_1.yaml" ns=""/>
+            <rosparam command="load" file="$(find tj2_bringup)/config/diffyjr/northstar/ov2311.yaml" ns=""/>
+            <param name="video_device" value="/dev/v4l/by-path/platform-3610000.xhci-usb-0:2.3:1.0-video-index0"/>
+            <param name="camera_name" value="camera_1"/>
+            <param name="camera_frame_id" value="camera_1"/>
             <remap from="image" to="camera_1/image_raw"/>
         </node>
     </group>
