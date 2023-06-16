@@ -96,8 +96,13 @@ def main():
                 success, corners = out_queue.get()
                 if success:
                     found_corners = corners
+                else:
+                    found_corners = None
 
-            debug = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+            if len(frame.shape) == 2:
+                debug = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+            else:
+                debug = frame
             if found_corners is not None:
                 debug = cv2.drawChessboardCorners(
                     debug, chessboard, found_corners, True

@@ -751,8 +751,7 @@ Visualization Manager:
       Marker Topic: /tj2/charged_up_perception/markers
       Name: Perception Markers
       Namespaces:
-        cone-ARROW: true
-        cone-CUBE: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -839,7 +838,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: Landmark Pose
@@ -849,7 +848,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /northstar/landmark
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -870,7 +869,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: Landmark Forwarded
@@ -880,7 +879,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /northstar/landmark/forwarded
       Unreliable: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -909,7 +908,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.273880004882812
+      Distance: 9.692806243896484
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -917,17 +916,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -3.010124683380127
-        Y: 3.366433620452881
-        Z: 0.0015339367091655731
+        X: 0.8597898483276367
+        Y: -0.5250388979911804
+        Z: -0.02006010338664055
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5647964477539062
+      Pitch: 0.9597967267036438
       Target Frame: <Fixed Frame>
-      Yaw: 4.639432907104492
+      Yaw: 1.9794265031814575
     Saved: ~
 Window Geometry:
   Camera:
