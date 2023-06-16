@@ -7,17 +7,17 @@ find ${DEP_ROS_WS_SRC} -type f -name CMakeLists.txt -exec sed -i'' -e 's/Boost R
 # helpful forum post: https://stackoverflow.com/questions/4770177/git-patch-does-not-apply
 cd ${DEP_ROS_WS_SRC}/image_pipeline/
 git checkout -f
-git apply /opt/tj2/install/evergreen/fix-image-pipeline.patch --reject --whitespace=fix 
+git apply /opt/tj2/install/ros/fix-image-pipeline.patch --reject --whitespace=fix 
 
 cd ${DEP_ROS_WS_SRC}/geometry2/
 git checkout -f
-git apply /opt/tj2/install/evergreen/fix-geometry2.patch --reject --whitespace=fix 
+git apply /opt/tj2/install/ros/fix-geometry2.patch --reject --whitespace=fix 
 
 cd ${DEP_ROS_WS_SRC}/imu_tools/
 git checkout -f
-git apply /opt/tj2/install/evergreen/fix-imu-tools.patch --reject --whitespace=fix 
+git apply /opt/tj2/install/ros/fix-imu-tools.patch --reject --whitespace=fix 
 
 cd ${DEP_ROS_WS_SRC}/zed-ros-wrapper/
 touch rviz-plugin-zed-od/CATKIN_IGNORE
 
-echo "Patched ROS evergreen packages"
+echo "Patched ROS packages"

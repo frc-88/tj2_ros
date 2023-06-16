@@ -153,7 +153,7 @@
 - git:
     local-name: usb_cam
     uri: https://github.com/ros-drivers/usb_cam.git
-    version: 0.3.7
+    version: develop
 - git:
     local-name: rosbag_snapshot
     uri: https://github.com/ros/rosbag_snapshot.git
@@ -210,3 +210,11 @@
     local-name: zed-ros-wrapper
     uri: https://github.com/frc-88/zed-ros-wrapper.git
     version: tj2_detections
+- git:
+    local-name: rosbridge_suite
+    uri: https://github.com/RobotWebTools/rosbridge_suite.git
+    version: ros1
+- git:
+    local-name: rosauth
+    uri: https://github.com/GT-RAIL/rosauth.git
+    version: develop

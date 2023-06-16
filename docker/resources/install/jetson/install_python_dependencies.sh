@@ -20,6 +20,7 @@ python -m pip install --no-cache-dir \
     tqdm \
     v4l2-fix
 
+sudo python -m pip install meson==0.47.0
 python -m pip install Cython --no-cache-dir
 python -m pip install llvmlite==0.32.0 --no-cache-dir
 python -m pip install numba==0.49.0 --no-cache-dir

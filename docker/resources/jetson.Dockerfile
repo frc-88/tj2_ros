@@ -69,23 +69,16 @@ RUN bash /opt/tj2/install/basic/install_apt_packages.sh && \
     bash /opt/tj2/install/basic/install_libraries.sh
 
 # ---
-# ROS evergreen dependency workspace
+# ROS dependency workspace
 # ---
 
 ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws \
     DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 
 COPY --chown=1000:1000 ./install/preferences /etc/apt/preferences
-COPY --chown=1000:1000 ./install/evergreen /opt/tj2/install/evergreen
 COPY --chown=1000:1000 ./install/rosdep_install.sh /opt/tj2/install
-RUN bash /opt/tj2/install/evergreen/install_evergreen_packages.sh
-
-# ---
-# ROS overlay dependency workspace
-# ---
-
-COPY --chown=1000:1000 ./install/overlay /opt/tj2/install/overlay
-RUN bash /opt/tj2/install/overlay/install_overlay_packages.sh
+COPY --chown=1000:1000 ./install/ros /opt/tj2/install/ros
+RUN bash /opt/tj2/install/ros/install_ros_packages.sh
 
 # ---
 # Python extra packages
