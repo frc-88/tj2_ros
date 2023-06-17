@@ -4,7 +4,6 @@ import threading
 from typing import Tuple
 import cv2
 import rospy
-import argparse
 from queue import Queue
 import numpy as np
 from dataclasses import dataclass, field
@@ -96,17 +95,17 @@ def main():
                 success, corners = out_queue.get()
                 if success:
                     found_corners = corners
-                else:
-                    found_corners = None
 
             if len(frame.shape) == 2:
                 debug = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
             else:
                 debug = frame
             if found_corners is not None:
-                debug = cv2.drawChessboardCorners(
-                    debug, chessboard, found_corners, True
+                corners_image = np.copy(debug)
+                cv2.drawChessboardCorners(
+                    corners_image, chessboard, found_corners, True
                 )
+                debug = np.concatenate((debug, corners_image), axis=1)
 
             cv2.imshow(window_name, debug)
             key = chr(cv2.waitKey(1) & 0xFF)
@@ -114,12 +113,14 @@ def main():
                 print("Exiting")
                 break
             elif key == "s":
-                name = f"{image_count:06d}.jpg"
-                path = os.path.join(write_directory, name)
+                path = ""
+                while len(path) == 0 or os.path.isfile(path):
+                    name = f"{image_count:06d}.jpg"
+                    path = os.path.join(write_directory, name)
+                    image_count += 1
                 print(f"Writing to {path}")
                 cv2.imwrite(path, frame)
-                assert os.path.isfile(path), path
-                image_count += 1
+                assert os.path.isfile(path), f"Failed to write file: {path}"
     finally:
         subscriber.unregister()
 

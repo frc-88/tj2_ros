@@ -137,8 +137,10 @@ class ChargedUpPerceptionNode:
 
     def compute_detections(self, color_msg: Image, depth_msg: Image) -> None:
         if self.camera_model is None:
-            rospy.logwarn("Camera model is not loaded! Not computing detections.")
+            rospy.logwarn("Camera model is not loaded! Skip computing detections for this image.")
             return
+        else:
+            rospy.loginfo_once("Camera model is now loaded.")
         self.timing_frame.start = TimingFrame.now()
         color_image = self.bridge.imgmsg_to_cv2(color_msg, desired_encoding="bgr8")
         debug_image, detections_2d = self.infer(color_image)

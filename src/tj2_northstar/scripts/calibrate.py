@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 import os
 import cv2
-import yaml
 import glob
 import argparse
 import numpy as np
-
 
 def adjust_gamma(image, gamma=1.0):
     # build a lookup table mapping the pixel values [0, 255] to
@@ -18,10 +16,55 @@ def adjust_gamma(image, gamma=1.0):
     return cv2.LUT(image, table)
 
 
-def write_parameters(path, parameters):
+def write_yaml_parameters(path, parameters):
     print(f"Wrote to {path}")
     with open(path, "w") as file:
-        yaml.dump(parameters, file)
+        image_height = parameters["image_height"]
+        image_width = parameters["image_width"]
+        distortion_model = parameters["distortion_model"]
+        distortion_coefficients = parameters["distortion_coefficients"]
+        camera_matrix = parameters["camera_matrix"]
+        rectification_matrix = parameters["rectification_matrix"]
+        projection_matrix = parameters["projection_matrix"]
+        camera_name = parameters["camera_name"]
+        contents = f"""
+image_width: {image_width}
+image_height: {image_height}
+camera_name: {camera_name}
+camera_matrix:
+  rows: {camera_matrix["rows"]}
+  cols: {camera_matrix["cols"]}
+  data: {camera_matrix["data"]}
+distortion_model: {distortion_model}
+distortion_coefficients:
+  rows: {distortion_coefficients["rows"]}
+  cols: {distortion_coefficients["cols"]}
+  data: {distortion_coefficients["data"]}
+rectification_matrix:
+  rows: {rectification_matrix["rows"]}
+  cols: {rectification_matrix["cols"]}
+  data: {rectification_matrix["data"]}
+projection_matrix:
+  rows: {projection_matrix["rows"]}
+  cols: {projection_matrix["cols"]}
+  data: {projection_matrix["data"]}
+"""
+        file.write(contents)
+
+
+def get_matrix_dict(matrix):
+    data = matrix.flatten().tolist()
+    if len(matrix.shape) == 1:
+        rows = 1
+        cols = matrix.shape[0]
+    else:
+        rows = matrix.shape[0]
+        cols = matrix.shape[1]
+    return {
+        "data": data,
+        "rows": rows,
+        "cols": cols,
+    }
 
 
 def main():
@@ -34,9 +77,16 @@ def main():
         "board_height", type=int, help="Number of internal height corners"
     )
     parser.add_argument("square_size", type=float, help="Size of square in meters")
+    parser.add_argument(
+        "camera_name", type=str, help="Name of camera"
+    )
+    parser.add_argument("-o", "--output", default="")
     args = parser.parse_args()
 
+    camera_name = args.camera_name
     read_directory = args.directory
+    write_path = os.path.join(read_directory, "camera.yaml") if len(args.output) == 0 else args.output
+    assert write_path.endswith(".yaml") or write_path.endswith(".yml")
     square_size = args.square_size
 
     # Define the dimensions of checkerboard
@@ -95,23 +145,24 @@ def main():
     )
 
     if success:
-        distortion_coeffs = dist[0].tolist()
-        camera_matrix = mtx.flatten().tolist()
-        rectification_matrix = np.eye(3).flatten().tolist()
+        distortion_coeffs = dist[0]
+        camera_matrix = mtx
+        rectification_matrix = np.eye(3)
         projection = np.zeros((3, 4))
         projection[0:3, 0:3] = mtx
-        projection_matrix = projection.flatten().tolist()
+        projection_matrix = projection
 
         parameters = {
-            "height": shape[0],
-            "width": shape[1],
+            "image_height": shape[0],
+            "image_width": shape[1],
             "distortion_model": "plumb_bob",
-            "D": distortion_coeffs,
-            "K": camera_matrix,
-            "R": rectification_matrix,
-            "P": projection_matrix,
+            "distortion_coefficients": get_matrix_dict(distortion_coeffs),
+            "camera_matrix": get_matrix_dict(camera_matrix),
+            "rectification_matrix": get_matrix_dict(rectification_matrix),
+            "projection_matrix": get_matrix_dict(projection_matrix),
+            "camera_name": camera_name
         }
-        write_parameters(os.path.join(read_directory, "camera.yaml"), parameters)
+        write_yaml_parameters(write_path, parameters)
 
     else:
         print("Failed to compute camera parameters!")
