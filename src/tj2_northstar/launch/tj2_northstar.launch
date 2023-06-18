@@ -4,27 +4,36 @@
     <arg name="apriltag_tags" default="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml"/>
     <arg name="publish_tag_detections_image" default="false"/>
     <arg name="filter_params" default="$(find tj2_bringup)/config/diffyjr/northstar/filter/filter.yaml"/>
-    <arg name="camera_0_params" default="$(find tj2_bringup)/config/diffyjr/northstar/camera/camera_0.yaml"/>
-    <arg name="camera_1_params" default="$(find tj2_bringup)/config/diffyjr/northstar/camera/camera_1.yaml"/>
+    <arg name="common_camera_params" default="$(find tj2_bringup)/config/diffyjr/northstar/ov2311.yaml"/>
+    <arg name="camera_0_info_url" default="package://tj2_bringup/config/diffyjr/northstar/calibration/camera_0.yaml"/>
+    <arg name="camera_1_info_url" default="package://tj2_bringup/config/diffyjr/northstar/calibration/camera_1.yaml"/>
 
     <group ns="northstar">
         <rosparam command="load" file="$(arg filter_params)" ns=""/>
 
-        <node pkg="tj2_northstar" type="tj2_northstar_filter.py" name="tj2_northstar" output="screen">
+        <!-- <node pkg="tj2_northstar" type="tj2_northstar_filter.py" name="tj2_northstar" output="screen">
             <remap from="odom" to="/tj2/odom" />
-        </node>
+        </node> -->
 
-        <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen"/>
+        <!-- <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen"/> -->
 
-        <!-- <node name="camera_0" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <rosparam command="load" file="$(arg camera_0_params)" ns=""/>
+        <node name="camera_0" pkg="usb_cam" type="usb_cam_node" output="screen" >
+            <rosparam command="load" file="$(arg common_camera_params)" ns=""/>
+            <param name="video_device" value="/dev/v4l/by-path/platform-3610000.xhci-usb-0:2.1:1.0-video-index0"/>
+            <param name="camera_name" value="camera_0"/>
+            <param name="camera_frame_id" value="camera_optical_0"/>
+            <param name="camera_info_url" value="$(arg camera_0_info_url)"/>
             <remap from="image" to="camera_0/image_raw"/>
         </node>
 
         <node name="camera_1" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <rosparam command="load" file="$(arg camera_1_params)" ns=""/>
+            <rosparam command="load" file="$(arg common_camera_params)" ns=""/>
+            <param name="video_device" value="/dev/v4l/by-path/platform-3610000.xhci-usb-0:2.3:1.0-video-index0"/>
+            <param name="camera_info_url" value="$(arg camera_1_info_url)"/>
+            <param name="camera_name" value="camera_1"/>
+            <param name="camera_frame_id" value="camera_optical_1"/>
             <remap from="image" to="camera_1/image_raw"/>
-        </node> -->
+        </node>
 
         <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
             <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>

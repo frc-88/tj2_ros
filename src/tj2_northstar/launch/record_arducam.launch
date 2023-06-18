@@ -2,11 +2,15 @@
 <launch>
     <group ns="northstar">
         <node pkg="rosbag" type="record" name="rosbag_record_arducam" output="screen"
-       args="record -o /media/storage/bags/arducam -b 4096 --lz4
-            /northstar/camera/image_raw
-            /northstar/camera/camera_info
+       args="record -o /media/storage/bags/northstar -b 4096 --lz4
+            /northstar/camera_0/camera_info
+            /northstar/camera_0/image_raw
+            /northstar/camera_1/camera_info
+            /northstar/camera_1/image_raw
+            /laser/scan
             /tj2/odom
             /tj2/imu
+            /tj2/cmd_vel
             /tf
             " />
     </group>

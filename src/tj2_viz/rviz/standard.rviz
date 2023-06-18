@@ -626,42 +626,27 @@ Visualization Manager:
       Namespaces:
         cube1: true
         cube2: true
-        cube3: true
-        cube5: true
         cube6: true
-        cube7: true
         cube8: true
         posx1: true
         posx1-2-3-4-5-6-7-8: true
         posx2: true
-        posx3: true
-        posx5: true
         posx6: true
-        posx7: true
         posx8: true
         posy1: true
         posy1-2-3-4-5-6-7-8: true
         posy2: true
-        posy3: true
-        posy5: true
         posy6: true
-        posy7: true
         posy8: true
         posz1: true
         posz1-2-3-4-5-6-7-8: true
         posz2: true
-        posz3: true
-        posz5: true
         posz6: true
-        posz7: true
         posz8: true
         text1: true
         text1-2-3-4-5-6-7-8: true
         text2: true
-        text3: true
-        text5: true
         text6: true
-        text7: true
         text8: true
       Queue Size: 100
       Value: true
@@ -760,8 +745,7 @@ Visualization Manager:
       Marker Topic: /tj2/charged_up_perception/markers
       Name: Perception Markers
       Namespaces:
-        cone-ARROW: true
-        cone-CUBE: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -918,7 +902,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 18.99410629272461
+      Distance: 13.935600280761719
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -926,17 +910,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -6.532757759094238
-        Y: 0.0969599038362503
-        Z: -2.558350086212158
+        X: -0.9754952192306519
+        Y: 0.7902438640594482
+        Z: -3.4296700954437256
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.134796380996704
+      Pitch: 1.3097962141036987
       Target Frame: <Fixed Frame>
-      Yaw: 1.3544286489486694
+      Yaw: 0.9944289922714233
     Saved: ~
 Window Geometry:
   Camera:
