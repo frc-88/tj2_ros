@@ -179,16 +179,12 @@ Visualization Manager:
       Namespaces:
         cube1: true
         posx1: true
-        posx1-2: true
         posx1-2-3-4-5-6-7-8: true
         posy1: true
-        posy1-2: true
         posy1-2-3-4-5-6-7-8: true
         posz1: true
-        posz1-2: true
         posz1-2-3-4-5-6-7-8: true
         text1: true
-        text1-2: true
         text1-2-3-4-5-6-7-8: true
       Queue Size: 100
       Value: true
@@ -312,7 +308,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: Landmark
@@ -322,7 +318,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /northstar/landmark
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -343,7 +339,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: Landmark Forwarded
@@ -353,7 +349,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /northstar/landmark/forwarded
       Unreliable: false
-      Value: true
+      Value: false
     - Angle Tolerance: 0.0010000000474974513
       Class: rviz/Odometry
       Covariance:
@@ -482,17 +478,17 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
-      Name: PoseWithCovariance
+      Name: AMCL Pose
       Queue Size: 10
       Shaft Length: 1
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
       Topic: /amcl_pose
       Unreliable: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -521,7 +517,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 10.540092468261719
+      Distance: 7.514347553253174
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -529,17 +525,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.46354472637176514
-        Y: 4.970449924468994
+        X: 0.3272300958633423
+        Y: -0.02617967128753662
         Z: 0
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.035398244857788
+      Pitch: 1.1397966146469116
       Target Frame: <Fixed Frame>
-      Yaw: 1.0903979539871216
+      Yaw: 4.99358606338501
     Saved: ~
 Window Geometry:
   Camera:

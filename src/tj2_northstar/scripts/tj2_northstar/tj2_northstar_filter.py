@@ -51,6 +51,12 @@ class TJ2NorthstarFilter:
         self.landmark_sub = rospy.Subscriber(
             "landmark", PoseWithCovarianceStamped, self.landmark_callback, queue_size=10
         )
+        self.amcl_pose_sub = rospy.Subscriber(
+            "amcl_pose",
+            PoseWithCovarianceStamped,
+            self.amcl_pose_callback,
+            queue_size=10,
+        )
         self.forwarded_landmark_pub = rospy.Publisher(
             "landmark/forwarded", PoseWithCovarianceStamped, queue_size=10
         )
@@ -156,10 +162,18 @@ class TJ2NorthstarFilter:
             with self.model_lock:
                 self.model.update_landmark(msg)
 
+    def amcl_pose_callback(self, msg: PoseWithCovarianceStamped) -> None:
+        with self.model_lock:
+            self.model.update_landmark(msg)
+
     def run(self) -> None:
         rate = rospy.Rate(self.update_rate)
         while not rospy.is_shutdown():
-            rate.sleep()
+            try:
+                rate.sleep()
+            except rospy.exceptions.ROSTimeMovedBackwardsException:
+                continue
+
             if len(self.odom_frame) == 0 and len(self.base_frame) == 0:
                 continue
             with self.model_lock:
