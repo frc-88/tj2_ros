@@ -15,7 +15,12 @@
             <remap from="odom" to="/tj2/odom" />
         </node> -->
 
-        <!-- <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen"/> -->
+        <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen"/>
+        <node pkg="tj2_northstar" type="amcl_tag_initialization.py" name="amcl_tag_initialization" required="false" output="screen">
+            <remap from="amcl_pose" to="/amcl_pose"/>
+            <remap from="odom" to="/tj2/odom"/>
+            <remap from="initialpose" to="/initialpose"/>
+        </node>
 
         <node name="camera_0" pkg="usb_cam" type="usb_cam_node" output="screen" >
             <rosparam command="load" file="$(arg common_camera_params)" ns=""/>

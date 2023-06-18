@@ -2,7 +2,7 @@
 <launch>
     <arg name="map_name" default="3-101"/>
     <arg name="apriltag_settings" default="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
-    <arg name="apriltag_tags" default="$(find tj2_bringup)/config/diffyjr/tags/tags.yaml"/>
+    <arg name="apriltag_tags" default="$(find tj2_bringup)/config/diffyjr/tags/3_101_tags.yaml"/>
     <arg name="publish_tag_detections_image" default="false"/>
     <arg name="filter_params" default="$(find tj2_bringup)/config/diffyjr/northstar/filter/filter.yaml"/>
     <arg name="calibration_params" default="$(find tj2_bringup)/config/diffyjr/northstar/calibration"/>
@@ -24,7 +24,7 @@
         </node>
     </group>
 
-    <node pkg="rosbag" type="play" name="rosbag_player" args="/opt/tj2/bags/northstar_2023-06-18-06-55-23-filtered.bag --clock --pause --loop" output="screen"/>
+    <node pkg="rosbag" type="play" name="rosbag_player" args="/opt/tj2/bags/northstar_2023-06-18-06-54-40-filtered.bag --clock --pause --loop" output="screen"/>
 
     <group ns="northstar">
         <rosparam command="load" file="$(arg filter_params)" ns=""/>
@@ -38,6 +38,11 @@
         </node> -->
 
         <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen"/>
+        <node pkg="tj2_northstar" type="amcl_tag_initialization.py" name="amcl_tag_initialization" required="false" output="screen">
+            <remap from="amcl_pose" to="/amcl_pose"/>
+            <remap from="odom" to="/tj2/odom"/>
+            <remap from="initialpose" to="/initialpose"/>
+        </node>
 
         <include file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
             <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>
