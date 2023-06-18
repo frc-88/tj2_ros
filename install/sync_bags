@@ -5,7 +5,7 @@ DESTINATION_NAME=$1
 REMOTE_KEY=$2
 PATTERN=$3
 
-LOCAL_PATH=${PARENT_DIR}/bags
+LOCAL_PATH=/opt/tj2/bags/
 
 if [ -z ${DESTINATION_NAME} ]; then
     echo "Please set a destination IP or hostname"
