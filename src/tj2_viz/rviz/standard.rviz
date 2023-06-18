@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /RobotModel1
+        - /RobotModel1/Status1
         - /TF1/Frames1
         - /Object Markers1/Namespaces1
         - /ZED1/Visibility1
@@ -34,7 +35,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: ZED
+    SyncSource: LaserScan
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -142,28 +143,6 @@ Visualization Manager:
           Value: false
         swerve_wheel_3:
           Value: false
-        zed2_baro_link:
-          Value: false
-        zed2_base_link:
-          Value: false
-        zed2_camera_center:
-          Value: false
-        zed2_imu_link:
-          Value: false
-        zed2_left_camera_frame:
-          Value: false
-        zed2_left_camera_optical_frame:
-          Value: false
-        zed2_mag_link:
-          Value: false
-        zed2_right_camera_frame:
-          Value: false
-        zed2_right_camera_optical_frame:
-          Value: false
-        zed2_temp_left_link:
-          Value: false
-        zed2_temp_right_link:
-          Value: false
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -184,24 +163,7 @@ Visualization Manager:
                 camera_tilt_link:
                   camera_armature_link:
                     camera_link:
-                      zed2_base_link:
-                        zed2_camera_center:
-                          zed2_baro_link:
-                            {}
-                          zed2_left_camera_frame:
-                            zed2_imu_link:
-                              {}
-                            zed2_left_camera_optical_frame:
-                              {}
-                            zed2_temp_left_link:
-                              {}
-                          zed2_mag_link:
-                            {}
-                          zed2_right_camera_frame:
-                            zed2_right_camera_optical_frame:
-                              {}
-                            zed2_temp_right_link:
-                              {}
+                      {}
                 imu:
                   {}
                 laser:
@@ -624,30 +586,7 @@ Visualization Manager:
       Marker Topic: /northstar/tag_markers
       Name: Apriltags
       Namespaces:
-        cube1: true
-        cube2: true
-        cube6: true
-        cube8: true
-        posx1: true
-        posx1-2-3-4-5-6-7-8: true
-        posx2: true
-        posx6: true
-        posx8: true
-        posy1: true
-        posy1-2-3-4-5-6-7-8: true
-        posy2: true
-        posy6: true
-        posy8: true
-        posz1: true
-        posz1-2-3-4-5-6-7-8: true
-        posz2: true
-        posz6: true
-        posz8: true
-        text1: true
-        text1-2-3-4-5-6-7-8: true
-        text2: true
-        text6: true
-        text8: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -942,7 +881,7 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 2524
-  X: 72
+  X: 2596
   Y: 35
   ZED:
     collapsed: false
