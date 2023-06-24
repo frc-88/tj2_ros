@@ -18,6 +18,7 @@ from geometry_msgs.msg import (
 
 from filter_models import TagFastForward
 from filter_models import DriveKalmanModel as FilterModel
+from helpers import amcl_and_landmark_agree
 from tj2_tools.robot_state import Pose2d, Velocity
 
 
@@ -33,6 +34,11 @@ class TJ2NorthstarFilter:
             "~tag_fast_forward_sample_window", 0.1
         )
         self.update_rate = rospy.get_param("~update_rate", 50.0)
+        self.roll_pitch_threshold = rospy.get_param("~roll_pitch_threshold", 0.2)
+        self.ground_distance_threshold = rospy.get_param(
+            "~ground_distance_threshold", 0.5
+        )
+        self.ground_angle_threshold = rospy.get_param("~ground_angle_threshold", 0.5)
 
         self.prev_odom = Odometry()
 
@@ -43,6 +49,7 @@ class TJ2NorthstarFilter:
             self.tag_fast_forward_sample_window, self.play_forward_buffer_size
         )
 
+        self.amcl_pose = PoseWithCovarianceStamped()
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
 
         self.odom_sub = rospy.Subscriber(
@@ -156,13 +163,25 @@ class TJ2NorthstarFilter:
         return transformations.inverse_matrix(self.get_forward_transform_mat(pose))
 
     def landmark_callback(self, msg: PoseWithCovarianceStamped) -> None:
-        msg = self.fast_forwarder.fast_forward(msg)
-        if msg:
-            self.forwarded_landmark_pub.publish(msg)
+        if len(self.amcl_pose.header.frame_id) == 0:
+            rospy.logwarn("AMCL pose not set. Not updating landmark")
+            return
+        if not amcl_and_landmark_agree(
+            self.amcl_pose,
+            msg,
+            self.roll_pitch_threshold,
+            self.ground_distance_threshold,
+            self.ground_angle_threshold,
+        ):
+            rospy.logwarn("AMCL pose do not agree. Not updating landmark")
+            return
+        if forwarded := self.fast_forwarder.fast_forward(msg):
+            self.forwarded_landmark_pub.publish(forwarded)
             with self.model_lock:
-                self.model.update_landmark(msg)
+                self.model.update_landmark(forwarded)
 
     def amcl_pose_callback(self, msg: PoseWithCovarianceStamped) -> None:
+        self.amcl_pose = msg
         with self.model_lock:
             self.model.update_landmark(msg)
 

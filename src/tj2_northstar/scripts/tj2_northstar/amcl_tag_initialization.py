@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import numpy as np
-import tf.transformations
 import rospy
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
+from helpers import amcl_and_landmark_agree
 from tj2_tools.robot_state import Velocity, Pose2d
 
 
@@ -115,26 +115,15 @@ class AmclTagInitialization:
             # check if the landmark is a reasonable Z height
             return
 
-        landmark_quat = msg.pose.pose.orientation
-        roll, pitch, _ = tf.transformations.euler_from_quaternion(
-            (landmark_quat.x, landmark_quat.y, landmark_quat.z, landmark_quat.w)
-        )
-        if (
-            abs(roll) > self.roll_pitch_threshold
-            or abs(pitch) > self.roll_pitch_threshold
-        ):
-            # check if the landmark is a reasonable roll and pitch
-            return
-
-        landmark_pose2d = Pose2d.from_ros_pose(msg.pose.pose)
-        amcl_pose2d = Pose2d.from_ros_pose(self.amcl_pose.pose.pose)
-
-        if (
-            landmark_pose2d.distance(amcl_pose2d) > self.ground_distance_threshold
-            or abs(landmark_pose2d.theta - amcl_pose2d.theta)
-            > self.ground_angle_threshold
+        if not amcl_and_landmark_agree(
+            self.amcl_pose,
+            msg,
+            self.roll_pitch_threshold,
+            self.ground_distance_threshold,
+            self.ground_angle_threshold,
         ):
             # reset AMCL pose if landmark doesn't agree within a threshold
+            landmark_pose2d = Pose2d.from_ros_pose(msg.pose.pose)
             self.reset_amcl_pose(msg.header.frame_id, landmark_pose2d)
 
     def amcl_pose_callback(self, msg: PoseWithCovarianceStamped) -> None:

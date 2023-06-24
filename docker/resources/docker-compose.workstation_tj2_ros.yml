@@ -7,7 +7,7 @@ volumes:
 
 services:
   workstation_tj2_ros:
-    image: workstation_tj2_ros:latest
+    image: ${TJ2_IMAGE_VERSION}
     container_name: workstation_tj2_ros
     restart: "no"
     network_mode: "host"
