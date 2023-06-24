@@ -67,7 +67,10 @@ class TJ2NorthstarFilter:
         self.forwarded_landmark_pub = rospy.Publisher(
             "landmark/forwarded", PoseWithCovarianceStamped, queue_size=10
         )
-        self.filter_state_pub = rospy.Publisher("filter_state", Odometry, queue_size=10)
+        self.filter_state_pub = rospy.Publisher("filter/state", Odometry, queue_size=10)
+        self.filter_pose_pub = rospy.Publisher(
+            "filter/pose", PoseWithCovarianceStamped, queue_size=10
+        )
 
     def get_last_pose(self) -> Pose:
         return self.prev_odom.pose.pose
@@ -107,26 +110,31 @@ class TJ2NorthstarFilter:
     def publish_filter_state(
         self, pose: Pose2d, velocity: Velocity, covariance: np.ndarray
     ) -> None:
-        msg = Odometry()
-        msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = self.map_frame
-        msg.child_frame_id = self.base_frame
-        msg.pose.pose = pose.to_ros_pose()
-        msg.twist.twist = velocity.to_ros_twist()
+        state_msg = Odometry()
+        state_msg.header.stamp = rospy.Time.now()
+        state_msg.header.frame_id = self.map_frame
+        state_msg.child_frame_id = self.base_frame
+        state_msg.pose.pose = pose.to_ros_pose()
+        state_msg.twist.twist = velocity.to_ros_twist()
 
         pose_covariance = np.zeros((6, 6))
         pose_covariance[0, 0] = covariance[0, 0]
         pose_covariance[1, 1] = covariance[1, 1]
         pose_covariance[5, 5] = covariance[2, 2]
-        msg.pose.covariance = pose_covariance.flatten().tolist()
+        state_msg.pose.covariance = pose_covariance.flatten().tolist()
 
         twist_covariance = np.zeros((6, 6))
         twist_covariance[0, 0] = covariance[3, 3]
         twist_covariance[1, 1] = covariance[4, 4]
         twist_covariance[5, 5] = covariance[5, 5]
-        msg.twist.covariance = twist_covariance.flatten().tolist()
+        state_msg.twist.covariance = twist_covariance.flatten().tolist()
 
-        self.filter_state_pub.publish(msg)
+        self.filter_state_pub.publish(state_msg)
+
+        pose_msg = PoseWithCovarianceStamped()
+        pose_msg.header = state_msg.header
+        pose_msg.pose = state_msg.pose
+        self.filter_pose_pub.publish(pose_msg)
 
     def get_map_to_odom(self, map_to_base_pose: Pose, odom_to_base_pose: Pose) -> Pose:
         base2map = self.get_reverse_transform_mat(map_to_base_pose)
@@ -153,9 +161,11 @@ class TJ2NorthstarFilter:
             pose.orientation.w,
         )
 
-        mat = transformations.concatenate_matrices(
-            transformations.translation_matrix(translation),
-            transformations.quaternion_matrix(rotation),
+        mat = np.array(
+            transformations.concatenate_matrices(
+                transformations.translation_matrix(translation),
+                transformations.quaternion_matrix(rotation),
+            )
         )
         return mat
 

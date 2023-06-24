@@ -21,7 +21,10 @@ def amcl_and_landmark_agree(
     landmark_pose2d = Pose2d.from_ros_pose(landmark.pose.pose)
     amcl_pose2d = Pose2d.from_ros_pose(amcl_pose.pose.pose)
 
+    distance_delta = landmark_pose2d.distance(amcl_pose2d)
+    angle_delta = abs(landmark_pose2d.theta - amcl_pose2d.theta)
+
     return (
-        landmark_pose2d.distance(amcl_pose2d) < ground_distance_threshold
-        and abs(landmark_pose2d.theta - amcl_pose2d.theta) < ground_angle_threshold
+        distance_delta < ground_distance_threshold
+        and angle_delta < ground_angle_threshold
     )

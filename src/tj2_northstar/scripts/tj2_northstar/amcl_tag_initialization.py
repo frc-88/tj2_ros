@@ -29,10 +29,10 @@ class AmclTagInitialization:
         self.initial_cov_aa = rospy.get_param("/amcl/initial_cov_aa", 0.06854)
 
         # 0.0 == only reset once
-        self.cooldown_time = rospy.Duration(rospy.get_param("~cooldown_time", 0.0))
+        self.cooldown_time = rospy.Duration(rospy.get_param("~cooldown_time", 0.0))  # type: ignore
 
         self.stale_measurement_time = rospy.Duration(
-            rospy.get_param("~stale_measurement_time", 0.5)
+            rospy.get_param("~stale_measurement_time", 0.5)  # type: ignore
         )
 
         self.last_reset_time = rospy.Time()
@@ -102,6 +102,7 @@ class AmclTagInitialization:
             and self.robot_velocity.magnitude() > self.linear_velocity_threshold
         ):
             # check if the robot is moving below the linear threshold
+            rospy.loginfo("Rejecting landmark. Linear velocity is too high")
             return
 
         if (
@@ -109,10 +110,12 @@ class AmclTagInitialization:
             and abs(self.robot_velocity.theta) > self.angular_velocity_threshold
         ):
             # check if the robot is moving below the angular threshold
+            rospy.loginfo("Rejecting landmark. Angular velocity is too high")
             return
 
         if abs(msg.pose.pose.position.z) > self.z_threshold:
             # check if the landmark is a reasonable Z height
+            rospy.loginfo("Rejecting landmark. Z height is too high")
             return
 
         if not amcl_and_landmark_agree(
