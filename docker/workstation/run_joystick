@@ -30,4 +30,4 @@ docker run -it \
     -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --rm \
     ${IMAGE_PREFIX}_${TJ2_IMAGE_VERSION} \
-    /opt/tj2/entrypoint.sh roslaunch tj2_debug_joystick tj2_debug_joystick.launch topic_name:=joy_remote device:=$JOYSTICK_DEVICE
+    /opt/tj2/entrypoint.sh roslaunch tj2_debug_joystick remote_joystick.launch device:=$JOYSTICK_DEVICE
