@@ -4,7 +4,7 @@ import numpy as np
 import tf.transformations
 import rospy
 import tf2_ros
-from scipy.optimize import minimize, LinearConstraint  # type: ignore
+from scipy.optimize import minimize  # type: ignore
 from std_msgs.msg import Bool, Float64
 from urdf_parser_py.urdf import URDF  # type: ignore
 from geometry_msgs.msg import Point, PointStamped, PoseStamped
@@ -35,7 +35,7 @@ class TJ2CalibrationPointer:
             np.array([-np.pi / 2.0, -np.pi / 2.0]),
             np.array([np.pi / 2.0, np.pi / 2.0]),
         )
-        self.initial_guess = (0.5, 0.5)
+        self.initial_guess = None
 
         rospy.loginfo(f"Loading URDF from {self.urdf_key}")
         self.robot = URDF.from_parameter_server(self.urdf_key)
@@ -118,7 +118,7 @@ class TJ2CalibrationPointer:
 
     def compute_joint_angles(
         self, goal: Point, initial_guess: Tuple[float, float]
-    ) -> Tuple[float, float]:
+    ) -> Optional[Tuple[float, float]]:
         rospy.loginfo(f"Goal: {goal.x}, {goal.y}, {goal.z}. guess: {initial_guess}")
         goal_point = np.array([goal.x, goal.y, goal.z])
         result = minimize(
@@ -129,6 +129,9 @@ class TJ2CalibrationPointer:
             args=(goal_point,),
             # bounds=self.joint_limits,
         )
+        if not result.success:
+            rospy.logwarn(f"Failed to find solution: {result.message}")
+            return None
         pan_angle = result.x[0]
         tilt_angle = result.x[1]
         return (pan_angle, tilt_angle)
@@ -178,13 +181,13 @@ class TJ2CalibrationPointer:
                     initial_guess = (self.pan_joint_command, self.tilt_joint_command)
                 else:
                     initial_guess = self.initial_guess
-                (
-                    self.pan_joint_command,
-                    self.tilt_joint_command,
-                ) = self.compute_joint_angles(
+                result = self.compute_joint_angles(
                     goal_point,
                     initial_guess,
                 )
+                if result is None:
+                    continue
+                self.pan_joint_command, self.tilt_joint_command = result
                 rospy.loginfo(
                     f"pan={self.pan_joint_command}, tilt={self.tilt_joint_command}"
                 )
