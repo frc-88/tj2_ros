@@ -38,7 +38,7 @@ def quaternion_multiply(rotate_quat, quat):
 
 
 # euler_from_quaternion(-0.5, 0.5, 0.5, -0.5)
-quaternion_from_euler(90.0, 0.0, 180.0)
+quaternion_from_euler(0.0, 90.0, 0.0)
 
 # camera_optical_rotation = (0.5, -0.5, -0.5, -0.5)
 
