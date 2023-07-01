@@ -7,9 +7,17 @@ from scipy.optimize import minimize  # type: ignore
 
 
 @njit
-def distance_to_line(p: np.ndarray, q: np.ndarray, r: np.ndarray):
-    x = p - q
-    return np.linalg.norm(np.dot(r - q, x) / np.dot(x, x) * (p - q) + q - r)
+def distance_to_line(line_pt1: np.ndarray, line_pt2: np.ndarray, point: np.ndarray):
+    x = line_pt1 - line_pt2
+    return np.linalg.norm(
+        np.dot(point - line_pt2, x) / np.dot(x, x) * (line_pt1 - line_pt2)
+        + line_pt2
+        - point
+    )
+
+
+def distance_to_point(point1: np.ndarray, point2: np.ndarray) -> float:
+    return float(np.linalg.norm(point2 - point1, axis=0))
 
 
 PAN_JOINT = tf.transformations.concatenate_matrices(
@@ -65,37 +73,41 @@ def set_axes_equal(ax):
     ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
 
-def plot_angle(pan_angle: float, tilt_angle: float, goal_point: np.ndarray) -> None:
+def compute_line(
+    pan_angle: float, tilt_angle: float, goal_point: np.ndarray
+) -> np.ndarray:
     system_transform = compute_system_transform(pan_angle, tilt_angle)
-    line_vector = np.array([1.0, 0.0, 0.0, 1.0])
+    line_vector = np.array([np.linalg.norm(goal_point), 0.0, 0.0, 1.0])
     line_transform = system_transform @ line_vector
 
     line_pt1 = tf.transformations.translation_from_matrix(system_transform)
     line_pt2 = line_transform[0:3]
-    line = np.array([line_pt1, line_pt2]).T
+    return np.array([line_pt1, line_pt2])
+
+
+def plot_angle(pan_angle: float, tilt_angle: float, goal_point: np.ndarray) -> None:
+    system_transform = compute_system_transform(pan_angle, tilt_angle)
+    line = compute_line(pan_angle, tilt_angle, goal_point)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    ax.plot(*line)
+    ax.plot(*line.T)
+    ax.scatter(*line[0])
     ax.scatter(*goal_point)
     set_axes_equal(ax)
     plt.show()
 
 
 def main():
-    goal_point = np.array([1.0, 1.0, 1.0])
+    goal_point = np.array([-1.0, 0.06, 0.08])
 
     def cost_function(state: np.ndarray) -> float:
         nonlocal goal_point
         pan_angle = state[0]
         tilt_angle = state[1]
-        system_transform = compute_system_transform(pan_angle, tilt_angle)
-        line_vector = np.array([1.0, 0.0, 0.0, 1.0])
-        line_transform = system_transform @ line_vector
-
-        line_pt1 = tf.transformations.translation_from_matrix(system_transform)
-        line_pt2 = line_transform[0:3]
-        return distance_to_line(line_pt1, line_pt2, np.array([goal_point]))
+        line = compute_line(pan_angle, tilt_angle, goal_point)
+        # return distance_to_line(line[0], line[1], np.array([goal_point]))
+        return distance_to_point(line[1], goal_point)
 
     cost_function(np.array([0.5, 0.5]))
 
