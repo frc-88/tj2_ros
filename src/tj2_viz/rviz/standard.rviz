@@ -17,6 +17,7 @@ Panels:
         - /Landmark Pose1
         - /Landmark Forwarded1
         - /PointStamped1
+        - /PointStamped2
       Splitter Ratio: 0.5495495200157166
     Tree Height: 566
   - Class: rviz/Selection
@@ -148,7 +149,7 @@ Visualization Manager:
         pointer_pan_link:
           Value: false
         pointer_tilt_base:
-          Value: false
+          Value: true
         pointer_tilt_link:
           Value: false
         swerve_wheel_0:
@@ -832,6 +833,17 @@ Visualization Manager:
       Topic: /tj2/pointer/transformed_goal
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Class: rviz/PointStamped
+      Color: 204; 41; 204
+      Enabled: true
+      History Length: 1
+      Name: PointStamped
+      Queue Size: 10
+      Radius: 0.009999999776482582
+      Topic: /tj2/pointer/goal
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -860,7 +872,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 0.4809364974498749
+      Distance: 0.7102476358413696
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -868,17 +880,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.07302837073802948
-        Y: 0.1400618702173233
+        X: -0.040906429290771484
+        Y: 0.12023860216140747
         Z: -4.470348358154297e-08
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7147982716560364
+      Pitch: 0.3597993552684784
       Target Frame: <Fixed Frame>
-      Yaw: 0.8843969106674194
+      Yaw: 0.34938526153564453
     Saved: ~
 Window Geometry:
   Camera:

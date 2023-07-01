@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import Tuple
+from typing import Tuple, Optional
 import numpy as np
 import tf.transformations
 import rospy
@@ -27,15 +27,15 @@ class TJ2CalibrationPointer:
         self.update_rate = rospy.get_param("~update_rate", 30.0)
 
         self.is_active = True
-        self.goal_point = Point(x=0.0, y=0.0, z=0.0)
+        self.goal_point = None
         self.pan_joint_command = 0.0
         self.tilt_joint_command = 0.0
 
-        self.joint_limits = LinearConstraint(
-            np.eye(2),
+        self.joint_limits = (
             np.array([-np.pi / 2.0, -np.pi / 2.0]),
             np.array([np.pi / 2.0, np.pi / 2.0]),
         )
+        self.initial_guess = (0.5, 0.5)
 
         rospy.loginfo(f"Loading URDF from {self.urdf_key}")
         self.robot = URDF.from_parameter_server(self.urdf_key)
@@ -88,11 +88,11 @@ class TJ2CalibrationPointer:
         pan_transform = tf.transformations.euler_matrix(0.0, 0.0, pan_angle)
         tilt_transform = tf.transformations.euler_matrix(0.0, 0.0, tilt_angle)
         system_transform = (
-            self.end_effector_joint
-            @ self.tilt_joint
-            @ tilt_transform
+            pan_transform
             @ self.pan_joint
-            @ pan_transform
+            @ tilt_transform
+            @ self.tilt_joint
+            @ self.end_effector_joint
         )
         return system_transform
 
@@ -124,23 +124,26 @@ class TJ2CalibrationPointer:
         result = minimize(
             self.cost_function,
             np.array(initial_guess),
-            method="Nelder-Mead",
-            # tol=1e-6,
+            method="SLSQP",
+            tol=1e-6,
             args=(goal_point,),
-            # constraints=self.joint_limits,
+            # bounds=self.joint_limits,
         )
         pan_angle = result.x[0]
         tilt_angle = result.x[1]
         return (pan_angle, tilt_angle)
 
     def goal_callback(self, goal_point: PointStamped) -> None:
+        self.goal_point = goal_point
+
+    def get_transformed_goal_point(self, goal_point: PointStamped) -> Optional[Point]:
         goal_pose = PoseStamped()
         goal_pose.header = goal_point.header
         goal_pose.pose.position = goal_point.point
         goal_pose.pose.orientation.w = 1.0
         transform = transform_pose(self.tf_buffer, goal_pose, self.pan_link_name)
         if transform is not None:
-            self.goal_point = transform.pose.position
+            return transform.pose.position
         else:
             rospy.logwarn(
                 "Could not transform goal point to device root frame. Ignoring goal."
@@ -161,27 +164,35 @@ class TJ2CalibrationPointer:
 
     def run(self) -> None:
         rate = rospy.Rate(self.update_rate)
-        prev_goal = self.goal_point
+        prev_goal = None
 
         while not rospy.is_shutdown():
             rate.sleep()
-            # if self.is_active and prev_goal != self.goal_point:
-            # prev_goal = self.goal_point
-            # (
-            #     self.pan_joint_command,
-            #     self.tilt_joint_command,
-            # ) = self.compute_joint_angles(
-            #     self.goal_point,
-            #     (self.pan_joint_command, self.tilt_joint_command),
-            # )
-            # rospy.loginfo(
-            #     f"pan={self.pan_joint_command}, tilt={self.tilt_joint_command}"
-            # )
-            self.publish_goal_from_joints(
-                self.pan_joint_command, self.tilt_joint_command
-            )
-            self.pan_joint_pub.publish(self.pan_joint_command)
-            self.tilt_joint_pub.publish(self.tilt_joint_command)
+            if self.goal_point is not None:
+                goal_point = self.get_transformed_goal_point(self.goal_point)
+            else:
+                goal_point = None
+            if self.is_active and prev_goal != goal_point and goal_point is not None:
+                prev_goal = goal_point
+                if self.initial_guess is None:
+                    initial_guess = (self.pan_joint_command, self.tilt_joint_command)
+                else:
+                    initial_guess = self.initial_guess
+                (
+                    self.pan_joint_command,
+                    self.tilt_joint_command,
+                ) = self.compute_joint_angles(
+                    goal_point,
+                    initial_guess,
+                )
+                rospy.loginfo(
+                    f"pan={self.pan_joint_command}, tilt={self.tilt_joint_command}"
+                )
+                self.publish_goal_from_joints(
+                    self.pan_joint_command, self.tilt_joint_command
+                )
+                self.pan_joint_pub.publish(self.pan_joint_command)
+                self.tilt_joint_pub.publish(self.tilt_joint_command)
 
 
 if __name__ == "__main__":

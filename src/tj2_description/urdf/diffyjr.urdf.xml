@@ -163,6 +163,6 @@
     <joint name="pointer_end_effector_to_tip_joint" type="fixed">
         <parent link="pointer_end_effector_base"/>
         <child link="pointer_end_effector_tip"/>
-        <origin xyz="0 0 0" rpy="0 -1.5708 0"/>
+        <origin xyz="0 0 0" rpy="0 3.1415 0"/>
     </joint>
 </robot>
