@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /RobotModel1
-        - /RobotModel1/Status1
+        - /TF1
         - /TF1/Frames1
         - /Object Markers1/Namespaces1
         - /ZED1/Visibility1
@@ -16,7 +16,8 @@ Panels:
         - /Camera1
         - /Landmark Pose1
         - /Landmark Forwarded1
-      Splitter Ratio: 0.40840840339660645
+        - /PointStamped1
+      Splitter Ratio: 0.5495495200157166
     Tree Height: 566
   - Class: rviz/Selection
     Name: Selection
@@ -35,7 +36,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -76,6 +77,33 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        pointer_end_effector_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pointer_end_effector_tip:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        pointer_pan_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pointer_pan_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        pointer_tilt_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pointer_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         swerve_wheel_0:
           Alpha: 1
           Show Axes: false
@@ -109,32 +137,20 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_link:
-          Value: true
         base_tilt_link:
           Value: true
-        camera_0:
-          Value: true
-        camera_1:
-          Value: true
-        camera_armature_link:
+        pointer_end_effector_base:
           Value: false
-        camera_link:
+        pointer_end_effector_tip:
+          Value: true
+        pointer_pan_base:
+          Value: true
+        pointer_pan_link:
           Value: false
-        camera_optical_0:
-          Value: true
-        camera_optical_1:
-          Value: true
-        camera_tilt_link:
+        pointer_tilt_base:
           Value: false
-        imu:
+        pointer_tilt_link:
           Value: false
-        laser:
-          Value: true
-        map:
-          Value: true
-        odom:
-          Value: true
         swerve_wheel_0:
           Value: false
         swerve_wheel_1:
@@ -144,38 +160,28 @@ Visualization Manager:
         swerve_wheel_3:
           Value: false
       Marker Alpha: 1
-      Marker Scale: 1
+      Marker Scale: 0.25
       Name: TF
       Show Arrows: true
       Show Axes: true
-      Show Names: true
+      Show Names: false
       Tree:
-        map:
-          odom:
-            base_link:
-              base_tilt_link:
-                camera_0:
-                  camera_optical_0:
-                    {}
-                camera_1:
-                  camera_optical_1:
-                    {}
-                camera_tilt_link:
-                  camera_armature_link:
-                    camera_link:
+        base_tilt_link:
+          pointer_pan_base:
+            pointer_pan_link:
+              pointer_tilt_base:
+                pointer_tilt_link:
+                  pointer_end_effector_base:
+                    pointer_end_effector_tip:
                       {}
-                imu:
-                  {}
-                laser:
-                  {}
-                swerve_wheel_0:
-                  {}
-                swerve_wheel_1:
-                  {}
-                swerve_wheel_2:
-                  {}
-                swerve_wheel_3:
-                  {}
+          swerve_wheel_0:
+            {}
+          swerve_wheel_1:
+            {}
+          swerve_wheel_2:
+            {}
+          swerve_wheel_3:
+            {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -454,6 +460,7 @@ Visualization Manager:
         Path Potential: false
         Perception Debug Image: true
         Perception Markers: true
+        PointStamped: true
         RobotModel: false
         Sinistra LaserScan: true
         TF: false
@@ -739,6 +746,7 @@ Visualization Manager:
         Path Potential: true
         Perception Debug Image: true
         Perception Markers: true
+        PointStamped: true
         RobotModel: false
         Sinistra LaserScan: true
         TF: false
@@ -813,11 +821,22 @@ Visualization Manager:
       Topic: /northstar/landmark/forwarded
       Unreliable: false
       Value: false
+    - Alpha: 1
+      Class: rviz/PointStamped
+      Color: 204; 41; 204
+      Enabled: true
+      History Length: 1
+      Name: PointStamped
+      Queue Size: 10
+      Radius: 0.009999999776482582
+      Topic: /tj2/pointer/transformed_goal
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: base_tilt_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -836,12 +855,12 @@ Visualization Manager:
       Topic: /move_base_simple/goal
     - Class: rviz/PublishPoint
       Single click: true
-      Topic: /clicked_point
+      Topic: /tj2/pointer/goal
   Value: true
   Views:
     Current:
-      Class: rviz/Orbit
-      Distance: 13.935600280761719
+      Class: rviz/ThirdPersonFollower
+      Distance: 0.4809364974498749
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -849,17 +868,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.9754952192306519
-        Y: 0.7902438640594482
-        Z: -3.4296700954437256
-      Focal Shape Fixed Size: false
+        X: 0.07302837073802948
+        Y: 0.1400618702173233
+        Z: -4.470348358154297e-08
+      Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3097962141036987
+      Pitch: 0.7147982716560364
       Target Frame: <Fixed Frame>
-      Yaw: 0.9944289922714233
+      Yaw: 0.8843969106674194
     Saved: ~
 Window Geometry:
   Camera:

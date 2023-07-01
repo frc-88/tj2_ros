@@ -2,3 +2,5 @@
 - base_link_to_wheel_1_joint
 - base_link_to_wheel_2_joint
 - base_link_to_wheel_3_joint
+- pointer_pan_joint
+- pointer_tilt_joint

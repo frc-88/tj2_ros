@@ -218,3 +218,7 @@
     local-name: rosauth
     uri: https://github.com/GT-RAIL/rosauth.git
     version: develop
+- git:
+    local-name: urdf_parser_py
+    uri: https://github.com/ros/urdf_parser_py.git
+    version: melodic-devel

@@ -22,24 +22,28 @@ def distance_to_point(point1: np.ndarray, point2: np.ndarray) -> float:
 
 PAN_JOINT = tf.transformations.concatenate_matrices(
     tf.transformations.translation_matrix([0.01225, 0.02650, 0.0]),
-    tf.transformations.quaternion_matrix([0.0, 0.0, 0.0, 1.0]),
+    tf.transformations.euler_matrix(-1.5708, 3.1415, 0.0),
 )
 TILT_JOINT = tf.transformations.concatenate_matrices(
     tf.transformations.translation_matrix([0.015, -0.01, 0.0]),
-    tf.transformations.quaternion_matrix([0.7071, 0.0, 0.0, 0.7071]),
+    tf.transformations.euler_matrix(0.0, 0.0, 0.0),
 )
 
 END_EFFECTOR_JOINT = tf.transformations.concatenate_matrices(
     tf.transformations.translation_matrix([0.0, 0.0, 0.0]),
-    tf.transformations.quaternion_matrix([0.0, 0.7071, 0.0, 0.7071]),
+    tf.transformations.euler_matrix(0.0, -1.5708, 0.0),
 )
+
+print(PAN_JOINT)
+print(TILT_JOINT)
+print(END_EFFECTOR_JOINT)
 
 
 def compute_system_transform(pan_angle: float, tilt_angle: float):
     pan_transform = tf.transformations.euler_matrix(0.0, 0.0, pan_angle)
     tilt_transform = tf.transformations.euler_matrix(0.0, 0.0, tilt_angle)
     system_transform = (
-        END_EFFECTOR_JOINT @ tilt_transform @ TILT_JOINT @ pan_transform @ PAN_JOINT
+        END_EFFECTOR_JOINT @ TILT_JOINT @ tilt_transform @ PAN_JOINT @ pan_transform
     )
     return system_transform
 
@@ -86,7 +90,6 @@ def compute_line(
 
 
 def plot_angle(pan_angle: float, tilt_angle: float, goal_point: np.ndarray) -> None:
-    system_transform = compute_system_transform(pan_angle, tilt_angle)
     line = compute_line(pan_angle, tilt_angle, goal_point)
 
     fig = plt.figure()
@@ -99,7 +102,7 @@ def plot_angle(pan_angle: float, tilt_angle: float, goal_point: np.ndarray) -> N
 
 
 def main():
-    goal_point = np.array([-1.0, 0.06, 0.08])
+    goal_point = np.array([1, 1, 1])
 
     def cost_function(state: np.ndarray) -> float:
         nonlocal goal_point
@@ -117,6 +120,7 @@ def main():
     result = minimize(cost_function, x0, method="Nelder-Mead", tol=1e-6)
     t1 = time.monotonic()
     print(f"Solve took {t1 - t0}")
+    print(result)
     pan_angle = result.x[0]
     tilt_angle = result.x[1]
     print(f"{pan_angle=}, {tilt_angle=}")

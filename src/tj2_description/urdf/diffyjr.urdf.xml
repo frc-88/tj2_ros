@@ -7,7 +7,7 @@
         <color rgba="0 0.369 0.722 1"/>
     </material>
 
-    <material name="red">
+    <material name="orange">
         <color rgba="0.722 0.369 0 1"/>
     </material>
 
@@ -29,7 +29,7 @@
             <geometry>
                 <mesh filename="package://tj2_description/meshes/diffyjr/wheel.stl"/>
             </geometry>
-            <material name="red"/>
+            <material name="orange"/>
         </visual>
     </link>
 
@@ -39,7 +39,7 @@
             <geometry>
                 <mesh filename="package://tj2_description/meshes/diffyjr/wheel.stl"/>
             </geometry>
-            <material name="red"/>
+            <material name="orange"/>
         </visual>
     </link>
 
@@ -49,7 +49,7 @@
             <geometry>
                 <mesh filename="package://tj2_description/meshes/diffyjr/wheel.stl"/>
             </geometry>
-            <material name="red"/>
+            <material name="orange"/>
         </visual>
     </link>
 
@@ -59,7 +59,7 @@
             <geometry>
                 <mesh filename="package://tj2_description/meshes/diffyjr/wheel.stl"/>
             </geometry>
-            <material name="red"/>
+            <material name="orange"/>
         </visual>
     </link>
 
@@ -89,5 +89,80 @@
         <child link="swerve_wheel_3"/>
         <origin xyz="0.154305  -0.154305  0.044"/>
         <axis xyz="0 0 1"/>
+    </joint>
+
+    <!-- Calibration pointer -->
+
+
+    <link name="pointer_pan_base">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/diffyjr/pointer_pan_base.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+    <link name="pointer_pan_link"/>
+
+    <link name="pointer_tilt_base">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/diffyjr/pointer_tilt_base.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+    <link name="pointer_tilt_link"/>
+
+    <link name="pointer_end_effector_base">
+        <visual>
+            <origin xyz="0.015 0.01 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/diffyjr/pointer_end_effector_base.stl"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+    <link name="pointer_end_effector_tip"/>
+
+    <joint name="base_to_pointer_base" type="fixed">
+        <parent link="base_tilt_link"/>
+        <child link="pointer_pan_base"/>
+        <origin xyz="0.136 0.184 0.231" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="pointer_pan_joint" type="continuous">
+        <parent link="pointer_pan_base"/>
+        <child link="pointer_pan_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <joint name="pointer_pan_to_tilt_joint" type="fixed">
+        <parent link="pointer_pan_link"/>
+        <child link="pointer_tilt_base"/>
+        <origin xyz="-0.01225 0.02650 0.0" rpy="-1.5708 3.1415 0"/>
+    </joint>
+
+    <joint name="pointer_tilt_joint" type="continuous">
+        <parent link="pointer_tilt_base"/>
+        <child link="pointer_tilt_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <joint name="pointer_tilt_to_end_effector_joint" type="fixed">
+        <parent link="pointer_tilt_link"/>
+        <child link="pointer_end_effector_base"/>
+        <origin xyz="-0.015 -0.01 0.0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <joint name="pointer_end_effector_to_tip_joint" type="fixed">
+        <parent link="pointer_end_effector_base"/>
+        <child link="pointer_end_effector_tip"/>
+        <origin xyz="0 0 0" rpy="0 -1.5708 0"/>
     </joint>
 </robot>
