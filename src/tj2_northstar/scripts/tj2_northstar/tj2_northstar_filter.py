@@ -185,7 +185,8 @@ class TJ2NorthstarFilter:
         ):
             rospy.logwarn("AMCL pose do not agree. Not updating landmark")
             return
-        if forwarded := self.fast_forwarder.fast_forward(msg):
+        forwarded = self.fast_forwarder.fast_forward(msg)
+        if forwarded is not None:
             self.forwarded_landmark_pub.publish(forwarded)
             with self.model_lock:
                 self.model.update_landmark(forwarded)

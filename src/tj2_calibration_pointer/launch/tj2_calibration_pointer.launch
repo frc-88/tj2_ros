@@ -5,8 +5,8 @@
         <group ns="pointer" >
             <node name="tj2_calibration_pointer" pkg="tj2_calibration_pointer" type="tj2_calibration_pointer_node.py" output="screen">
                 <param name="robot_description_param" value="$(arg robot_description_param)"/>
-                <remap from="pan_joint" to="/tj2/joint/pointer_pan_joint"/>
-                <remap from="tilt_joint" to="/tj2/joint/pointer_tilt_joint"/>
+                <remap from="pan_joint" to="/tj2/joint/pointer_pan_joint/command"/>
+                <remap from="tilt_joint" to="/tj2/joint/pointer_tilt_joint/command"/>
             </node>
         </group>
     </group>

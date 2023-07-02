@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-from typing import Tuple, Optional
+from typing import Optional
 import numpy as np
-import tf.transformations
 import rospy
 import tf2_ros
-from scipy.optimize import minimize  # type: ignore
 from std_msgs.msg import Bool, Float64
 from urdf_parser_py.urdf import URDF  # type: ignore
 from geometry_msgs.msg import Point, PointStamped, PoseStamped
 from tj2_tools.transforms import transform_pose
+from tj2_calibration_pointer.kinematics import CalibrationPointerKinematics
 
 
 class TJ2CalibrationPointer:
@@ -31,23 +30,17 @@ class TJ2CalibrationPointer:
         self.pan_joint_command = 0.0
         self.tilt_joint_command = 0.0
 
-        self.joint_limits = (
-            np.array([-np.pi / 2.0, -np.pi / 2.0]),
-            np.array([np.pi / 2.0, np.pi / 2.0]),
-        )
         self.initial_guess = None
 
         rospy.loginfo(f"Loading URDF from {self.urdf_key}")
         self.robot = URDF.from_parameter_server(self.urdf_key)
 
-        self.pan_joint = self.lookup_homogenous_transform(
-            self.pan_link_name, self.tilt_link_name
-        )
-        self.tilt_joint = self.lookup_homogenous_transform(
-            self.tilt_link_name, self.end_effector_base_link_name
-        )
-        self.end_effector_joint = self.lookup_homogenous_transform(
-            self.end_effector_base_link_name, self.end_effector_tip_link_name
+        self.kinematics = CalibrationPointerKinematics(
+            self.robot,
+            self.pan_link_name,
+            self.tilt_link_name,
+            self.end_effector_base_link_name,
+            self.end_effector_tip_link_name,
         )
 
         self.tf_buffer = tf2_ros.Buffer()
@@ -65,76 +58,6 @@ class TJ2CalibrationPointer:
         self.set_active_subscriber = rospy.Subscriber(
             "set_active", Bool, self.set_active_callback, queue_size=1
         )
-
-    def lookup_homogenous_transform(
-        self, parent_link: str, child_link: str
-    ) -> np.ndarray:
-        chain = self.robot.get_chain(
-            parent_link, child_link, joints=True, links=False, fixed=True
-        )
-        homogenous_transform = np.identity(4)
-        for joint_name in chain:
-            joint = self.robot.joint_map[joint_name]
-            homogenous_transform = tf.transformations.concatenate_matrices(
-                tf.transformations.translation_matrix(joint.origin.xyz),
-                tf.transformations.euler_matrix(*joint.origin.rpy),
-                homogenous_transform,
-            )
-        return np.array(homogenous_transform)
-
-    def compute_system_transform(
-        self, pan_angle: float, tilt_angle: float
-    ) -> np.ndarray:
-        pan_transform = tf.transformations.euler_matrix(0.0, 0.0, pan_angle)
-        tilt_transform = tf.transformations.euler_matrix(0.0, 0.0, tilt_angle)
-        system_transform = (
-            pan_transform
-            @ self.pan_joint
-            @ tilt_transform
-            @ self.tilt_joint
-            @ self.end_effector_joint
-        )
-        return system_transform
-
-    def compute_line(
-        self, pan_angle: float, tilt_angle: float, goal_point: np.ndarray
-    ) -> np.ndarray:
-        system_transform = self.compute_system_transform(pan_angle, tilt_angle)
-        line_vector = np.array([np.linalg.norm(goal_point), 0.0, 0.0, 1.0])
-        line_transform = system_transform @ line_vector
-
-        line_pt1 = tf.transformations.translation_from_matrix(system_transform)
-        line_pt2 = line_transform[0:3]
-        return np.array([line_pt1, line_pt2])
-
-    def distance_to_point(self, point1: np.ndarray, point2: np.ndarray) -> float:
-        return float(np.linalg.norm(point2 - point1, axis=0))
-
-    def cost_function(self, state: np.ndarray, goal_point: np.ndarray) -> float:
-        pan_angle = state[0]
-        tilt_angle = state[1]
-        line = self.compute_line(pan_angle, tilt_angle, goal_point)
-        return self.distance_to_point(line[1], goal_point)
-
-    def compute_joint_angles(
-        self, goal: Point, initial_guess: Tuple[float, float]
-    ) -> Optional[Tuple[float, float]]:
-        rospy.loginfo(f"Goal: {goal.x}, {goal.y}, {goal.z}. guess: {initial_guess}")
-        goal_point = np.array([goal.x, goal.y, goal.z])
-        result = minimize(
-            self.cost_function,
-            np.array(initial_guess),
-            method="SLSQP",
-            tol=1e-6,
-            args=(goal_point,),
-            # bounds=self.joint_limits,
-        )
-        if not result.success:
-            rospy.logwarn(f"Failed to find solution: {result.message}")
-            return None
-        pan_angle = result.x[0]
-        tilt_angle = result.x[1]
-        return (pan_angle, tilt_angle)
 
     def goal_callback(self, goal_point: PointStamped) -> None:
         self.goal_point = goal_point
@@ -156,7 +79,9 @@ class TJ2CalibrationPointer:
         self.is_active = is_active.data
 
     def publish_goal_from_joints(self, pan_angle: float, tilt_angle: float) -> None:
-        system_transform = self.compute_system_transform(pan_angle, tilt_angle)
+        system_transform = self.kinematics.compute_forward_kinematics(
+            pan_angle, tilt_angle
+        )
         end_effector_point = system_transform @ np.array([0.0, 0.0, 0.0, 1.0])
         goal_point = PointStamped()
         goal_point.header.frame_id = self.pan_link_name
@@ -181,9 +106,8 @@ class TJ2CalibrationPointer:
                     initial_guess = (self.pan_joint_command, self.tilt_joint_command)
                 else:
                     initial_guess = self.initial_guess
-                result = self.compute_joint_angles(
-                    goal_point,
-                    initial_guess,
+                result = self.kinematics.compute_inverse_kinematics(
+                    goal_point, initial_guess
                 )
                 if result is None:
                     continue

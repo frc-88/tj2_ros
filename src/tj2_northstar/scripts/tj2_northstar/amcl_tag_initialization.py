@@ -75,13 +75,6 @@ class AmclTagInitialization:
             # check if the amcl pose has been set
             return
 
-        if now - self.amcl_pose.header.stamp > self.stale_measurement_time:
-            # check if the AMCL pose is too old
-            rospy.logwarn(
-                f"AMCL pose is stale. It is {(now - self.amcl_pose.header.stamp).to_sec()} seconds old."
-            )
-            return
-
         if now - self.robot_velocity_timestamp > self.stale_measurement_time:
             # check if odometry is too old
             rospy.logwarn(
