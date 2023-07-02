@@ -24,13 +24,14 @@ class TJ2CalibrationPointer:
             "~end_effector_tip_link", "pointer_end_effector_tip"
         )
         self.update_rate = rospy.get_param("~update_rate", 30.0)
+        self.world_frame = rospy.get_param("~world_frame", "odom")
 
         self.is_active = True
         self.goal_point = None
         self.pan_joint_command = 0.0
         self.tilt_joint_command = 0.0
 
-        self.initial_guess = None
+        self.initial_guess = (0.5, 0.5)
 
         rospy.loginfo(f"Loading URDF from {self.urdf_key}")
         self.robot = URDF.from_parameter_server(self.urdf_key)
@@ -60,16 +61,21 @@ class TJ2CalibrationPointer:
         )
 
     def goal_callback(self, goal_point: PointStamped) -> None:
-        self.goal_point = goal_point
+        self.goal_point = self.get_transformed_goal_point(goal_point, self.world_frame)
 
-    def get_transformed_goal_point(self, goal_point: PointStamped) -> Optional[Point]:
-        goal_pose = PoseStamped()
-        goal_pose.header = goal_point.header
-        goal_pose.pose.position = goal_point.point
-        goal_pose.pose.orientation.w = 1.0
-        transform = transform_pose(self.tf_buffer, goal_pose, self.pan_link_name)
-        if transform is not None:
-            return transform.pose.position
+    def get_transformed_goal_point(
+        self, point: PointStamped, destination_frame: str
+    ) -> Optional[PointStamped]:
+        pose = PoseStamped()
+        pose.header = point.header
+        pose.pose.position = point.point
+        pose.pose.orientation.w = 1.0
+        transformed_pose = transform_pose(self.tf_buffer, pose, destination_frame)
+        if transformed_pose is not None:
+            transformed_point = PointStamped()
+            transformed_point.header.frame_id = destination_frame
+            transformed_point.point = transformed_pose.pose.position
+            return transformed_point
         else:
             rospy.logwarn(
                 "Could not transform goal point to device root frame. Ignoring goal."
@@ -97,24 +103,26 @@ class TJ2CalibrationPointer:
         while not rospy.is_shutdown():
             rate.sleep()
             if self.goal_point is not None:
-                goal_point = self.get_transformed_goal_point(self.goal_point)
+                goal_point = self.get_transformed_goal_point(
+                    self.goal_point, self.pan_link_name
+                )
             else:
                 goal_point = None
             if self.is_active and prev_goal != goal_point and goal_point is not None:
+                # print(
+                #     f"x={goal_point.point.x:0.4f}, y={goal_point.point.y:0.4f}, z={goal_point.point.z:0.4f}"
+                # )
                 prev_goal = goal_point
                 if self.initial_guess is None:
                     initial_guess = (self.pan_joint_command, self.tilt_joint_command)
                 else:
                     initial_guess = self.initial_guess
                 result = self.kinematics.compute_inverse_kinematics(
-                    goal_point, initial_guess
+                    goal_point.point, initial_guess
                 )
                 if result is None:
                     continue
                 self.pan_joint_command, self.tilt_joint_command = result
-                rospy.loginfo(
-                    f"pan={self.pan_joint_command}, tilt={self.tilt_joint_command}"
-                )
                 self.publish_goal_from_joints(
                     self.pan_joint_command, self.tilt_joint_command
                 )

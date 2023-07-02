@@ -85,13 +85,12 @@ class CalibrationPointerKinematics:
     def compute_inverse_kinematics(
         self, goal: Point, initial_guess: Tuple[float, float]
     ) -> Optional[Tuple[float, float]]:
-        rospy.loginfo(f"Goal: {goal.x}, {goal.y}, {goal.z}. guess: {initial_guess}")
         goal_point = np.array([goal.x, goal.y, goal.z])
         result = minimize(
             self.cost_function,
             np.array(initial_guess),
             method="SLSQP",
-            tol=1e-6,
+            # tol=1e-6,
             args=(goal_point,),
             # bounds=self.joint_limits,
         )
