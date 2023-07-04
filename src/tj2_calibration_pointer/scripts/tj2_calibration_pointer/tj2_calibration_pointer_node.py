@@ -24,7 +24,7 @@ class TJ2CalibrationPointer:
             "~end_effector_tip_link", "pointer_end_effector_tip"
         )
         self.update_rate = rospy.get_param("~update_rate", 30.0)
-        self.world_frame = rospy.get_param("~world_frame", "odom")
+        self.world_frame = rospy.get_param("~world_frame", "map")
 
         self.is_active = True
         self.goal_point = None
@@ -59,6 +59,7 @@ class TJ2CalibrationPointer:
         self.set_active_subscriber = rospy.Subscriber(
             "set_active", Bool, self.set_active_callback, queue_size=1
         )
+        rospy.loginfo("Calibration pointer node initialized.")
 
     def goal_callback(self, goal_point: PointStamped) -> None:
         self.goal_point = self.get_transformed_goal_point(goal_point, self.world_frame)
