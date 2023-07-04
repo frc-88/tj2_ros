@@ -53,4 +53,4 @@ odom_alpha5: 0.05  # 0.2, Translation-related noise parameter (only used if mode
 odom_frame_id: odom  # odom, Which frame to use for odometry.
 base_frame_id: base_link  # base_link, Which frame to use for the robot base
 global_frame_id: map  # map, The name of the coordinate frame published by the localization system
-tf_broadcast: false  # true, Set this to false to prevent amcl from publishing the transform between the global frame and the odometry frame.
+tf_broadcast: true  # true, Set this to false to prevent amcl from publishing the transform between the global frame and the odometry frame.
