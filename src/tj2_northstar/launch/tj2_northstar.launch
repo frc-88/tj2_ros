@@ -44,11 +44,13 @@
         </node> -->
         <include file="$(find tj2_northstar)/launch/ov2311.launch">
             <arg name="camera_info_url" default="package://tj2_bringup/config/diffyjr/northstar/calibration/camera_0.yaml"/>
+            <arg name="common_camera_params" default="$(arg common_camera_params)"/>
             <arg name="camera_name" default="camera_0"/>
             <arg name="camera_index" default="0"/>
         </include>
         <include file="$(find tj2_northstar)/launch/ov2311.launch">
             <arg name="camera_info_url" default="package://tj2_bringup/config/diffyjr/northstar/calibration/camera_1.yaml"/>
+            <arg name="common_camera_params" default="$(arg common_camera_params)"/>
             <arg name="camera_name" default="camera_1"/>
             <arg name="camera_index" default="1"/>
         </include>
