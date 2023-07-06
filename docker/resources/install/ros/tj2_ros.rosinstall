@@ -222,3 +222,7 @@
     local-name: urdf_parser_py
     uri: https://github.com/ros/urdf_parser_py.git
     version: melodic-devel
+- git:
+    local-name: libuvc_ros
+    uri: https://github.com/ktossell/libuvc_ros.git
+    version: master

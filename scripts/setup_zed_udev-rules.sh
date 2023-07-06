@@ -8,7 +8,6 @@ set -x
 wget -q https://download.stereolabs.com/zedsdk/3.5/jp44/jetsons -O zed_installer.run
 # Extracting only the file we're interested in
 bash ./zed_installer.run --tar -x './99-slabs.rules'  > /dev/null 2>&1
-sudo mv "./99-slabs.rules" "/etc/udev/rules.d/"
-sudo chmod 777 "/etc/udev/rules.d/99-slabs.rules"
+sudo mv "./99-slabs.rules" "/etc/udev/rules.d/99-zed.rules"
+sudo chmod 777 "/etc/udev/rules.d/99-zed.rules"
 sudo udevadm control --reload-rules && sudo udevadm trigger
-
