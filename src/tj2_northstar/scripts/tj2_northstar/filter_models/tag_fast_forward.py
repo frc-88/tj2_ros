@@ -20,7 +20,7 @@ class TagFastForward:
         self,
         dt: float,
         play_forward_buffer_size: int,
-        lag_upper_threshold: float = 15.0,
+        lag_upper_threshold: float = 0.25,
     ) -> None:
         self.dt = dt
         self.play_forward_buffer_size = play_forward_buffer_size
@@ -44,6 +44,11 @@ class TagFastForward:
         lag = now - start_time
         if lag > self.lag_upper_threshold:
             rospy.logwarn(f"Lag is too high ({lag}), ignoring message")
+            return None
+        elif lag < 0.0:
+            rospy.logwarn(
+                f"Landmark has a timestamp in the future ({lag}), ignoring message"
+            )
             return None
         num_samples = round(lag / self.dt)
         if num_samples > 0:

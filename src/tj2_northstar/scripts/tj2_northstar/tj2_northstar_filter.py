@@ -30,8 +30,8 @@ class TJ2NorthstarFilter:
         self.base_frame = ""
 
         self.play_forward_buffer_size = rospy.get_param("~play_forward_buffer_size", 20)
-        self.tag_fast_forward_sample_window = rospy.get_param(
-            "~tag_fast_forward_sample_window", 0.1
+        self.tag_fast_forward_sample_dt = rospy.get_param(
+            "~tag_fast_forward_sample_dt", 0.05
         )
         self.update_rate = rospy.get_param("~update_rate", 50.0)
         self.roll_pitch_threshold = rospy.get_param("~roll_pitch_threshold", 0.2)
@@ -46,7 +46,7 @@ class TJ2NorthstarFilter:
         self.model_lock = Lock()
 
         self.fast_forwarder = TagFastForward(
-            self.tag_fast_forward_sample_window, self.play_forward_buffer_size
+            self.tag_fast_forward_sample_dt, self.play_forward_buffer_size
         )
 
         self.amcl_pose = PoseWithCovarianceStamped()

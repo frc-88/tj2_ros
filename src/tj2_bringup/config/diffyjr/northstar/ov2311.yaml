@@ -5,7 +5,7 @@ io_method: mmap                     # I/O method
                                     # - read - for devices supporting virtual filesystem or block I/O
                                     # - mmap - for devices with direct libusb memory mapping
                                     # - userptr - for userspace devices supporting userspace pointer exchange
-pixel_format: yuyv                    # Pixel format for Video4linux device (also selects decoder mode)
+pixel_format: mjpeg                     # Pixel format for Video4linux device (also selects decoder mode)
                                         # https://wiki.videolan.org/YUV#YUV_4:2:0_.28I420.2FJ420.2FYV12.29
                                         # - yuyv - YUV420
                                         # - yuv - synonym for yuyv
@@ -26,7 +26,7 @@ full_ffmpeg_log: false              # Allows to suppress warning messages genera
 camera_transport_suffix: image_raw  # Suffix used by image_transport to generate topic names
 image_width: 1600                    # Frame dimensions, should be supported by camera hardware
 image_height: 1200
-framerate: 100                       # Camera polling frequency, Hz (integer)
+framerate: 15                       # Camera polling frequency, Hz (integer)
 
 # Auxiliary camera parameters provided by libv4l2.
     # Names for these parameters are generated automatically according to the intrinsic control names exported by the

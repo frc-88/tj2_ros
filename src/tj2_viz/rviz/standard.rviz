@@ -13,8 +13,7 @@ Panels:
         - /ZED Depth1/Occlusion Compensation1
         - /Apriltags1
         - /Camera1/Visibility1
-        - /PointStamped1
-        - /PointStamped2
+        - /Landmark Forwarded1
       Splitter Ratio: 0.5480480194091797
     Tree Height: 695
   - Class: rviz/Selection
@@ -538,7 +537,7 @@ Visualization Manager:
         Path Potential: false
         Perception Debug Image: true
         Perception Markers: true
-        PointStamped: true
+        Pointer Goal: true
         RobotModel: false
         Sinistra LaserScan: true
         TF: false
@@ -824,7 +823,7 @@ Visualization Manager:
         Path Potential: true
         Perception Debug Image: true
         Perception Markers: true
-        PointStamped: true
+        Pointer Goal: true
         RobotModel: false
         Sinistra LaserScan: true
         TF: false
@@ -857,7 +856,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: false
+      Enabled: true
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: Landmark Pose
@@ -867,7 +866,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /northstar/landmark
       Unreliable: false
-      Value: false
+      Value: true
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -888,7 +887,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: false
+      Enabled: true
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: Landmark Forwarded
@@ -898,29 +897,18 @@ Visualization Manager:
       Shape: Arrow
       Topic: /northstar/landmark/forwarded
       Unreliable: false
-      Value: false
-    - Alpha: 1
-      Class: rviz/PointStamped
-      Color: 204; 41; 204
-      Enabled: true
-      History Length: 1
-      Name: PointStamped
-      Queue Size: 10
-      Radius: 0.009999999776482582
-      Topic: /tj2/pointer/transformed_goal
-      Unreliable: false
       Value: true
     - Alpha: 1
       Class: rviz/PointStamped
       Color: 204; 41; 204
-      Enabled: true
+      Enabled: false
       History Length: 1
-      Name: PointStamped
+      Name: Pointer Goal
       Queue Size: 10
       Radius: 0.05000000074505806
       Topic: /tj2/pointer/goal
       Unreliable: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -949,7 +937,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 4.302242279052734
+      Distance: 19.521862030029297
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -957,17 +945,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.04506830871105194
-        Y: 1.757264494895935
+        X: -0.1023760735988617
+        Y: 0.8466593027114868
         Z: -1.9371509552001953e-07
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.264797329902649
+      Pitch: 0.9097979068756104
       Target Frame: <Fixed Frame>
-      Yaw: 1.4525487422943115
+      Yaw: 0.6275510787963867
     Saved: ~
 Window Geometry:
   Camera:
@@ -989,7 +977,7 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 2524
-  X: 2596
+  X: 72
   Y: 35
   ZED:
     collapsed: false
