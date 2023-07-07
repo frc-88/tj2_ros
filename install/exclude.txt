@@ -8,6 +8,7 @@ playground/calicam/cpp/build/
 playground/cv_pipe_detection/images/
 playground/particle_filter/data/
 playground/swerve/swerve_bag_plotter/data
+tj2_ros/playground/arducam/data/
 tj2_tools/build/
 tj2_tools/dist/
 tj2_tools/tj2_tools.egg-info/

@@ -23,7 +23,6 @@ services:
     volumes:
       - workstation_tj2_ros_build:/home/tj2/ros_ws:rw
       - /home/${USER}/tj2_ros:/opt/tj2/tj2_ros:rw
-      - /home/${USER}/tj2_ros/src:/home/tj2/ros_ws/src/tj2_ros:rw
       - /home/${USER}/tj2_ros/scripts:/opt/tj2/scripts:rw
       - /media/storage/training_tj2_ros_data:/opt/tj2/tj2_ros/dataset_builder/data:rw
       - /home/${USER}/tj2_ros/logs:/opt/tj2/logs:rw
@@ -34,5 +33,4 @@ services:
       - /home/${USER}/.docker:/opt/tj2/.docker:rw # docker looks here inside a container
       - /var/run/docker.sock:/var/run/docker.sock
 
-    # Overrides default command so things don't shut down after the process ends.
-    command: /bin/sh -c "sleep infinity"
+    command: bash /opt/tj2/scripts/watch_for_changes.sh

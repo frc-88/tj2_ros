@@ -23,3 +23,7 @@
     local-name: apriltag_ros
     uri: https://github.com/AprilRobotics/apriltag_ros.git
     version: master
+- git:
+    local-name: urdf_parser_py
+    uri: https://github.com/ros/urdf_parser_py.git
+    version: melodic-devel

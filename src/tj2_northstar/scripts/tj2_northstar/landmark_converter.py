@@ -16,7 +16,9 @@ class LandmarkConverter:
     def __init__(self) -> None:
         rospy.init_node("landmark_converter")
 
-        self.base_frame = str(rospy.get_param("~base_frame", "base_link"))
+        self.base_frame = str(rospy.get_param("~base_frame", "base_tilt_link"))
+        self.map_frame = str(rospy.get_param("~map_frame", "map"))
+        self.field_frame = str(rospy.get_param("~field_frame", "field"))
         self.landmark_ids = frozenset(rospy.get_param("~landmark_ids", [0]))
         base_covariance = rospy.get_param(
             "~covariance", np.eye(6, dtype=np.float64).flatten().tolist()
@@ -28,6 +30,8 @@ class LandmarkConverter:
 
         self.landmark = PoseWithCovarianceStamped()
         self.landmark.header.frame_id = self.base_frame
+
+        self.prev_landmark = PoseStamped()
 
         self.buffer = tf2_ros.Buffer()
         self.transform_listener = tf2_ros.TransformListener(self.buffer)
@@ -53,41 +57,61 @@ class LandmarkConverter:
             elif len(ids) == 1:
                 individual_measurements.append(detection_pose)
         if landmark_pose is not None:
-            self.publish_landmark(landmark_pose)
-        if len(individual_measurements) > 0:
-            self.update_covariance(individual_measurements)
+            # self.publish_landmark_from_tf()
+            self.publish_inverted_landmark(landmark_pose)
+            if len(individual_measurements) > 0:
+                self.update_covariance(individual_measurements, landmark_pose)
 
-    def publish_landmark(self, pose: PoseStamped) -> None:
-        # pose = self.invert_transform_pose(pose)
-        self.landmark.header = pose.header
-        self.landmark.pose.pose = pose.pose
+    def publish_landmark_from_tf(self) -> None:
+        transform = lookup_transform(self.buffer, self.field_frame, self.base_frame)
+        zero_pose = PoseStamped()
+        zero_pose.header.frame_id = self.base_frame
+        zero_pose.pose.orientation.w = 1.0
+        base_in_field = tf2_geometry_msgs.do_transform_pose(zero_pose, transform)
+        self.landmark.header = base_in_field.header
+        self.landmark.pose.pose = base_in_field.pose
+        self.landmark_pub.publish(self.landmark)
+
+    def publish_inverted_landmark(self, pose: PoseStamped) -> None:
+        inverted_pose = self.invert_transform_pose(pose)
+        if inverted_pose is None:
+            return
+        self.landmark.header = inverted_pose.header
+        self.landmark.pose.pose = inverted_pose.pose
         self.landmark_pub.publish(self.landmark)
 
     def invert_transform_pose(self, pose: PoseStamped) -> Optional[PoseStamped]:
         transform = lookup_transform(self.buffer, self.base_frame, pose.header.frame_id)
         if transform is None:
             return None
-        reverse_pose = tf2_geometry_msgs.do_transform_pose(pose, transform)
+        landmark_in_base = tf2_geometry_msgs.do_transform_pose(pose, transform)
         translation = (
-            reverse_pose.pose.position.x,
-            reverse_pose.pose.position.y,
-            reverse_pose.pose.position.z,
+            landmark_in_base.pose.position.x,
+            landmark_in_base.pose.position.y,
+            landmark_in_base.pose.position.z,
         )
         rotation = (
-            reverse_pose.pose.orientation.x,
-            reverse_pose.pose.orientation.y,
-            reverse_pose.pose.orientation.z,
-            reverse_pose.pose.orientation.w,
+            landmark_in_base.pose.orientation.x,
+            landmark_in_base.pose.orientation.y,
+            landmark_in_base.pose.orientation.z,
+            landmark_in_base.pose.orientation.w,
         )
-        transform_mat = tf.transformations.concatenate_matrices(
-            tf.transformations.translation_matrix(translation),
-            tf.transformations.quaternion_matrix(rotation),
+
+        inverse_mat = tf.transformations.inverse_matrix(
+            tf.transformations.translation_matrix(translation)
         )
-        inverse_mat = tf.transformations.inverse_matrix(transform_mat)
+
+        inverse_mat = tf.transformations.concatenate_matrices(
+            tf.transformations.inverse_matrix(
+                tf.transformations.quaternion_matrix(rotation)
+            ),
+            inverse_mat,
+        )
 
         forward_translation = tf.transformations.translation_from_matrix(inverse_mat)
         forward_rotation = tf.transformations.quaternion_from_matrix(inverse_mat)
         inverse_pose = PoseStamped()
+        inverse_pose.header.frame_id = self.map_frame
         inverse_pose.header.stamp = pose.header.stamp
         inverse_pose.pose.position.x = forward_translation[0]
         inverse_pose.pose.position.y = forward_translation[1]
@@ -124,12 +148,38 @@ class LandmarkConverter:
             )
         )
 
-    def update_covariance(self, poses: List[PoseStamped]) -> None:
-        distances = [self.get_pose_distance(pose) for pose in poses]
+    def pose_stamped_to_vector(self, pose: PoseStamped) -> np.ndarray:
+        return np.array(
+            [
+                pose.pose.position.x,
+                pose.pose.position.y,
+                pose.pose.position.z,
+            ]
+        )
+
+    def delta_pose_covariance_scale(
+        self, current_pose: PoseStamped, prev_pose: PoseStamped
+    ) -> None:
+        distance = np.linalg.norm(
+            self.pose_stamped_to_vector(current_pose)
+            - self.pose_stamped_to_vector(prev_pose)
+        )
+        scale = 4 * distance + 1.0
+        return scale
+
+    def update_covariance(
+        self, tag_poses: List[PoseStamped], overall_pose: PoseStamped
+    ) -> None:
+        distances = [self.get_pose_distance(pose) for pose in tag_poses]
         aggregate_distance = float(np.median(distances))
 
-        covariance = self.base_covariance * self.num_tags_covariance_scale(len(poses))
+        covariance = self.base_covariance * self.num_tags_covariance_scale(
+            len(tag_poses)
+        )
         covariance *= self.pose_distance_covariance_scale(aggregate_distance)
+
+        covariance *= self.delta_pose_covariance_scale(overall_pose, self.prev_landmark)
+        self.prev_landmark = overall_pose
         self.landmark.pose.covariance = covariance.flatten().tolist()
 
     def run(self) -> None:

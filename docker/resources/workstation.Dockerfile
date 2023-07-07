@@ -28,7 +28,7 @@ USER ${USER}
 
 RUN sudo apt-get update && \
     sudo apt-get install -y apt-utils \
-         git nano tmux curl wget htop net-tools iproute2 iputils-ping gdb dumb-init rsync
+         git nano tmux curl wget htop net-tools iproute2 iputils-ping gdb dumb-init rsync entr
 
 # ---
 # PyTorch CMake
@@ -42,7 +42,11 @@ ENV LD_LIBRARY_PATH=/usr/local/lib/python3.6/dist-packages/torch/lib${LD_LIBRARY
 # Basic dependencies
 # ---
 
-COPY --chown=1000:1000 ./install/workstation /opt/tj2/install/workstation
+COPY --chown=1000:1000 \
+    ./install/workstation/install_apt_packages.sh \
+    ./install/workstation/install_python_dependencies.sh \
+    ./install/workstation/install_libraries.sh \
+    /opt/tj2/install/workstation/
 RUN bash /opt/tj2/install/workstation/install_apt_packages.sh && \
     bash /opt/tj2/install/workstation/install_python_dependencies.sh && \
     bash /opt/tj2/install/workstation/install_libraries.sh
@@ -55,7 +59,21 @@ ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws \
     DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 
 COPY --chown=1000:1000 ./install/rosdep_install.sh /opt/tj2/install
+COPY --chown=1000:1000 \
+    ./install/workstation/install_ros_packages.sh \
+    ./install/workstation/tj2_ros_workstation.rosinstall \
+    /opt/tj2/install/workstation/
 RUN bash /opt/tj2/install/workstation/install_ros_packages.sh
+
+# ---
+# Python extra packages
+# ---
+
+COPY --chown=1000:1000 \
+    ./install/workstation/requirements.txt \
+    ./install/workstation/install_python_extras.sh \
+    /opt/tj2/install/workstation/
+RUN cd /opt/tj2/install/workstation && bash ./install_python_extras.sh
 
 # ---
 # Environment setup
@@ -64,8 +82,8 @@ RUN bash /opt/tj2/install/workstation/install_ros_packages.sh
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 ENV FLASK_ENV=development \
+    PATH=${HOME}/.local/bin:/opt/tj2/scripts${PATH:+:${PATH}} \
     PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools${PYTHONPATH:+:${PYTHONPATH}} \
-    PATH=${HOME}/.local/bin${PATH:+:${PATH}} \
     PYTHONIOENCODING=utf-8
 
 COPY --chown=1000:1000 ./install/client_bashrc ${HOME}/.bashrc
@@ -75,6 +93,7 @@ COPY --chown=1000:1000 \
     ./launch/launch.sh \
     ./launch/roscore.sh \
     /opt/tj2/
+RUN ln -s /opt/tj2/tj2_ros ${HOME}/tj2_ros
 
 RUN chown 1000:1000 ${HOME}
 

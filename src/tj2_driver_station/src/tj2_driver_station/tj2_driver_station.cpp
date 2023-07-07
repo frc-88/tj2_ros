@@ -19,14 +19,12 @@ TJ2DriverStation::TJ2DriverStation(ros::NodeHandle* nodehandle) :
     _heartbeat_time = ros::Time(0);
     _current_mode = NOMODE;
 
-    _twist_heartbeat_time = ros::Time::now();
-
     status_pub = nh.advertise<tj2_driver_station::RobotStatus>("robot_status", 20);
 
     robot_mode_srv = nh.advertiseService("robot_mode", &TJ2DriverStation::robot_mode_callback, this);
     alliance_srv = nh.advertiseService("alliance", &TJ2DriverStation::alliance_callback, this);
 
-    twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &TJ2DriverStation::twist_callback, this);
+    enable_sub = nh.subscribe<std_msgs::Bool>("motor_enable", 1, &TJ2DriverStation::motor_enable_callback, this);
 
     _frc_protocol = DS_GetProtocolFRC_2020();
 
@@ -46,8 +44,7 @@ bool TJ2DriverStation::robot_mode_callback(tj2_driver_station::SetRobotMode::Req
         resp.message = "Robot code isn't running! Can't set mode.";
         return true;
     }
-    _requested_mode = (RobotMode)req.mode;
-    if (set_mode(_requested_mode)) {
+    if (set_mode((RobotMode)req.mode)) {
         resp.success = true;
         resp.message = "";
     }
@@ -73,18 +70,18 @@ bool TJ2DriverStation::alliance_callback(tj2_driver_station::SetAlliance::Reques
 }
 
 
-void TJ2DriverStation::twist_callback(const geometry_msgs::TwistConstPtr& msg) {
-    /*
-    If a non-zero twist command is set, reset the twist timer.
-    If the twist timer is exceeded in the main loop, disable the robot
-    */
-    if (msg->linear.x != 0.0 || msg->linear.y != 0.0 || msg->angular.z != 0.0) {
-        _twist_heartbeat_time = ros::Time::now();
+void TJ2DriverStation::motor_enable_callback(const std_msgs::BoolConstPtr& msg) {
+    if (msg->data) {
+        set_mode(TELEOP);
+    }
+    else {
+        set_mode(DISABLED);
     }
 }
 
 bool TJ2DriverStation::set_mode(RobotMode mode)
 {
+    _requested_mode = mode;
     if (!_is_robot_connected) {
         ROS_WARN_THROTTLE(1.0, "Robot isn't connected! Can't set mode.");
         return false;
@@ -108,17 +105,14 @@ bool TJ2DriverStation::set_mode(RobotMode mode)
         case TELEOP:
             DS_SetRobotEnabled(1);
             DS_SetControlMode(DS_CONTROL_TELEOPERATED);
-            _twist_heartbeat_time = ros::Time::now();
             break;
         case AUTONOMOUS:
             DS_SetRobotEnabled(1);
             DS_SetControlMode(DS_CONTROL_AUTONOMOUS);
-            _twist_heartbeat_time = ros::Time::now();
             break;
         case TEST:
             DS_SetRobotEnabled(1);
             DS_SetControlMode(DS_CONTROL_TEST);
-            _twist_heartbeat_time = ros::Time::now();
             break;
         default:
             ROS_WARN("Invalid mode: %d", mode);
@@ -235,15 +229,6 @@ bool TJ2DriverStation::is_connected()
     return _is_robot_connected;
 }
 
-void TJ2DriverStation::check_disable_timeout()
-{
-    if (is_connected() && _requested_mode != DISABLED && ros::Time::now() - _twist_heartbeat_time > _disable_time_threshold) {
-        ROS_INFO("No twist commands received for %0.1fs. Disabling robot", _disable_time_threshold.toSec());
-        _requested_mode = DISABLED;
-        set_mode(DISABLED);
-    }
-}
-
 
 void TJ2DriverStation::init()
 {
@@ -295,7 +280,6 @@ int TJ2DriverStation::run()
     {
         ros::spinOnce();
         process_events();
-        check_disable_timeout();
         DS_Sleep(20);
         
         if (is_connected()) {
@@ -304,8 +288,6 @@ int TJ2DriverStation::run()
             }
         }
         if (_current_mode != NOMODE && (!_is_robot_connected || !_is_code_running)) {
-            // _requested_mode = (RobotMode)_start_mode;
-            _requested_mode = NOMODE;
             _current_mode = NOMODE;
             set_mode(NOMODE);
         }

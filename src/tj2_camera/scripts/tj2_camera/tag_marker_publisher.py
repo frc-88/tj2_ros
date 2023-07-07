@@ -277,7 +277,10 @@ class TagMarkerPublisher:
         rate = rospy.Rate(self.marker_publish_rate)
         while not rospy.is_shutdown():
             self.publish_marker(self.tag_msg)
-            rate.sleep()
+            try:
+                rate.sleep()
+            except rospy.exceptions.ROSTimeMovedBackwardsException:
+                continue
 
 
 if __name__ == "__main__":

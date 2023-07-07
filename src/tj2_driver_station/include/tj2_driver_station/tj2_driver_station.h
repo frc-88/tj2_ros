@@ -14,7 +14,7 @@
 #include "tj2_driver_station/SetAlliance.h"
 #include "tj2_driver_station/RobotStatus.h"
 
-#include "geometry_msgs/Twist.h"
+#include "std_msgs/Bool.h"
 
 using namespace std;
 
@@ -51,10 +51,9 @@ private:
     ros::Time _heartbeat_time;
 
     ros::Duration _disable_time_threshold;
-    ros::Time _twist_heartbeat_time;
 
     // Subscribers
-    ros::Subscriber twist_sub;
+    ros::Subscriber enable_sub;
 
     // Publishers
     ros::Publisher status_pub;
@@ -66,7 +65,7 @@ private:
     // Callbacks
     bool robot_mode_callback(tj2_driver_station::SetRobotMode::Request &req, tj2_driver_station::SetRobotMode::Response &resp);
     bool alliance_callback(tj2_driver_station::SetAlliance::Request &req, tj2_driver_station::SetAlliance::Response &resp);
-    void twist_callback(const geometry_msgs::TwistConstPtr& msg);
+    void motor_enable_callback(const std_msgs::BoolConstPtr& msg);
 
     void init();
     void close();
@@ -77,7 +76,6 @@ private:
     bool set_mode(RobotMode mode);
     bool set_alliance(string alliance);
     bool set_position(string position);
-    void check_disable_timeout();
 
 public:
     TJ2DriverStation(ros::NodeHandle* nodehandle);

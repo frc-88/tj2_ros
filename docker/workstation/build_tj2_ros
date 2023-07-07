@@ -7,8 +7,6 @@ ${BASE_DIR}/copy_tj2_ros
 
 cd ${BASE_DIR}/../resources
 
-${BASE_DIR}/stop_main_container
-
 TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
 IMAGE_PREFIX=$(${BASE_DIR}/get_built_image)
 

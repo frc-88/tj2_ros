@@ -9,7 +9,6 @@ SERVICE_NAME=tj2_ros
 LOCAL_PATH=${PARENT_DIR}
 DESTINATION_PATH=/home/tj2
 LOCAL_NAME=$(basename $LOCAL_PATH)
-DESTINATION_PATH=/home/tj2
 DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
 
 if [ -z ${DESTINATION_NAME} ]; then
@@ -23,6 +22,9 @@ if [ -z ${REMOTE_KEY} ]; then
 fi
 
 SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
+
+echo "Syncing time"
+${BASE_DIR}/sync_time ${DESTINATION_NAME} ${REMOTE_KEY}
 
 echo "Uploading package data"
 rsync -av --delete --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY} -p 5810"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}

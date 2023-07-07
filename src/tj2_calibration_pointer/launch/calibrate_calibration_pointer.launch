@@ -1,0 +1,18 @@
+<launch>
+    <arg name="robot_description_param" default="/robot_description"/>
+
+    <group ns="tj2" >
+        <group ns="pointer" >
+            <node name="tj2_calibration_pointer" pkg="tj2_calibration_pointer" type="tj2_calibration_pointer_node.py" output="screen">
+                <param name="robot_description_param" value="$(arg robot_description_param)"/>
+                <remap from="pan_joint" to="/tj2/joint/pointer_pan_joint"/>
+                <remap from="tilt_joint" to="/tj2/joint/pointer_tilt_joint"/>
+            </node>
+
+            <node name="record_calibration_data" pkg="tj2_calibration_pointer" type="record_calibration_data.py" output="screen">
+                <remap from="pan_joint" to="/tj2/joint/pointer_pan_joint"/>
+                <remap from="tilt_joint" to="/tj2/joint/pointer_tilt_joint"/>
+            </node>
+        </group>
+    </group>
+</launch>

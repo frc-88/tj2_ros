@@ -20,6 +20,7 @@ sudo apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-geometry2 \
     ros-noetic-tf2 \
     ros-noetic-nav-msgs \
+    ros-noetic-navigation \
     ros-noetic-message-generation \
     ros-noetic-roslaunch \
     ros-noetic-message-runtime \

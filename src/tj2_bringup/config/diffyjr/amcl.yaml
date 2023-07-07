@@ -5,8 +5,8 @@ max_particles: 750  # 5000, Maximum allowed number of particles.
 kld_err: 0.01  # 0.01, Maximum error between the true distribution and the estimated distribution.
 kld_z: 0.99  # 0.99, Upper standard normal quantile for (1 - p), where p is the probability that the error on the estimated distrubition will be less than kld_err.
 
-update_min_d: 0.025  # 0.2, Translational movement required before performing a filter update.
-update_min_a: 0.05  # 0.5236 (pi/6.0), Rotational movement required before performing a filter update.
+update_min_d: 0.1  # 0.2, Translational movement required before performing a filter update.
+update_min_a: 0.1  # 0.5236 (pi/6.0), Rotational movement required before performing a filter update.
 resample_interval: 3  # 2, Number of filter updates required before resampling.
 transform_tolerance: 0.2  # 0.1, Time with which to post-date the transform that is published, to indicate that this transform is valid into the future.
 recovery_alpha_slow: 0.0  # 0.0, Exponential decay rate for the slow average weight filter, used in deciding when to recover by adding random poses. A good value might be 0.001.
@@ -53,4 +53,4 @@ odom_alpha5: 0.05  # 0.2, Translation-related noise parameter (only used if mode
 odom_frame_id: odom  # odom, Which frame to use for odometry.
 base_frame_id: base_link  # base_link, Which frame to use for the robot base
 global_frame_id: map  # map, The name of the coordinate frame published by the localization system
-tf_broadcast: true  # true, Set this to false to prevent amcl from publishing the transform between the global frame and the odometry frame.
+tf_broadcast: false    # true, Set this to false to prevent amcl from publishing the transform between the global frame and the odometry frame.

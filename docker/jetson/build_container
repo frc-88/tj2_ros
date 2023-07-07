@@ -7,7 +7,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 ${BASE_DIR}/stop_all_containers
-${BASE_DIR}/../../scripts/prioritize_wifi.sh
+${BASE_DIR}/../../scripts/prioritize_wifi
 TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
 cd ${BASE_DIR}/../resources
 docker build -f ./jetson.Dockerfile -t ${TJ2_IMAGE_VERSION} .

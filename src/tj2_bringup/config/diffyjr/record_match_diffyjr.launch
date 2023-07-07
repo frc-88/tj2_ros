@@ -21,10 +21,6 @@
         /tj2/joint/base_link_to_wheel_1_joint
         /tj2/joint/base_link_to_wheel_2_joint
         /tj2/joint/base_link_to_wheel_3_joint
-        /tj2/joint/command/base_link_to_wheel_0_joint
-        /tj2/joint/command/base_link_to_wheel_1_joint
-        /tj2/joint/command/base_link_to_wheel_2_joint
-        /tj2/joint/command/base_link_to_wheel_3_joint
         /tj2/joint_states
         /tj2/labels
         /tj2/match_time

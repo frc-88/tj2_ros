@@ -5,6 +5,7 @@
     <arg name="laser_scan_topic"   default="/laser/scan"/>
     <arg name="gmapping_config"    default="$(find tj2_laser_slam)/config/gmapping.yaml"/>
     <arg name="amcl_config"        default="$(find tj2_laser_slam)/config/amcl.yaml"/>
+    
 
     <node pkg="tj2_laser_slam" type="tj2_laser_slam_node.py" name="tj2_laser_slam" output="screen">
         <param name="mode" value="$(arg mode)"/>

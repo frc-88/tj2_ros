@@ -34,12 +34,13 @@
     <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
         <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
         <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
+        <arg name="serial_number"             value="33452020" />    
     </include>
-    <!-- <include file="$(find tj2_yolo)/launch/tj2_yolo.launch">
+    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch">
         <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
         <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
-    </include> -->
-    <include file="$(find tj2_charged_up)/launch/charged_up_perception.launch"/>
+    </include>
+    <!-- <include file="$(find tj2_charged_up)/launch/charged_up_perception.launch"/> -->
 
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch">
         <arg name="record_launch_path" value="$(find tj2_bringup)/config/diffyjr/record_match_diffyjr.launch" />
@@ -58,7 +59,7 @@
     </group>
 
     <include if="$(arg enable_driver_station)" file="$(find tj2_driver_station)/launch/tj2_driver_station.launch"/>
-    <include if="$(arg enable_driver_station)" file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/>
+    <!-- <include if="$(arg enable_driver_station)" file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch"/> -->
 
     <!-- <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
         <remap from="/cmd_vel" to="/tj2/cmd_vel_nav"/>
@@ -85,6 +86,7 @@
         <arg name="gmapping_config" value="$(find tj2_bringup)/config/diffyjr/gmapping.yaml"/>
         <arg name="amcl_config" value="$(find tj2_bringup)/config/diffyjr/amcl.yaml"/>
     </include>
+
     <!-- <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_data)/data/waypoints/$(arg map_name)"/>
     </include> -->
@@ -95,10 +97,22 @@
 
     <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
         <arg name="nt_host" value="$(arg robot_address)"/>
-        <arg name="robot" default="$(env ROBOT)"/>
+        <arg name="robot" value="$(env ROBOT)"/>
     </include>
 
     <!-- <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/> -->
     <!-- <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/> -->
-    <!-- <include file="$(find tj2_northstar)/launch/tj2_northstar.launch"/> -->
+
+    <include file="$(find tj2_northstar)/launch/tj2_northstar.launch">
+        <arg name="apriltag_settings" value="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
+        <arg name="apriltag_tags" value="$(find tj2_bringup)/config/diffyjr/tags/$(arg map_name)_tags.yaml"/>
+        <arg name="filter_params" value="$(find tj2_bringup)/config/diffyjr/northstar/filter/filter.yaml"/>
+        <arg name="camera_0_info_url" value="package://tj2_bringup/config/diffyjr/northstar/calibration/camera_0.yaml"/>
+        <arg name="camera_1_info_url" value="package://tj2_bringup/config/diffyjr/northstar/calibration/camera_1.yaml"/>
+    </include>
+    <node name="static_map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
+        <param name="frame_id" value="map"/>
+    </node>
+
+    <include file="$(find tj2_calibration_pointer)/launch/tj2_calibration_pointer.launch"/>
 </launch>

@@ -21,9 +21,6 @@ sudo apt-get install -y \
     graphviz  \
     libgeographic-dev  \
     python3-pyproj  \
-    ffmpeg  \
-    libavcodec-dev  \
-    libavformat-dev  \
     libavutil-dev  \
     libswscale-dev  \
     v4l-utils  \
@@ -34,7 +31,6 @@ sudo apt-get install -y \
     lm-sensors  \
     python3-psutil  \
     libusb-1.0-0*  \
-    libswscale-dev \
     libsuitesparse-dev \
     python3-termcolor \
     i2c-tools \
@@ -44,10 +40,46 @@ sudo apt-get install -y \
     python3-twisted \
     python3-tornado \
     python3-autobahn \
-    python3-bson
+    python3-bson \
+    libv4l-dev \
+    libgeos-dev
+
+# ffmpeg dependencies
+sudo apt-get -y install \
+    autoconf \
+    automake \
+    build-essential \
+    cmake \
+    git-core \
+    libass-dev \
+    libfreetype6-dev \
+    libgnutls28-dev \
+    libmp3lame-dev \
+    libsdl2-dev \
+    libtool \
+    libva-dev \
+    libvdpau-dev \
+    libvorbis-dev \
+    libxcb1-dev \
+    libxcb-shm0-dev \
+    libxcb-xfixes0-dev \
+    ninja-build \
+    pkg-config \
+    texinfo \
+    wget \
+    yasm \
+    zlib1g-dev \
+    libunistring-dev \
+    nasm \
+    libx264-dev \
+    libx265-dev \
+    libnuma-dev \
+    libvpx-dev \
+    libfdk-aac-dev \
+    libopus-dev
+
 
 sudo apt-get upgrade -y
-
-sudo rm -rf /var/lib/apt/lists/*
+sudo apt-get autoremove -y
 
 echo "Installed all basic apt packages"

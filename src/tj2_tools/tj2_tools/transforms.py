@@ -21,7 +21,7 @@ def lookup_transform(
 
     try:
         return tf_buffer.lookup_transform(parent_link, child_link, time_window, timeout)
-    except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:  # type: ignore
+    except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException, tf2_ros.InvalidArgumentException) as e:  # type: ignore
         if not silent:
             rospy.logwarn(
                 "Failed to look up %s to %s. %s" % (parent_link, child_link, e)

@@ -59,29 +59,36 @@ RUN bash /opt/tj2/install/zed_jetson_install.sh
 # Basic dependencies
 # ---
 
-COPY --chown=1000:1000 ./install/jetson /opt/tj2/install/basic
+COPY --chown=1000:1000 \
+    ./install/jetson/install_apt_packages.sh \
+    ./install/jetson/install_python_dependencies.sh \
+    ./install/jetson/install_libraries.sh \
+    /opt/tj2/install/basic/
 RUN bash /opt/tj2/install/basic/install_apt_packages.sh && \
     bash /opt/tj2/install/basic/install_python_dependencies.sh && \
     bash /opt/tj2/install/basic/install_libraries.sh
 
 # ---
-# ROS evergreen dependency workspace
+# ROS dependency workspace
 # ---
 
 ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws \
     DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 
 COPY --chown=1000:1000 ./install/preferences /etc/apt/preferences
-COPY --chown=1000:1000 ./install/evergreen /opt/tj2/install/evergreen
 COPY --chown=1000:1000 ./install/rosdep_install.sh /opt/tj2/install
-RUN bash /opt/tj2/install/evergreen/install_evergreen_packages.sh
+COPY --chown=1000:1000 ./install/ros /opt/tj2/install/ros
+RUN bash /opt/tj2/install/ros/install_ros_packages.sh
 
 # ---
-# ROS overlay dependency workspace
+# Python extra packages
 # ---
 
-COPY --chown=1000:1000 ./install/overlay /opt/tj2/install/overlay
-RUN bash /opt/tj2/install/overlay/install_overlay_packages.sh
+COPY --chown=1000:1000 \
+    ./install/jetson/requirements.txt \
+    ./install/jetson/install_python_extras.sh \
+    /opt/tj2/install/basic/
+RUN cd /opt/tj2/install/basic/ && bash ./install_python_extras.sh
 
 # ---
 # Environment setup
@@ -90,6 +97,7 @@ RUN bash /opt/tj2/install/overlay/install_overlay_packages.sh
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 ENV FLASK_ENV=development \
+    PATH=${HOME}/.local/bin:/opt/tj2/scripts${PATH:+:${PATH}} \
     PYTHONPATH=${ROS_WS_SRC}/tj2_ros/tj2_tools${PYTHONPATH:+:${PYTHONPATH}} \
     PYTHONIOENCODING=utf-8
 
@@ -100,6 +108,7 @@ COPY --chown=1000:1000 \
     ./launch/launch.sh \
     ./launch/roscore.sh \
     /opt/tj2/
+RUN ln -s /opt/tj2/tj2_ros ${HOME}/tj2_ros
 
 RUN chown 1000:1000 ${HOME}
 

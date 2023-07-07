@@ -31,7 +31,7 @@ def process_info(data: AppData, msg: CameraInfoArray):
         info_pubs[index].publish(msg.cameras[index])
 
 
-def process_image(data: AppData, msg: Image):
+def process_image(data: AppData, msg: Image, timestamp: Optional[rospy.Time] = None):
     bridge = data.bridge
     image_pubs = data.image_pubs
     num_cameras = len(image_pubs)
@@ -46,7 +46,10 @@ def process_image(data: AppData, msg: Image):
         sub_image = image[0:height, x0:x1]
         header = Header()
         header.frame_id = f"camera_optical_{index}"
-        header.stamp = msg.header.stamp
+        if timestamp is None:
+            header.stamp = msg.header.stamp
+        else:
+            header.stamp = timestamp
         sub_msg = bridge.cv2_to_imgmsg(sub_image, msg.encoding, header)
         image_pubs[index].publish(sub_msg)
 
@@ -81,8 +84,9 @@ def main():
 
     camera_info_directory = str(rospy.get_param("~info_directory", "."))
     bag_name = str(rospy.get_param("~bag_name", ""))
+    replay = bool(rospy.get_param("~replay", False))
 
-    bag_path = f"/opt/tj2/tj2_ros/bags/{bag_name}.bag"
+    bag_path = f"/opt/tj2/tj2_ros/bags/{bag_name}"
     bag = Bag(bag_path)
 
     NUM_CAMERAS = 4
@@ -117,20 +121,25 @@ def main():
     tf_broadcaster = tf2_ros.TransformBroadcaster()
     bridge = CvBridge()
     paused = False
+    pressed_keys = {}
     data = AppData(image_pubs, info_pubs, bridge)
 
     sim_clock = Clock()
 
     def on_press(key):
+        pressed_keys[key] = True
         nonlocal paused
-        if key == Key.space:
+        if pressed_keys.get(Key.space, False) and pressed_keys.get(Key.ctrl, False):
             paused = not paused
             if paused:
                 print("Pausing")
             else:
                 print("Unpausing")
 
-    listener = Listener(on_press=on_press)
+    def on_release(key):
+        pressed_keys[key] = False
+
+    listener = Listener(on_press=on_press, on_release=on_release)
     listener.start()
 
     try:
@@ -165,22 +174,36 @@ def main():
                     info_msgs[index].header.stamp = now
 
                 if topic == "/northstar/camera/image_raw":
-                    process_image(data, msg)
+                    process_image(data, msg, now)
                     combined_image_pub.publish(msg)
                     combined_info_pub.publish(combined_info_msg)
                     for index in range(NUM_CAMERAS):
                         info_pubs[index].publish(info_msgs[index])
                 elif topic == "/tj2/odom":
                     msg.header.stamp = now
+
+                    # fmt: off
+                    msg.twist.covariance = [
+                        0.00010, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000,
+                        0.00000, 0.00010, 0.00000, 0.00000, 0.00000, 0.00000,
+                        0.00000, 0.00000, 0.00010, 0.00000, 0.00000, 0.00000,
+                        0.00000, 0.00000, 0.00000, 0.00010, 0.00000, 0.00000,
+                        0.00000, 0.00000, 0.00000, 0.00000, 0.00010, 0.00000,
+                        0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00010,
+                    ]
+                    # fmt: on
                     odom_pub.publish(msg)
-                # elif topic == "/tf":
-                #     for transform_msg in msg.transforms:
-                #         transform_msg.header.stamp = now
-                #         parent = transform_msg.header.frame_id
-                #         child = transform_msg.child_frame_id
-                #         if parent == "odom" and child == "base_link":
-                #             tf_broadcaster.sendTransform(transform_msg)
+                elif topic == "/tf":
+                    # tf_broadcaster.sendTransform(msg.transforms)
+                    for transform_msg in msg.transforms:
+                        transform_msg.header.stamp = now
+                        parent = transform_msg.header.frame_id
+                        child = transform_msg.child_frame_id
+                        if parent == "odom" and child == "base_link":
+                            tf_broadcaster.sendTransform(transform_msg)
                 # clock_pub.publish(sim_clock)
+            if not replay:
+                break
 
             messages = bag.read_messages()
             if rospy.is_shutdown():

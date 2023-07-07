@@ -26,8 +26,8 @@ def print_euler(euler):
 
 def print_quaternion(quat):
     # print("     x       y       z       w")
-    # print("qx: %0.4f, qy: %0.4f, qz: %0.4f, qw: %0.4f" % tuple(quat))
-    print("%0.4f  %0.4f  %0.4f  %0.4f" % tuple(quat))
+    print("qx: %7.4f, qy: %7.4f, qz: %7.4f, qw: %7.4f" % tuple(quat))
+    # print("%0.4f  %0.4f  %0.4f  %0.4f" % tuple(quat))
 
 
 def quaternion_multiply(rotate_quat, quat):
@@ -37,8 +37,8 @@ def quaternion_multiply(rotate_quat, quat):
     return rotated.as_quat()
 
 
-# euler_from_quaternion(0.5, 0.5, 0.5, 0.5)
-quaternion_from_euler(-90.0, 0.0, 90.0)
+# euler_from_quaternion(-0.5, 0.5, 0.5, -0.5)
+quaternion_from_euler(-90.0, 180.0, 0.0)
 
 # camera_optical_rotation = (0.5, -0.5, -0.5, -0.5)
 

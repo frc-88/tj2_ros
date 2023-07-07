@@ -92,12 +92,14 @@ void SplitCam::process_image(cv::Mat image, ros::Time timestamp)
     header.frame_id = get_optical_frame();
     header.stamp = timestamp;
     _info.header = header;
+
+    if (_pub.getNumSubscribers() == 0) {
+        return;
+    }
+
     _image_msg = cv_bridge::CvImage(header, "mono8", image).toImageMsg();
     _bridge_msg = cv_bridge::toCvCopy(_image_msg, _image_msg->encoding);
-
-    if (_pub.getNumSubscribers() > 0) {
-        _pub.publish(*_image_msg, _info);
-    }
+    _pub.publish(*_image_msg, _info);
 }
 
 SplitCam::~SplitCam()
@@ -120,9 +122,9 @@ ArducamROS::ArducamROS(ros::NodeHandle* node_handle) :
     std::string fourcc_code;
     ros::param::param<std::string>("~fourcc_code", fourcc_code, "GREY");  // "GREY", "Y16"
 
-    ros::param::param<double>("~publish_rate", _publish_rate, 20.0);
+    ros::param::param<double>("~publish_rate", _publish_rate, 50.0);
 
-    ros::param::param<int>("~frame_rate", _frame_rate, 60);
+    ros::param::param<int>("~frame_rate", _frame_rate, 50);
     ros::param::param<int>("~frame_timeout_ms", _frame_timeout, 200);
     ros::param::param<bool>("~low_latency_mode", _low_latency_mode, true);
     ros::param::param<int>("~exposure", _exposure, 50);
@@ -174,7 +176,9 @@ int ArducamROS::run() {
             parameters_set = true;
         }
         if (_combined_pub.getNumSubscribers() > 0) {
-            sensor_msgs::ImagePtr combined_msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", image).toImageMsg();
+            std_msgs::Header header;
+            header.stamp = now;
+            sensor_msgs::ImagePtr combined_msg = cv_bridge::CvImage(header, "mono8", image).toImageMsg();
             _combined_pub.publish(*combined_msg);
         }
 
