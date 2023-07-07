@@ -103,7 +103,7 @@
     <!-- <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/> -->
     <!-- <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/> -->
 
-    <!-- <include file="$(find tj2_northstar)/launch/tj2_northstar.launch">
+    <include file="$(find tj2_northstar)/launch/tj2_northstar.launch">
         <arg name="apriltag_settings" value="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml"/>
         <arg name="apriltag_tags" value="$(find tj2_bringup)/config/diffyjr/tags/$(arg map_name)_tags.yaml"/>
         <arg name="filter_params" value="$(find tj2_bringup)/config/diffyjr/northstar/filter/filter.yaml"/>
@@ -112,7 +112,7 @@
     </include>
     <node name="static_map_server" pkg="map_server" type="map_server" output="screen" args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
         <param name="frame_id" value="map"/>
-    </node> -->
+    </node>
 
     <include file="$(find tj2_calibration_pointer)/launch/tj2_calibration_pointer.launch"/>
 </launch>

@@ -1,0 +1,32 @@
+/Preferences/Game Object Zone Radius,float,1,15.0
+/Preferences/TrajectoryLinearPID kP,float,1,4.5
+/Preferences/TrajectoryLinearPID kI,float,1,0.0
+/Preferences/TrajectoryLinearPID kD,float,1,0.1
+/Preferences/TrajectoryLinearPID kF,float,1,0.0
+/Preferences/TrajectoryLinearPID iZone,float,1,0.0
+/Preferences/TrajectoryLinearPID iMax,float,1,0.0
+/Preferences/TrajectoryLinearPID tolerance,float,1,0.0
+/Preferences/TrajectoryAngularPID kP,float,1,4.5
+/Preferences/TrajectoryAngularPID kI,float,1,0.0
+/Preferences/TrajectoryAngularPID kD,float,1,0.05
+/Preferences/TrajectoryAngularPID kF,float,1,0.0
+/Preferences/TrajectoryAngularPID iZone,float,1,0.0
+/Preferences/TrajectoryAngularPID iMax,float,1,0.0
+/Preferences/TrajectoryAngularPID tolerance,float,1,0.0
+/Preferences/joystick,float,1,0.0
+/Preferences/auto,str,1,backwards
+/Preferences/distanceStartThreshold,float,1,0.25
+/Preferences/angleStartThreshold,float,1,0.2
+/Preferences/.type,str,1,RobotPreferences
+/Preferences/LaserTurret/default_tilt,float,1,150.0
+/Preferences/LaserTurret/default_pan,float,1,54.0
+/Preferences/CalibrationPointer/default_tilt,float,1,150.0
+/Preferences/CalibrationPointer/default_pan,float,1,54.0
+/Preferences/CalibrationPointer/pan_servo_value_1,float,1,55.22
+/Preferences/CalibrationPointer/pan_servo_value_2,float,1,153.92
+/Preferences/CalibrationPointer/pan_servo_angle_1,float,1,0.0
+/Preferences/CalibrationPointer/pan_servo_angle_2,float,1,1.57
+/Preferences/CalibrationPointer/tilt_servo_value_1,float,1,137.17
+/Preferences/CalibrationPointer/tilt_servo_value_2,float,1,35.0
+/Preferences/CalibrationPointer/tilt_servo_angle_1,float,1,0.0
+/Preferences/CalibrationPointer/tilt_servo_angle_2,float,1,-1.57

@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+    <arg name="common_camera_params" default="$(find tj2_bringup)/config/diffyjr/northstar/libuvc_ov2311.yaml"/>
     <group ns="northstar">
         <include file="$(find tj2_northstar)/launch/ov2311.launch">
+            <arg name="common_camera_params" default="$(arg common_camera_params)"/>
             <arg name="camera_info_url" default="package://tj2_bringup/config/diffyjr/northstar/calibration/camera_0.yaml"/>
             <arg name="camera_name" default="camera_0"/>
-            <arg name="camera_index" default="0"/>
+            <arg name="serial" default="UC621"/>
         </include>
         <include file="$(find tj2_northstar)/launch/ov2311.launch">
+            <arg name="common_camera_params" default="$(arg common_camera_params)"/>
             <arg name="camera_info_url" default="package://tj2_bringup/config/diffyjr/northstar/calibration/camera_1.yaml"/>
             <arg name="camera_name" default="camera_1"/>
-            <arg name="camera_index" default="1"/>
+            <arg name="serial" default="UC622"/>
         </include>
     </group>
 </launch>
