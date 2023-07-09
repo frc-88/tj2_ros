@@ -7,12 +7,16 @@ Panels:
         - /Global Options1
         - /RobotModel1
         - /TF1/Frames1
-        - /Object Markers1/Namespaces1
+        - /LaserScan1
+        - /AMCL Particles1
         - /ZED1/Visibility1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
         - /Apriltags1
-        - /Camera1/Status1
+        - /Detections1
+        - /Grid Tracking Markers1
+        - /Perception Markers1
+        - /Landmark Pose1
         - /Landmark Forwarded1
       Splitter Ratio: 0.5480480194091797
     Tree Height: 695
@@ -87,7 +91,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         pointer_pan_link:
           Alpha: 1
           Show Axes: false
@@ -96,7 +99,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         pointer_tilt_link:
           Alpha: 1
           Show Axes: false
@@ -145,10 +147,6 @@ Visualization Manager:
         camera_armature_link:
           Value: true
         camera_link:
-          Value: true
-        camera_optical_0:
-          Value: true
-        camera_optical_1:
           Value: true
         camera_tilt_link:
           Value: true
@@ -218,13 +216,9 @@ Visualization Manager:
             base_link:
               base_tilt_link:
                 camera_0:
-                  camera_optical_0:
-                    {}
                   optical_camera_0:
                     {}
                 camera_1:
-                  camera_optical_1:
-                    {}
                   optical_camera_1:
                     {}
                 camera_tilt_link:
@@ -349,14 +343,6 @@ Visualization Manager:
       Topic: /move_base_simple/waypoints
       Unreliable: false
       Value: true
-    - Class: rviz/MarkerArray
-      Enabled: false
-      Marker Topic: /tj2/markers
-      Name: Object Markers
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -541,7 +527,6 @@ Visualization Manager:
         Move Base Goal: true
         Move Base Waypoints: true
         Nearest Cone: true
-        Object Markers: true
         Path Potential: false
         Perception Debug Image: true
         Perception Markers: true
@@ -680,12 +665,16 @@ Visualization Manager:
       Namespaces:
         cube1: true
         posx1: true
+        posx1-2: true
         posx1-2-3-4-5-6-7-8: true
         posy1: true
+        posy1-2: true
         posy1-2-3-4-5-6-7-8: true
         posz1: true
+        posz1-2: true
         posz1-2-3-4-5-6-7-8: true
         text1: true
+        text1-2: true
         text1-2-3-4-5-6-7-8: true
       Queue Size: 100
       Value: true
@@ -732,9 +721,7 @@ Visualization Manager:
       Marker Topic: /tj2/detections/markers
       Name: Detections
       Namespaces:
-        box_cone: true
-        line_cone: true
-        text_box_cone: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Image
@@ -837,7 +824,6 @@ Visualization Manager:
         Move Base Goal: true
         Move Base Waypoints: true
         Nearest Cone: true
-        Object Markers: true
         Path Potential: true
         Perception Debug Image: true
         Perception Markers: true
@@ -955,7 +941,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 7.727583408355713
+      Distance: 5.047140121459961
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -963,17 +949,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.09387566149234772
-        Y: 0.6436721086502075
-        Z: -1.9371509552001953e-07
+        X: 5.1334686279296875
+        Y: -2.2586069107055664
+        Z: 4.813075065612793e-06
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.469797134399414
+      Pitch: 1.3897967338562012
       Target Frame: <Fixed Frame>
-      Yaw: 1.2625505924224854
+      Yaw: 2.7707223892211914
     Saved: ~
 Window Geometry:
   Camera:

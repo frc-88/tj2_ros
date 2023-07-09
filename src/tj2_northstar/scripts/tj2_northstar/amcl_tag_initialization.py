@@ -3,7 +3,7 @@ import numpy as np
 import rospy
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
-from helpers import amcl_and_landmark_agree
+from helpers import amcl_and_landmark_agree, is_roll_pitch_reasonable
 from tj2_tools.robot_state import Velocity, Pose2d
 
 
@@ -111,10 +111,13 @@ class AmclTagInitialization:
             rospy.loginfo("Rejecting landmark. Z height is too high")
             return
 
+        if not is_roll_pitch_reasonable(msg, self.roll_pitch_threshold):
+            rospy.loginfo("Rejecting landmark. Roll or pitch is too high")
+            return
+
         if not amcl_and_landmark_agree(
             self.amcl_pose,
             msg,
-            self.roll_pitch_threshold,
             self.ground_distance_threshold,
             self.ground_angle_threshold,
         ):

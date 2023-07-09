@@ -18,7 +18,7 @@ from geometry_msgs.msg import (
 
 from filter_models import TagFastForward
 from filter_models import DriveKalmanModel as FilterModel
-from helpers import amcl_and_landmark_agree
+from helpers import amcl_and_landmark_agree, is_roll_pitch_reasonable
 from tj2_tools.robot_state import Pose2d, Velocity
 
 
@@ -176,10 +176,14 @@ class TJ2NorthstarFilter:
         if len(self.amcl_pose.header.frame_id) == 0:
             rospy.logwarn("AMCL pose not set. Not updating landmark")
             return
+
+        if not is_roll_pitch_reasonable(msg, self.roll_pitch_threshold):
+            rospy.loginfo("Rejecting landmark. Roll or pitch is too high")
+            return
+
         if not amcl_and_landmark_agree(
             self.amcl_pose,
             msg,
-            self.roll_pitch_threshold,
             self.ground_distance_threshold,
             self.ground_angle_threshold,
         ):

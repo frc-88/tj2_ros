@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_record_northstar_alot" output="screen"
+    args="record -o /media/storage/bags/northstar_alot -b 4096 --lz4
+        /amcl_pose
+        /particlecloud
+        /initialpose
+        /joint_states
+        /joy
+        /laser/scan_filtered
+        /tj2_zed/rgb/camera_info
+        /tj2_zed/rgb/image_rect_color
+        /northstar/tag_markers
+        /northstar/landmark
+        /northstar/landmark/forwarded
+        /northstar/camera_0/camera_info
+        /northstar/camera_0/image_raw
+        /northstar/camera_1/camera_info
+        /northstar/camera_1/image_raw
+        /northstar/tag_detections
+        /northstar/filter/pose
+        /northstar/filter/state
+        /tf
+        /tj2/ping
+        " />
+</launch>
