@@ -4,7 +4,29 @@ video_mode: mjpeg
 frame_rate: 15.0
 timestamp_method: start
 auto_exposure: 0
-auto_white_balance: false
+exposure_absolute: 0.003
+gain: 70
+
+
+auto_exposure_priority: 0
 auto_focus: false
-exposure_absolute: 0.005
-gamma: 0.1
+auto_hue: false
+auto_white_balance: false
+backlight_compensation: 0
+brightness: 0
+contrast: 0
+focus_absolute: 127
+gamma: 1.0
+hue: 0.0
+iris_absolute: 0.0
+pan_absolute: 0
+power_line_frequency: 0
+privacy: false
+roll_absolute: 0
+saturation: 0
+scanning_mode: 0
+sharpness: 0
+tilt_absolute: 127
+white_balance_BU: 0.0
+white_balance_RV: 0.0
+white_balance_temperature: 0
