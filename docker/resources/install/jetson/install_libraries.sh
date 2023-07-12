@@ -138,6 +138,12 @@ git checkout n6.0
 make -j4
 sudo make install && hash -r
 
+# pyuvc
+cd /tmp
+git clone https://github.com/pupil-labs/pyuvc --recursive
+export FORCE_LOCAL_LIBUVC_BUILD=ON
+python -m pip install ./pyuvc
+
 # clean up
 sudo ldconfig
 rm -r /tmp/*

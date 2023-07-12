@@ -4,11 +4,11 @@ video_mode: mjpeg
 frame_rate: 15.0
 timestamp_method: start
 auto_exposure: 0
-exposure_absolute: 0.003
-gain: 70
+exposure_absolute: 0.002
+gain: 50
 
 
-auto_exposure_priority: 0
+auto_exposure_priority: 2
 auto_focus: false
 auto_hue: false
 auto_white_balance: false

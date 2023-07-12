@@ -42,7 +42,8 @@ sudo apt-get install -y \
     python3-autobahn \
     python3-bson \
     libv4l-dev \
-    libgeos-dev
+    libgeos-dev \
+    libturbojpeg-dev
 
 # ffmpeg dependencies
 sudo apt-get -y install \
