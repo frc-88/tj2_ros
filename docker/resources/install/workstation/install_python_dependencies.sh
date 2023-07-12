@@ -19,7 +19,7 @@ python -m pip install --no-cache-dir \
     psutil \
     tqdm \
     v4l2-fix \
-    numpy==1.19.5 \
+    numpy==1.24.4 \
     matplotlib==3.4.3
 
 python -m pip install Cython --no-cache-dir
