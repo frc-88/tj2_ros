@@ -42,42 +42,8 @@ sudo apt-get install -y \
     python3-autobahn \
     python3-bson \
     libv4l-dev \
-    libgeos-dev
-
-# ffmpeg dependencies
-sudo apt-get -y install \
-    autoconf \
-    automake \
-    build-essential \
-    cmake \
-    git-core \
-    libass-dev \
-    libfreetype6-dev \
-    libgnutls28-dev \
-    libmp3lame-dev \
-    libsdl2-dev \
-    libtool \
-    libva-dev \
-    libvdpau-dev \
-    libvorbis-dev \
-    libxcb1-dev \
-    libxcb-shm0-dev \
-    libxcb-xfixes0-dev \
-    ninja-build \
-    pkg-config \
-    texinfo \
-    wget \
-    yasm \
-    zlib1g-dev \
-    libunistring-dev \
-    nasm \
-    libx264-dev \
-    libx265-dev \
-    libnuma-dev \
-    libvpx-dev \
-    libfdk-aac-dev \
-    libopus-dev
-
+    libgeos-dev \
+    ffmpeg
 
 sudo apt-get upgrade -y
 sudo apt-get autoremove -y

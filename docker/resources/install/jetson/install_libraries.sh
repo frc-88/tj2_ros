@@ -110,33 +110,14 @@ meson --bindir="/usr/local/bin" ..
 ninja
 sudo ninja install
 
-# ffmpeg
+# pyuvc
 cd /tmp
-git clone https://github.com/FFmpeg/FFmpeg.git
-cd FFmpeg
-git checkout n6.0
-
-./configure \
-  --enable-gpl \
-  --enable-gnutls \
-  --enable-libaom \
-  --enable-libass \
-  --enable-libfdk-aac \
-  --enable-libfreetype \
-  --enable-libmp3lame \
-  --enable-libopus \
-  --enable-libsvtav1 \
-  --enable-libdav1d \
-  --enable-libvorbis \
-  --enable-libvpx \
-  --enable-libx264 \
-  --enable-libx265 \
-  --enable-nonfree \
-  --enable-shared \
-  --extra-libs="-lpthread"
-
-make -j4
-sudo make install && hash -r
+git clone https://github.com/pupil-labs/pyuvc --recursive
+cd pyuvc
+git checkout v1.0.0rc1
+cd ..
+export FORCE_LOCAL_LIBUVC_BUILD=ON
+python -m pip install ./pyuvc
 
 # clean up
 sudo ldconfig
