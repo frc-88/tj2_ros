@@ -19,7 +19,11 @@ class CameraPublisher:
         self.info_pub = rospy.Publisher(info_topic, CameraInfo, queue_size=1)
 
     def load_info(self, url: str) -> None:
-        self.info_manager = CameraInfoManager(self.name, url=url)
+        namespace = rospy.get_namespace() + "/" + self.name + "/"
+        while namespace.startswith("/"):
+            namespace = namespace[1:]
+        namespace = "/" + namespace
+        self.info_manager = CameraInfoManager(self.name, url=url, namespace=namespace)
         self.info_manager.loadCameraInfo()
 
     def publish(self, image: Image) -> None:
@@ -50,7 +54,7 @@ class UVCCameraNode:
 
         self.cameras: Dict[str, UVCCamera] = {}
         self.publishers: Dict[str, CameraPublisher] = {}
-        for name, config in camera_configs:
+        for name, config in camera_configs.items():
             camera = UVCCamera(
                 config["frame_id"], CaptureConfig.from_dict(config["capture"])
             )
@@ -76,3 +80,8 @@ class UVCCameraNode:
                 self.rate.sleep()
         for camera in self.cameras.values():
             camera.close()
+
+
+if __name__ == "__main__":
+    node = UVCCameraNode()
+    node.run()
