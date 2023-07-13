@@ -14,6 +14,7 @@ cmake ..
 make -j4
 sudo make install
 
+# apriltag
 cd /tmp
 git clone https://github.com/AprilRobotics/apriltag.git
 cd apriltag
@@ -77,38 +78,6 @@ cd /tmp/g2o/build
 cmake ..
 make -j4
 sudo make install
-
-# libaom
-cd /tmp
-git -C aom pull 2> /dev/null || git clone --depth 1 https://aomedia.googlesource.com/aom
-cd aom
-mkdir -p build
-cd build
-cmake -DENABLE_TESTS=OFF -DENABLE_NASM=on ..
-make -j4
-sudo make install
-
-# libsvtav1
-cd /tmp
-git -C SVT-AV1 pull 2> /dev/null || git clone https://gitlab.com/AOMediaCodec/SVT-AV1.git
-cd SVT-AV1
-git checkout v0.9.1
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_DEC=OFF -DBUILD_SHARED_LIBS=OFF ..
-make -j4
-sudo make install
-
-# dav1d
-cd /tmp
-git clone https://code.videolan.org/videolan/dav1d.git
-cd dav1d
-git checkout 0.5.2
-mkdir build
-cd build
-meson --bindir="/usr/local/bin" ..
-ninja
-sudo ninja install
 
 # pyuvc
 cd /tmp
