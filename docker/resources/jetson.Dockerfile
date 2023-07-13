@@ -68,6 +68,11 @@ RUN bash /opt/tj2/install/basic/install_apt_packages.sh && \
     bash /opt/tj2/install/basic/install_python_dependencies.sh && \
     bash /opt/tj2/install/basic/install_libraries.sh
 
+COPY --chown=1000:1000 \
+    ./install/jetson/install_extra_libraries.sh \
+    /opt/tj2/install/basic/
+RUN bash /opt/tj2/install/basic/install_extra_libraries.sh
+
 # ---
 # ROS dependency workspace
 # ---
