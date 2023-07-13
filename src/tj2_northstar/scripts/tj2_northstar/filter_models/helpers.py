@@ -87,15 +87,6 @@ def state_transition_fn(state, dt):
     return next_state
 
 
-def sqrt_func(x):
-    try:
-        result = scipy.linalg.cholesky(x)
-    except scipy.linalg.LinAlgError:
-        x = (x + x.T) / 2
-        result = scipy.linalg.cholesky(x)
-    return result
-
-
 @njit
 def jit_update(x, P, H, z, R):
     y = z - H @ x  # error (residual)

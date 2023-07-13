@@ -10,10 +10,10 @@ landmark_converter:
   landmark_ids: [1, 2, 3, 4, 5, 6, 7, 8]
 
 tj2_northstar:
-  parent_frame: field
-
-arducam_ros:
-  exposure: 450
-  analogue_gain: 500
-  publish_rate: 15
-  frame_rate: 50
+  map_frame: map
+  play_forward_buffer_size: 20
+  tag_fast_forward_sample_dt: 0.05
+  update_rate: 50.0
+  roll_pitch_threshold: 0.2
+  ground_distance_threshold: 0.5
+  ground_angle_threshold: 0.5

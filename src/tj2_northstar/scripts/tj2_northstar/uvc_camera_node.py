@@ -3,7 +3,7 @@ import rospy
 from typing import Optional, Dict
 
 from sensor_msgs.msg import Image, CameraInfo
-from camera_info_manager import CameraInfoManager
+from camera_info_manager import CameraInfoManager  # type: ignore
 
 from tj2_northstar.uvc_camera import UVCCamera, CaptureConfig, CameraConfig
 
