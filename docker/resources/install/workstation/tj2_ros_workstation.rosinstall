@@ -27,3 +27,7 @@
     local-name: urdf_parser_py
     uri: https://github.com/ros/urdf_parser_py.git
     version: melodic-devel
+- git:
+    local-name: camera_info_manager_py
+    uri: https://github.com/mllofriu/camera_info_manager_py.git
+    version: be1046dc8acc3d37f43052bfd4fc8d1db9619d93

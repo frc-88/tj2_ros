@@ -226,3 +226,7 @@
     local-name: libuvc_ros
     uri: https://github.com/ktossell/libuvc_ros.git
     version: master
+- git:
+    local-name: camera_info_manager_py
+    uri: https://github.com/mllofriu/camera_info_manager_py.git
+    version: be1046dc8acc3d37f43052bfd4fc8d1db9619d93
