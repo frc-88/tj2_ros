@@ -26,7 +26,7 @@
             raw
             in:=$(arg name_0)/image_raw
             compressed
-            out:=$(arg name_0)/image_raw/compressed
+            out:=$(arg name_0)/image_raw
         "/>
     <node name="arducam_compressed_$(arg name_1)" pkg="image_transport" type="republish" output="screen" required="false" args="
             raw
