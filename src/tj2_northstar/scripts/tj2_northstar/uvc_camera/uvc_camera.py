@@ -15,7 +15,7 @@ from tj2_northstar.uvc_camera.helper import find_match
 
 
 class CameraFormat(Enum):
-    MJPEG = "MJPEG"
+    MJPG = "MJPG"
     YUYV = "YUYV"
 
 
@@ -137,15 +137,18 @@ class UVCCamera:
 
     def is_capture_check(
         self, capture_info: CaptureInfo, capture_config: CaptureConfig
-    ) -> bool:
+    ) -> int:
+        count = 0
         if capture_info.uid == capture_config.uid:
-            return True
+            count += 1
         if capture_info.serialNumber == capture_config.serial_number:
-            return True
-        return (
+            count += 1
+        if (
             capture_info.idVendor == capture_config.vendor_id
             and capture_info.idProduct == capture_config.product_id
-        )
+        ):
+            count += 1
+        return count
 
     def get_capture_info(self, capture_config: CaptureConfig) -> CaptureInfo:
         captures: List[CaptureInfo] = find_match(
@@ -158,12 +161,12 @@ class UVCCamera:
         else:
             return captures[0]
 
-    def is_mode_match(self, mode: CameraMode, config: CameraConfig) -> bool:
+    def is_mode_match(self, mode: CameraMode, config: CameraConfig) -> int:
         return (
-            config.width == mode.width
-            or config.height == mode.height
-            or config.fps == mode.fps
-            or config.format.value == mode.format_name
+            int(config.width == mode.width)
+            + int(config.height == mode.height)
+            + int(config.fps == mode.fps)
+            + int(config.format.value == mode.format_name)
         )
 
     def get_mode(self, capture: uvc.Capture, camera_config: CameraConfig) -> CameraMode:
