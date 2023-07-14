@@ -1,4 +1,3 @@
-import scipy
 import math
 from numba import njit
 import numpy as np
@@ -12,6 +11,15 @@ NUM_MEASUREMENTS = 3
 NUM_POSE_STATES_ROS = 6
 NUM_STATES = 6
 NUM_STATES_1ST_ORDER = 3
+
+
+# "enum" for state indices. numba doesn't support python enums
+STATE_x = 0
+STATE_y = 1
+STATE_t = 2
+STATE_vx = 3
+STATE_vy = 4
+STATE_vt = 5
 
 
 def get_index(row: int, col: int, row_length: int) -> int:
@@ -68,28 +76,52 @@ def normalize_theta(theta):
 
 @njit
 def state_transition_fn(state, dt):
-    x = state[0]
-    y = state[1]
-    theta = normalize_theta(state[2])
+    x = state[STATE_x]
+    y = state[STATE_y]
+    theta = normalize_theta(state[STATE_t])
 
-    vx_prev = state[3]
-    vy_prev = state[4]
+    vx_prev = state[STATE_vx]
+    vy_prev = state[STATE_vy]
 
     vx = vx_prev * math.cos(theta) - vy_prev * math.sin(theta)
     vy = vx_prev * math.sin(theta) + vy_prev * math.cos(theta)
-    vt = state[5]
+    vt = state[STATE_vt]
 
     next_state = np.copy(state)
-    next_state[0] = x + dt * vx
-    next_state[1] = y + dt * vy
-    next_state[2] = theta + dt * vt
+    next_state[STATE_x] = x + dt * vx
+    next_state[STATE_y] = y + dt * vy
+    next_state[STATE_t] = theta + dt * vt
 
     return next_state
 
 
 @njit
-def jit_update(x, P, H, z, R):
+def input_modulus(value, min_value, max_value):
+    modulus = max_value - min_value
+
+    # Wrap input if it's above the maximum input
+    num_max = int((value - min_value) / modulus)
+    value -= num_max * modulus
+
+    # Wrap input if it's below the minimum input
+    num_min = int((value - max_value) / modulus)
+    value -= num_min * modulus
+
+    return value
+
+
+@njit
+def compute_residual(z, H, x, min_angle, max_angle):
     y = z - H @ x  # error (residual)
+    angle_error = y[STATE_t]
+    angle_error = input_modulus(angle_error, min_angle, max_angle)
+    y[STATE_t] = angle_error
+    return y
+
+
+@njit
+def jit_update(x, P, H, z, R):
+    y = compute_residual(z, H, x, -math.pi, math.pi)
     PHT = P @ H.T
     S = H @ PHT + R  # project system uncertainty into measurement space
     SI = np.linalg.inv(S)
