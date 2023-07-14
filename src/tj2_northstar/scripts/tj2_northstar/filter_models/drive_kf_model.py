@@ -60,3 +60,12 @@ class DriveKalmanModel(FilterModel):
 
     def get_covariance(self) -> np.ndarray:
         return self.covariance
+
+    def reset(self, msg: PoseWithCovarianceStamped) -> None:
+        measurement, measurement_noise = landmark_to_measurement(msg)
+        self.state = np.zeros(NUM_STATES)
+        self.state[0:NUM_STATES_1ST_ORDER] = measurement
+        self.covariance = np.eye(NUM_STATES)
+        self.covariance[
+            0:NUM_STATES_1ST_ORDER, 0:NUM_STATES_1ST_ORDER
+        ] = measurement_noise

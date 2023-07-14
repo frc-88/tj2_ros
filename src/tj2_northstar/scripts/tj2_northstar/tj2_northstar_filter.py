@@ -58,6 +58,9 @@ class TJ2NorthstarFilter:
         self.landmark_sub = rospy.Subscriber(
             "landmark", PoseWithCovarianceStamped, self.landmark_callback, queue_size=10
         )
+        self.reset_sub = rospy.Subscriber(
+            "reset_pose", PoseWithCovarianceStamped, self.reset_callback, queue_size=10
+        )
         self.amcl_pose_sub = rospy.Subscriber(
             "amcl_pose",
             PoseWithCovarianceStamped,
@@ -194,6 +197,9 @@ class TJ2NorthstarFilter:
             self.forwarded_landmark_pub.publish(forwarded)
             with self.model_lock:
                 self.model.update_landmark(forwarded)
+
+    def reset_callback(self, msg: PoseWithCovarianceStamped) -> None:
+        self.model.reset(msg)
 
     def amcl_pose_callback(self, msg: PoseWithCovarianceStamped) -> None:
         self.amcl_pose = msg

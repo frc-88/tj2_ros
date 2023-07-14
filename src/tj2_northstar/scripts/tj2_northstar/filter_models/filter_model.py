@@ -34,3 +34,7 @@ class FilterModel:
     @abstractmethod
     def get_covariance(self) -> np.ndarray:
         pass
+
+    @abstractmethod
+    def reset(self, msg: PoseWithCovarianceStamped) -> None:
+        pass

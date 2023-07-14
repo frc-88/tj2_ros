@@ -11,6 +11,7 @@ from apriltag_ros.msg import AprilTagDetectionArray
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 
 from tj2_tools.transforms import lookup_transform
+from tj2_tools.robot_state import SimpleFilter
 
 
 class LandmarkConverter:
@@ -21,6 +22,9 @@ class LandmarkConverter:
         self.map_frame = str(rospy.get_param("~map_frame", "map"))
         self.field_frame = str(rospy.get_param("~field_frame", "field"))
         self.max_tag_distance = float(rospy.get_param("~max_tag_distance", 2.0))
+        self.time_covariance_filter_k = float(
+            rospy.get_param("~time_covariance_filter_k", 0.5)
+        )
         self.landmark_ids = frozenset(rospy.get_param("~landmark_ids", [0]))
         base_covariance = rospy.get_param(
             "~covariance", np.eye(6, dtype=np.float64).flatten().tolist()
@@ -34,6 +38,8 @@ class LandmarkConverter:
         self.landmark.header.frame_id = self.base_frame
 
         self.prev_landmark = PoseStamped()
+
+        self.time_covariance_filter = SimpleFilter(self.time_covariance_filter_k)
 
         self.buffer = tf2_ros.Buffer()
         self.transform_listener = tf2_ros.TransformListener(self.buffer)
@@ -186,6 +192,16 @@ class LandmarkConverter:
         scale = 4 * distance + 1.0
         return scale
 
+    def time_covariance_scale(
+        self, current_pose: PoseStamped, prev_pose: PoseStamped
+    ) -> float:
+        time_delta = (current_pose.header.stamp - prev_pose.header.stamp).to_sec()
+        time_delta = max(time_delta, 5.0)
+        filtered_delta = self.time_covariance_filter.update(time_delta)
+        if filtered_delta < time_delta:
+            time_delta = filtered_delta
+        return time_delta * 2.0
+
     def update_covariance(
         self, tag_poses: List[PoseStamped], overall_pose: PoseStamped
     ) -> None:
@@ -198,6 +214,8 @@ class LandmarkConverter:
         covariance *= self.pose_distance_covariance_scale(aggregate_distance)
 
         covariance *= self.delta_pose_covariance_scale(overall_pose, self.prev_landmark)
+        covariance *= self.time_covariance_scale(overall_pose, self.prev_landmark)
+
         self.prev_landmark = overall_pose
         self.landmark.pose.covariance = covariance.flatten().tolist()
 

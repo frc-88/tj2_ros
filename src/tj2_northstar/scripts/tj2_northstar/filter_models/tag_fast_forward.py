@@ -6,12 +6,7 @@ from nav_msgs.msg import Odometry
 from tf_conversions import transformations
 from geometry_msgs.msg import PoseWithCovarianceStamped, Quaternion
 
-from .helpers import (
-    landmark_to_measurement,
-    NUM_STATES,
-    NUM_STATES_1ST_ORDER,
-    LANDMARK_COVARIANCE_INDICES,
-)
+from .helpers import LANDMARK_COVARIANCE_INDICES
 from .drive_kf_model import DriveKalmanModel
 
 
@@ -52,7 +47,7 @@ class TagFastForward:
             return None
         num_samples = round(lag / self.dt)
         if num_samples > 0:
-            self._reset_filter_to_landmark(msg)
+            self.model.reset(msg)
             self.current_index = 0
             for forwarded_time in np.linspace(start_time, now, num_samples):
                 odom_msg = self._find_nearest_odom(forwarded_time)
@@ -92,15 +87,6 @@ class TagFastForward:
                 break
         self.current_index = index
         return selected_msg
-
-    def _reset_filter_to_landmark(self, msg: PoseWithCovarianceStamped) -> None:
-        measurement, measurement_noise = landmark_to_measurement(msg)
-        self.model.state = np.zeros(NUM_STATES)
-        self.model.state[0:NUM_STATES_1ST_ORDER] = measurement
-        self.model.covariance = np.eye(NUM_STATES)
-        self.model.covariance[
-            0:NUM_STATES_1ST_ORDER, 0:NUM_STATES_1ST_ORDER
-        ] = measurement_noise
 
     def _update_odometry(self, msg: Odometry) -> None:
         self.model.update_odometry(msg)
