@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from typing import List, Optional
+import math
 import numpy as np
 import rospy
 import tf2_ros
@@ -19,6 +20,7 @@ class LandmarkConverter:
         self.base_frame = str(rospy.get_param("~base_frame", "base_tilt_link"))
         self.map_frame = str(rospy.get_param("~map_frame", "map"))
         self.field_frame = str(rospy.get_param("~field_frame", "field"))
+        self.max_tag_distance = float(rospy.get_param("~max_tag_distance", 2.0))
         self.landmark_ids = frozenset(rospy.get_param("~landmark_ids", [0]))
         base_covariance = rospy.get_param(
             "~covariance", np.eye(6, dtype=np.float64).flatten().tolist()
@@ -54,13 +56,30 @@ class LandmarkConverter:
             detection_pose.pose = detection.pose.pose.pose
             if self.landmark_ids == ids:
                 landmark_pose = detection_pose
-            elif len(ids) == 1:
+            elif len(ids) == 1 and next(iter(ids)) in self.landmark_ids:
                 individual_measurements.append(detection_pose)
         if landmark_pose is not None:
             # self.publish_landmark_from_tf()
-            self.publish_inverted_landmark(landmark_pose)
+            if self.should_publish(individual_measurements):
+                self.publish_inverted_landmark(landmark_pose)
             if len(individual_measurements) > 0:
                 self.update_covariance(individual_measurements, landmark_pose)
+
+    def should_publish(self, tag_poses: List[PoseStamped]) -> bool:
+        """
+        Should publish if at least one tag is closer than the threshold distance
+        """
+        for tag_pose in tag_poses:
+            distance = self.get_distance(tag_pose)
+            if distance < self.max_tag_distance:
+                return True
+        return False
+
+    def get_distance(self, tag_pose: PoseStamped) -> float:
+        x = tag_pose.pose.position.x
+        y = tag_pose.pose.position.y
+        z = tag_pose.pose.position.z
+        return math.sqrt(x * x + y * y + z * z)
 
     def publish_landmark_from_tf(self) -> None:
         transform = lookup_transform(self.buffer, self.field_frame, self.base_frame)
