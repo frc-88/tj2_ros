@@ -14,6 +14,7 @@
         <node pkg="tj2_northstar" type="tj2_northstar_filter.py" name="tj2_northstar" output="screen">
             <remap from="odom" to="/tj2/odom" />
             <remap from="amcl_pose" to="/amcl_pose" />
+            <remap from="initialpose" to="/initialpose"/>
         </node>
 
         <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter" required="false" output="screen"/>

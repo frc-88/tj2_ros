@@ -67,6 +67,9 @@ class TJ2NorthstarFilter:
             self.amcl_pose_callback,
             queue_size=10,
         )
+        self.initial_pose_pub = rospy.Publisher(
+            "initialpose", PoseWithCovarianceStamped, queue_size=10
+        )
         self.forwarded_landmark_pub = rospy.Publisher(
             "landmark/forwarded", PoseWithCovarianceStamped, queue_size=10
         )
@@ -200,6 +203,7 @@ class TJ2NorthstarFilter:
 
     def reset_callback(self, msg: PoseWithCovarianceStamped) -> None:
         self.model.reset(msg)
+        self.initial_pose_pub.publish(msg)
 
     def amcl_pose_callback(self, msg: PoseWithCovarianceStamped) -> None:
         self.amcl_pose = msg
