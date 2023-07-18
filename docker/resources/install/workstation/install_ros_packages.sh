@@ -17,6 +17,8 @@ wstool update -t .
 
 # TODO: install ZED SDK in docker
 rm -r ${DEP_ROS_WS_SRC}/zed-ros-wrapper/zed_nodelets
+cd ${DEP_ROS_WS_SRC}/zed-ros-wrapper
+git submodule update --init --recursive
 
 cd ${DEP_ROS_WS_ROOT}
 /opt/tj2/install/rosdep_install.sh

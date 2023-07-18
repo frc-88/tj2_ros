@@ -14,6 +14,7 @@ cmake ..
 make -j4
 sudo make install
 
+# apriltag
 cd /tmp
 git clone https://github.com/AprilRobotics/apriltag.git
 cd apriltag
@@ -78,65 +79,14 @@ cmake ..
 make -j4
 sudo make install
 
-# libaom
+# pyuvc
 cd /tmp
-git -C aom pull 2> /dev/null || git clone --depth 1 https://aomedia.googlesource.com/aom
-cd aom
-mkdir -p build
-cd build
-cmake -DENABLE_TESTS=OFF -DENABLE_NASM=on ..
-make -j4
-sudo make install
-
-# libsvtav1
-cd /tmp
-git -C SVT-AV1 pull 2> /dev/null || git clone https://gitlab.com/AOMediaCodec/SVT-AV1.git
-cd SVT-AV1
-git checkout v0.9.1
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_DEC=OFF -DBUILD_SHARED_LIBS=OFF ..
-make -j4
-sudo make install
-
-# dav1d
-cd /tmp
-git clone https://code.videolan.org/videolan/dav1d.git
-cd dav1d
-git checkout 0.5.2
-mkdir build
-cd build
-meson --bindir="/usr/local/bin" ..
-ninja
-sudo ninja install
-
-# ffmpeg
-cd /tmp
-git clone https://github.com/FFmpeg/FFmpeg.git
-cd FFmpeg
-git checkout n6.0
-
-./configure \
-  --enable-gpl \
-  --enable-gnutls \
-  --enable-libaom \
-  --enable-libass \
-  --enable-libfdk-aac \
-  --enable-libfreetype \
-  --enable-libmp3lame \
-  --enable-libopus \
-  --enable-libsvtav1 \
-  --enable-libdav1d \
-  --enable-libvorbis \
-  --enable-libvpx \
-  --enable-libx264 \
-  --enable-libx265 \
-  --enable-nonfree \
-  --enable-shared \
-  --extra-libs="-lpthread"
-
-make -j4
-sudo make install && hash -r
+git clone https://github.com/pupil-labs/pyuvc --recursive
+cd pyuvc
+git checkout v1.0.0rc1
+cd ..
+export FORCE_LOCAL_LIBUVC_BUILD=ON
+python -m pip install ./pyuvc
 
 # clean up
 sudo ldconfig

@@ -7,25 +7,10 @@ project(tj2_northstar)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    std_msgs
-    geometry_msgs
-    sensor_msgs
-    tf2_ros
-    tf2_geometry_msgs
-    camera_info_manager
-    cv_bridge
-    visualization_msgs
-    apriltag_ros
-    tj2_interfaces
-)
+find_package(catkin)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
-find_package(OpenCV REQUIRED)
-find_package(yaml-cpp REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -113,43 +98,23 @@ catkin_python_setup()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- INCLUDE_DIRS include
- DEPENDS 
-    geometry_msgs 
-    roscpp 
-    sensor_msgs
-    tf2_ros
-    tf2_geometry_msgs
-    camera_info_manager
-    cv_bridge
-    visualization_msgs
-    apriltag_ros
-    tj2_interfaces
-)
+#  INCLUDE_DIRS include
+#  DEPENDS 
+ )
 
 ###########
 ## Build ##
 ###########
 
-set(ARDUCAM_PROJECT_NAME arducam)
-set(ARDUCAM_ROS_PROJECT_NAME arducam_ros)
-set(APRILTAG_PROJECT_NAME apriltag_cam_array)
-
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
-    ${OpenCV_INCLUDE_DIRS}
-    ${YAML_CPP_INCLUDE_DIRS}
-)
+# include_directories(
+#     include
+# )
 
-link_directories(${catkin_LIBRARY_DIRS})
+# link_directories(${catkin_LIBRARY_DIRS})
 
 ## Declare a C++ library
-add_library(${ARDUCAM_PROJECT_NAME}
-  src/${ARDUCAM_PROJECT_NAME}.cpp
-)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -159,8 +124,7 @@ add_library(${ARDUCAM_PROJECT_NAME}
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${ARDUCAM_ROS_PROJECT_NAME} src/${ARDUCAM_ROS_PROJECT_NAME}.cpp)
-add_executable(${APRILTAG_PROJECT_NAME} src/${APRILTAG_PROJECT_NAME}.cpp)
+# add_executable(${ARDUCAM_ROS_PROJECT_NAME} src/${ARDUCAM_ROS_PROJECT_NAME}.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -170,24 +134,12 @@ add_executable(${APRILTAG_PROJECT_NAME} src/${APRILTAG_PROJECT_NAME}.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(${ARDUCAM_PROJECT_NAME} ${${ARDUCAM_PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(${ARDUCAM_ROS_PROJECT_NAME} ${${ARDUCAM_ROS_PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(${APRILTAG_PROJECT_NAME} ${${APRILTAG_PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${ARDUCAM_ROS_PROJECT_NAME}
-    ${ARDUCAM_PROJECT_NAME}
-    ${catkin_LIBRARIES}
-    ${OpenCV_LIBRARIES}
-)
-target_link_libraries(${ARDUCAM_PROJECT_NAME}
-    ${catkin_LIBRARIES}
-    ${OpenCV_LIBRARIES}
-    ${YAML_CPP_LIBRARIES}
-)
-target_link_libraries(${APRILTAG_PROJECT_NAME}
-    ${catkin_LIBRARIES}
-)
+# target_link_libraries(${PROJECT_NAME}
+#     ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -212,21 +164,11 @@ target_link_libraries(${APRILTAG_PROJECT_NAME}
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
 
-install(TARGETS ${ARDUCAM_ROS_PROJECT_NAME}
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-)
-install(TARGETS ${ARDUCAM_PROJECT_NAME}
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-)
-install(TARGETS ${APRILTAG_PROJECT_NAME}
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-)
+# install(TARGETS ${PROJECT_NAME}
+#     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#     RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+# )
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
 #   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}

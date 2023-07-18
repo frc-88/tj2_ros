@@ -18,7 +18,7 @@ from geometry_msgs.msg import (
 
 from filter_models import TagFastForward
 from filter_models import DriveKalmanModel as FilterModel
-from helpers import amcl_and_landmark_agree
+from helpers import amcl_and_landmark_agree, is_roll_pitch_reasonable
 from tj2_tools.robot_state import Pose2d, Velocity
 
 
@@ -58,11 +58,17 @@ class TJ2NorthstarFilter:
         self.landmark_sub = rospy.Subscriber(
             "landmark", PoseWithCovarianceStamped, self.landmark_callback, queue_size=10
         )
+        self.reset_sub = rospy.Subscriber(
+            "reset_pose", PoseWithCovarianceStamped, self.reset_callback, queue_size=10
+        )
         self.amcl_pose_sub = rospy.Subscriber(
             "amcl_pose",
             PoseWithCovarianceStamped,
             self.amcl_pose_callback,
             queue_size=10,
+        )
+        self.initial_pose_pub = rospy.Publisher(
+            "initialpose", PoseWithCovarianceStamped, queue_size=10
         )
         self.forwarded_landmark_pub = rospy.Publisher(
             "landmark/forwarded", PoseWithCovarianceStamped, queue_size=10
@@ -176,10 +182,14 @@ class TJ2NorthstarFilter:
         if len(self.amcl_pose.header.frame_id) == 0:
             rospy.logwarn("AMCL pose not set. Not updating landmark")
             return
+
+        if not is_roll_pitch_reasonable(msg, self.roll_pitch_threshold):
+            rospy.loginfo("Rejecting landmark. Roll or pitch is too high")
+            return
+
         if not amcl_and_landmark_agree(
             self.amcl_pose,
             msg,
-            self.roll_pitch_threshold,
             self.ground_distance_threshold,
             self.ground_angle_threshold,
         ):
@@ -190,6 +200,10 @@ class TJ2NorthstarFilter:
             self.forwarded_landmark_pub.publish(forwarded)
             with self.model_lock:
                 self.model.update_landmark(forwarded)
+
+    def reset_callback(self, msg: PoseWithCovarianceStamped) -> None:
+        self.model.reset(msg)
+        self.initial_pose_pub.publish(msg)
 
     def amcl_pose_callback(self, msg: PoseWithCovarianceStamped) -> None:
         self.amcl_pose = msg

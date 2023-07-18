@@ -151,18 +151,6 @@
     uri: https://github.com/ros-perception/openslam_gmapping.git
     version: melodic-devel
 - git:
-    local-name: usb_cam
-    uri: https://github.com/ros-drivers/usb_cam.git
-    version: develop
-- git:
-    local-name: rosbag_snapshot
-    uri: https://github.com/ros/rosbag_snapshot.git
-    version: main
-- git:
-    local-name: ipcamera_driver
-    uri: https://github.com/alireza-hosseini/ipcamera_driver
-    version: master
-- git:
     local-name: twist_mux
     uri: https://github.com/ros-teleop/twist_mux.git
     version: melodic-devel
@@ -182,18 +170,6 @@
     local-name: imu_tools
     uri: https://github.com/CCNYRoboticsLab/imu_tools.git
     version: noetic
-- git:
-    local-name: executive_smach
-    uri: https://github.com/ros/executive_smach.git
-    version: noetic-devel
-- git:
-    local-name: py_trees_ros
-    uri: https://github.com/splintered-reality/py_trees_ros.git
-    version: release/0.6.x
-- git:
-    local-name: py_trees_msgs
-    uri: https://github.com/splintered-reality/py_trees_msgs.git
-    version: release/0.3.x
 - git:
     local-name: teb_local_planner
     uri: https://github.com/rst-tu-dortmund/teb_local_planner
@@ -223,6 +199,6 @@
     uri: https://github.com/ros/urdf_parser_py.git
     version: melodic-devel
 - git:
-    local-name: libuvc_ros
-    uri: https://github.com/ktossell/libuvc_ros.git
-    version: master
+    local-name: camera_info_manager_py
+    uri: https://github.com/mllofriu/camera_info_manager_py.git
+    version: be1046dc8acc3d37f43052bfd4fc8d1db9619d93

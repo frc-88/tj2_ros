@@ -33,4 +33,4 @@ cat <<EOT > ${DIR}/.env
 TJ2_IMAGE_VERSION=$(${DIR}/../docker/get_image_tag)
 EOT
 
-${DIR}/../docker/workstation/build_tj2_ros
+${DIR}/../docker/workstation/copy_tj2_ros

@@ -4,3 +4,4 @@ ezdxf
 filterpy
 mypy
 pynput
+pupil-labs-uvc
