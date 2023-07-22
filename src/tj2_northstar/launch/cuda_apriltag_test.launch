@@ -1,0 +1,9 @@
+<launch>
+    <group ns="northstar">
+        <include file="$(find tj2_northstar)/launch/cuda_apriltag_single_cam.launch">
+            <arg name="node_name" value="apriltag_camera_0"/>
+            <arg name="camera_info_topic" value="camera_0/camera_info"/>
+            <arg name="image_rect_topic" value="camera_0/image_raw"/>
+        </include>
+    </group>
+</launch>
