@@ -35,6 +35,7 @@ sudo apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-image-pipeline \
     ros-noetic-image-common \
     ros-noetic-marker-msgs \
+    ros-noetic-usb-cam \
     libsdl-image1.2-dev \
     libsdl-dev \
     python3-pip \

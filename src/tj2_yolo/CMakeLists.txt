@@ -58,9 +58,13 @@ print(os.path.join(os.path.dirname(torch.__file__), \"share/cmake/Torch/\"))"
     string(REPLACE ":" ";" CMAKE_PREFIX_PATH "$ENV{CMAKE_PREFIX_PATH}")
     list(APPEND CMAKE_PREFIX_PATH "${TORCH_CMAKE_DIR}")
     message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+
+    find_package(Torch REQUIRED)
+else()
+    message(STATUS "Detecting x86 device. Using libtorch path")
+    find_package(Torch REQUIRED PATHS /usr/local/libtorch NO_DEFAULT_PATH)
 endif()
 
-find_package(Torch REQUIRED)
 
 if(Torch_FOUND)
     message(STATUS "Torch library found!")
