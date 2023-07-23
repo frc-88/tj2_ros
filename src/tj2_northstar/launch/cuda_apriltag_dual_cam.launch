@@ -1,0 +1,18 @@
+<launch>
+    <arg name="apriltag_settings" default="$(find cuda_apriltag_ros)/config/settings.yaml"/>
+
+    <group ns="northstar">
+        <include file="$(find tj2_northstar)/launch/cuda_apriltag_single_cam.launch">
+            <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>
+            <arg name="node_name" value="apriltag_camera_0"/>
+            <arg name="camera_info_topic" value="camera_0/camera_info"/>
+            <arg name="image_rect_topic" value="camera_0/image_raw"/>
+        </include>
+        <include file="$(find tj2_northstar)/launch/cuda_apriltag_single_cam.launch">
+            <arg name="apriltag_settings" value="$(arg apriltag_settings)"/>
+            <arg name="node_name" value="apriltag_camera_1"/>
+            <arg name="camera_info_topic" value="camera_1/camera_info"/>
+            <arg name="image_rect_topic" value="camera_1/image_raw"/>
+        </include>
+    </group>
+</launch>
