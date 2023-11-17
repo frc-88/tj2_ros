@@ -32,5 +32,6 @@ services:
       # Allow container to control docker
       - /home/${USER}/.docker:/opt/tj2/.docker:rw # docker looks here inside a container
       - /var/run/docker.sock:/var/run/docker.sock
+      - /dev:/dev:rw
 
     command: bash /opt/tj2/scripts/watch_for_changes.sh

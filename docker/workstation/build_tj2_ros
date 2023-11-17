@@ -13,9 +13,7 @@ IMAGE_PREFIX=$(${BASE_DIR}/get_built_image)
 if [ "${IMAGE_PREFIX}" == "workstation" ]; then
     BUILD_FLAGS='-DCATKIN_BLACKLIST_PACKAGES=tj2_yolo'
 else
-    # TODO: add cxx11 ABI library to docker
-    BUILD_FLAGS='-DCATKIN_BLACKLIST_PACKAGES=tj2_yolo'
-    # BUILD_FLAGS=-DCATKIN_BLACKLIST_PACKAGES=\'\'
+    BUILD_FLAGS=-DCATKIN_BLACKLIST_PACKAGES=\'\'
 fi
 
 docker run -it \

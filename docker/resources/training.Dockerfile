@@ -9,7 +9,7 @@ COPY --chown=1000:1000 \
 RUN bash /opt/tj2/install/training/install_apt_packages.sh && \
     bash /opt/tj2/install/training/install_python_dependencies.sh
 
-FROM nvidia/cuda:12.1.1-devel-ubuntu20.04
+FROM nvidia/cuda:11.8.0-devel-ubuntu20.04
 
 ENV L4T_MAJOR_VERSION=32 \
     L4T_MINOR_VERSION=6 \
@@ -48,6 +48,20 @@ USER ${USER}
 COPY --from=workstation_tj2_ros / /tmp/workstation_tj2_ros
 COPY --chown=1000:1000 ./install/training/copy_over_multistage.sh /opt/tj2/install/training/
 RUN bash /opt/tj2/install/training/copy_over_multistage.sh
+
+# ---
+# Training dependencies
+# ---
+
+
+COPY --chown=1000:1000 \
+    ./install/training/install_torchscript.sh \
+    /opt/tj2/install/training/
+RUN bash -x /opt/tj2/install/training/install_torchscript.sh
+
+ENV CMAKE_PREFIX_PATH=/usr/local/libtorch/share/cmake/Torch/${CMAKE_PREFIX_PATH:+:${CMAKE_PREFIX_PATH}}
+ENV CMAKE_LIBRARY_PATH=/usr/local/cuda/lib64/stubs/${CMAKE_LIBRARY_PATH:+:${CMAKE_LIBRARY_PATH}}
+
 
 # ---
 # Environment variables
