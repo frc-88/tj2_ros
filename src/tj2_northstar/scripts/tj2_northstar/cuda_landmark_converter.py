@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from dataclasses import dataclass
-from functools import cached_property
 
 import numpy as np
 import rospy
@@ -33,10 +32,10 @@ class BundleConfig:
     size: float
     frame_id: str
     pose: Pose
+    transform: np.ndarray = np.array([])
 
-    @cached_property
-    def transform(self) -> np.ndarray:
-        return pose_to_matrix(self.pose)
+    def __post_init__(self) -> None:
+        self.transform = pose_to_matrix(self.pose)
 
 
 class CudaLandmarkConverter:

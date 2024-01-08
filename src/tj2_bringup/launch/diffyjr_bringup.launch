@@ -128,7 +128,8 @@
     </node> -->
 
     <include file="$(find tj2_northstar)/launch/dual_camera.launch">
-        <arg name="common_camera_params" value="$(arg common_camera_params)" />
+        <arg name="common_camera_params"
+            value="$(find tj2_bringup)/config/diffyjr/northstar/ov2311.yaml" />
         <arg name="camera_0_info_url"
             value="package://tj2_bringup/config/diffyjr/northstar/calibration/camera_0.yaml" />
         <arg name="serial_0" value="UC621" />
