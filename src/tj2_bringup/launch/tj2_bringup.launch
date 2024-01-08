@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <include if="$(eval env('ROBOT') == 'diffyjr')" file="$(find tj2_bringup)/launch/diffyjr_bringup.launch"/>
-    <include if="$(eval env('ROBOT') == 'diffyjr-mapping')" file="$(find tj2_bringup)/launch/diffyjr_build_map.launch"/>
-    <include if="$(eval env('ROBOT') == 'scorpion')" file="$(find tj2_bringup)/launch/scorpion_bringup.launch"/>
+    <include file="$(find tj2_bringup)/launch/$(optenv ROBOT)_bringup.launch" />
 </launch>

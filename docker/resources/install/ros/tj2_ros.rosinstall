@@ -202,3 +202,7 @@
     local-name: camera_info_manager_py
     uri: https://github.com/mllofriu/camera_info_manager_py.git
     version: be1046dc8acc3d37f43052bfd4fc8d1db9619d93
+- git:
+    local-name: cuda_apriltag_ros
+    uri: https://github.com/frc-88/cuda_apriltag_ros.git
+    version: 5f68d7de6a0e039bba40dfce750fd132a1fce5ef

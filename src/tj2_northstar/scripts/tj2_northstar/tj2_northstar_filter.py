@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
-from tf_conversions import transformations
-import numpy as np
-import tf2_ros
-import rospy
 from threading import Lock
 
-from nav_msgs.msg import Odometry
+import numpy as np
+import rospy
+import tf2_ros
+from filter_models import DriveKalmanModel as FilterModel
+from filter_models import TagFastForward
 from geometry_msgs.msg import (
+    Point,
+    Pose,
+    PoseStamped,
     PoseWithCovarianceStamped,
     Quaternion,
     TransformStamped,
-    PoseStamped,
     Vector3,
-    Pose,
-    Point,
 )
-
-from filter_models import TagFastForward
-from filter_models import DriveKalmanModel as FilterModel
 from helpers import amcl_and_landmark_agree, is_roll_pitch_reasonable
+from nav_msgs.msg import Odometry
+from tf_conversions import transformations
 from tj2_tools.robot_state import Pose2d, Velocity
 
 
@@ -30,14 +29,10 @@ class TJ2NorthstarFilter:
         self.base_frame = ""
 
         self.play_forward_buffer_size = rospy.get_param("~play_forward_buffer_size", 20)
-        self.tag_fast_forward_sample_dt = rospy.get_param(
-            "~tag_fast_forward_sample_dt", 0.05
-        )
+        self.tag_fast_forward_sample_dt = rospy.get_param("~tag_fast_forward_sample_dt", 0.05)
         self.update_rate = rospy.get_param("~update_rate", 50.0)
         self.roll_pitch_threshold = rospy.get_param("~roll_pitch_threshold", 0.2)
-        self.ground_distance_threshold = rospy.get_param(
-            "~ground_distance_threshold", 0.5
-        )
+        self.ground_distance_threshold = rospy.get_param("~ground_distance_threshold", 0.5)
         self.ground_angle_threshold = rospy.get_param("~ground_angle_threshold", 0.5)
 
         self.prev_odom = Odometry()
@@ -45,38 +40,26 @@ class TJ2NorthstarFilter:
         self.model = FilterModel(1.0 / self.update_rate)
         self.model_lock = Lock()
 
-        self.fast_forwarder = TagFastForward(
-            self.tag_fast_forward_sample_dt, self.play_forward_buffer_size
-        )
+        self.fast_forwarder = TagFastForward(self.tag_fast_forward_sample_dt, self.play_forward_buffer_size)
 
         self.amcl_pose = PoseWithCovarianceStamped()
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
 
-        self.odom_sub = rospy.Subscriber(
-            "odom", Odometry, self.odom_callback, queue_size=10
-        )
+        self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback, queue_size=10)
         self.landmark_sub = rospy.Subscriber(
             "landmark", PoseWithCovarianceStamped, self.landmark_callback, queue_size=10
         )
-        self.reset_sub = rospy.Subscriber(
-            "reset_pose", PoseWithCovarianceStamped, self.reset_callback, queue_size=10
-        )
+        self.reset_sub = rospy.Subscriber("reset_pose", PoseWithCovarianceStamped, self.reset_callback, queue_size=10)
         self.amcl_pose_sub = rospy.Subscriber(
             "amcl_pose",
             PoseWithCovarianceStamped,
             self.amcl_pose_callback,
             queue_size=10,
         )
-        self.initial_pose_pub = rospy.Publisher(
-            "initialpose", PoseWithCovarianceStamped, queue_size=10
-        )
-        self.forwarded_landmark_pub = rospy.Publisher(
-            "landmark/forwarded", PoseWithCovarianceStamped, queue_size=10
-        )
+        self.initial_pose_pub = rospy.Publisher("initialpose", PoseWithCovarianceStamped, queue_size=10)
+        self.forwarded_landmark_pub = rospy.Publisher("landmark/forwarded", PoseWithCovarianceStamped, queue_size=10)
         self.filter_state_pub = rospy.Publisher("filter/state", Odometry, queue_size=10)
-        self.filter_pose_pub = rospy.Publisher(
-            "filter/pose", PoseWithCovarianceStamped, queue_size=10
-        )
+        self.filter_pose_pub = rospy.Publisher("filter/pose", PoseWithCovarianceStamped, queue_size=10)
 
     def get_last_pose(self) -> Pose:
         return self.prev_odom.pose.pose
@@ -87,15 +70,9 @@ class TJ2NorthstarFilter:
         if len(self.odom_frame) == 0:
             self.odom_frame = msg.header.frame_id
         if msg.child_frame_id != self.base_frame:
-            raise ValueError(
-                "Odometry child frame is inconsistent "
-                f"{msg.child_frame_id} != {self.base_frame}"
-            )
+            raise ValueError("Odometry child frame is inconsistent " f"{msg.child_frame_id} != {self.base_frame}")
         if msg.header.frame_id != self.odom_frame:
-            raise ValueError(
-                "Odometry frame is inconsistent "
-                f"{msg.header.frame_id} != {self.odom_frame}"
-            )
+            raise ValueError("Odometry frame is inconsistent " f"{msg.header.frame_id} != {self.odom_frame}")
 
         self.prev_odom = msg
         with self.model_lock:
@@ -107,15 +84,11 @@ class TJ2NorthstarFilter:
         transform.header.stamp = rospy.Time.now()
         transform.header.frame_id = pose.header.frame_id
         transform.child_frame_id = child_frame
-        transform.transform.translation = Vector3(
-            pose.pose.position.x, pose.pose.position.y, pose.pose.position.z
-        )
+        transform.transform.translation = Vector3(pose.pose.position.x, pose.pose.position.y, pose.pose.position.z)
         transform.transform.rotation = pose.pose.orientation
         self.tf_broadcaster.sendTransform(transform)
 
-    def publish_filter_state(
-        self, pose: Pose2d, velocity: Velocity, covariance: np.ndarray
-    ) -> None:
+    def publish_filter_state(self, pose: Pose2d, velocity: Velocity, covariance: np.ndarray) -> None:
         state_msg = Odometry()
         state_msg.header.stamp = rospy.Time.now()
         state_msg.header.frame_id = self.map_frame
@@ -232,9 +205,7 @@ class TJ2NorthstarFilter:
             if odom_pose is not None:
                 tf_pose = PoseStamped()
                 tf_pose.header.frame_id = self.map_frame
-                tf_pose.pose = self.get_map_to_odom(
-                    global_pose.to_ros_pose(), odom_pose
-                )
+                tf_pose.pose = self.get_map_to_odom(global_pose.to_ros_pose(), odom_pose)
                 self.publish_transform(tf_pose, self.odom_frame)
 
 
