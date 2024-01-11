@@ -21,8 +21,6 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
-
 # sync both ways
 if [ ${UPLOAD} = y ]; then
     rsync -rtuv -e "ssh -i ${REMOTE_KEY} -p 5810" ${LOCAL_PATH}/${DATA_RELATIVE_DIR}/* tj2@${DESTINATION_NAME}:${DEST_FULL_PATH}/${DATA_RELATIVE_DIR}

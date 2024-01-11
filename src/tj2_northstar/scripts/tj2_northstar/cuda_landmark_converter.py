@@ -51,12 +51,12 @@ class CudaLandmarkConverter:
         self.base_covariance = np.array(base_covariance).reshape((6, 6))
         bundles_config = rospy.get_param("~tag_bundles", [])
         assert isinstance(bundles_config, list) and len(bundles_config) > 0, "No tag bundles specified!"
-        bundle_config = []
+        bundle_layout = []
         for bundle in bundles_config:
             if bundle["name"] == self.field_frame:
-                bundle_config = bundle
+                bundle_layout = bundle["layout"]
                 break
-        if len(bundle_config) == 0:
+        if len(bundle_layout) == 0:
             raise ValueError(f"Bundle {self.field_frame} not found!")
         self.bundle = {
             bundle["id"]: BundleConfig(
@@ -73,7 +73,7 @@ class CudaLandmarkConverter:
                     ),
                 ),
             )
-            for bundle in bundle_config
+            for bundle in bundle_layout
         }
 
         self.tag_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.tags_callback, queue_size=10)

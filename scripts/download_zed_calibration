@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+import os
+import urllib.request
+
+import pyzed.sl as sl
+import rospkg
+
+rospack = rospkg.RosPack()
+
+calibration_dir = os.path.join(rospack.get_path("tj2_data"), "data", "zed", "resources")
+os.makedirs(calibration_dir, exist_ok=True)
+
+cameras = sl.Camera.get_device_list()
+for camera in cameras:
+    serial_number = camera.serial_number
+    print(f"Found ZED camera. SN={serial_number}. Downloading calibration file.")
+    urllib.request.urlretrieve(
+        f"https://www.stereolabs.com/developers/calib/?SN={serial_number}",
+        os.path.join(calibration_dir, f"SN{serial_number}.conf"),
+    )
+if len(cameras) == 0:
+    print("No ZED cameras found. Aborting.")
+
+print("Done!")
