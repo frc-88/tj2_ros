@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <arg name="record_launch_path" default=""/>
-
     <group ns="tj2">
-        <node pkg="tj2_match_watcher" type="tj2_match_watcher_node.py" name="tj2_match_watcher" output="screen" required="false">
-            <param name="record_match_launch_path" value="$(arg record_launch_path)"/>
+        <node pkg="tj2_match_watcher" type="tj2_match_watcher_node.py" name="tj2_match_watcher"
+            output="screen" required="false">
+            <param name="exclude_regex"
+                value="\/camera_.*\/.*.*image.*|\/camera_.*\/point_cloud.*|\/camera_.*\/depth.*|\/tag_detections_image.*|\/rosout.*" />
         </node>
     </group>
 </launch>

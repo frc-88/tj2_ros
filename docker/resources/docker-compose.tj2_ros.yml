@@ -15,6 +15,7 @@ services:
         stop_signal: SIGINT
         environment:
             - ROS_MASTER_INTERFACE=eth0
+            - IMAGE_VERSION=${TJ2_IMAGE_VERSION}
         group_add:
             - dialout
         volumes:
