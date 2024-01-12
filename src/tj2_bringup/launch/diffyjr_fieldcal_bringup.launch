@@ -76,8 +76,17 @@
         <arg name="name_1" value="camera_1" />
     </include>
 
-    <include file="$(find tj2_northstar)/launch/cuda_apriltag_dual_cam.launch">
+    <include file="$(find tj2_northstar)/launch/apriltag_dual_cam.launch">
+        <arg name="apriltag_settings"
+            value="$(find tj2_bringup)/config/$(arg robot)/tags/settings.yaml" />
+        <arg name="apriltag_tags"
+            value="$(find tj2_bringup)/config/$(arg robot)/tags/$(arg map_name)_tags.yaml" />
+    </include>
+
+    <!-- <include file="$(find tj2_northstar)/launch/cuda_apriltag_dual_cam.launch">
         <arg name="apriltag_settings"
             value="$(find tj2_bringup)/config/$(arg robot)/tags/cuda_tags.yaml" />
-    </include>
+    </include> -->
+
+    <include file="$(find tj2_northstar)/launch/field_calibration.launch" />
 </launch>

@@ -3,15 +3,13 @@ import copy
 from typing import List, Optional, Tuple
 
 import rospy
-import tf2_ros
 import tf2_geometry_msgs
-
+import tf2_ros
+from apriltag_ros.msg import AprilTagDetection, AprilTagDetectionArray
+from geometry_msgs.msg import Point, Pose, PoseArray, PoseStamped, Quaternion, Vector3
 from scipy.spatial.transform import Rotation
-
-from apriltag_ros.msg import AprilTagDetectionArray, AprilTagDetection
-from geometry_msgs.msg import Pose, Point, Vector3, PoseStamped, Quaternion, PoseArray
 from std_msgs.msg import ColorRGBA
-from visualization_msgs.msg import MarkerArray, Marker
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 class TagMarkerPublisher:
@@ -27,9 +25,7 @@ class TagMarkerPublisher:
         self.marker_publish_rate = rospy.get_param("~marker_publish_rate", 5.0)
         self.debug = rospy.get_param("~debug", False)
         self.robot_frame = rospy.get_param("~robot_frame", "base_link")
-        self.stale_detection_seconds = rospy.Duration(
-            rospy.get_param("~stale_detection_seconds", 1.0)
-        )
+        self.stale_detection_seconds = rospy.Duration(rospy.get_param("~stale_detection_seconds", 1.0))
 
         self.tag_msg = AprilTagDetectionArray()
         self.rotate_quat = (0.5, -0.5, -0.5, -0.5)
@@ -49,16 +45,10 @@ class TagMarkerPublisher:
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.tag_sub = rospy.Subscriber(
-            "tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10
-        )
+        self.tag_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10)
         self.marker_pub = rospy.Publisher("tag_markers", MarkerArray, queue_size=10)
-        self.rotated_tag_pub = rospy.Publisher(
-            "rotated_detections", AprilTagDetectionArray, queue_size=10
-        )
-        self.rotated_debug_pub = rospy.Publisher(
-            "rotated_debug", PoseArray, queue_size=10
-        )
+        self.rotated_tag_pub = rospy.Publisher("rotated_detections", AprilTagDetectionArray, queue_size=10)
+        self.rotated_debug_pub = rospy.Publisher("rotated_debug", PoseArray, queue_size=10)
 
         rospy.loginfo("%s init complete" % self.name)
 
@@ -67,11 +57,11 @@ class TagMarkerPublisher:
             return
         base_detections = AprilTagDetectionArray()
         for detection in msg.detections:
+            detection: AprilTagDetection
+            detection.pose.header = msg.header
             if len(detection.id) == 1:
                 pose: Pose = detection.pose.pose.pose
-                detection.pose.pose.pose.orientation = self.rotate_tag_orientation(
-                    pose.orientation, self.rotate_quat
-                )
+                detection.pose.pose.pose.orientation = self.rotate_tag_orientation(pose.orientation, self.rotate_quat)
             new_detection = self.transform_tag_to_base(detection)
             if new_detection is None:
                 continue
@@ -80,9 +70,9 @@ class TagMarkerPublisher:
 
         if len(base_detections.detections) != 0:
             self.tag_msg = base_detections
-        self.rotated_tag_pub.publish(self.tag_msg)
-        if self.debug:
-            self.publish_debug_rotation(self.tag_msg)
+            self.rotated_tag_pub.publish(self.tag_msg)
+            if self.debug:
+                self.publish_debug_rotation(self.tag_msg)
 
     def is_topic_active(self):
         num_subscriptions = (
@@ -100,9 +90,7 @@ class TagMarkerPublisher:
             pose_array.poses.append(pose)
         self.rotated_debug_pub.publish(pose_array)
 
-    def transform_tag_to_base(
-        self, detection: AprilTagDetection
-    ) -> Optional[AprilTagDetection]:
+    def transform_tag_to_base(self, detection: AprilTagDetection) -> Optional[AprilTagDetection]:
         tag_pose_stamped = PoseStamped()
         tag_pose_stamped.header = detection.pose.header
         tag_pose_stamped.pose = detection.pose.pose.pose
@@ -121,14 +109,9 @@ class TagMarkerPublisher:
             tf2_ros.ConnectivityException,
             tf2_ros.ExtrapolationException,
         ) as e:
-            rospy.logwarn(
-                "Failed to look up %s to %s. %s"
-                % (self.robot_frame, tag_pose_stamped.header.frame_id, e)
-            )
+            rospy.logwarn("Failed to look up %s to %s. %s" % (self.robot_frame, tag_pose_stamped.header.frame_id, e))
             return None
-        base_pose_stamped = tf2_geometry_msgs.do_transform_pose(
-            tag_pose_stamped, transform
-        )
+        base_pose_stamped = tf2_geometry_msgs.do_transform_pose(tag_pose_stamped, transform)
 
         new_detection = copy.deepcopy(detection)
         new_detection.pose.pose.pose = base_pose_stamped.pose
@@ -203,9 +186,7 @@ class TagMarkerPublisher:
                 markers.markers.append(square_marker)
         self.marker_pub.publish(markers)
 
-    def prep_position_marker(
-        self, name, position_marker, rotate_quat, color: Tuple[float, float, float]
-    ):
+    def prep_position_marker(self, name, position_marker, rotate_quat, color: Tuple[float, float, float]):
         position_marker.type = Marker.ARROW
         position_marker.ns = "pos" + name + position_marker.ns
         position_marker.color.r = color[0]

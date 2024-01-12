@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="tj2_northstar" type="field_calibration.py" name="field_calibration" required="false"
+        output="screen">
+        <remap from="zed_pose" to="/tj2_zed/pose" />
+    </node>
+</launch>

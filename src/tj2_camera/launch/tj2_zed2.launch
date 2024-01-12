@@ -3,7 +3,6 @@
     <arg name="yolo_model_path" default="$(find tj2_yolo)/models/powercell_2021.torchscript" />
     <arg name="yolo_class_names_path" default="$(find tj2_yolo)/models/powercell_2021.names" />
     <arg name="pos_tracking_enabled" default="false" />
-    <arg name="no_odom_pos_tracking_enabled" default="false" />
     <arg name="camera_name" default="zed2" />
     <arg name="serial_number" default="0" />
     <!-- ROS URDF description of the ZED -->
@@ -36,8 +35,9 @@
         <param name="general/base_frame" value="camera_link" />
         <param name="general/serial_number" value="$(arg serial_number)" />
         <param name="pos_tracking/pos_tracking_enabled" value="$(arg pos_tracking_enabled)" />
-        <param name="pos_tracking/publish_tf" value="$(arg no_odom_pos_tracking_enabled)" />
         <param name="pos_tracking/publish_map_tf" value="$(arg pos_tracking_enabled)" />
+        <param name="pos_tracking/area_memory" value="$(arg pos_tracking_enabled)" />
+        <param name="pos_tracking/mapping_enabled" value="$(arg pos_tracking_enabled)" />
         <param name="yolo_object_detection/model_path" value="$(arg yolo_model_path)" />
         <param name="yolo_object_detection/class_names_path" value="$(arg yolo_class_names_path)" />
     </node>

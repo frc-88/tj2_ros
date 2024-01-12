@@ -1,8 +1,9 @@
 from typing import Optional
+
 import rospy
-import tf2_ros
 import tf2_geometry_msgs
-from geometry_msgs.msg import TransformStamped, PoseStamped
+import tf2_ros
+from geometry_msgs.msg import PoseStamped, TransformStamped
 
 
 def lookup_transform(
@@ -23,9 +24,7 @@ def lookup_transform(
         return tf_buffer.lookup_transform(parent_link, child_link, time_window, timeout)
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException, tf2_ros.InvalidArgumentException) as e:  # type: ignore
         if not silent:
-            rospy.logwarn(
-                "Failed to look up %s to %s. %s" % (parent_link, child_link, e)
-            )
+            rospy.logwarn("Failed to look up %s to %s. %s" % (parent_link, child_link, e))
         return None
 
 
