@@ -205,4 +205,4 @@
 - git:
     local-name: cuda_apriltag_ros
     uri: https://github.com/frc-88/cuda_apriltag_ros.git
-    version: 23fea67bf25c5054340aa350ce8ceec57eb63141
+    version: e62cd34d55b25dcab0d8c7799e7cbb29b748950c
