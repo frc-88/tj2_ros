@@ -47,7 +47,7 @@ class FieldCalibration:
                 self.recorded_tags[tag_id] = []
             self.recorded_tags[tag_id].append(tag_in_map)
             rospy.loginfo(f"Recorded tag {tag_id}")
-        rospy.loginfo("Data:\n" + self.get_summary())
+        # rospy.loginfo("Data:\n" + self.get_summary())
 
     def get_summary(self) -> str:
         summary = ""

@@ -12,3 +12,4 @@ remove_duplicates: true
 # Other parameters
 publish_tf:        false      # default: false
 transport_hint:    "raw"      # default: raw, see http://wiki.ros.org/image_transport#Known_Transport_Packages for options
+publish_tag_detections_image: false

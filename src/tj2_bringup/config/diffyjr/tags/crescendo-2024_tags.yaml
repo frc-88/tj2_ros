@@ -19,23 +19,7 @@
 #   ]
 standalone_tags:
   [
-    {id:  1, size: 0.1524,  "1"},  # red alliance, source far from driver station
-    {id:  2, size: 0.1524,  "2"},  # red alliance, source near driver station
-    {id:  3, size: 0.1524,  "3"},  # red alliance, subwoofer right
-    {id:  4, size: 0.1524,  "4"},  # red alliance, subwoofer center
-    {id:  5, size: 0.1524,  "5"},  # red alliance, amp
-    {id: 11, size: 0.1524, "11"},  # red alliance, stage left
-    {id: 12, size: 0.1524, "12"},  # red alliance, stage right
-    {id: 13, size: 0.1524, "13"},  # red alliance, stage center
 
-    {id: 10, size: 0.1524, "10"},  # blue alliance, source far from driver station
-    {id:  9, size: 0.1524,  "9"},  # blue alliance, source near driver station
-    {id:  8, size: 0.1524,  "8"},  # blue alliance, subwoofer left
-    {id:  7, size: 0.1524,  "7"},  # blue alliance, subwoofer center
-    {id:  6, size: 0.1524,  "6"},  # blue alliance, amp
-    {id: 15, size: 0.1524, "15"},  # blue alliance, stage left
-    {id: 16, size: 0.1524, "16"},  # blue alliance, stage right
-    {id: 14, size: 0.1524, "14"},  # blue alliance, stage center
   ]
 # ## Tag bundle definitions
 # ### Remarks
@@ -64,23 +48,23 @@ tag_bundles:
       name: 'field',
       layout:
       [
-        {id:  1, size: 0.1524, x: -7.243096, y:  2.936589, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, source far from driver station
-        {id:  2, size: 0.1524, x: -7.243096, y:  1.260189, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, source near driver station
-        {id:  3, size: 0.1524, x: -7.243096, y: -0.416211, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, subwoofer right
-        {id:  4, size: 0.1524, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, subwoofer center
-        {id:  5, size: 0.1524, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, amp
-        {id: 11, size: 0.1524, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, stage left
-        {id: 12, size: 0.1524, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, stage right
-        {id: 13, size: 0.1524, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, stage center
+        {id:  1, size: 0.1651, x: -7.243096, y:  2.936589, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, source far from driver station
+        {id:  2, size: 0.1651, x: -7.243096, y:  1.260189, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, source near driver station
+        {id:  3, size: 0.1651, x: -7.243096, y: -0.416211, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, subwoofer right
+        {id:  4, size: 0.1651, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, subwoofer center
+        {id:  5, size: 0.1651, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, amp
+        {id: 11, size: 0.1651, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, stage left
+        {id: 12, size: 0.1651, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, stage right
+        {id: 13, size: 0.1651, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # red alliance, stage center
 
-        {id: 10, size: 0.1524, x:  7.243096, y:  2.936589, z:  0.467500, qx: -0.5000, qy:  0.5000, qz:  0.5000, qw: -0.5000},  # blue alliance, source far from driver station
-        {id:  9, size: 0.1524, x:  7.243096, y:  2.936589, z:  0.467500, qx: -0.5000, qy:  0.5000, qz:  0.5000, qw: -0.5000},  # blue alliance, source near driver station
-        {id:  8, size: 0.1524, x:  7.243096, y:  1.260189, z:  0.467500, qx: -0.5000, qy:  0.5000, qz:  0.5000, qw: -0.5000},  # blue alliance, subwoofer left
-        {id:  7, size: 0.1524, x:  7.243096, y: -0.416211, z:  0.467500, qx: -0.5000, qy:  0.5000, qz:  0.5000, qw: -0.5000},  # blue alliance, subwoofer center
-        {id:  6, size: 0.1524, x:  7.908322, y: -2.741613, z:  0.467500, qx: -0.5000, qy:  0.5000, qz:  0.5000, qw: -0.5000},  # blue alliance, amp
-        {id: 15, size: 0.1524, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # blue alliance, stage left
-        {id: 16, size: 0.1524, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # blue alliance, stage right
-        {id: 14, size: 0.1524, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # blue alliance, stage center
+        {id: 10, size: 0.1651, x:  7.243096, y:  2.936589, z:  0.467500, qx: -0.5000, qy:  0.5000, qz:  0.5000, qw: -0.5000},  # blue alliance, source far from driver station
+        {id:  9, size: 0.1651, x:  7.243096, y:  2.936589, z:  0.467500, qx: -0.5000, qy:  0.5000, qz:  0.5000, qw: -0.5000},  # blue alliance, source near driver station
+        {id:  8, size: 0.1651, x:  7.243096, y:  1.260189, z:  0.467500, qx: -0.5000, qy:  0.5000, qz:  0.5000, qw: -0.5000},  # blue alliance, subwoofer left
+        {id:  7, size: 0.1651, x:  7.243096, y: -0.416211, z:  0.467500, qx: -0.5000, qy:  0.5000, qz:  0.5000, qw: -0.5000},  # blue alliance, subwoofer center
+        {id:  6, size: 0.1651, x:  7.908322, y: -2.741613, z:  0.467500, qx: -0.5000, qy:  0.5000, qz:  0.5000, qw: -0.5000},  # blue alliance, amp
+        {id: 15, size: 0.1651, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # blue alliance, stage left
+        {id: 16, size: 0.1651, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # blue alliance, stage right
+        {id: 14, size: 0.1651, x: -7.908322, y: -2.741613, z:  0.467500, qx:  0.5000, qy:  0.5000, qz:  0.5000, qw:  0.5000},  # blue alliance, stage center
       ]
     }
   ]

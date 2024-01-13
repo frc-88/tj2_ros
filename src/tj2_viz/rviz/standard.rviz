@@ -7,20 +7,11 @@ Panels:
         - /Global Options1
         - /Status1
         - /TF1
-        - /TF1/Tree1/map1
-        - /TF1/Tree1/map1/odom1
-        - /TF1/Tree1/map1/odom1/base_link1
-        - /TF1/Tree1/map1/odom1/base_link1/base_tilt_link1
-        - /TF1/Tree1/map1/odom1/base_link1/base_tilt_link1/camera_tilt_link1
-        - /TF1/Tree1/map1/odom1/base_link1/base_tilt_link1/camera_tilt_link1/camera_armature_link1
-        - /TF1/Tree1/map1/odom1/base_link1/base_tilt_link1/camera_tilt_link1/camera_armature_link1/camera_link1
-        - /TF1/Tree1/map1/odom1/base_link1/base_tilt_link1/camera_tilt_link1/camera_armature_link1/camera_link1/zed2_base_link1
-        - /TF1/Tree1/map1/odom1/base_link1/base_tilt_link1/camera_tilt_link1/camera_armature_link1/camera_link1/zed2_base_link1/zed2_camera_center1
         - /LaserScan1
         - /ZED1/Visibility1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
-        - /Apriltags Camera1/Status1
+        - /Apriltags Camera1
       Splitter Ratio: 0.740240216255188
     Tree Height: 573
   - Class: rviz/Selection
@@ -88,23 +79,7 @@ Visualization Manager:
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
-        10:
-          Value: true
-        11:
-          Value: true
-        12:
-          Value: true
-        13:
-          Value: true
-        14:
-          Value: true
-        15:
-          Value: true
-        16:
-          Value: true
-        6:
-          Value: true
-        8:
+        5:
           Value: true
         All Enabled: false
         base_link:
@@ -188,25 +163,10 @@ Visualization Manager:
               base_tilt_link:
                 camera_0:
                   optical_camera_0:
-                    10:
-                      {}
-                    13:
-                      {}
-                    14:
-                      {}
-                    6:
-                      {}
-                    8:
-                      {}
+                    {}
                 camera_1:
                   optical_camera_1:
-                    11:
-                      {}
-                    12:
-                      {}
-                    15:
-                      {}
-                    16:
+                    5:
                       {}
                 camera_tilt_link:
                   camera_armature_link:
@@ -650,7 +610,35 @@ Visualization Manager:
       Marker Topic: /northstar/tag_markers
       Name: Apriltags
       Namespaces:
-        {}
+        cube2: true
+        cube3: true
+        cube4: true
+        cube5: true
+        cube6: true
+        posx1-2-3-4-5-6-7-8: true
+        posx2: true
+        posx3: true
+        posx4: true
+        posx5: true
+        posx6: true
+        posy1-2-3-4-5-6-7-8: true
+        posy2: true
+        posy3: true
+        posy4: true
+        posy5: true
+        posy6: true
+        posz1-2-3-4-5-6-7-8: true
+        posz2: true
+        posz3: true
+        posz4: true
+        posz5: true
+        posz6: true
+        text1-2-3-4-5-6-7-8: true
+        text2: true
+        text3: true
+        text4: true
+        text5: true
+        text6: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -916,7 +904,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 2.396620035171509
+      Distance: 4.573540687561035
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -924,17 +912,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.4667275547981262
-        Y: -0.24037301540374756
-        Z: 4.932284355163574e-06
+        X: 0.6951553225517273
+        Y: 1.118752121925354
+        Z: 4.9620866775512695e-06
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0097967386245728
+      Pitch: 0.3097974956035614
       Target Frame: <Fixed Frame>
-      Yaw: 3.945726156234741
+      Yaw: 0.40254083275794983
     Saved: ~
 Window Geometry:
   Apriltags Camera:
