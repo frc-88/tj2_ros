@@ -153,11 +153,11 @@ class TJ2NorthstarFilter:
 
     def landmark_callback(self, msg: PoseWithCovarianceStamped) -> None:
         if len(self.amcl_pose.header.frame_id) == 0:
-            rospy.logwarn("AMCL pose not set. Not updating landmark")
+            rospy.logwarn_throttle(1.0, "AMCL pose not set. Not updating landmark")
             return
 
         if not is_roll_pitch_reasonable(msg, self.roll_pitch_threshold):
-            rospy.loginfo("Rejecting landmark. Roll or pitch is too high")
+            rospy.loginfo_throttle(1.0, "Rejecting landmark. Roll or pitch is too high")
             return
 
         if not amcl_and_landmark_agree(

@@ -19,23 +19,23 @@
 #   ]
 standalone_tags:
   [
-    {id:  1, size: 0.1651,  "1"},  # red alliance, source far from driver station
-    {id:  2, size: 0.1651,  "2"},  # red alliance, source near driver station
-    {id:  3, size: 0.1651,  "3"},  # red alliance, subwoofer right
-    {id:  4, size: 0.1651,  "4"},  # red alliance, subwoofer center
-    {id:  5, size: 0.1651,  "5"},  # red alliance, amp
-    {id: 11, size: 0.1651, "11"},  # red alliance, stage left
-    {id: 12, size: 0.1651, "12"},  # red alliance, stage right
-    {id: 13, size: 0.1651, "13"},  # red alliance, stage center
+    {id:  1, size: 0.1651, name:  "1"},  # red alliance, source far from driver station
+    {id:  2, size: 0.1651, name:  "2"},  # red alliance, source near driver station
+    {id:  3, size: 0.1651, name:  "3"},  # red alliance, subwoofer right
+    {id:  4, size: 0.1651, name:  "4"},  # red alliance, subwoofer center
+    {id:  5, size: 0.1651, name:  "5"},  # red alliance, amp
+    {id: 11, size: 0.1651, name: "11"},  # red alliance, stage left
+    {id: 12, size: 0.1651, name: "12"},  # red alliance, stage right
+    {id: 13, size: 0.1651, name: "13"},  # red alliance, stage center
 
-    {id: 10, size: 0.1651, "10"},  # blue alliance, source far from driver station
-    {id:  9, size: 0.1651,  "9"},  # blue alliance, source near driver station
-    {id:  8, size: 0.1651,  "8"},  # blue alliance, subwoofer left
-    {id:  7, size: 0.1651,  "7"},  # blue alliance, subwoofer center
-    {id:  6, size: 0.1651,  "6"},  # blue alliance, amp
-    {id: 15, size: 0.1651, "15"},  # blue alliance, stage left
-    {id: 16, size: 0.1651, "16"},  # blue alliance, stage right
-    {id: 14, size: 0.1651, "14"},  # blue alliance, stage center
+    {id: 10, size: 0.1651, name: "10"},  # blue alliance, source far from driver station
+    {id:  9, size: 0.1651, name:  "9"},  # blue alliance, source near driver station
+    {id:  8, size: 0.1651, name:  "8"},  # blue alliance, subwoofer left
+    {id:  7, size: 0.1651, name:  "7"},  # blue alliance, subwoofer center
+    {id:  6, size: 0.1651, name:  "6"},  # blue alliance, amp
+    {id: 15, size: 0.1651, name: "15"},  # blue alliance, stage left
+    {id: 16, size: 0.1651, name: "16"},  # blue alliance, stage right
+    {id: 14, size: 0.1651, name: "14"},  # blue alliance, stage center
   ]
 # ## Tag bundle definitions
 # ### Remarks
