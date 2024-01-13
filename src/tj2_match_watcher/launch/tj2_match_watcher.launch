@@ -4,7 +4,7 @@
         <node pkg="tj2_match_watcher" type="tj2_match_watcher_node.py" name="tj2_match_watcher"
             output="screen" required="false">
             <param name="exclude_regex"
-                value=".*image.*|\/.*zed\/point_cloud.*|\/.*zed\/confidence.*|\/.*zed\/depth.*|.*zed\/imu\/data_raw|.*zed\/imu\/mag|.*zed\/atm_press|.*zed\/temperature\/.*|.*zed\/.*raw\/camera_info|.*zed\/pose.*|.*zed\/plane.*|.*zed\/parameter.*|.*zed\/odom|.*zed\/.*transform.*|rosout.*" />
+                value=".*image.*|\/.*zed\/.*|rosout.*" />
         </node>
     </group>
 </launch>
