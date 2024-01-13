@@ -266,7 +266,7 @@ costmap_converter_rate: 5.0 # 5.0
 ## Optimization Parameters ##
 
 optimization_activate: true  # true
-optimization_verbose: true  # false
+optimization_verbose: false  # false
 
 # Number of actual solver iterations called in each outerloop iteration.
 # See param no_outer_iterations.
