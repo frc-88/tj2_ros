@@ -8,10 +8,10 @@ Panels:
         - /Status1
         - /TF1
         - /LaserScan1
-        - /ZED1/Visibility1
+        - /ZED1
+        - /ZED1/Status1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
-        - /Apriltags Camera1
       Splitter Ratio: 0.740240216255188
     Tree Height: 573
   - Class: rviz/Selection
@@ -31,7 +31,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ZED
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -60,7 +60,7 @@ Visualization Manager:
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: false
+      Enabled: true
       Links:
         All Links Enabled: true
         Expand Joint Details: false
@@ -71,7 +71,7 @@ Visualization Manager:
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: false
+      Value: true
       Visual Enabled: true
     - Class: rviz/TF
       Enabled: true
@@ -79,17 +79,15 @@ Visualization Manager:
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
-        5:
-          Value: true
         All Enabled: false
         base_link:
           Value: true
         base_tilt_link:
           Value: false
         camera_0:
-          Value: false
+          Value: true
         camera_1:
-          Value: false
+          Value: true
         camera_armature_link:
           Value: false
         camera_link:
@@ -97,37 +95,17 @@ Visualization Manager:
         camera_tilt_link:
           Value: false
         imu:
-          Value: false
+          Value: true
         laser:
-          Value: false
+          Value: true
         map:
           Value: true
         odom:
           Value: true
         optical_camera_0:
-          Value: false
+          Value: true
         optical_camera_1:
-          Value: false
-        pointer_end_effector_base:
-          Value: false
-        pointer_end_effector_tip:
-          Value: false
-        pointer_pan_base:
-          Value: false
-        pointer_pan_link:
-          Value: false
-        pointer_tilt_base:
-          Value: false
-        pointer_tilt_link:
-          Value: false
-        swerve_wheel_0:
-          Value: false
-        swerve_wheel_1:
-          Value: false
-        swerve_wheel_2:
-          Value: false
-        swerve_wheel_3:
-          Value: false
+          Value: true
         zed2_baro_link:
           Value: false
         zed2_base_link:
@@ -150,6 +128,8 @@ Visualization Manager:
           Value: false
         zed2_temp_right_link:
           Value: false
+        zed_handheld:
+          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -159,55 +139,40 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            base_link:
-              base_tilt_link:
-                camera_0:
-                  optical_camera_0:
-                    {}
-                camera_1:
-                  optical_camera_1:
-                    5:
+            zed_handheld:
+              base_link:
+                base_tilt_link:
+                  camera_0:
+                    optical_camera_0:
                       {}
-                camera_tilt_link:
-                  camera_armature_link:
-                    camera_link:
-                      zed2_base_link:
-                        zed2_camera_center:
-                          zed2_baro_link:
-                            {}
-                          zed2_left_camera_frame:
-                            zed2_imu_link:
+                  camera_1:
+                    optical_camera_1:
+                      {}
+                  camera_tilt_link:
+                    camera_armature_link:
+                      camera_link:
+                        zed2_base_link:
+                          zed2_camera_center:
+                            zed2_baro_link:
                               {}
-                            zed2_left_camera_optical_frame:
+                            zed2_left_camera_frame:
+                              zed2_imu_link:
+                                {}
+                              zed2_left_camera_optical_frame:
+                                {}
+                              zed2_temp_left_link:
+                                {}
+                            zed2_mag_link:
                               {}
-                            zed2_temp_left_link:
-                              {}
-                          zed2_mag_link:
-                            {}
-                          zed2_right_camera_frame:
-                            zed2_right_camera_optical_frame:
-                              {}
-                            zed2_temp_right_link:
-                              {}
-                imu:
-                  {}
-                laser:
-                  {}
-                pointer_pan_base:
-                  pointer_pan_link:
-                    pointer_tilt_base:
-                      pointer_tilt_link:
-                        pointer_end_effector_base:
-                          pointer_end_effector_tip:
-                            {}
-                swerve_wheel_0:
-                  {}
-                swerve_wheel_1:
-                  {}
-                swerve_wheel_2:
-                  {}
-                swerve_wheel_3:
-                  {}
+                            zed2_right_camera_frame:
+                              zed2_right_camera_optical_frame:
+                                {}
+                              zed2_temp_right_link:
+                                {}
+                  imu:
+                    {}
+                  laser:
+                    {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -610,35 +575,30 @@ Visualization Manager:
       Marker Topic: /northstar/tag_markers
       Name: Apriltags
       Namespaces:
+        cube1: true
         cube2: true
         cube3: true
         cube4: true
-        cube5: true
-        cube6: true
-        posx1-2-3-4-5-6-7-8: true
+        posx1: true
+        posx1-2-3-4-5-11-12-13-10-9-8-7-6-15-16-14: true
         posx2: true
         posx3: true
         posx4: true
-        posx5: true
-        posx6: true
-        posy1-2-3-4-5-6-7-8: true
+        posy1: true
+        posy1-2-3-4-5-11-12-13-10-9-8-7-6-15-16-14: true
         posy2: true
         posy3: true
         posy4: true
-        posy5: true
-        posy6: true
-        posz1-2-3-4-5-6-7-8: true
+        posz1: true
+        posz1-2-3-4-5-11-12-13-10-9-8-7-6-15-16-14: true
         posz2: true
         posz3: true
         posz4: true
-        posz5: true
-        posz6: true
-        text1-2-3-4-5-6-7-8: true
+        text1: true
+        text1-2-3-4-5-11-12-13-10-9-8-7-6-15-16-14: true
         text2: true
         text3: true
         text4: true
-        text5: true
-        text6: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -904,7 +864,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 4.573540687561035
+      Distance: 3.4545607566833496
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -912,17 +872,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.6951553225517273
-        Y: 1.118752121925354
-        Z: 4.9620866775512695e-06
+        X: -0.03106936812400818
+        Y: 0.13909029960632324
+        Z: 4.842877388000488e-06
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3097974956035614
+      Pitch: 0.6847964525222778
       Target Frame: <Fixed Frame>
-      Yaw: 0.40254083275794983
+      Yaw: 3.8225438594818115
     Saved: ~
 Window Geometry:
   Apriltags Camera:
@@ -944,7 +904,7 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 2524
-  X: 2596
+  X: 72
   Y: 35
   ZED:
     collapsed: false

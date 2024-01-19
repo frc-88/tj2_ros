@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="map_name" default="$(env ROS_MAP_NAME)" />
+    <arg name="filename"
+        default="diffyjr_fieldcal_2024-01-14T16-32-10_filtered" />
+
+    <include
+        file="$(find tj2_camera)/launch/tj2_zed2.launch">
+        <arg name="pos_tracking_enabled" value="true" />
+        <arg name="depth_quality" value="4" />
+        <arg name="svo_file" value="/media/storage/svo/$(arg filename).svo" />
+    </include>
+
+    <node pkg="tf2_ros"
+        type="static_transform_publisher" name="zed_handheld_to_base"
+        args="0.0 0.0 0.0  0.0000  0.0000  0.0000  1.0000 zed_handheld base_link" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_camera_tilt"
+        args="0.1983 0.0 0.229  0 0 0 1 base_tilt_link camera_tilt_link" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_armature_to_link"
+        args="0.0 0.0 0.0  0 0 0 1 camera_armature_link camera_link" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_tilt_link_to_laser"
+        args="-0.0553 0.116 0.253  0 0 1 0 base_tilt_link laser" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_tilt_link_to_imu"
+        args="0.0634 0.0012 0.2039  0.0000  0.0000  0.7071  0.7071 base_tilt_link imu" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_footprint"
+        args="0.0 0.0 0.0  0 0 0 1 base_link base_tilt_link" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_tilt_to_armature"
+        args="0.0 0.0 0.0  0 0 0 1 camera_tilt_link camera_armature_link" />
+
+    <group ns="northstar">
+        <include
+            file="$(find tj2_northstar)/launch/apriltag_single_cam.launch">
+            <arg name="apriltag_settings"
+                value="$(find tj2_bringup)/config/diffyjr/tags/settings.yaml" />
+            <arg name="apriltag_tags"
+                value="$(find tj2_bringup)/config/diffyjr/tags/$(arg map_name)_tags.yaml" />
+            <arg name="camera_info_topic" value="/tj2_zed/rgb/camera_info" />
+            <arg name="image_rect_topic" value="/tj2_zed/rgb/image_rect_color" />
+            <arg name="node_name" value="apriltag" />
+        </include>
+
+        <node pkg="tj2_northstar" type="field_calibration.py" name="field_calibration"
+            required="false" output="screen" />
+    </group>
+
+    <node pkg="rosbag" type="record" name="fieldcal_recorder" output="screen"
+        args="record -O /media/storage/bags/fieldcal.bag
+            /northstar/filtered_detections"
+    />
+</launch>

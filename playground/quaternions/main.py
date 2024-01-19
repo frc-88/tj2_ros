@@ -1,4 +1,5 @@
 import math
+
 import tf_conversions
 from scipy.spatial.transform import Rotation
 
@@ -40,8 +41,8 @@ def quaternion_multiply(rotate_quat, quat):
 # euler_from_quaternion(0.0, 0.7071, 0.7071, 0.0)
 quaternion_from_euler(90.0, 0.0, 180.0)
 
-# camera_optical_rotation = (0.5, -0.5, -0.5, -0.5)
-
+camera_optical_rotation = (0.5, -0.5, -0.5, -0.5)
+print(euler_from_quaternion(*camera_optical_rotation))
 
 # print(quaternion_multiply((0.5, 0.5, 0.5, 0.5), quaternion_from_euler(0.0, 180.0, 0.0)))
 # print_quaternion(quaternion_from_euler(180.0000, -9.0, 0.0000))
@@ -50,11 +51,11 @@ quaternion_from_euler(90.0, 0.0, 180.0)
 # print_quaternion(quaternion_from_euler(180.0000, -9.0, 270.0000))
 
 # rotate apriltag about world Z:
-print_quaternion(
-    quaternion_multiply(
-        tf_conversions.transformations.quaternion_inverse(
-            quaternion_from_euler(90.0, 0.0, 180.0)
-        ),
-        quaternion_from_euler(0.0, 0.0, 53.0 + 90.0),
-    )
-)
+# print_quaternion(
+#     quaternion_multiply(
+#         tf_conversions.transformations.quaternion_inverse(
+#             quaternion_from_euler(90.0, 0.0, 180.0)
+#         ),
+#         quaternion_from_euler(0.0, 0.0, 53.0 + 90.0),
+#     )
+# )

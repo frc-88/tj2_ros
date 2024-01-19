@@ -88,5 +88,5 @@
             value="$(find tj2_bringup)/config/$(arg robot)/tags/cuda_tags.yaml" />
     </include> -->
 
-    <include file="$(find tj2_northstar)/launch/field_calibration.launch" />
+    <!-- <include file="$(find tj2_northstar)/launch/field_calibration.launch" /> -->
 </launch>

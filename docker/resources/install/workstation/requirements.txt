@@ -8,3 +8,4 @@ pupil-labs-uvc
 requests
 svgwrite
 pillow==9.1.0
+scikit-learn

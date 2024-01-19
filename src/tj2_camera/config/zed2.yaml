@@ -18,9 +18,8 @@ pos_tracking:
   pos_tracking_enabled: false # True to enable positional tracking from start
   publish_tf: false # publish `odom -> base_link` TF
   publish_map_tf: false # publish `map -> odom` TF
-  base_frame: "camera_link"
-  map_frame: "zed_map" # main frame
-  odometry_frame: "zed_odom" # odometry frame
+  map_frame: "map" # main frame
+  odometry_frame: "odom" # odometry frame
   area_memory_db_path: "zed_area_memory.area" # file loaded when the node starts to restore the "known visual features" map.
   save_area_memory_db_on_exit: false # save the "known visual features" map when the node is correctly closed to the path indicated by `area_memory_db_path`
   area_memory: false # Enable to detect loop closure

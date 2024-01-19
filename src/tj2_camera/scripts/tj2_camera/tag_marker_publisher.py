@@ -27,7 +27,6 @@ class TagMarkerPublisher:
         self.robot_frame = rospy.get_param("~robot_frame", "base_link")
         self.stale_detection_seconds = rospy.Duration(rospy.get_param("~stale_detection_seconds", 1.0))
 
-        self.tag_msg = AprilTagDetectionArray()
         self.rotate_quat = (0.5, -0.5, -0.5, -0.5)
 
         self.marker_colors = {
@@ -69,10 +68,10 @@ class TagMarkerPublisher:
             base_detections.detections.append(new_detection)
 
         if len(base_detections.detections) != 0:
-            self.tag_msg = base_detections
-            self.rotated_tag_pub.publish(self.tag_msg)
+            self.rotated_tag_pub.publish(base_detections)
             if self.debug:
-                self.publish_debug_rotation(self.tag_msg)
+                self.publish_debug_rotation(base_detections)
+        self.publish_marker(base_detections)
 
     def is_topic_active(self):
         num_subscriptions = (
@@ -236,9 +235,10 @@ class TagMarkerPublisher:
         marker.action = Marker.ADD
         marker.pose = copy.deepcopy(pose.pose)
         marker.header = pose.header
-        marker.lifetime = rospy.Duration(2.0 / self.marker_publish_rate)
+        marker.lifetime = rospy.Duration(0.0)
         marker.ns = name
         marker.id = 0  # all waypoint names should be unique
+        marker.frame_locked = False
 
         scale_vector = Vector3()
         scale_vector.x = self.tag_pose_marker_size
@@ -255,13 +255,7 @@ class TagMarkerPublisher:
         return marker
 
     def run(self):
-        rate = rospy.Rate(self.marker_publish_rate)
-        while not rospy.is_shutdown():
-            self.publish_marker(self.tag_msg)
-            try:
-                rate.sleep()
-            except rospy.exceptions.ROSTimeMovedBackwardsException:
-                continue
+        rospy.spin()
 
 
 if __name__ == "__main__":

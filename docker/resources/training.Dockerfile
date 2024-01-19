@@ -50,6 +50,17 @@ COPY --chown=1000:1000 ./install/training/copy_over_multistage.sh /opt/tj2/insta
 RUN bash /opt/tj2/install/training/copy_over_multistage.sh
 
 # ---
+# ZED SDK
+# ---
+
+ENV TZ=America/New_York
+
+COPY --chown=1000:1000 \
+    ./install/training/install_zed.sh \
+    /opt/${ORGANIZATION}/install/
+RUN bash /opt/${ORGANIZATION}/install/install_zed.sh
+
+# ---
 # Training dependencies
 # ---
 
@@ -62,17 +73,21 @@ RUN bash -x /opt/tj2/install/training/install_torchscript.sh
 ENV CMAKE_PREFIX_PATH=/usr/local/libtorch/share/cmake/Torch/${CMAKE_PREFIX_PATH:+:${CMAKE_PREFIX_PATH}}
 ENV CMAKE_LIBRARY_PATH=/usr/local/cuda/lib64/stubs/${CMAKE_LIBRARY_PATH:+:${CMAKE_LIBRARY_PATH}}
 
-
-# ---
-# Environment variables
-# ---
-
 ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
 ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 
 ENV ROS_DISTRO=noetic
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
+
+COPY --chown=1000:1000 \
+    ./install/training/install_ros_packages.sh \
+    /opt/tj2/install/training/
+RUN bash -x /opt/tj2/install/training/install_ros_packages.sh
+
+# ---
+# Environment variables
+# ---
 
 ENV FLASK_ENV=development \
     PATH=${HOME}/.local/bin:/opt/tj2/scripts${PATH:+:${PATH}} \
@@ -87,6 +102,8 @@ COPY --chown=1000:1000 ./install/client_bashrc ${HOME}/.bashrc
 
 RUN chown 1000:1000 ${HOME} && \
     chown -R 1000:1000 ${HOME}/.ros
+COPY --chown=1000:1000 ./install/training/make_symlinks.sh /opt/tj2/install
+RUN bash /opt/tj2/install/make_symlinks.sh
 
 WORKDIR ${HOME}
 USER ${USER}

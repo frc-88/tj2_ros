@@ -1,5 +1,10 @@
 version: "3"
 
+volumes:
+    workstation_tj2_ros_build:
+        name: workstation_tj2_ros_build
+        external: true
+
 services:
     training_tj2_ros:
         image: training_tj2_ros:latest
@@ -17,8 +22,15 @@ services:
         # https://askubuntu.com/questions/1237400/how-to-fix-x-error-badaccess-baddrawable-badshmseg-while-running-graphical-ap
         ipc: host
         volumes:
+            - workstation_tj2_ros_build:/home/tj2/ros_ws:rw
             - /home/${USER}/tj2_ros:/opt/tj2/tj2_ros:rw
-            - /home/${USER}/tj2_ros/workstation/docker/resources/scripts:/opt/tj2/scripts:rw
-            - /home/${USER}/tj2_ros/logs:/opt/tj2/logs:rw
-            - /home/${USER}/tj2_ros/bags:/opt/tj2/bags:rw
+            - /home/${USER}/tj2_ros/scripts:/opt/tj2/scripts:rw
+            - /media/storage/training_tj2_ros_data:/opt/tj2/tj2_ros/dataset_builder/data:rw
+            - /media/storage/tj2_ros_media:/media/storage:rw
+            - /tmp/.X11-unix:/tmp/.X11-unix
+            - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority:rw
+            # Allow container to control docker
+            - /home/${USER}/.docker:/opt/tj2/.docker:rw # docker looks here inside a container
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /dev:/dev:rw
         command: ["/opt/tj2/launch.sh"]
