@@ -27,35 +27,36 @@ def main() -> None:
             if len(msg.detections) > 0:
                 tags.append(msg)
 
-    global_poses: dict[str, list[Transform3D]] = {}
-    sizes: dict[str, float] = {}
+    global_poses: dict[int, list[Transform3D]] = {}
+    sizes: dict[int, float] = {}
     for tag in tags:
         tag: AprilTagDetectionArray
         for detection in tag.detections:
             detection: AprilTagDetection
             if len(detection.id) != 1:
                 continue
-            tag_id = str(detection.id[0])
+            tag_id = int(detection.id[0])
             sizes[tag_id] = detection.size[0]
             if tag_id not in global_poses:
                 global_poses[tag_id] = []
             detection_tf = Transform3D.from_pose_msg(detection.pose.pose.pose)
             global_poses[tag_id].append(detection_tf)
 
-    map_tags: dict[str, Transform3D] = {}
+    map_tags: dict[int, Transform3D] = {}
     for tag_id, poses in global_poses.items():
         data = np.array([np.append(pose.position_array, pose.rpy.to_array()) for pose in poses])
-        kmeans = KMeans(n_clusters=3, n_init=10)
+        kmeans = KMeans(n_clusters=3, n_init="auto")
         kmeans.fit(data)
 
         tag_transform = Transform3D.from_position_and_rpy(
             Vector3(*kmeans.cluster_centers_[0, 0:3].tolist()), RPY(kmeans.cluster_centers_[0, 3:6].tolist())
         )
-        tag_rotation = tag_transform.rotation_matrix @ base_to_optical_tf.rotation_matrix
-        optical_tag_transform = np.eye(4)
-        optical_tag_transform[0:3, 0:3] = tag_rotation
-        optical_tag_transform[0:3, 3] = tag_transform.position_array
-        map_tags[tag_id] = Transform3D(optical_tag_transform)
+        map_tags[tag_id] = tag_transform
+        # tag_rotation = tag_transform.rotation_matrix @ base_to_optical_tf.rotation_matrix
+        # optical_tag_transform = np.eye(4)
+        # optical_tag_transform[0:3, 0:3] = tag_rotation
+        # optical_tag_transform[0:3, 3] = tag_transform.position_array
+        # map_tags[tag_id] = Transform3D(optical_tag_transform)
 
         x = data[:, 0]
         y = data[:, 1]
@@ -67,7 +68,10 @@ def main() -> None:
             marker="x",
             markersize=10,
         )
-    for tag_id, pose in map_tags.items():
+
+    tag_ids = sorted(map_tags.keys())
+    for tag_id in tag_ids:
+        pose = map_tags[tag_id]
         tag_data = {
             "id": int(tag_id),
             "size": sizes[tag_id],
