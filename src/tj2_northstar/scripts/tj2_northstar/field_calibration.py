@@ -16,7 +16,6 @@ class FieldCalibration:
 
         self.tag_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10)
         self.filtered_tag_pub = rospy.Publisher("filtered_detections", AprilTagDetectionArray, queue_size=10)
-        self.global_pose_pub = rospy.Publisher("global_pose", PoseStamped, queue_size=10)
 
     def tag_callback(self, msg: AprilTagDetectionArray) -> None:
         out_msg = AprilTagDetectionArray()
@@ -28,9 +27,15 @@ class FieldCalibration:
                 continue
 
             tag_pose_stamped = PoseStamped()
-            tag_pose_stamped.header = msg.header
+            tag_pose_stamped.header = detection.pose.header
             tag_pose_stamped.pose = detection.pose.pose.pose
-            base_pose_stamped = transform_pose(self.tf_buffer, tag_pose_stamped, self.map_frame)
+            base_pose_stamped = transform_pose(
+                self.tf_buffer,
+                tag_pose_stamped,
+                self.map_frame,
+                rospy.Time.now() - detection.pose.header.stamp,
+                timeout=rospy.Duration.from_sec(0.05),
+            )
             if base_pose_stamped is None:
                 rospy.logwarn("Failed to transform tag pose to base frame")
                 continue
@@ -40,12 +45,6 @@ class FieldCalibration:
             out_msg.detections.append(detection)
 
         self.filtered_tag_pub.publish(out_msg)
-
-        base_pose = PoseStamped()
-        base_pose.header.frame_id = self.base_frame
-        base_pose.pose.orientation.w = 1.0
-        map_pose = transform_pose(self.tf_buffer, base_pose, self.map_frame)
-        self.global_pose_pub.publish(map_pose)
 
     def run(self) -> None:
         rospy.spin()
