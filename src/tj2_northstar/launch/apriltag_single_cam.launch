@@ -1,15 +1,15 @@
 <launch>
-    <arg name="apriltag_settings" default="settings.yaml"/>
-    <arg name="apriltag_tags" default="tags.yaml"/>
-    <arg name="camera_info_topic" default="camera_info"/>
-    <arg name="image_rect_topic" default="image_rect_color"/>
-    <arg name="node_name" default="apriltag"/>
+    <arg name="apriltag_settings" default="settings.yaml" />
+    <arg name="apriltag_tags" default="tags.yaml" />
+    <arg name="camera_info_topic" default="camera_info" />
+    <arg name="image_rect_topic" default="image_rect_color" />
+    <arg name="node_name" default="apriltag" />
 
-    <rosparam command="load" file="$(arg apriltag_settings)" ns="$(arg node_name)"/>
-    <rosparam command="load" file="$(arg apriltag_tags)" ns="$(arg node_name)"/>
-    <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="$(arg node_name)" required="false" output="screen">
-        <param name="publish_tag_detections_image" type="bool" value="false" />
-        <remap from="camera_info" to="$(arg camera_info_topic)"/>
-        <remap from="image_rect" to="$(arg image_rect_topic)"/>
+    <rosparam command="load" file="$(arg apriltag_settings)" ns="$(arg node_name)" />
+    <rosparam command="load" file="$(arg apriltag_tags)" ns="$(arg node_name)" />
+    <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="$(arg node_name)"
+        required="false" output="screen">
+        <remap from="camera_info" to="$(arg camera_info_topic)" />
+        <remap from="image_rect" to="$(arg image_rect_topic)" />
     </node>
 </launch>

@@ -1,2 +1,2 @@
 export ROBOT=diffyjr
-export ROS_MAP_NAME=charged-up-2023
+export ROS_MAP_NAME=charged_up_2023

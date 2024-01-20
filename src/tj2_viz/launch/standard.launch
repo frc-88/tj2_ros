@@ -1,10 +1,12 @@
 <?xml version="1.0"?>
 <launch>
-    <node name="rviz" pkg="rviz" type="rviz" args="-d /home/tj2/tj2_ros/src/tj2_viz/rviz/standard.rviz" output="screen" required="true"/>
+    <node name="rviz" pkg="rviz" type="rviz"
+        args="-d /home/tj2/tj2_ros/src/tj2_viz/rviz/standard.rviz" output="screen" required="true" />
 
     <group ns="northstar">
-        <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen">
-            <param name="marker_publish_rate" value="50"/>
+        <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher"
+            required="false" output="screen">
+            <param name="bundles_param" value="apriltag/tag_bundles" />
         </node>
     </group>
 </launch>

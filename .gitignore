@@ -3,6 +3,7 @@ scripts/startup.sh
 src/tj2_limelight/models
 src/tj2_detectnet/models
 src/tj2_detectnet/scripts/video_dataset/output
+src/tj2_data/data/zed/resources
 dataset_builder/limelight_targets/resources
 dataset_builder/limelight_targets/outputs
 dataset_builder/powercells_2021/resources
@@ -23,6 +24,8 @@ docker-compose.gpu.yaml
 *.pkl
 *.pt
 *.torchscript
+.neural_depth_*
+neural_depth_*.model
 
 **/wandb/*
 .OutlineViewer/

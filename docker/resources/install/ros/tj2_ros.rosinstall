@@ -169,7 +169,7 @@
 - git:
     local-name: imu_tools
     uri: https://github.com/CCNYRoboticsLab/imu_tools.git
-    version: noetic
+    version: 13ff13aceb6a4e827b5e952887a097a8fd72a897
 - git:
     local-name: teb_local_planner
     uri: https://github.com/rst-tu-dortmund/teb_local_planner
@@ -202,3 +202,7 @@
     local-name: camera_info_manager_py
     uri: https://github.com/mllofriu/camera_info_manager_py.git
     version: be1046dc8acc3d37f43052bfd4fc8d1db9619d93
+- git:
+    local-name: cuda_apriltag_ros
+    uri: https://github.com/frc-88/cuda_apriltag_ros.git
+    version: c441e48e6f08272c5f7cdcca55305963a62a7a52

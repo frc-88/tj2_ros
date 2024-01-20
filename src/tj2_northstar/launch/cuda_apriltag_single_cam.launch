@@ -1,13 +1,14 @@
 <launch>
-    <arg name="apriltag_settings" default="$(find cuda_apriltag_ros)/config/settings.yaml"/>
-    <arg name="camera_info_topic" default="camera_info"/>
-    <arg name="image_rect_topic" default="image_rect_color"/>
-    <arg name="node_name" default="apriltag"/>
+    <arg name="apriltag_settings" default="$(find cuda_apriltag_ros)/config/settings.yaml" />
+    <arg name="camera_info_topic" default="camera_info" />
+    <arg name="image_rect_topic" default="image_rect_color" />
+    <arg name="node_name" default="apriltag" />
 
-    <rosparam command="load" file="$(arg apriltag_settings)" ns="$(arg node_name)"/>
+    <rosparam command="load" file="$(arg apriltag_settings)" ns="$(arg node_name)" />
 
-    <node pkg="cuda_apriltag_ros" type="cuda_continuous_detector" name="cuda_continuous_detector" output="screen">
-        <rosparam command="load" file="$(arg apriltag_settings)" ns=""/>
+    <node pkg="cuda_apriltag_ros" type="cuda_continuous_detector" name="$(arg node_name)"
+        output="screen">
+        <rosparam command="load" file="$(arg apriltag_settings)" ns="" />
         <param name="image_topic" value="$(arg image_rect_topic)" />
         <param name="camera_info" value="$(arg camera_info_topic)" />
         <param name="pub_topic" value="tag_detections" />

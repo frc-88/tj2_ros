@@ -1,27 +1,21 @@
 #!/usr/bin/env python3
 import numpy as np
 import rospy
-from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from helpers import amcl_and_landmark_agree, is_roll_pitch_reasonable
-from tj2_tools.robot_state import Velocity, Pose2d
+from nav_msgs.msg import Odometry
+from tj2_tools.robot_state import Pose2d, Velocity
 
 
 class AmclTagInitialization:
     def __init__(self) -> None:
         rospy.init_node("amcl_tag_initialization")
 
-        self.linear_velocity_threshold = rospy.get_param(
-            "~linear_velocity_threshold", 0.1
-        )
-        self.angular_velocity_threshold = rospy.get_param(
-            "~angular_velocity_threshold", 0.1
-        )
+        self.linear_velocity_threshold = rospy.get_param("~linear_velocity_threshold", 0.1)
+        self.angular_velocity_threshold = rospy.get_param("~angular_velocity_threshold", 0.1)
         self.z_threshold = rospy.get_param("~z_threshold", 0.75)
         self.roll_pitch_threshold = rospy.get_param("~roll_pitch_threshold", 0.2)
-        self.ground_distance_threshold = rospy.get_param(
-            "~ground_distance_threshold", 0.5
-        )
+        self.ground_distance_threshold = rospy.get_param("~ground_distance_threshold", 0.5)
         self.ground_angle_threshold = rospy.get_param("~ground_angle_threshold", 0.5)
 
         self.initial_cov_xx = rospy.get_param("/amcl/initial_cov_xx", 0.25)
@@ -31,9 +25,7 @@ class AmclTagInitialization:
         # 0.0 == only reset once
         self.cooldown_time = rospy.Duration(rospy.get_param("~cooldown_time", 0.0))  # type: ignore
 
-        self.stale_measurement_time = rospy.Duration(
-            rospy.get_param("~stale_measurement_time", 0.5)  # type: ignore
-        )
+        self.stale_measurement_time = rospy.Duration(rospy.get_param("~stale_measurement_time", 0.5))  # type: ignore
 
         self.last_reset_time = rospy.Time()
 
@@ -53,12 +45,8 @@ class AmclTagInitialization:
             self.amcl_pose_callback,
             queue_size=10,
         )
-        self.odom_sub = rospy.Subscriber(
-            "odom", Odometry, self.odom_callback, queue_size=10
-        )
-        self.initial_pose_pub = rospy.Publisher(
-            "initialpose", PoseWithCovarianceStamped, queue_size=10
-        )
+        self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_callback, queue_size=10)
+        self.initial_pose_pub = rospy.Publisher("initialpose", PoseWithCovarianceStamped, queue_size=10)
 
     def landmark_callback(self, msg: PoseWithCovarianceStamped) -> None:
         now = rospy.Time.now()
@@ -90,29 +78,23 @@ class AmclTagInitialization:
             )
             return
 
-        if (
-            self.linear_velocity_threshold > 0.0
-            and self.robot_velocity.magnitude() > self.linear_velocity_threshold
-        ):
+        if self.linear_velocity_threshold > 0.0 and self.robot_velocity.magnitude() > self.linear_velocity_threshold:
             # check if the robot is moving below the linear threshold
-            rospy.loginfo("Rejecting landmark. Linear velocity is too high")
+            rospy.loginfo_throttle(1.0, "Rejecting landmark. Linear velocity is too high")
             return
 
-        if (
-            self.angular_velocity_threshold > 0.0
-            and abs(self.robot_velocity.theta) > self.angular_velocity_threshold
-        ):
+        if self.angular_velocity_threshold > 0.0 and abs(self.robot_velocity.theta) > self.angular_velocity_threshold:
             # check if the robot is moving below the angular threshold
-            rospy.loginfo("Rejecting landmark. Angular velocity is too high")
+            rospy.loginfo_throttle(1.0, "Rejecting landmark. Angular velocity is too high")
             return
 
         if abs(msg.pose.pose.position.z) > self.z_threshold:
             # check if the landmark is a reasonable Z height
-            rospy.loginfo("Rejecting landmark. Z height is too high")
+            rospy.loginfo_throttle(1.0, "Rejecting landmark. Z height is too high")
             return
 
         if not is_roll_pitch_reasonable(msg, self.roll_pitch_threshold):
-            rospy.loginfo("Rejecting landmark. Roll or pitch is too high")
+            rospy.loginfo_throttle(1.0, "Rejecting landmark. Roll or pitch is too high")
             return
 
         if not amcl_and_landmark_agree(

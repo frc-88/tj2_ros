@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+
+import pyzed.sl as sl
+
+cameras = sl.Camera.get_device_list()
+for camera in cameras:
+    sn = camera.serial_number
+    print(f"Found ZED with serial number {sn}")

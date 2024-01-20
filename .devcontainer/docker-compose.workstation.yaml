@@ -25,8 +25,7 @@ services:
       - /home/${USER}/tj2_ros:/opt/tj2/tj2_ros:rw
       - /home/${USER}/tj2_ros/scripts:/opt/tj2/scripts:rw
       - /media/storage/training_tj2_ros_data:/opt/tj2/tj2_ros/dataset_builder/data:rw
-      - /home/${USER}/tj2_ros/logs:/opt/tj2/logs:rw
-      - /media/storage/tj2_ros_bags/bags/:/opt/tj2/bags:rw
+      - /media/storage/tj2_ros_media:/media/storage:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority:rw
       # Allow container to control docker
