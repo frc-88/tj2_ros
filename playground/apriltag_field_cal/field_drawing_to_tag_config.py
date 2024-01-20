@@ -1,6 +1,6 @@
-import math
 import os
 
+import numpy as np
 import yaml
 from geometry_msgs.msg import Quaternion, Vector3
 from tj2_tools.transforms.rpy import RPY
@@ -18,8 +18,8 @@ def main() -> None:
 
     optical_to_field_tf = Transform3D.from_position_and_rpy(
         Vector3(0, 0, 0),
-        RPY.from_degrees((90.0, 0.0, 90.0)),
-    )
+        RPY.from_degrees((-90.0, -90.0, 0.0)),
+    ).inverse()
     out_config = []
     comments = {}
     for tag_config in drawing:
