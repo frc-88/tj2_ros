@@ -1,7 +1,8 @@
 import math
+import os
 
 import yaml
-from geometry_msgs.msg import Vector3
+from geometry_msgs.msg import Quaternion, Vector3
 from tj2_tools.transforms.rpy import RPY
 from tj2_tools.transforms.transform3d import Transform3D
 
@@ -11,17 +12,25 @@ def in_to_m(inches: float) -> float:
 
 
 def main() -> None:
-    with open("drawing.yaml", "r") as f:
+    local_dir = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(local_dir, "drawing.yaml"), "r") as f:
         drawing = yaml.safe_load(f)
 
+    optical_to_field_tf = Transform3D.from_position_and_rpy(
+        Vector3(0, 0, 0),
+        RPY.from_degrees((90.0, 0.0, 90.0)),
+    )
     out_config = []
     comments = {}
     for tag_config in drawing:
         tag_id = tag_config["id"]
         tag_transform = Transform3D.from_position_and_rpy(
             Vector3(in_to_m(tag_config["x"]), in_to_m(tag_config["y"]), in_to_m(tag_config["z"])),
-            RPY((math.radians(tag_config["roll"]), math.radians(tag_config["pitch"]), math.radians(tag_config["yaw"]))),
+            RPY.from_degrees((tag_config["roll"], tag_config["pitch"], tag_config["yaw"])),
         )
+        rotated_in_place = tag_transform.rotation_matrix @ optical_to_field_tf.rotation_matrix
+        tag_transform = Transform3D.from_position_and_quaternion(tag_transform.position, Quaternion(w=1.0))
+        tag_transform.tfmat[0:3, 0:3] = rotated_in_place
         tag_size = in_to_m(tag_config["size"])
         out_config.append(
             {

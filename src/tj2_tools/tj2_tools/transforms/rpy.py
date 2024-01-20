@@ -56,6 +56,10 @@ class RPY(Tuple[float, float, float]):
         return RosQuaternion(*tf_conversions.transformations.quaternion_from_euler(self.roll, self.pitch, self.yaw))
 
     @classmethod
+    def from_degrees(cls, iterable: Iterable[float]) -> "RPY":
+        return cls(np.deg2rad(iterable))
+
+    @classmethod
     def from_quaternion(cls, quat: RosQuaternion) -> "RPY":
         angles = tf_conversions.transformations.euler_from_quaternion((quat.x, quat.y, quat.z, quat.w))
         return cls(angles)

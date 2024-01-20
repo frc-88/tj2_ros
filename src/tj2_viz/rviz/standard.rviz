@@ -9,7 +9,6 @@ Panels:
         - /TF1
         - /LaserScan1
         - /ZED1
-        - /ZED1/Status1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
       Splitter Ratio: 0.740240216255188
@@ -79,21 +78,23 @@ Visualization Manager:
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
+        3:
+          Value: true
+        4:
+          Value: true
         All Enabled: false
         base_link:
           Value: true
         base_tilt_link:
           Value: false
-        camera_0:
-          Value: true
-        camera_1:
-          Value: true
         camera_armature_link:
           Value: false
         camera_link:
           Value: false
         camera_tilt_link:
           Value: false
+        field:
+          Value: true
         imu:
           Value: true
         laser:
@@ -101,10 +102,6 @@ Visualization Manager:
         map:
           Value: true
         odom:
-          Value: true
-        optical_camera_0:
-          Value: true
-        optical_camera_1:
           Value: true
         zed2_baro_link:
           Value: false
@@ -142,12 +139,6 @@ Visualization Manager:
             zed_handheld:
               base_link:
                 base_tilt_link:
-                  camera_0:
-                    optical_camera_0:
-                      {}
-                  camera_1:
-                    optical_camera_1:
-                      {}
                   camera_tilt_link:
                     camera_armature_link:
                       camera_link:
@@ -159,7 +150,12 @@ Visualization Manager:
                               zed2_imu_link:
                                 {}
                               zed2_left_camera_optical_frame:
-                                {}
+                                3:
+                                  {}
+                                4:
+                                  {}
+                                field:
+                                  {}
                               zed2_temp_left_link:
                                 {}
                             zed2_mag_link:
@@ -575,30 +571,96 @@ Visualization Manager:
       Marker Topic: /northstar/tag_markers
       Name: Apriltags
       Namespaces:
-        cube1: true
-        cube2: true
         cube3: true
         cube4: true
-        posx1: true
-        posx1-2-3-4-5-11-12-13-10-9-8-7-6-15-16-14: true
-        posx2: true
+        cubefield: true
+        cubefield-1: true
+        cubefield-10: true
+        cubefield-11: true
+        cubefield-12: true
+        cubefield-13: true
+        cubefield-14: true
+        cubefield-15: true
+        cubefield-16: true
+        cubefield-2: true
+        cubefield-4: true
+        cubefield-5: true
+        cubefield-6: true
+        cubefield-7: true
+        cubefield-8: true
+        cubefield-9: true
         posx3: true
         posx4: true
-        posy1: true
-        posy1-2-3-4-5-11-12-13-10-9-8-7-6-15-16-14: true
-        posy2: true
+        posxfield: true
+        posxfield-1: true
+        posxfield-10: true
+        posxfield-11: true
+        posxfield-12: true
+        posxfield-13: true
+        posxfield-14: true
+        posxfield-15: true
+        posxfield-16: true
+        posxfield-2: true
+        posxfield-4: true
+        posxfield-5: true
+        posxfield-6: true
+        posxfield-7: true
+        posxfield-8: true
+        posxfield-9: true
         posy3: true
         posy4: true
-        posz1: true
-        posz1-2-3-4-5-11-12-13-10-9-8-7-6-15-16-14: true
-        posz2: true
+        posyfield: true
+        posyfield-1: true
+        posyfield-10: true
+        posyfield-11: true
+        posyfield-12: true
+        posyfield-13: true
+        posyfield-14: true
+        posyfield-15: true
+        posyfield-16: true
+        posyfield-2: true
+        posyfield-4: true
+        posyfield-5: true
+        posyfield-6: true
+        posyfield-7: true
+        posyfield-8: true
+        posyfield-9: true
         posz3: true
         posz4: true
-        text1: true
-        text1-2-3-4-5-11-12-13-10-9-8-7-6-15-16-14: true
-        text2: true
+        poszfield: true
+        poszfield-1: true
+        poszfield-10: true
+        poszfield-11: true
+        poszfield-12: true
+        poszfield-13: true
+        poszfield-14: true
+        poszfield-15: true
+        poszfield-16: true
+        poszfield-2: true
+        poszfield-4: true
+        poszfield-5: true
+        poszfield-6: true
+        poszfield-7: true
+        poszfield-8: true
+        poszfield-9: true
         text3: true
         text4: true
+        textfield: true
+        textfield-1: true
+        textfield-10: true
+        textfield-11: true
+        textfield-12: true
+        textfield-13: true
+        textfield-14: true
+        textfield-15: true
+        textfield-16: true
+        textfield-2: true
+        textfield-4: true
+        textfield-5: true
+        textfield-6: true
+        textfield-7: true
+        textfield-8: true
+        textfield-9: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -864,7 +926,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 3.4545607566833496
+      Distance: 18.933839797973633
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -872,17 +934,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.03106936812400818
-        Y: 0.13909029960632324
-        Z: 4.842877388000488e-06
+        X: -6.07221794128418
+        Y: -5.20803165435791
+        Z: 1.110606717702467e-06
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6847964525222778
+      Pitch: 1.0697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 3.8225438594818115
+      Yaw: 4.79754638671875
     Saved: ~
 Window Geometry:
   Apriltags Camera:
