@@ -1,6 +1,5 @@
 import os
 
-import numpy as np
 import yaml
 from geometry_msgs.msg import Quaternion, Vector3
 from tj2_tools.transforms.rpy import RPY

@@ -78,10 +78,6 @@ Visualization Manager:
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
-        3:
-          Value: true
-        4:
-          Value: true
         All Enabled: false
         base_link:
           Value: true
@@ -93,8 +89,6 @@ Visualization Manager:
           Value: false
         camera_tilt_link:
           Value: false
-        field:
-          Value: true
         imu:
           Value: true
         laser:
@@ -150,12 +144,7 @@ Visualization Manager:
                               zed2_imu_link:
                                 {}
                               zed2_left_camera_optical_frame:
-                                3:
-                                  {}
-                                4:
-                                  {}
-                                field:
-                                  {}
+                                {}
                               zed2_temp_left_link:
                                 {}
                             zed2_mag_link:
@@ -571,8 +560,9 @@ Visualization Manager:
       Marker Topic: /northstar/tag_markers
       Name: Apriltags
       Namespaces:
+        cube1: true
+        cube2: true
         cube3: true
-        cube4: true
         cubefield: true
         cubefield-1: true
         cubefield-10: true
@@ -583,14 +573,16 @@ Visualization Manager:
         cubefield-15: true
         cubefield-16: true
         cubefield-2: true
+        cubefield-3: true
         cubefield-4: true
         cubefield-5: true
         cubefield-6: true
         cubefield-7: true
         cubefield-8: true
         cubefield-9: true
+        posx1: true
+        posx2: true
         posx3: true
-        posx4: true
         posxfield: true
         posxfield-1: true
         posxfield-10: true
@@ -601,14 +593,16 @@ Visualization Manager:
         posxfield-15: true
         posxfield-16: true
         posxfield-2: true
+        posxfield-3: true
         posxfield-4: true
         posxfield-5: true
         posxfield-6: true
         posxfield-7: true
         posxfield-8: true
         posxfield-9: true
+        posy1: true
+        posy2: true
         posy3: true
-        posy4: true
         posyfield: true
         posyfield-1: true
         posyfield-10: true
@@ -619,14 +613,16 @@ Visualization Manager:
         posyfield-15: true
         posyfield-16: true
         posyfield-2: true
+        posyfield-3: true
         posyfield-4: true
         posyfield-5: true
         posyfield-6: true
         posyfield-7: true
         posyfield-8: true
         posyfield-9: true
+        posz1: true
+        posz2: true
         posz3: true
-        posz4: true
         poszfield: true
         poszfield-1: true
         poszfield-10: true
@@ -637,14 +633,16 @@ Visualization Manager:
         poszfield-15: true
         poszfield-16: true
         poszfield-2: true
+        poszfield-3: true
         poszfield-4: true
         poszfield-5: true
         poszfield-6: true
         poszfield-7: true
         poszfield-8: true
         poszfield-9: true
+        text1: true
+        text2: true
         text3: true
-        text4: true
         textfield: true
         textfield-1: true
         textfield-10: true
@@ -655,6 +653,7 @@ Visualization Manager:
         textfield-15: true
         textfield-16: true
         textfield-2: true
+        textfield-3: true
         textfield-4: true
         textfield-5: true
         textfield-6: true
@@ -934,8 +933,8 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -6.07221794128418
-        Y: -5.20803165435791
+        X: 5.911494731903076
+        Y: 1.2664529085159302
         Z: 1.110606717702467e-06
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806

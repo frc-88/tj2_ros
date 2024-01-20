@@ -10,6 +10,11 @@
         <arg name="svo_file" value="/media/storage/svo/$(arg filename).svo" />
     </include>
 
+    <node name="map_server" pkg="map_server" type="map_server" output="screen"
+        args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
+        <param name="frame_id" value="map" />
+    </node>
+
     <node pkg="tf2_ros"
         type="static_transform_publisher" name="zed_handheld_to_base"
         args="0.0 0.0 0.0  0.0000  0.0000  0.0000  1.0000 zed_handheld base_link" />
