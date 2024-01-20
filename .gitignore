@@ -24,6 +24,8 @@ docker-compose.gpu.yaml
 *.pkl
 *.pt
 *.torchscript
+.neural_depth_*
+neural_depth_*.model
 
 **/wandb/*
 .OutlineViewer/
