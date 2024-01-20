@@ -9,6 +9,8 @@ from apriltag_ros.msg import AprilTagDetection, AprilTagDetectionArray
 from geometry_msgs.msg import Point, Pose, PoseArray, PoseStamped, Quaternion, Vector3
 from scipy.spatial.transform import Rotation
 from std_msgs.msg import ColorRGBA
+from tj2_tools.tag_bundle import BundleConfig, LayoutConfig
+from tj2_tools.transforms.transform3d import Transform3D
 from visualization_msgs.msg import Marker, MarkerArray
 
 
@@ -26,6 +28,10 @@ class TagMarkerPublisher:
         self.debug = rospy.get_param("~debug", False)
         self.robot_frame = rospy.get_param("~robot_frame", "base_link")
         self.stale_detection_seconds = rospy.Duration(rospy.get_param("~stale_detection_seconds", 1.0))
+        bundles_param = rospy.get_param("~bundles_param", "")
+        self.bundles_config = BundleConfig.from_dict(
+            {"layouts": rospy.get_param(bundles_param, []) if bundles_param else []}
+        )
 
         self.rotate_quat = (0.5, -0.5, -0.5, -0.5)
 
@@ -142,48 +148,65 @@ class TagMarkerPublisher:
         for detection in msg.detections:
             pose: Pose = detection.pose.pose.pose
             header = detection.pose.header
-            tag_id: List[int] = detection.id
-            size = 0.0
-            for tag_size in detection.size:
-                size += tag_size
-            name = "-".join([str(sub_id) for sub_id in tag_id])
+
             pose_stamped = PoseStamped()
             pose_stamped.header = header
             pose_stamped.pose = pose
 
-            if name in self.marker_colors:
-                marker_color = self.marker_colors[name]
+            tag_id: List[int] = list(detection.id)
+            if len(tag_id) == 1:
+                tag_markers = self.make_single_marker(str(tag_id[0]), pose_stamped, detection.size[0])
             else:
-                marker_color = self.marker_colors[None]
-            x_position_marker = self.make_marker(name, pose_stamped, marker_color)
-            y_position_marker = self.make_marker(name, pose_stamped, marker_color)
-            z_position_marker = self.make_marker(name, pose_stamped, marker_color)
-            text_marker = self.make_marker(name, pose_stamped, marker_color)
-            square_marker = self.make_marker(name, pose_stamped, marker_color)
+                bundle_key = tuple(sorted(tag_id))
+                layout: Optional[LayoutConfig] = None
+                for layout in self.bundles_config.layouts:
+                    if layout.key == bundle_key:
+                        break
+                if layout is None:
+                    rospy.logwarn(f"No layout found for tag bundle {bundle_key}")
+                    continue
+                bundle_tf = Transform3D.from_position_and_quaternion(
+                    pose_stamped.pose.position,
+                    pose_stamped.pose.orientation,
+                )
+                tag_markers = self.make_single_marker(layout.name, pose_stamped, sum(detection.size))
+                for tag in layout.layout:
+                    tag_tf = tag.transform.forward_by(bundle_tf)
+                    tag_pose = PoseStamped(header=pose_stamped.header, pose=tag_tf.to_pose_msg())
+                    tag_marker = self.make_single_marker(f"{layout.name}-{tag.id}", tag_pose, tag.size)
+                    tag_markers.extend(tag_marker)
 
-            self.prep_position_marker("x", x_position_marker, None, (1.0, 0.0, 0.0))
-            self.prep_position_marker(
-                "y",
-                y_position_marker,
-                (0.0000, 0.0000, 0.7071, 0.7071),
-                (0.0, 1.0, 0.0),
-            )
-            self.prep_position_marker(
-                "z",
-                z_position_marker,
-                (0.0000, -0.7071, 0.0000, 0.7071),
-                (0.0, 0.0, 1.0),
-            )
-            self.prep_text_marker(text_marker, name)
-            self.prep_square_marker(square_marker, size)
-
-            markers.markers.append(x_position_marker)
-            markers.markers.append(y_position_marker)
-            markers.markers.append(z_position_marker)
-            markers.markers.append(text_marker)
-            if len(detection.id) == 1:
-                markers.markers.append(square_marker)
+            markers.markers.extend(tag_markers)
         self.marker_pub.publish(markers)
+
+    def make_single_marker(self, tag_id: str, pose_stamped: PoseStamped, size: float) -> List[Marker]:
+        if tag_id in self.marker_colors:
+            marker_color = self.marker_colors[tag_id]
+        else:
+            marker_color = self.marker_colors[None]
+        x_position_marker = self.make_marker(tag_id, pose_stamped, marker_color)
+        y_position_marker = self.make_marker(tag_id, pose_stamped, marker_color)
+        z_position_marker = self.make_marker(tag_id, pose_stamped, marker_color)
+        text_marker = self.make_marker(tag_id, pose_stamped, marker_color)
+        square_marker = self.make_marker(tag_id, pose_stamped, marker_color)
+
+        self.prep_position_marker("x", x_position_marker, None, (1.0, 0.0, 0.0))
+        self.prep_position_marker(
+            "y",
+            y_position_marker,
+            (0.0000, 0.0000, 0.7071, 0.7071),
+            (0.0, 1.0, 0.0),
+        )
+        self.prep_position_marker(
+            "z",
+            z_position_marker,
+            (0.0000, -0.7071, 0.0000, 0.7071),
+            (0.0, 0.0, 1.0),
+        )
+        self.prep_text_marker(text_marker, tag_id)
+        self.prep_square_marker(square_marker, size)
+
+        return [x_position_marker, y_position_marker, z_position_marker, text_marker, square_marker]
 
     def prep_position_marker(self, name, position_marker, rotate_quat, color: Tuple[float, float, float]):
         position_marker.type = Marker.ARROW

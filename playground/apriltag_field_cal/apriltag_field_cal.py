@@ -1,6 +1,7 @@
 import json
 import math
 
+from typing import List
 import numpy as np
 from apriltag_ros.msg import AprilTagDetection, AprilTagDetectionArray
 from geometry_msgs.msg import Vector3
@@ -42,7 +43,7 @@ def main() -> None:
             if len(msg.detections) > 0:
                 tags.append(msg)
 
-    global_poses: dict[int, list[Transform3D]] = {}
+    global_poses: dict[int, List[Transform3D]] = {}
     sizes: dict[int, float] = {}
     for tag in tags:
         tag: AprilTagDetectionArray

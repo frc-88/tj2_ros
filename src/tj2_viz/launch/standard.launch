@@ -5,6 +5,8 @@
 
     <group ns="northstar">
         <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher"
-            required="false" output="screen" />
+            required="false" output="screen">
+            <param name="bundles_param" value="apriltag/tag_bundles" />
+        </node>
     </group>
 </launch>

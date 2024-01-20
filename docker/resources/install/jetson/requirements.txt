@@ -3,3 +3,5 @@ jsonlines
 ezdxf
 filterpy
 pynmcli==1.0.5
+scikit-learn
+dacite

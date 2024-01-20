@@ -1,0 +1,16 @@
+- {"id": 1, "x": 593.68, "y": 9.68, "z": 53.38, "roll": 0.0, "pitch": 0.0, "yaw": 120.0, "size": 6.5, "comment": "red alliance, source far from driver station"}
+- {"id": 2, "x": 637.21, "y": 34.79, "z": 53.38, "roll": 0.0, "pitch": 0.0, "yaw": 120.0, "size": 6.5, "comment": "red alliance, source near driver station"}
+- {"id": 3, "x": 652.73, "y": 196.17, "z": 57.13, "roll": 0.0, "pitch": 0.0, "yaw": 180.0, "size": 6.5, "comment": "red alliance, subwoofer right"}
+- {"id": 4, "x": 652.73, "y": 218.42, "z": 57.13, "roll": 0.0, "pitch": 0.0, "yaw": 180.0, "size": 6.5, "comment": "red alliance, subwoofer center"}
+- {"id": 5, "x": 578.77, "y": 323.0, "z": 53.38, "roll": 0.0, "pitch": 0.0, "yaw": 270.0, "size": 6.5, "comment": "red alliance, amp"}
+- {"id": 6, "x": 72.5, "y": 323.0, "z": 53.38, "roll": 0.0, "pitch": 0.0, "yaw": 270.0, "size": 6.5, "comment": "blue alliance, amp"}
+- {"id": 7, "x": -1.5, "y": 218.42, "z": 57.13, "roll": 0.0, "pitch": 0.0, "yaw": 0.0, "size": 6.5, "comment": "blue alliance, subwoofer center"}
+- {"id": 8, "x": -1.5, "y": 196.17, "z": 57.13, "roll": 0.0, "pitch": 0.0, "yaw": 0.0, "size": 6.5, "comment": "blue alliance, subwoofer left"}
+- {"id": 9, "x": 14.02, "y": 34.79, "z": 53.38, "roll": 0.0, "pitch": 0.0, "yaw": 60.0, "size": 6.5, "comment": "blue alliance, source near driver station"}
+- {"id": 10, "x": 57.54, "y": 9.68, "z": 53.38, "roll": 0.0, "pitch": 0.0, "yaw": 60.0, "size": 6.5, "comment": "blue alliance, source far from driver station"}
+- {"id": 11, "x": 468.69, "y": 146.19, "z": 52.0, "roll": 0.0, "pitch": 0.0, "yaw": 300.0, "size": 6.5, "comment": "red alliance, stage left"}
+- {"id": 12, "x": 468.69, "y": 177.1, "z": 52.0, "roll": 0.0, "pitch": 0.0, "yaw": 60.0, "size": 6.5, "comment": "red alliance, stage right"}
+- {"id": 13, "x": 441.74, "y": 161.62, "z": 52.0, "roll": 0.0, "pitch": 0.0, "yaw": 180.0, "size": 6.5, "comment": "red alliance, stage center"}
+- {"id": 14, "x": 209.48, "y": 161.62, "z": 52.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0, "size": 6.5, "comment": "blue alliance, stage center"}
+- {"id": 15, "x": 182.73, "y": 177.1, "z": 52.0, "roll": 0.0, "pitch": 0.0, "yaw": 120.0, "size": 6.5, "comment": "blue alliance, stage left"}
+- {"id": 16, "x": 182.73, "y": 146.19, "z": 52.0, "roll": 0.0, "pitch": 0.0, "yaw": 240.0, "size": 6.5, "comment": "blue alliance, stage right"}
