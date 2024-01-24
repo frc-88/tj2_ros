@@ -15,17 +15,17 @@ class JetsonPowerMode(IntEnum):
 
 class PowerModeNode:
     def __init__(self) -> None:
-        self.mode_id = JetsonPowerMode(rospy.get_param("~default_power_mode", JetsonPowerMode.HIGH_POWER.value))
+        self.default_mode_id = JetsonPowerMode(rospy.get_param("~default_power_mode", JetsonPowerMode.HIGH_POWER.value))
         self.launch_trigger = JetsonPowerMode(rospy.get_param("~launch_trigger", JetsonPowerMode.HIGH_POWER.value))
         self.launch_path = str(rospy.get_param("~launch_path", ""))
         self.primary_launcher = LaunchManager(self.launch_path) if self.launch_path else None
         self.current_mode_id = JetsonPowerMode.UNKNOWN
+        self.prev_mode_set_time = rospy.Time(0)
         self.mode_set_cooldown = rospy.Duration.from_sec(3.0)
         self.mode_sub = rospy.Subscriber("power_mode", Int32, self.mode_callback, queue_size=1)
 
     def mode_callback(self, msg: Int32) -> None:
         self.set_power_mode(JetsonPowerMode(msg.data))
-        rospy.sleep(self.mode_set_cooldown)
 
     def set_power_mode(self, mode_id: JetsonPowerMode) -> None:
         if self.current_mode_id == mode_id:
@@ -33,6 +33,17 @@ class PowerModeNode:
         if mode_id == JetsonPowerMode.UNKNOWN:
             rospy.logwarn("Cannot set power mode to UNKNOWN")
             return
+        if rospy.Time.now() - self.prev_mode_set_time < self.mode_set_cooldown:
+            rospy.logwarn(
+                f"Power mode set too recently. "
+                f"Please wait {self.mode_set_cooldown.to_sec()} seconds. "
+                "Ignoring request."
+            )
+            return
+
+        self.current_mode_id = mode_id
+        self.prev_mode_set_time = rospy.Time.now()
+
         rospy.loginfo(f"Setting power mode to {mode_id}")
         if self.primary_launcher:
             if self.launch_trigger == mode_id:
@@ -44,7 +55,7 @@ class PowerModeNode:
         os.system(f"sudo /usr/sbin/nvpmodel -m {mode_id.value}")
 
     def run(self):
-        self.set_power_mode(self.mode_id)
+        self.set_power_mode(self.default_mode_id)
         rospy.spin()
 
 
