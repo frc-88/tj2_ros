@@ -32,7 +32,6 @@
     </include>
 
     <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
-        <arg name="pos_tracking_enabled" value="false" />
         <arg name="serial_number" value="25556416" />
     </include>
 
