@@ -4,16 +4,13 @@ from threading import Lock
 import numpy as np
 import rospy
 import tf2_ros
-from geometry_msgs.msg import (Point, Pose, PoseStamped,
-                               PoseWithCovarianceStamped, Quaternion,
-                               TransformStamped, Vector3)
+from filter_models import DriveKalmanModel as FilterModel
+from filter_models import TagFastForward
+from geometry_msgs.msg import Point, Pose, PoseStamped, PoseWithCovarianceStamped, Quaternion, TransformStamped, Vector3
+from helpers import amcl_and_landmark_agree, is_roll_pitch_reasonable
 from nav_msgs.msg import Odometry
 from tf_conversions import transformations
 from tj2_tools.robot_state import Pose2d, Velocity
-
-from filter_models import DriveKalmanModel as FilterModel
-from filter_models import TagFastForward
-from helpers import amcl_and_landmark_agree, is_roll_pitch_reasonable
 
 
 class TJ2NorthstarFilter:
@@ -29,6 +26,7 @@ class TJ2NorthstarFilter:
         self.roll_pitch_threshold = rospy.get_param("~roll_pitch_threshold", 0.2)
         self.ground_distance_threshold = rospy.get_param("~ground_distance_threshold", 0.5)
         self.ground_angle_threshold = rospy.get_param("~ground_angle_threshold", 0.5)
+        self.use_amcl = rospy.get_param("~use_amcl", True)
 
         self.prev_odom = Odometry()
 
@@ -147,22 +145,23 @@ class TJ2NorthstarFilter:
         return transformations.inverse_matrix(self.get_forward_transform_mat(pose))
 
     def landmark_callback(self, msg: PoseWithCovarianceStamped) -> None:
-        # if len(self.amcl_pose.header.frame_id) == 0:
-        #     rospy.logwarn_throttle(1.0, "AMCL pose not set. Not updating landmark")
-        #     return
+        if self.use_amcl:
+            if len(self.amcl_pose.header.frame_id) == 0:
+                rospy.logwarn_throttle(1.0, "AMCL pose not set. Not updating landmark")
+                return
 
-        # if not is_roll_pitch_reasonable(msg, self.roll_pitch_threshold):
-        #     rospy.loginfo_throttle(1.0, "Rejecting landmark. Roll or pitch is too high")
-        #     return
+            if not is_roll_pitch_reasonable(msg, self.roll_pitch_threshold):
+                rospy.loginfo_throttle(1.0, "Rejecting landmark. Roll or pitch is too high")
+                return
 
-        # if not amcl_and_landmark_agree(
-        #     self.amcl_pose,
-        #     msg,
-        #     self.ground_distance_threshold,
-        #     self.ground_angle_threshold,
-        # ):
-        #     rospy.logwarn("AMCL pose do not agree. Not updating landmark")
-        #     return
+            if not amcl_and_landmark_agree(
+                self.amcl_pose,
+                msg,
+                self.ground_distance_threshold,
+                self.ground_angle_threshold,
+            ):
+                rospy.logwarn("AMCL pose do not agree. Not updating landmark")
+                return
         forwarded = self.fast_forwarder.fast_forward(msg)
         if forwarded is not None:
             self.forwarded_landmark_pub.publish(forwarded)
@@ -174,10 +173,12 @@ class TJ2NorthstarFilter:
         self.initial_pose_pub.publish(msg)
 
     def amcl_pose_callback(self, msg: PoseWithCovarianceStamped) -> None:
-        return
-        self.amcl_pose = msg
-        with self.model_lock:
-            self.model.update_landmark(msg)
+        if self.use_amcl:
+            self.amcl_pose = msg
+            with self.model_lock:
+                self.model.update_landmark(msg)
+        else:
+            rospy.logwarn("AMCL pose received but not used")
 
     def run(self) -> None:
         rate = rospy.Rate(self.update_rate)
