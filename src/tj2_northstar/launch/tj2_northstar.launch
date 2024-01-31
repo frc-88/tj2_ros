@@ -14,12 +14,12 @@
             <remap from="initialpose" to="/initialpose" />
         </node>
 
-        <node pkg="tj2_northstar" type="cuda_landmark_converter.py" name="landmark_converter"
+        <!-- <node pkg="tj2_northstar" type="cuda_landmark_converter.py" name="landmark_converter"
             required="false" output="screen">
             <rosparam command="load" file="$(arg tag_params)" ns="" />
-        </node>
-        <!-- <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter"
-        required="false" output="screen"/> -->
+        </node> -->
+        <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter"
+        required="false" output="screen"/>
         <node pkg="tj2_northstar" type="amcl_tag_initialization.py" name="amcl_tag_initialization"
             required="false" output="screen">
             <remap from="amcl_pose" to="/amcl_pose" />

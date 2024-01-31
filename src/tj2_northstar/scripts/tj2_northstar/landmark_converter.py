@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-from typing import List, Optional
 import math
+from typing import List, Optional
+
 import numpy as np
 import rospy
-import tf2_ros
 import tf2_geometry_msgs
+import tf2_ros
 import tf.transformations
-
 from apriltag_ros.msg import AprilTagDetectionArray
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
-
-from tj2_tools.transforms import lookup_transform
 from tj2_tools.robot_state import SimpleFilter
+from tj2_tools.transforms import lookup_transform
 
 
 class LandmarkConverter:
@@ -21,11 +20,11 @@ class LandmarkConverter:
         self.base_frame = str(rospy.get_param("~base_frame", "base_tilt_link"))
         self.map_frame = str(rospy.get_param("~map_frame", "map"))
         self.field_frame = str(rospy.get_param("~field_frame", "field"))
-        self.max_tag_distance = float(rospy.get_param("~max_tag_distance", 2.0))
+        self.max_tag_distance = float(rospy.get_param("~max_tag_distance", 1000.0))
         self.time_covariance_filter_k = float(
             rospy.get_param("~time_covariance_filter_k", 0.5)
         )
-        self.landmark_ids = frozenset(rospy.get_param("~landmark_ids", [0]))
+        self.landmark_ids = frozenset(rospy.get_param("~landmark_ids", list(range(1, 17))))
         base_covariance = rospy.get_param(
             "~covariance", np.eye(6, dtype=np.float64).flatten().tolist()
         )
@@ -65,9 +64,9 @@ class LandmarkConverter:
             elif len(ids) == 1 and next(iter(ids)) in self.landmark_ids:
                 individual_measurements.append(detection_pose)
         if landmark_pose is not None:
-            # self.publish_landmark_from_tf()
-            if self.should_publish(individual_measurements):
-                self.publish_inverted_landmark(landmark_pose)
+            self.publish_landmark_from_tf()
+            # if self.should_publish(individual_measurements):
+            #     self.publish_inverted_landmark(landmark_pose)
             if len(individual_measurements) > 0:
                 self.update_covariance(individual_measurements, landmark_pose)
 
