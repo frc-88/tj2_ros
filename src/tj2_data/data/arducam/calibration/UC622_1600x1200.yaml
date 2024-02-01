@@ -1,7 +1,7 @@
 
 image_width: 1600
 image_height: 1200
-camera_name: camera_1
+camera_name: UC622
 camera_matrix:
   rows: 3
   cols: 3
