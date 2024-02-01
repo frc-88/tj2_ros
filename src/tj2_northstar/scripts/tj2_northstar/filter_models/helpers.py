@@ -1,10 +1,10 @@
 import math
-from numba import njit
+from typing import Dict, Tuple
+
 import numpy as np
-from typing import Tuple, Dict
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
-
+from numba import njit
 from tj2_tools.robot_state import Pose2d, Velocity
 
 NUM_MEASUREMENTS = 3

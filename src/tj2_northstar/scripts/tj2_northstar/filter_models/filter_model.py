@@ -1,10 +1,10 @@
-import numpy as np
-from typing import Tuple
-from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseWithCovarianceStamped
-
-from tj2_tools.robot_state import Pose2d, Velocity
 from abc import abstractmethod
+from typing import Tuple
+
+import numpy as np
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from nav_msgs.msg import Odometry
+from tj2_tools.robot_state import Pose2d, Velocity
 
 
 class FilterModel:

@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <arg name="filter_params" default="$(find tj2_bringup)/config/diffyjr/northstar/filter.yaml" />
-    <arg name="tag_params"
-        default="$(find tj2_bringup)/config/diffyjr/tags/charged_up_2023_tags.yaml" />
 
     <group ns="northstar">
         <rosparam command="load" file="$(arg filter_params)" ns="" />
@@ -14,12 +12,8 @@
             <remap from="initialpose" to="/initialpose" />
         </node>
 
-        <!-- <node pkg="tj2_northstar" type="cuda_landmark_converter.py" name="landmark_converter"
-            required="false" output="screen">
-            <rosparam command="load" file="$(arg tag_params)" ns="" />
-        </node> -->
         <node pkg="tj2_northstar" type="landmark_converter.py" name="landmark_converter"
-        required="false" output="screen"/>
+            required="false" output="screen" />
         <node pkg="tj2_northstar" type="amcl_tag_initialization.py" name="amcl_tag_initialization"
             required="false" output="screen">
             <remap from="amcl_pose" to="/amcl_pose" />

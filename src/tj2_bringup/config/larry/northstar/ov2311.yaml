@@ -1,0 +1,9 @@
+mode:
+  width: 1600
+  height: 1200
+  fps: 10
+  format: MJPG
+controls:
+  "Auto Exposure Mode": 1
+  "Absolute Exposure Time": 50
+  "Gain": 20

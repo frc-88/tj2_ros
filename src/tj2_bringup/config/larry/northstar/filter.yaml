@@ -16,4 +16,4 @@ tj2_northstar:
   roll_pitch_threshold: 0.2
   ground_distance_threshold: 0.5
   ground_angle_threshold: 0.5
-  use_amcl: false
+  max_tag_distance: 3.0
