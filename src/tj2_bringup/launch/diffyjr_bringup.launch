@@ -111,7 +111,7 @@
 
     <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
         <arg name="nt_host" value="$(arg robot_address)" />
-        <arg name="robot" value="$(env ROBOT)" />
+        <arg name="robot" value="$(arg robot)" />
     </include>
 
     <!-- <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/> -->
