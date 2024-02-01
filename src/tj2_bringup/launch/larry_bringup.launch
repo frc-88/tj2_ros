@@ -30,8 +30,8 @@
 
     <!-- Joint and bounding box descriptions of the robot (URDF) -->
     <include file="$(find tj2_description)/launch/tj2_description.launch">
-        <arg name="model" value="$(find tj2_description)/urdf/scorpion.urdf.xml" />
-        <arg name="joint_names" value="$(find tj2_bringup)/config/scorpion/joints.yaml" />
+        <arg name="model" value="$(find tj2_description)/urdf/$(arg robot).urdf.xml" />
+        <arg name="joint_names" value="$(find tj2_bringup)/config/$(arg robot)/joints.yaml" />
     </include>
 
     <!-- ZED 2 camera -->
