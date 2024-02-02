@@ -36,7 +36,7 @@
 
     <!-- ZED 2 camera -->
     <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
-        <!-- <arg name="serial_number" value="25556416" /> -->
+        <arg name="serial_number" value="37015368" />
     </include>
 
     <!-- Bag recorder -->
@@ -48,17 +48,22 @@
             value="$(find tj2_bringup)/config/$(arg robot)/northstar/filter.yaml" />
     </include>
 
+    <node name="static_map_server" pkg="map_server" type="map_server" output="screen"
+    args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
+        <param name="frame_id" value="map"/>
+    </node>
+
     <include file="$(find tj2_northstar)/launch/dual_camera.launch">
         <arg name="common_camera_params"
             value="$(find tj2_bringup)/config/$(arg robot)/northstar/ov2311.yaml" />
         <arg name="camera_0_info_url"
             value="package://tj2_data/data/arducam/calibration/UC621_1600x1200.yaml" />
-        <arg name="serial_0" value="UC621" />
+        <arg name="serial_0" value="TJ2001" />
         <arg name="name_0" value="camera_0" />
 
         <arg name="camera_1_info_url"
             value="package://tj2_data/data/arducam/calibration/UC622_1600x1200.yaml" />
-        <arg name="serial_1" value="UC622" />
+        <arg name="serial_1" value="TJ2002" />
         <arg name="name_1" value="camera_1" />
     </include>
 

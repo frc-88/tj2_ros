@@ -98,6 +98,9 @@ def main():
                 corners_image = np.copy(debug)
                 cv2.drawChessboardCorners(corners_image, chessboard, found_corners, True)
                 debug = np.concatenate((debug, corners_image), axis=1)
+            
+            debug_height, debug_width = debug.shape[0:2]
+            debug = cv2.resize(debug, (debug_width // 2, debug_height // 2))
 
             cv2.imshow(window_name, debug)
             key = chr(cv2.waitKey(1) & 0xFF)

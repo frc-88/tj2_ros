@@ -15,7 +15,7 @@ class TagFastForward:
         self,
         dt: float,
         play_forward_buffer_size: int,
-        lag_upper_threshold: float = 0.25,
+        lag_upper_threshold: float = 0.5,
     ) -> None:
         self.dt = dt
         self.play_forward_buffer_size = play_forward_buffer_size
