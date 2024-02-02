@@ -83,7 +83,7 @@ def main():
     # stop the iteration when specified
     # accuracy, epsilon, is reached or
     # specified number of iterations are completed.
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.1)
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.0001)
 
     # Creating vector to store vectors of 3D points for each checkerboard image
     obj_points = []
