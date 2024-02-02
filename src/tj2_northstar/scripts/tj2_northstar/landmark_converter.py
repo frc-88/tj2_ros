@@ -21,7 +21,6 @@ class LandmarkConverter:
 
         self.base_frame = str(rospy.get_param("~base_frame", "base_tilt_link"))
         self.map_frame = str(rospy.get_param("~map_frame", "map"))
-        self.field_frame = str(rospy.get_param("~field_frame", "field"))
         self.max_tag_distance = float(rospy.get_param("~max_tag_distance", 1000.0))
         self.time_covariance_filter_k = float(rospy.get_param("~time_covariance_filter_k", 0.5))
         base_covariance = rospy.get_param("~covariance", np.eye(6, dtype=np.float64).flatten().tolist())
