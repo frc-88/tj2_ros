@@ -1,12 +1,10 @@
-import rospy
-from copy import deepcopy
-import numpy as np
-from typing import Optional, List
-from nav_msgs.msg import Odometry
-from tf_conversions import transformations
-from geometry_msgs.msg import PoseWithCovarianceStamped, Quaternion
+from typing import List, Optional
 
-from .helpers import LANDMARK_COVARIANCE_INDICES
+import numpy as np
+import rospy
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from nav_msgs.msg import Odometry
+
 from .drive_kf_model import DriveKalmanModel
 
 
@@ -25,15 +23,7 @@ class TagFastForward:
         self.current_index = 0
         self.odom_messages: List[Odometry] = []
 
-    @staticmethod
-    def _get_rpy(quaternion: Quaternion):
-        return transformations.euler_from_quaternion(
-            (quaternion.x, quaternion.y, quaternion.z, quaternion.w)
-        )
-
-    def fast_forward(
-        self, msg: PoseWithCovarianceStamped
-    ) -> Optional[PoseWithCovarianceStamped]:
+    def fast_forward(self, msg: PoseWithCovarianceStamped) -> Optional[PoseWithCovarianceStamped]:
         start_time = msg.header.stamp.to_sec()
         now = rospy.Time.now().to_sec()
         lag = now - start_time
@@ -41,13 +31,11 @@ class TagFastForward:
             rospy.logwarn(f"Lag is too high ({lag}), ignoring message")
             return None
         elif lag < 0.0:
-            rospy.logwarn(
-                f"Landmark has a timestamp in the future ({lag}), ignoring message"
-            )
+            rospy.logwarn(f"Landmark has a timestamp in the future ({lag}), ignoring message")
             return None
         num_samples = round(lag / self.dt)
         if num_samples > 0:
-            self.model.reset(msg)
+            self.model.teleport(msg.pose)
             self.current_index = 0
             for forwarded_time in np.linspace(start_time, now, num_samples):
                 odom_msg = self._find_nearest_odom(forwarded_time)
@@ -56,20 +44,8 @@ class TagFastForward:
                 self.model.predict()
             self.odom_messages = []
 
-            roll, pitch, _ = self._get_rpy(msg.pose.pose.orientation)
-            result = deepcopy(msg)
-            pose = self.model.get_pose()
-            result.pose.pose.position.x = pose.x
-            result.pose.pose.position.y = pose.y
-            result.pose.pose.orientation = Quaternion(
-                *transformations.quaternion_from_euler(roll, pitch, pose.theta)
-            )
-            covariance = list(result.pose.covariance)
-            new_covariance = self.model.get_covariance()
-            for mat_index, msg_index in LANDMARK_COVARIANCE_INDICES.items():
-                covariance[msg_index] = new_covariance[mat_index]
-            result.pose.covariance = covariance
-            return result
+            pose, twist = self.model.get_state()
+            return PoseWithCovarianceStamped(header=msg.header, pose=pose)
         else:
             return msg
 
@@ -89,7 +65,7 @@ class TagFastForward:
         return selected_msg
 
     def _update_odometry(self, msg: Odometry) -> None:
-        self.model.update_odometry(msg)
+        self.model.update_cmd_vel(msg.twist)
 
     def record_odometry(self, msg: Odometry) -> None:
         self.odom_messages.append(msg)
