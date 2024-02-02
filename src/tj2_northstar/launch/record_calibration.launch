@@ -6,18 +6,19 @@
 
     <group ns="northstar">
         <node name="decompress_arducam" pkg="image_transport" type="republish" output="screen"
-        required="false" args="
+            required="false"
+            args="
             compressed
             in:=$(arg name)/image_raw
             raw
             out:=calibration_image
-        "/>
+        " />
         <node pkg="tj2_northstar" type="record_calibration.py" name="arducam_record_calibration"
             required="true" output="screen">
             <param name="serial" value="$(arg serial)" />
             <param name="board_width" value="$(arg board_width)" />
             <param name="board_height" value="$(arg board_height)" />
-            <param name="directory" value="$(find tj2_northstar)/scripts/images" />
+            <param name="directory" value="/opt/tj2/tj2_ros/src/tj2_northstar/scripts/images" />
             <remap from="image_raw" to="calibration_image" />
             <!-- <remap from="image_raw" to="$(arg name)/image_raw" /> -->
         </node>

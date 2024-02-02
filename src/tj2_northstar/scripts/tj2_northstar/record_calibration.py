@@ -55,14 +55,14 @@ def main():
     board_height = rospy.get_param("~board_height", 8)
 
     write_directory = os.path.join(directory, serial)
-    chessboard = (board_width, board_height)
+    checkerboard = (board_width, board_height)
     window_name = "calibration"
 
     if not os.path.isdir(write_directory):
         os.makedirs(write_directory)
         print("Making directory:", write_directory)
 
-    data = AppData(window_name, CvBridge(), threading.Lock(), chessboard)
+    data = AppData(window_name, CvBridge(), threading.Lock(), checkerboard)
     in_queue = Queue()
     out_queue = Queue()
     detection_thread = threading.Thread(target=detection_task, args=(data, in_queue, out_queue))
@@ -96,9 +96,9 @@ def main():
                 debug = frame
             if found_corners is not None:
                 corners_image = np.copy(debug)
-                cv2.drawChessboardCorners(corners_image, chessboard, found_corners, True)
+                cv2.drawChessboardCorners(corners_image, checkerboard, found_corners, True)
                 debug = np.concatenate((debug, corners_image), axis=1)
-            
+
             debug_height, debug_width = debug.shape[0:2]
             debug = cv2.resize(debug, (debug_width // 2, debug_height // 2))
 
