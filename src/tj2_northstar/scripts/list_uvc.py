@@ -19,7 +19,7 @@ def list_captures(args) -> None:
 
 def list_modes(args) -> None:
     config = capture_config_from_args(args)
-    capture = UVCCamera(config)
+    capture = UVCCamera("camera", config)
     print(f"Listing modes for {capture.capture}")
     for mode in capture.get_modes():
         print(mode)
@@ -27,7 +27,7 @@ def list_modes(args) -> None:
 
 def list_controls(args) -> None:
     config = capture_config_from_args(args)
-    capture = UVCCamera(config)
+    capture = UVCCamera("camera", config)
     print(f"Listing modes for {capture.capture}")
     for control in capture.get_controls():
         print(control)
