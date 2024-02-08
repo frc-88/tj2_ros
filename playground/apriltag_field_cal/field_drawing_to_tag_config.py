@@ -17,7 +17,7 @@ def main() -> None:
 
     optical_to_field_tf = Transform3D.from_position_and_rpy(
         Vector3(0, 0, 0),
-        RPY.from_degrees((0, -90.0, 90.0)),
+        RPY.from_degrees((-90.0, -90.0, 0.0)),
     ).inverse()
     out_config = []
     comments = {}
