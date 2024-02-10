@@ -24,6 +24,7 @@ class LandmarkConverter:
         self.max_tag_distance = float(rospy.get_param("~max_tag_distance", 1000.0))
         self.time_covariance_filter_k = float(rospy.get_param("~time_covariance_filter_k", 0.5))
         base_covariance = rospy.get_param("~covariance", np.eye(6, dtype=np.float64).flatten().tolist())
+        self.min_visible_tags = rospy.get_param("~min_visible_tags", 0)
         assert len(base_covariance) == 36, f"Invalid covariance. Length is {len(base_covariance)}: {base_covariance}"
         self.base_covariance = np.array(base_covariance).reshape((6, 6))
 
@@ -70,7 +71,7 @@ class LandmarkConverter:
         """
         Should publish if at least one tag is closer than the threshold distance
         """
-        if len(tag_poses) <= 1:
+        if len(tag_poses) <= self.min_visible_tags:
             return False
         for tag_pose in tag_poses:
             distance = self.get_distance(tag_pose)
