@@ -10,30 +10,32 @@ from geometry_msgs.msg import (
     Point,
     Pose,
     PoseStamped,
+    PoseWithCovariance,
     PoseWithCovarianceStamped,
     Quaternion,
     TransformStamped,
+    TwistWithCovariance,
     Vector3,
 )
 from helpers import amcl_and_landmark_agree, is_roll_pitch_reasonable
 from nav_msgs.msg import Odometry
 from tf_conversions import transformations
-from tj2_tools.robot_state import Pose2d, Velocity
 
 
 class TJ2NorthstarFilter:
     def __init__(self) -> None:
         rospy.init_node("tj2_northstar_filter")
-        self.map_frame = rospy.get_param("~map_frame", "map")
-        self.odom_frame = ""
-        self.base_frame = ""
+        self.map_frame = str(rospy.get_param("~map_frame", "map"))
+        self.odom_frame = ""  # Will be set by the first odometry message
+        self.base_frame = ""  # Will be set by the first odometry message
 
-        self.play_forward_buffer_size = rospy.get_param("~play_forward_buffer_size", 20)
-        self.tag_fast_forward_sample_dt = rospy.get_param("~tag_fast_forward_sample_dt", 0.05)
-        self.update_rate = rospy.get_param("~update_rate", 50.0)
-        self.roll_pitch_threshold = rospy.get_param("~roll_pitch_threshold", 0.2)
-        self.ground_distance_threshold = rospy.get_param("~ground_distance_threshold", 0.5)
-        self.ground_angle_threshold = rospy.get_param("~ground_angle_threshold", 0.5)
+        self.play_forward_buffer_size = int(rospy.get_param("~play_forward_buffer_size", 20))
+        self.tag_fast_forward_sample_dt = float(rospy.get_param("~tag_fast_forward_sample_dt", 0.05))
+        self.update_rate = float(rospy.get_param("~update_rate", 50.0))
+        self.roll_pitch_threshold = float(rospy.get_param("~roll_pitch_threshold", 0.2))
+        self.ground_distance_threshold = float(rospy.get_param("~ground_distance_threshold", 0.5))
+        self.ground_angle_threshold = float(rospy.get_param("~ground_angle_threshold", 0.5))
+        self.use_amcl = bool(rospy.get_param("~use_amcl", True))
 
         self.prev_odom = Odometry()
 
@@ -76,7 +78,7 @@ class TJ2NorthstarFilter:
 
         self.prev_odom = msg
         with self.model_lock:
-            self.model.update_odometry(msg)
+            self.model.update_cmd_vel(msg.twist)
             self.fast_forwarder.record_odometry(msg)
 
     def publish_transform(self, pose: PoseStamped, child_frame: str) -> None:
@@ -88,31 +90,19 @@ class TJ2NorthstarFilter:
         transform.transform.rotation = pose.pose.orientation
         self.tf_broadcaster.sendTransform(transform)
 
-    def publish_filter_state(self, pose: Pose2d, velocity: Velocity, covariance: np.ndarray) -> None:
+    def publish_filter_state(self, pose: PoseWithCovariance, twist: TwistWithCovariance) -> None:
         state_msg = Odometry()
-        state_msg.header.stamp = rospy.Time.now()
         state_msg.header.frame_id = self.map_frame
+        state_msg.header.stamp = rospy.Time.now()
         state_msg.child_frame_id = self.base_frame
-        state_msg.pose.pose = pose.to_ros_pose()
-        state_msg.twist.twist = velocity.to_ros_twist()
-
-        pose_covariance = np.zeros((6, 6))
-        pose_covariance[0, 0] = covariance[0, 0]
-        pose_covariance[1, 1] = covariance[1, 1]
-        pose_covariance[5, 5] = covariance[2, 2]
-        state_msg.pose.covariance = pose_covariance.flatten().tolist()
-
-        twist_covariance = np.zeros((6, 6))
-        twist_covariance[0, 0] = covariance[3, 3]
-        twist_covariance[1, 1] = covariance[4, 4]
-        twist_covariance[5, 5] = covariance[5, 5]
-        state_msg.twist.covariance = twist_covariance.flatten().tolist()
+        state_msg.pose = pose
+        state_msg.twist = twist
 
         self.filter_state_pub.publish(state_msg)
 
         pose_msg = PoseWithCovarianceStamped()
         pose_msg.header = state_msg.header
-        pose_msg.pose = state_msg.pose
+        pose_msg.pose = pose
         self.filter_pose_pub.publish(pose_msg)
 
     def get_map_to_odom(self, map_to_base_pose: Pose, odom_to_base_pose: Pose) -> Pose:
@@ -152,36 +142,40 @@ class TJ2NorthstarFilter:
         return transformations.inverse_matrix(self.get_forward_transform_mat(pose))
 
     def landmark_callback(self, msg: PoseWithCovarianceStamped) -> None:
-        if len(self.amcl_pose.header.frame_id) == 0:
-            rospy.logwarn_throttle(1.0, "AMCL pose not set. Not updating landmark")
-            return
+        if self.use_amcl:
+            if len(self.amcl_pose.header.frame_id) == 0:
+                rospy.logwarn_throttle(1.0, "AMCL pose not set. Not updating landmark")
+                return
 
-        if not is_roll_pitch_reasonable(msg, self.roll_pitch_threshold):
-            rospy.loginfo_throttle(1.0, "Rejecting landmark. Roll or pitch is too high")
-            return
+            if not is_roll_pitch_reasonable(msg, self.roll_pitch_threshold):
+                rospy.loginfo_throttle(1.0, "Rejecting landmark. Roll or pitch is too high")
+                return
 
-        if not amcl_and_landmark_agree(
-            self.amcl_pose,
-            msg,
-            self.ground_distance_threshold,
-            self.ground_angle_threshold,
-        ):
-            rospy.logwarn("AMCL pose do not agree. Not updating landmark")
-            return
+            if not amcl_and_landmark_agree(
+                self.amcl_pose,
+                msg,
+                self.ground_distance_threshold,
+                self.ground_angle_threshold,
+            ):
+                rospy.logwarn("AMCL pose do not agree. Not updating landmark")
+                return
         forwarded = self.fast_forwarder.fast_forward(msg)
         if forwarded is not None:
             self.forwarded_landmark_pub.publish(forwarded)
             with self.model_lock:
-                self.model.update_landmark(forwarded)
+                self.model.update_pose(forwarded.pose)
 
     def reset_callback(self, msg: PoseWithCovarianceStamped) -> None:
-        self.model.reset(msg)
+        self.model.teleport(msg.pose)
         self.initial_pose_pub.publish(msg)
 
     def amcl_pose_callback(self, msg: PoseWithCovarianceStamped) -> None:
-        self.amcl_pose = msg
-        with self.model_lock:
-            self.model.update_landmark(msg)
+        if self.use_amcl:
+            self.amcl_pose = msg
+            with self.model_lock:
+                self.model.update_pose(msg.pose)
+        else:
+            rospy.logwarn("AMCL pose received but not used")
 
     def run(self) -> None:
         rate = rospy.Rate(self.update_rate)
@@ -195,17 +189,14 @@ class TJ2NorthstarFilter:
                 continue
             with self.model_lock:
                 self.model.predict()
-                self.publish_filter_state(
-                    self.model.get_pose(),
-                    self.model.get_velocity(),
-                    self.model.get_covariance(),
-                )
-                global_pose = self.model.get_pose()
+
+                pose, twist = self.model.get_state()
+                self.publish_filter_state(pose, twist)
             odom_pose = self.get_last_pose()
             if odom_pose is not None:
                 tf_pose = PoseStamped()
                 tf_pose.header.frame_id = self.map_frame
-                tf_pose.pose = self.get_map_to_odom(global_pose.to_ros_pose(), odom_pose)
+                tf_pose.pose = self.get_map_to_odom(pose.pose, odom_pose)
                 self.publish_transform(tf_pose, self.odom_frame)
 
 

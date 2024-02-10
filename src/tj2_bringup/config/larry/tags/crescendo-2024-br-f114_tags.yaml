@@ -1,0 +1,98 @@
+# # Definitions of tags to detect
+#
+# ## General remarks
+#
+# - All length in meters
+# - Ellipsis (...) signifies that the previous element can be repeated multiple times.
+#
+# ## Standalone tag definitions
+# ### Remarks
+#
+# - name is optional
+#
+# ### Syntax
+#
+# standalone_tags:
+#   [
+#     {id: ID, size: SIZE, name: NAME},
+#     ...
+#   ]
+standalone_tags:
+  [
+    {id:  1, size: 0.1651, name:  "1"},  # red alliance, source far from driver station
+    {id:  2, size: 0.1651, name:  "2"},  # red alliance, source near driver station
+    {id:  3, size: 0.1651, name:  "3"},  # red alliance, subwoofer right
+    {id:  4, size: 0.1651, name:  "4"},  # red alliance, subwoofer center
+    {id:  5, size: 0.1651, name:  "5"},  # red alliance, amp
+    {id: 11, size: 0.1651, name: "11"},  # red alliance, stage left
+    {id: 12, size: 0.1651, name: "12"},  # red alliance, stage right
+    {id: 13, size: 0.1651, name: "13"},  # red alliance, stage center
+
+    {id: 10, size: 0.1651, name: "10"},  # blue alliance, source far from driver station
+    {id:  9, size: 0.1651, name:  "9"},  # blue alliance, source near driver station
+    {id:  8, size: 0.1651, name:  "8"},  # blue alliance, subwoofer left
+    {id:  7, size: 0.1651, name:  "7"},  # blue alliance, subwoofer center
+    {id:  6, size: 0.1651, name:  "6"},  # blue alliance, amp
+    {id: 15, size: 0.1651, name: "15"},  # blue alliance, stage left
+    {id: 16, size: 0.1651, name: "16"},  # blue alliance, stage right
+    {id: 14, size: 0.1651, name: "14"},  # blue alliance, stage center
+  ]
+# ## Tag bundle definitions
+# ### Remarks
+#
+# - name is optional
+# - x, y, z have default values of 0 thus they are optional
+# - qw has default value of 1 and qx, qy, qz have default values of 0 thus they are optional
+#
+# ### Syntax
+#
+# tag_bundles:
+#   [
+#     {
+#       name: 'CUSTOM_BUNDLE_NAME',
+#       layout:
+#         [
+#           {id: ID, size: SIZE, x: X_POS, y: Y_POS, z: Z_POS, qw: QUAT_W_VAL, qx: QUAT_X_VAL, qy: QUAT_Y_VAL, qz: QUAT_Z_VAL},
+#           ...
+#         ]
+#     },
+#     ...
+#   ]
+tag_bundles:
+  [
+    {
+      name: 'field',
+      layout:
+      [
+        {id:  1, x: 15.0795, y: 0.2459, z: 1.3559, qx: -0.183, qy:  0.683, qz:  0.683, qw: -0.183, size: 0.1651},  # red alliance, source far from driver station
+        {id:  2, x: 16.1851, y: 0.8837, z: 1.3559, qx: -0.183, qy:  0.683, qz:  0.683, qw: -0.183, size: 0.1651},  # red alliance, source near driver station
+        {id:  3, x: 16.5793, y: 4.9827, z: 1.4511, qx:   -0.5, qy:    0.5, qz:    0.5, qw:   -0.5, size: 0.1651},  # red alliance, subwoofer right
+        {id:  4, x: 16.5793, y: 5.5479, z: 1.4511, qx:   -0.5, qy:    0.5, qz:    0.5, qw:   -0.5, size: 0.1651},  # red alliance, subwoofer center
+        {id:  5, x: 14.7008, y: 8.2042, z: 1.3559, qx: 0.7071, qy:   -0.0, qz:   -0.0, qw: 0.7071, size: 0.1651},  # red alliance, amp
+        # {id:  6, x:  1.8415, y: 8.2042, z: 1.3559, qx: 0.7071, qy:   -0.0, qz:   -0.0, qw: 0.7071, size: 0.1651},  # blue alliance, amp
+        # {id:  7, x: -0.0381, y: 5.5479, z: 1.4511, qx:    0.5, qy:    0.5, qz:    0.5, qw:    0.5, size: 0.1651},  # blue alliance, subwoofer center
+        # {id:  8, x: -0.0381, y: 4.9827, z: 1.4511, qx:    0.5, qy:    0.5, qz:    0.5, qw:    0.5, size: 0.1651},  # blue alliance, subwoofer left
+        {id:  9, x:  3.7089, y: 0.8837, z: 1.3559, qx:  0.183, qy:  0.683, qz:  0.683, qw:  0.183, size: 0.1651},  # blue alliance, source near driver station
+        {id: 10, x:  4.8143, y: 0.2459, z: 1.3559, qx:  0.183, qy:  0.683, qz:  0.683, qw:  0.183, size: 0.1651},  # blue alliance, source far from driver station
+        {id: 11, x: 11.9047, y: 3.7132, z: 1.3208, qx:  0.683, qy:  0.183, qz:  0.183, qw:  0.683, size: 0.1651},  # red alliance, stage left
+        {id: 12, x: 11.9047, y: 4.4983, z: 1.3208, qx:  0.183, qy:  0.683, qz:  0.683, qw:  0.183, size: 0.1651},  # red alliance, stage right
+        {id: 13, x: 11.2202, y: 4.1051, z: 1.3208, qx:   -0.5, qy:    0.5, qz:    0.5, qw:   -0.5, size: 0.1651},  # red alliance, stage center
+        {id: 14, x:  5.3208, y: 4.1051, z: 1.3208, qx:    0.5, qy:    0.5, qz:    0.5, qw:    0.5, size: 0.1651},  # blue alliance, stage center
+        # {id: 15, x:  4.6413, y: 4.4983, z: 1.3208, qx: -0.183, qy:  0.683, qz:  0.683, qw: -0.183, size: 0.1651},  # blue alliance, stage left
+        # {id: 16, x:  4.6413, y: 3.7132, z: 1.3208, qx:  0.683, qy: -0.183, qz: -0.183, qw:  0.683, size: 0.1651},  # blue alliance, stage right
+      ]
+    }
+  ]
+
+#     CRESCENDO 2024 FIELD
+#   BLUE                   RED
+# |----------------------------|
+# |                            |
+# |                            |
+# |                            |
+# |                            |
+# |                            |
+# +Y                           |
+# |                            |
+# o--+X------------------------|
+#         SCORING TABLE

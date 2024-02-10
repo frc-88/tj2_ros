@@ -1,10 +1,8 @@
-import numpy as np
-from typing import Tuple
-from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseWithCovarianceStamped
-
-from tj2_tools.robot_state import Pose2d, Velocity
 from abc import abstractmethod
+from typing import Tuple
+
+import numpy as np
+from geometry_msgs.msg import PoseWithCovariance, PoseWithCovarianceStamped, TwistWithCovariance
 
 
 class FilterModel:
@@ -13,28 +11,21 @@ class FilterModel:
         pass
 
     @abstractmethod
-    def update_landmark(self, msg: PoseWithCovarianceStamped) -> None:
+    def update_pose(self, msg: PoseWithCovarianceStamped) -> None:
         pass
 
     @abstractmethod
-    def update_odometry(self, msg: Odometry) -> None:
+    def update_cmd_vel(self, msg: TwistWithCovariance) -> None:
         pass
 
     @abstractmethod
-    def get_pose(self) -> Pose2d:
+    def get_state(self) -> Tuple[PoseWithCovariance, TwistWithCovariance]:
         pass
-
-    @abstractmethod
-    def get_velocity(self) -> Velocity:
-        pass
-
-    def get_state(self) -> Tuple[Pose2d, Velocity]:
-        return self.get_pose(), self.get_velocity()
 
     @abstractmethod
     def get_covariance(self) -> np.ndarray:
         pass
 
     @abstractmethod
-    def reset(self, msg: PoseWithCovarianceStamped) -> None:
+    def teleport(self, msg: PoseWithCovarianceStamped) -> None:
         pass

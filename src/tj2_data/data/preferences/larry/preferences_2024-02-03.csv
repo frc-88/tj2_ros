@@ -1,0 +1,9 @@
+/Preferences/.type,str,1,RobotPreferences
+/Preferences/swervedrive/BackLeft/Offset,float,1,0.067
+/Preferences/swervedrive/FrontLeft/Offset,float,1,0.33
+/Preferences/swervedrive/FrontRight/Offset,float,1,0.34
+/Preferences/swervedrive/BackRight/Offset,float,1,-1.045
+/Preferences/Drive/Offsets/Front Left,float,1,220.1
+/Preferences/Drive/Offsets/Front Right,float,1,182.7
+/Preferences/Drive/Offsets/Back Left,float,1,5.5
+/Preferences/Drive/Offsets/Back Right,float,1,317.0
