@@ -123,11 +123,14 @@ class LandmarkConverter:
     def num_tags_covariance_scale(self, num_tags: int) -> float:
         if num_tags == 0:
             raise ValueError("Can't compute covariance with no measurements!")
-        # 1 -> 1
-        # 2 -> 0.5
-        # 3 -> 0.25
-        # 4 -> 0.125
-        scale = 1.0 / (2 ** (num_tags - 1))
+        # 1 -> 5
+        elif num_tags == 1:
+            scale = 5
+        else:
+            # 2 -> 0.5
+            # 3 -> 0.25
+            # 4 -> 0.125
+            scale = 1.0 / (2 ** (num_tags - 1))
         return scale
 
     def pose_distance_covariance_scale(self, distance: float) -> float:

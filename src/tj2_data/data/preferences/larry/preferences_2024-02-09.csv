@@ -1,0 +1,24 @@
+/Preferences/.type,str,1,RobotPreferences
+/Preferences/swervedrive/FrontLeft/Offset,float,1,0.33
+/Preferences/swervedrive/BackLeft/Offset,float,1,0.067
+/Preferences/swervedrive/BackRight/Offset,float,1,-1.045
+/Preferences/swervedrive/FrontRight/Offset,float,1,0.34
+/Preferences/shooter/indexer/speed,float,1,0.0
+/Preferences/shooter/shooter/Leftspeed,float,1,0.0
+/Preferences/shooter/shooter/Rightspeed,float,1,0.0
+/Preferences/Drive/Offsets/Front Left,float,1,220.1
+/Preferences/Drive/Offsets/Front Right,float,1,182.7
+/Preferences/Drive/Offsets/Back Left,float,1,5.5
+/Preferences/Drive/Offsets/Back Right,float,1,317.0
+/Preferences/Elevator/Stow,float,1,0.0
+/Preferences/Elevator/Flat,float,1,50.0
+/Preferences/Elevator/MotionMagicVelocity,float,1,0.0
+/Preferences/Elevator/MotionMagicAcceleration,float,1,0.0
+/Preferences/Elevator/MotionMagicJerk,float,1,0.0
+/Preferences/Elevator/PID kP,float,1,0.0
+/Preferences/Elevator/PID kI,float,1,0.0
+/Preferences/Elevator/PID kD,float,1,0.0
+/Preferences/Elevator/PID kF,float,1,0.0
+/Preferences/Elevator/PID iZone,float,1,0.0
+/Preferences/Elevator/PID iMax,float,1,0.0
+/Preferences/Elevator/PID tolerance,float,1,0.0
