@@ -47,7 +47,7 @@
     </include>
 
     <!-- Arducam drivers -->
-    <include file="$(find tj2_northstar)/launch/dual_camera.launch">
+    <include file="$(find tj2_northstar)/launch/triple_camera.launch">
         <arg name="common_camera_params"
             value="$(find tj2_bringup)/config/shared/arducam/ov2311.yaml" />
         <arg name="camera_0_info_url"
@@ -59,10 +59,15 @@
             value="package://tj2_bringup/config/shared/arducam/calibration/TJ2002_1600x1200.yaml" />
         <arg name="serial_1" value="TJ2002" />
         <arg name="name_1" value="camera_1" />
+
+        <arg name="camera_2_info_url"
+            value="package://tj2_bringup/config/shared/arducam/calibration/TJ2003_1600x1200.yaml" />
+        <arg name="serial_2" value="TJ2003" />
+        <arg name="name_2" value="camera_2" />
     </include>
 
     <!-- AprilTag detection -->
-    <include file="$(find tj2_northstar)/launch/apriltag_dual_cam.launch">
+    <include file="$(find tj2_northstar)/launch/apriltag_triple_cam.launch">
         <arg name="apriltag_settings"
             value="$(find tj2_bringup)/config/shared/tags/settings.yaml" />
         <arg name="apriltag_tags"

@@ -13,6 +13,11 @@
     <arg name="serial_1" default="UC622" />
     <arg name="name_1" default="camera_1" />
 
+    <arg name="camera_2_info_url"
+        default="package://tj2_bringup/config/shared/arducam/calibration/UC622_1600x1200.yaml" />
+    <arg name="serial_2" default="UC622" />
+    <arg name="name_2" default="camera_2" />
+
     <group ns="northstar">
         <node pkg="tj2_northstar" type="uvc_camera_node.py" name="arducams" output="screen" respawn="true">
             <rosparam command="load" file="$(arg common_camera_params)" ns="cameras/$(arg name_0)" />
@@ -24,6 +29,11 @@
             <param name="cameras/$(arg name_1)/capture/serial_number" value="$(arg serial_1)" />
             <param name="cameras/$(arg name_1)/frame_id" value="optical_$(arg name_1)" />
             <param name="info_urls/$(arg name_1)" value="$(arg camera_1_info_url)" />
+
+            <rosparam command="load" file="$(arg common_camera_params)" ns="cameras/$(arg name_2)" />
+            <param name="cameras/$(arg name_2)/capture/serial_number" value="$(arg serial_2)" />
+            <param name="cameras/$(arg name_2)/frame_id" value="optical_$(arg name_2)" />
+            <param name="info_urls/$(arg name_2)" value="$(arg camera_2_info_url)" />
 
             <param name="tick_rate" value="10.0" />
         </node>
@@ -43,6 +53,14 @@
                 in:=$(arg name_1)/image_raw
                 compressed
                 out:=$(arg name_1)/image_raw
+            " />
+        <node name="arducam_compressed_$(arg name_2)" pkg="image_transport" type="republish"
+            output="screen" required="false"
+            args="
+                raw
+                in:=$(arg name_2)/image_raw
+                compressed
+                out:=$(arg name_2)/image_raw
             " />
     </group>
 </launch>
