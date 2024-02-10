@@ -70,6 +70,8 @@ class LandmarkConverter:
         """
         Should publish if at least one tag is closer than the threshold distance
         """
+        if len(tag_poses) <= 1:
+            return False
         for tag_pose in tag_poses:
             distance = self.get_distance(tag_pose)
             if distance < self.max_tag_distance:
