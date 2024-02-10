@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <arg name="common_camera_params"
-        default="$(find tj2_bringup)/config/diffyjr/northstar/ov2311.yaml" />
+        default="$(find tj2_bringup)/config/shared/arducam/ov2311.yaml" />
 
     <arg name="camera_0_info_url"
-        default="package://tj2_data/data/arducam/calibration/UC621_1600x1200.yaml" />
+        default="package://tj2_bringup/config/shared/arducam/calibration/UC621_1600x1200.yaml" />
     <arg name="serial_0" default="UC621" />
     <arg name="name_0" default="camera_0" />
 
     <arg name="camera_1_info_url"
-        default="package://tj2_data/data/arducam/calibration/UC622_1600x1200.yaml" />
+        default="package://tj2_bringup/config/shared/arducam/calibration/UC622_1600x1200.yaml" />
     <arg name="serial_1" default="UC622" />
     <arg name="name_1" default="camera_1" />
 
@@ -29,18 +29,20 @@
         </node>
 
         <node name="arducam_compressed_$(arg name_0)" pkg="image_transport" type="republish"
-        output="screen" required="false" args="
+            output="screen" required="false"
+            args="
                 raw
                 in:=$(arg name_0)/image_raw
                 compressed
                 out:=$(arg name_0)/image_raw
-            "/>
+            " />
         <node name="arducam_compressed_$(arg name_1)" pkg="image_transport" type="republish"
-        output="screen" required="false" args="
+            output="screen" required="false"
+            args="
                 raw
                 in:=$(arg name_1)/image_raw
                 compressed
                 out:=$(arg name_1)/image_raw
-            "/>
+            " />
     </group>
 </launch>
