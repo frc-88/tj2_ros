@@ -16,9 +16,6 @@
             value="$(find tj2_bringup)/config/$(arg robot)/frame_ids.yaml" />
     </include>
 
-    <!-- Mux together velocity command topics (joystick vs. autonomous commands) -->
-    <include file="$(find tj2_comm)/launch/twist_mux.launch" />
-
     <!-- Bridge NetworkTables and ROS topics to and from the RoboRIO -->
     <group ns="tj2">
         <include file="$(find ros_networktables_bridge_host)/launch/nt_client.launch">
@@ -26,13 +23,8 @@
         </include>
     </group>
 
+    <!-- Static transforms defining robot layout -->
     <include file="$(find tj2_bringup)/config/$(arg robot)/static_transforms_$(arg robot).launch" />
-
-    <!-- Joint and bounding box descriptions of the robot (URDF) -->
-    <include file="$(find tj2_description)/launch/tj2_description.launch">
-        <arg name="model" value="$(find tj2_description)/urdf/$(arg robot).urdf.xml" />
-        <arg name="joint_names" value="$(find tj2_bringup)/config/$(arg robot)/joints.yaml" />
-    </include>
 
     <!-- ZED 2 camera -->
     <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
@@ -42,17 +34,19 @@
     <!-- Bag recorder -->
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch" />
 
+    <!-- PreferenceConstants backup -->
+    <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
+        <arg name="nt_host" value="$(arg robot_address)" />
+        <arg name="robot" default="$(arg robot)" />
+    </include>
+
     <!-- TJ2 Northstar -->
     <include file="$(find tj2_northstar)/launch/tj2_northstar.launch">
         <arg name="filter_params"
             value="$(find tj2_bringup)/config/shared/northstar/filter.yaml" />
     </include>
 
-    <node name="static_map_server" pkg="map_server" type="map_server" output="screen"
-        args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
-        <param name="frame_id" value="map" />
-    </node>
-
+    <!-- Arducam drivers -->
     <include file="$(find tj2_northstar)/launch/dual_camera.launch">
         <arg name="common_camera_params"
             value="$(find tj2_bringup)/config/shared/northstar/ov2311.yaml" />
@@ -67,6 +61,7 @@
         <arg name="name_1" value="camera_1" />
     </include>
 
+    <!-- AprilTag detection -->
     <include file="$(find tj2_northstar)/launch/apriltag_dual_cam.launch">
         <arg name="apriltag_settings"
             value="$(find tj2_bringup)/config/shared/tags/settings.yaml" />
@@ -74,9 +69,9 @@
             value="$(find tj2_bringup)/config/shared/tags/$(arg map_name)_tags.yaml" />
     </include>
 
-    <!-- PreferenceConstants backup -->
-    <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
-        <arg name="nt_host" value="$(arg robot_address)" />
-        <arg name="robot" default="$(arg robot)" />
-    </include>
+    <!-- 2D Occupancy map -->
+    <node name="static_map_server" pkg="map_server" type="map_server" output="screen"
+        args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
+        <param name="frame_id" value="map" />
+    </node>
 </launch>

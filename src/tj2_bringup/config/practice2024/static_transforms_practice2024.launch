@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_camera"
+        args="0.0 0.0 0.0  0 0 0 1 base_tilt_link camera_link" />
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="pivot_to_camera_0"
+        args="0.1650 0.2455 0.21054  0.70711 0.70711 0 0 base_tilt_link camera_0" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="pivot_to_camera_1"
+        args="-0.1450 -0.2875 0.21054  0.70711 -0.70711 0 0 base_tilt_link camera_1" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_optical_0"
+        args="0.0 0.0 0.0  -0.5000  0.5000  -0.5000  0.5000 camera_0 optical_camera_0" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_optical_1"
+        args="0.0 0.0 0.0  -0.5000  0.5000  -0.5000  0.5000 camera_1 optical_camera_1" />
+</launch>
