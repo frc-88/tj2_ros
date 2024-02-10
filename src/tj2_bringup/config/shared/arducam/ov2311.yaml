@@ -4,7 +4,7 @@ mode:
   fps: 50
   format: MJPG
 controls:
-  "Auto Exposure Mode": 0
+  "Auto Exposure Mode": 1
   "Absolute Exposure Time": 20
   "Gain": 10
   "Sharpness": 3
