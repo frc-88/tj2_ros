@@ -51,18 +51,18 @@
         <arg name="common_camera_params"
             value="$(find tj2_bringup)/config/shared/arducam/ov2311.yaml" />
         <arg name="camera_0_info_url"
-            value="package://tj2_bringup/config/shared/arducam/calibration/TJ2001_1600x1200.yaml" />
-        <arg name="serial_0" value="TJ2001" />
+            value="package://tj2_bringup/config/shared/arducam/calibration/TJ2003_1600x1200.yaml" />
+        <arg name="serial_0" value="TJ2003" />
         <arg name="name_0" value="camera_0" />
 
         <arg name="camera_1_info_url"
-            value="package://tj2_bringup/config/shared/arducam/calibration/TJ2002_1600x1200.yaml" />
-        <arg name="serial_1" value="TJ2002" />
+            value="package://tj2_bringup/config/shared/arducam/calibration/TJ2004_1600x1200.yaml" />
+        <arg name="serial_1" value="TJ2004" />
         <arg name="name_1" value="camera_1" />
 
         <arg name="camera_2_info_url"
-            value="package://tj2_bringup/config/shared/arducam/calibration/TJ2003_1600x1200.yaml" />
-        <arg name="serial_2" value="TJ2003" />
+            value="package://tj2_bringup/config/shared/arducam/calibration/TJ2005_1600x1200.yaml" />
+        <arg name="serial_2" value="TJ2005" />
         <arg name="name_2" value="camera_2" />
     </include>
 
