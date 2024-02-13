@@ -1,7 +1,7 @@
 mode:
   width: 1600
   height: 1200
-  fps: 50
+  fps: 20
   format: MJPG
 controls:
   "Auto Exposure Mode": 1
