@@ -421,6 +421,7 @@ def convert_quat_to_euler_app(args: ToEulerCommandLineArgs) -> None:
                     "yaw": float(angles.yaw),
                 },
                 default_flow_style=True,
+                sort_keys=False,
             )
         )
     else:
@@ -452,6 +453,7 @@ def convert_euler_to_quat_app(args: ToQuatCommandLineArgs) -> None:
                     "qw": float(quat.w),
                 },
                 default_flow_style=True,
+                sort_keys=False,
             )
         )
     else:
