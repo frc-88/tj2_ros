@@ -2,8 +2,8 @@
 /Preferences/shooter/shooter/speed,float,1,0.0
 /Preferences/shooter/shooter/Leftspeed,float,1,5000.0
 /Preferences/shooter/shooter/Rightspeed,float,1,6000.0
-/Preferences/shooter/shooter/idleSpeed,float,1,5000.0
-/Preferences/shooter/shooter/idleControl,float,1,5000.0
+/Preferences/shooter/shooter/idleSpeed,float,1,0.0
+/Preferences/shooter/shooter/idleControl,float,1,1000.0
 /Preferences/shooter/shooter/velocityControl,float,1,0.0
 /Preferences/shooter/shooter/motor_kP,float,1,0.0
 /Preferences/shooter/shooter/motor_kI,float,1,0.0
@@ -26,11 +26,11 @@
 /Preferences/Arm/PID tolerance,float,1,0.0
 /Preferences/Arm/RightTarget,float,1,170.0
 /Preferences/Arm/LeftTarget,float,1,-174.0
-/Preferences/Intake/IntakeRollerSpeed,float,1,1.0
+/Preferences/Intake/IntakeRollerSpeed,float,1,0.5
 /Preferences/Intake/GuideRollerSpeed,float,1,1.0
 /Preferences/Intake/IndexRollerSpeed,float,1,0.25
 /Preferences/Intake/IndexerShootSetup,float,1,1.0
-/Preferences/swervedrive/FrontRight/Offset,float,1,0.154052734375
 /Preferences/swervedrive/BackLeft/Offset,float,1,0.374267578125
-/Preferences/swervedrive/FrontLeft/Offset,float,1,-0.27099609375
 /Preferences/swervedrive/BackRight/Offset,float,1,0.234130859375
+/Preferences/swervedrive/FrontLeft/Offset,float,1,-0.27099609375
+/Preferences/swervedrive/FrontRight/Offset,float,1,0.154052734375

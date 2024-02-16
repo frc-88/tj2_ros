@@ -1,0 +1,7 @@
+image: full-garage-2021-10-21T21-18-26--503396-edited.pgm
+resolution: 0.050000
+origin: [-39.000000, -26.200000, 0.000000]
+negate: 0
+occupied_thresh: 0.8
+free_thresh: 0.1
+
