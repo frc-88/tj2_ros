@@ -1,4 +1,8 @@
 /Preferences/.type,str,1,RobotPreferences
+/Preferences/swervedrive/FrontLeft/Offset,float,1,0.356
+/Preferences/swervedrive/BackLeft/Offset,float,1,0.067
+/Preferences/swervedrive/FrontRight/Offset,float,1,0.34
+/Preferences/swervedrive/BackRight/Offset,float,1,-1.045
 /Preferences/shooter/indexer/speed,float,1,0.0
 /Preferences/shooter/shooter/Leftspeed,float,1,0.0
 /Preferences/shooter/shooter/Rightspeed,float,1,0.0
@@ -18,7 +22,3 @@
 /Preferences/Elevator/PID iZone,float,1,0.0
 /Preferences/Elevator/PID iMax,float,1,0.0
 /Preferences/Elevator/PID tolerance,float,1,0.0
-/Preferences/swervedrive/FrontLeft/Offset,float,1,0.356
-/Preferences/swervedrive/BackLeft/Offset,float,1,0.067
-/Preferences/swervedrive/BackRight/Offset,float,1,-1.045
-/Preferences/swervedrive/FrontRight/Offset,float,1,0.34

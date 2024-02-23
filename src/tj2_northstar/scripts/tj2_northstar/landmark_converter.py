@@ -128,7 +128,7 @@ class LandmarkConverter:
             raise ValueError("Can't compute covariance with no measurements!")
         # 1 -> 5
         elif num_tags == 1:
-            scale = 5
+            scale = 10
         else:
             # 2 -> 0.5
             # 3 -> 0.25

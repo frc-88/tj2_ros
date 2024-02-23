@@ -172,6 +172,14 @@ def main():
         }
         write_yaml_parameters(write_path, parameters)
 
+        mean_error = 0
+        for i in range(len(obj_points)):
+            imgpoints2, _ = cv2.projectPoints(obj_points[i], rvecs[i], tvecs[i], mtx, dist)
+            error = cv2.norm(img_points[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+            mean_error += error
+
+        print("total error: ", mean_error)
+
     else:
         print("Failed to compute camera parameters!")
 

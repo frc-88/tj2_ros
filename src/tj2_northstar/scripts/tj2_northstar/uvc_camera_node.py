@@ -54,7 +54,7 @@ class UVCCameraNode:
         self.cameras: Dict[str, UVCCamera] = {}
         self.publishers: Dict[str, CameraPublisher] = {}
         for name, config in camera_configs.items():
-            print(config)
+            rospy.loginfo("config: %s" % config)
             camera = UVCCamera(config["frame_id"], CaptureConfig.from_dict(config["capture"]))
             camera.set_mode(CameraConfig.from_dict(config["mode"]))
             camera.set_controls(config["controls"])
