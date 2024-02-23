@@ -1,7 +1,7 @@
 import json
 import math
-
 from typing import List
+
 import numpy as np
 from apriltag_ros.msg import AprilTagDetection, AprilTagDetectionArray
 from geometry_msgs.msg import Vector3

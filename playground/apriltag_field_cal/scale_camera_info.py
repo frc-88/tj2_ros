@@ -1,8 +1,11 @@
+import argparse
 import copy
+import os
 
 import numpy as np
 from camera_info_manager import CameraInfoManager  # type: ignore
 from sensor_msgs.msg import CameraInfo
+from tj2_tools.camera_calibration.save_camera_info import resolve_url, save_camera_info
 
 
 def resize_camera_info(info: CameraInfo, destination_width: int, destination_height: int) -> CameraInfo:
@@ -44,9 +47,28 @@ def load_camera_info(url: str) -> CameraInfo:
 
 
 def main() -> None:
-    info = load_camera_info("package://tj2_bringup/config/shared/arducam/calibration/TJ2003_1600x1200.yaml")
-    resized_info = resize_camera_info(info, 800, 600)
-    print(resized_info)
+    parser = argparse.ArgumentParser("scale_camera_info")
+    parser.add_argument(
+        "url",
+        type=str,
+        help="URL to camera info yaml file. "
+        "ex: package://tj2_bringup/config/shared/arducam/calibration/TJ2003_1600x1200.yaml",
+    )
+    parser.add_argument("width", type=int, help="Desired width")
+    parser.add_argument("height", type=int, help="Desired height")
+    parser.add_argument("out_name", type=str, help="Output file name. ex: TJ2003_800x600.yaml")
+    args = parser.parse_args()
+
+    url = args.url
+    path = resolve_url(url, "camera")
+    out_dir = os.path.dirname(path)
+    out_path = os.path.join(out_dir, args.out_name)
+
+    info = load_camera_info(url)
+    resized_info = resize_camera_info(info, args.width, args.height)
+    out_path = out_path.replace("/home/tj2/ros_ws/src/tj2_ros", "/home/tj2/tj2_ros/src")
+    save_camera_info(out_path, resized_info)
+    print(f"Saved camera info to {out_path}")
 
 
 if __name__ == "__main__":

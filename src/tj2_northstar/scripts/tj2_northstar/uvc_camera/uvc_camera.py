@@ -1,17 +1,15 @@
-import rospy
 import copy
-from typing import Dict, Union, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
+import rospy
 import uvc
-from uvc.uvc_bindings import CameraMode
-
 from cv_bridge import CvBridge
-from std_msgs.msg import Header
 from sensor_msgs.msg import Image
-
+from std_msgs.msg import Header
 from tj2_northstar.uvc_camera.helper import find_match
+from uvc.uvc_bindings import CameraMode
 
 
 class CameraFormat(Enum):
@@ -108,9 +106,7 @@ class UVCCamera:
         self.frame_id = frame_id
         info = self.get_capture_info(capture_config)
         if info.uid in UVCCamera.opened_uids:
-            raise ConnectionError(
-                f"Camera is already opened: {info}. Supplied config: {capture_config}"
-            )
+            raise ConnectionError(f"Camera is already opened: {info}. Supplied config: {capture_config}")
         UVCCamera.opened_uids.add(info.uid)
         rospy.loginfo(f"Opening {info}")
         self.capture = uvc.Capture(info.uid)
@@ -135,18 +131,13 @@ class UVCCamera:
     def get_available_captures(cls) -> List[CaptureInfo]:
         return [CaptureInfo.from_dict(x) for x in uvc.device_list()]
 
-    def is_capture_check(
-        self, capture_info: CaptureInfo, capture_config: CaptureConfig
-    ) -> int:
+    def is_capture_check(self, capture_info: CaptureInfo, capture_config: CaptureConfig) -> int:
         count = 0
         if capture_info.uid == capture_config.uid:
             count += 1
         if capture_info.serialNumber == capture_config.serial_number:
             count += 1
-        if (
-            capture_info.idVendor == capture_config.vendor_id
-            and capture_info.idProduct == capture_config.product_id
-        ):
+        if capture_info.idVendor == capture_config.vendor_id and capture_info.idProduct == capture_config.product_id:
             count += 1
         return count
 
