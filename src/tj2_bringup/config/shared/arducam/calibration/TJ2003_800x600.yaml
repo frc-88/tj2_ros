@@ -1,7 +1,7 @@
 
 image_width: 800
 image_height: 600
-camera_name: 
+camera_name: TJ2003
 camera_matrix:
   rows: 3
   cols: 3

@@ -8,7 +8,7 @@ import numpy as np
 from camera_info_manager import CameraInfoManager  # type: ignore
 from sensor_msgs.msg import CameraInfo
 from std_msgs.msg import Header
-from tj2_tools.camera_calibration.save_camera_info import save_camera_info
+from tj2_tools.camera_calibration.calibration_file import write_yaml_parameters
 
 
 def get_matrix_dict(matrix):
@@ -139,7 +139,7 @@ def main():
             P=projection_matrix.flatten().tolist(),
         )
         print(f"Wrote to {write_path}")
-        save_camera_info("file://" + write_path, info)
+        write_yaml_parameters(write_path, info, camera_name)
 
         mean_error = 0
         for i in range(len(obj_points)):

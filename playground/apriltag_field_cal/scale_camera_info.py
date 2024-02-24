@@ -3,9 +3,8 @@ import copy
 import os
 
 import numpy as np
-from camera_info_manager import CameraInfoManager  # type: ignore
 from sensor_msgs.msg import CameraInfo
-from tj2_tools.camera_calibration.save_camera_info import resolve_url, save_camera_info
+from tj2_tools.camera_calibration.calibration_file import read_yaml_parameters, write_yaml_parameters
 
 
 def resize_camera_info(info: CameraInfo, destination_width: int, destination_height: int) -> CameraInfo:
@@ -40,34 +39,27 @@ def resize_camera_info(info: CameraInfo, destination_width: int, destination_hei
     return info
 
 
-def load_camera_info(url: str) -> CameraInfo:
-    info_manager = CameraInfoManager("camera", url=url, namespace="/")
-    info_manager.loadCameraInfo()
-    return info_manager.getCameraInfo()
-
-
 def main() -> None:
     parser = argparse.ArgumentParser("scale_camera_info")
     parser.add_argument(
-        "url",
+        "path",
         type=str,
-        help="URL to camera info yaml file. "
-        "ex: package://tj2_bringup/config/shared/arducam/calibration/TJ2003_1600x1200.yaml",
+        help="path to camera info yaml file. "
+        "ex: /opt/tj2/tj2_ros/src/tj2_bringup/config/shared/arducam/calibration/TJ2003_1600x1200.yaml",
     )
     parser.add_argument("width", type=int, help="Desired width")
     parser.add_argument("height", type=int, help="Desired height")
     parser.add_argument("out_name", type=str, help="Output file name. ex: TJ2003_800x600.yaml")
     args = parser.parse_args()
 
-    url = args.url
-    path = resolve_url(url, "camera")
+    path = args.path
     out_dir = os.path.dirname(path)
     out_path = os.path.join(out_dir, args.out_name)
 
-    info = load_camera_info(url)
+    info, name = read_yaml_parameters(path)
     resized_info = resize_camera_info(info, args.width, args.height)
     out_path = out_path.replace("/home/tj2/ros_ws/src/tj2_ros", "/home/tj2/tj2_ros/src")
-    save_camera_info(out_path, resized_info)
+    write_yaml_parameters(out_path, resized_info, name)
     print(f"Saved camera info to {out_path}")
 
 
