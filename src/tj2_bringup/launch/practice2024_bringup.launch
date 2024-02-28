@@ -18,8 +18,8 @@
 
     <!-- Bridge NetworkTables and ROS topics to and from the RoboRIO -->
     <group ns="tj2">
-        <include file="$(find ros_networktables_bridge_host)/launch/nt_host.launch"> <!-- changed to host jetson-->
-            <arg name="nt_host" value="$(arg robot_address)" /> <!--potentially remove? -->
+        <include file="$(find ros_networktables_bridge_host)/launch/nt_client.launch">
+            <arg name="nt_host" value="$(arg robot_address)" /> 
         </include>
     </group>
 

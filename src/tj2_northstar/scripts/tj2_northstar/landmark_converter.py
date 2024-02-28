@@ -133,11 +133,11 @@ class LandmarkConverter:
             # 2 -> 0.5
             # 3 -> 0.25
             # 4 -> 0.125
-            scale = 1.0 / (2 ** (num_tags - 1))
+            scale = 1.0 / (8 ** (num_tags - 1))
         return scale
 
     def pose_distance_covariance_scale(self, distance: float) -> float:
-        if distance < 0.5:
+        if distance < 0.2:
             return 10.0
         return 0.25 * distance**2.0
 

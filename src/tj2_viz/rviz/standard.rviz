@@ -11,7 +11,6 @@ Panels:
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
         - /Apriltags Camera1
-        - /Apriltags Camera1/Status1
       Splitter Ratio: 0.6117216348648071
     Tree Height: 141
   - Class: rviz/Selection
@@ -88,8 +87,8 @@ Visualization Manager:
           Value: true
         camera_1:
           Value: false
-        camera_link:
-          Value: false
+        camera_2:
+          Value: true
         map:
           Value: true
         odom:
@@ -97,6 +96,8 @@ Visualization Manager:
         optical_camera_0:
           Value: true
         optical_camera_1:
+          Value: true
+        optical_camera_2:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -115,8 +116,9 @@ Visualization Manager:
                 camera_1:
                   optical_camera_1:
                     {}
-                camera_link:
-                  {}
+                camera_2:
+                  optical_camera_2:
+                    {}
       Update Interval: 0
       Value: true
     - Alpha: 1
