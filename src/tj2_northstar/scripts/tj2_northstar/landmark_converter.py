@@ -34,7 +34,7 @@ class LandmarkConverter:
         assert len(base_covariance) == 36, f"Invalid covariance. Length is {len(base_covariance)}: {base_covariance}"
         self.base_covariance = np.array(base_covariance).reshape((6, 6))
 
-        self.prev_landmark = PoseStamped()
+        self.prev_landmarks: Dict[TagBundleId, PoseStamped] = {}
 
         self.time_covariance_filter = SimpleFilter(self.time_covariance_filter_k)
 
@@ -73,7 +73,9 @@ class LandmarkConverter:
             landmark = PoseWithCovarianceStamped()
             landmark.header = inverted_pose.header
             landmark.pose.pose = inverted_pose.pose
-            landmark.pose.covariance = self.get_covariance(sub_measurements, landmark_pose)
+            prev_landmark = self.prev_landmarks.get(ids, inverted_pose)
+            landmark.pose.covariance = self.get_covariance(sub_measurements, landmark_pose, prev_landmark)
+            self.prev_landmarks[ids] = inverted_pose
             self.landmark_pub.publish(landmark)
 
     def should_publish(self, tag_poses: List[PoseStamped], landmark_pose: PoseStamped) -> bool:
@@ -155,7 +157,7 @@ class LandmarkConverter:
     def pose_distance_covariance_scale(self, distance: float) -> float:
         if distance < 0.2:
             return 10.0
-        return 0.25 * distance**2.0
+        return 0.25 * distance**2.0 + 1.0
 
     def get_pose_distance(self, pose: PoseStamped) -> float:
         return float(
@@ -188,19 +190,20 @@ class LandmarkConverter:
         filtered_delta = self.time_covariance_filter.update(time_delta)
         if filtered_delta < time_delta:
             time_delta = filtered_delta
-        return time_delta * 2.0
+        return time_delta * 2.0 + 1.0
 
-    def get_covariance(self, tag_poses: List[PoseStamped], overall_pose: PoseStamped) -> List[float]:
+    def get_covariance(
+        self, tag_poses: List[PoseStamped], landmark: PoseStamped, prev_landmark: PoseStamped
+    ) -> List[float]:
         distances = [self.get_pose_distance(pose) for pose in tag_poses]
         aggregate_distance = float(np.median(distances))
 
         covariance = self.base_covariance * self.num_tags_covariance_scale(len(tag_poses))
         covariance *= self.pose_distance_covariance_scale(aggregate_distance)
 
-        covariance *= self.delta_pose_covariance_scale(overall_pose, self.prev_landmark)
-        covariance *= self.time_covariance_scale(overall_pose, self.prev_landmark)
+        covariance *= self.delta_pose_covariance_scale(landmark, prev_landmark)
+        covariance *= self.time_covariance_scale(landmark, prev_landmark)
 
-        self.prev_landmark = overall_pose
         return covariance.flatten().tolist()
 
     def run(self) -> None:
