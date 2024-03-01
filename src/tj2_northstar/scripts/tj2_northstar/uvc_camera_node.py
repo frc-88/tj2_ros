@@ -54,14 +54,16 @@ class UVCCameraNode:
         self.cameras: Dict[str, UVCCamera] = {}
         self.publishers: Dict[str, CameraPublisher] = {}
         for name, config in camera_configs.items():
-            rospy.loginfo("config: %s" % config)
-            camera = UVCCamera(config["frame_id"], CaptureConfig.from_dict(config["capture"]))
+            rospy.loginfo("Config: %s" % config)
+            if len(config["serial_number"]) == 0:
+                rospy.logwarn("Serial number supplied is empty. Skipping %s" % name)
+                continue
+            camera = UVCCamera(config["frame_id"], config["serial_number"])
             camera.set_mode(CameraConfig.from_dict(config["mode"]))
             camera.set_controls(config["controls"])
             self.cameras[name] = camera
             self.publishers[name] = CameraPublisher(name)
-
-        for name, url in info_urls.items():
+            url = info_urls[name]
             self.publishers[name].load_info(url)
 
     def run(self) -> None:

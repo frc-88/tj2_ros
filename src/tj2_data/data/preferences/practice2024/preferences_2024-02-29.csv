@@ -1,8 +1,9 @@
 /Preferences/.type,str,1,RobotPreferences
+/Preferences/Auto/AutoCloseAim,float,1,63.0
 /Preferences/shooter/indexer/speed,float,1,0.0
 /Preferences/shooter/shooter/speed,float,1,0.0
-/Preferences/shooter/shooter/Leftspeed,float,1,3000.0
-/Preferences/shooter/shooter/Rightspeed,float,1,5600.0
+/Preferences/shooter/shooter/Leftspeed,float,1,5600.0
+/Preferences/shooter/shooter/Rightspeed,float,1,5000.0
 /Preferences/shooter/shooter/idleSpeed,float,1,0.0
 /Preferences/shooter/shooter/idleControl,float,1,1500.0
 /Preferences/shooter/shooter/velocityControl,float,1,200.0
@@ -11,32 +12,10 @@
 /Preferences/shooter/shooter/motor_kD,float,1,0.0
 /Preferences/shooter/shooter/motor_kV,float,1,0.129
 /Preferences/shooter/shooter/motor_kS,float,1,0.0
-/Preferences/Auto/AutoCloseAim,float,1,63.0
 /Preferences/Intake/IntakeRollerSpeed,float,1,1.0
 /Preferences/Intake/GuideRollerSpeed,float,1,1.0
 /Preferences/Intake/IndexRollerSpeed,float,1,0.25
 /Preferences/Intake/IndexerShootSetup,float,1,1.0
-/Preferences/Arm/Speed,float,1,-0.5
-/Preferences/Arm/MotionMagicVelocity,float,1,100.0
-/Preferences/Arm/MotionMagicAcceleration,float,1,1000.0
-/Preferences/Arm/MotionMagicJerk,float,1,100000.0
-/Preferences/Arm/TagrgetPosition,float,1,0.0
-/Preferences/Arm/PID kP,float,1,10.0
-/Preferences/Arm/PID kI,float,1,0.0
-/Preferences/Arm/PID kD,float,1,0.3
-/Preferences/Arm/PID kF,float,1,0.12
-/Preferences/Arm/PID kS,float,1,0.0
-/Preferences/Arm/PID iZone,float,1,0.0
-/Preferences/Arm/PID iMax,float,1,0.0
-/Preferences/Arm/PID tolerance,float,1,0.0
-/Preferences/Arm/RightTarget,float,1,170.0
-/Preferences/Arm/LeftTarget,float,1,-174.0
-/Preferences/Arm/ArmStowSpeed,float,1,0.05
-/Preferences/Arm/ArmTarget,float,1,0.0
-/Preferences/Arm/ArmPrepPosition,float,1,-45.0
-/Preferences/Arm/ArmClimbPosition,float,1,103.0
-/Preferences/Runtime/Teleop,float,1,6953.986659
-/Preferences/Runtime/Auto,float,1,0.0
 /Preferences/Elevator/Stow,float,1,0.0
 /Preferences/Elevator/Flat,float,1,90.0
 /Preferences/Elevator/MotionMagicVelocity,float,1,100.0
@@ -82,7 +61,28 @@
 /Preferences/Elevator/ElevatorClimbPosition,float,1,47.0
 /Preferences/Elevator/ElevatorPrepPosition,float,1,32.0
 /Preferences/Elevator/PivotTarget,float,1,0.0
-/Preferences/swervedrive/FrontRight/Offset,float,1,0.154052734375
-/Preferences/swervedrive/BackLeft/Offset,float,1,0.374267578125
-/Preferences/swervedrive/FrontLeft/Offset,float,1,-0.27099609375
+/Preferences/Runtime/Teleop,float,1,8071.354572000002
+/Preferences/Runtime/Auto,float,1,0.0
 /Preferences/swervedrive/BackRight/Offset,float,1,0.234130859375
+/Preferences/swervedrive/FrontLeft/Offset,float,1,-0.27099609375
+/Preferences/swervedrive/BackLeft/Offset,float,1,0.374267578125
+/Preferences/swervedrive/FrontRight/Offset,float,1,0.154052734375
+/Preferences/Arm/Speed,float,1,-0.5
+/Preferences/Arm/MotionMagicVelocity,float,1,100.0
+/Preferences/Arm/MotionMagicAcceleration,float,1,1000.0
+/Preferences/Arm/MotionMagicJerk,float,1,100000.0
+/Preferences/Arm/TagrgetPosition,float,1,0.0
+/Preferences/Arm/PID kP,float,1,10.0
+/Preferences/Arm/PID kI,float,1,0.0
+/Preferences/Arm/PID kD,float,1,0.3
+/Preferences/Arm/PID kF,float,1,0.12
+/Preferences/Arm/PID kS,float,1,0.0
+/Preferences/Arm/PID iZone,float,1,0.0
+/Preferences/Arm/PID iMax,float,1,0.0
+/Preferences/Arm/PID tolerance,float,1,0.0
+/Preferences/Arm/RightTarget,float,1,170.0
+/Preferences/Arm/LeftTarget,float,1,-174.0
+/Preferences/Arm/ArmStowSpeed,float,1,0.05
+/Preferences/Arm/ArmTarget,float,1,0.0
+/Preferences/Arm/ArmPrepPosition,float,1,-45.0
+/Preferences/Arm/ArmClimbPosition,float,1,103.0

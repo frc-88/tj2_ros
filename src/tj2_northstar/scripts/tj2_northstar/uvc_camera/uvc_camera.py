@@ -102,11 +102,11 @@ class UVCCamera:
     bridge = CvBridge()
     opened_uids = set()
 
-    def __init__(self, frame_id: str, capture_config: CaptureConfig) -> None:
+    def __init__(self, frame_id: str, serial_number: str) -> None:
         self.frame_id = frame_id
-        info = self.get_capture_info(capture_config)
+        info = self.get_capture_info(serial_number)
         if info.uid in UVCCamera.opened_uids:
-            raise ConnectionError(f"Camera is already opened: {info}. Supplied config: {capture_config}")
+            raise ConnectionError(f"Camera is already opened: {info}. Supplied serial: {serial_number}")
         UVCCamera.opened_uids.add(info.uid)
         rospy.loginfo(f"Opening {info}")
         self.capture = uvc.Capture(info.uid)
@@ -141,16 +141,16 @@ class UVCCamera:
             count += 1
         return count
 
-    def get_capture_info(self, capture_config: CaptureConfig) -> CaptureInfo:
-        captures: List[CaptureInfo] = find_match(
-            self.get_available_captures(),  # type: ignore
-            capture_config,
-            self.is_capture_check,  # type: ignore
-        )
-        if len(captures) > 1:
-            return captures[capture_config.index]
-        else:
-            return captures[0]
+    def get_capture_info(self, serial_number: str) -> CaptureInfo:
+        available_captures = self.get_available_captures()
+        selected_capture = None
+        for capture in available_captures:
+            if capture.serialNumber == serial_number:
+                selected_capture = capture
+        if selected_capture is None:
+            rospy.loginfo("Available captures: %s" % available_captures)
+            raise RuntimeError("Failed to find capture with serial %s" % serial_number)
+        return selected_capture
 
     def is_mode_match(self, mode: CameraMode, config: CameraConfig) -> int:
         return (
