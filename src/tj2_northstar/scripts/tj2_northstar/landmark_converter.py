@@ -25,6 +25,12 @@ class LandmarkConverter:
         self.time_covariance_filter_k = float(rospy.get_param("~time_covariance_filter_k", 0.5))
         base_covariance = rospy.get_param("~covariance", np.eye(6, dtype=np.float64).flatten().tolist())
         self.min_visible_tags = rospy.get_param("~min_visible_tags", 0)
+        self.min_x = rospy.get_param("~min_x", 0.0)
+        self.min_y = rospy.get_param("~min_y", 0.0)
+        self.min_z = rospy.get_param("~min_z", -0.25)
+        self.max_x = rospy.get_param("~max_x", 16.46)
+        self.max_y = rospy.get_param("~max_y", 8.23)
+        self.max_z = rospy.get_param("~max_z", 0.5)
         assert len(base_covariance) == 36, f"Invalid covariance. Length is {len(base_covariance)}: {base_covariance}"
         self.base_covariance = np.array(base_covariance).reshape((6, 6))
 
@@ -55,10 +61,10 @@ class LandmarkConverter:
         for landmark_pose in landmark_poses.values():
             if len(individual_measurements) == 0:
                 continue
-            if not self.should_publish(individual_measurements):
-                continue
             inverted_pose = self.invert_transform_pose(landmark_pose)
             if inverted_pose is None:
+                continue
+            if not self.should_publish(individual_measurements, inverted_pose):
                 continue
 
             landmark = PoseWithCovarianceStamped()
@@ -67,12 +73,19 @@ class LandmarkConverter:
             landmark.pose.covariance = self.get_covariance(individual_measurements, landmark_pose)
             self.landmark_pub.publish(landmark)
 
-    def should_publish(self, tag_poses: List[PoseStamped]) -> bool:
+    def should_publish(self, tag_poses: List[PoseStamped], landmark_pose: PoseStamped) -> bool:
         """
         Should publish if at least one tag is closer than the threshold distance
         """
         if len(tag_poses) <= self.min_visible_tags:
             return False
+
+        x_in_bounds = self.min_x <= landmark_pose.pose.position.x < self.max_x
+        y_in_bounds = self.min_y <= landmark_pose.pose.position.y < self.max_y
+        z_in_bounds = self.min_z <= landmark_pose.pose.position.z < self.max_z
+        if not (x_in_bounds and y_in_bounds and z_in_bounds):
+            return False
+
         for tag_pose in tag_poses:
             distance = self.get_distance(tag_pose)
             if distance < self.max_tag_distance:
@@ -163,7 +176,7 @@ class LandmarkConverter:
 
     def delta_pose_covariance_scale(self, current_pose: PoseStamped, prev_pose: PoseStamped) -> None:
         distance = np.linalg.norm(self.pose_stamped_to_vector(current_pose) - self.pose_stamped_to_vector(prev_pose))
-        scale = 4 * distance + 1.0
+        scale = 4 * distance**2.0 + 1.0
         return scale
 
     def time_covariance_scale(self, current_pose: PoseStamped, prev_pose: PoseStamped) -> float:

@@ -364,7 +364,6 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         AMCL Particles: false
         AMCL Pose: false
         Apriltags: true
@@ -391,6 +390,7 @@ Visualization Manager:
         Perception Debug Image: true
         Perception Markers: true
         Pointer Goal: true
+        PoseWithCovariance: true
         RobotModel: false
         Sinistra LaserScan: true
         TF: false
@@ -523,9 +523,12 @@ Visualization Manager:
       Marker Topic: /northstar/tag_markers
       Name: Apriltags
       Namespaces:
+        cube1: true
+        cube10: true
         cube11: true
         cube12: true
-        cube15: true
+        cube13: true
+        cube14: true
         cube2: true
         cube3: true
         cube4: true
@@ -536,9 +539,12 @@ Visualization Manager:
         cubefield-3: true
         cubefield-4: true
         cubefield-5: true
+        posx1: true
+        posx10: true
         posx11: true
         posx12: true
-        posx15: true
+        posx13: true
+        posx14: true
         posx2: true
         posx3: true
         posx4: true
@@ -549,9 +555,12 @@ Visualization Manager:
         posxfield-3: true
         posxfield-4: true
         posxfield-5: true
+        posy1: true
+        posy10: true
         posy11: true
         posy12: true
-        posy15: true
+        posy13: true
+        posy14: true
         posy2: true
         posy3: true
         posy4: true
@@ -562,9 +571,12 @@ Visualization Manager:
         posyfield-3: true
         posyfield-4: true
         posyfield-5: true
+        posz1: true
+        posz10: true
         posz11: true
         posz12: true
-        posz15: true
+        posz13: true
+        posz14: true
         posz2: true
         posz3: true
         posz4: true
@@ -575,9 +587,12 @@ Visualization Manager:
         poszfield-3: true
         poszfield-4: true
         poszfield-5: true
+        text1: true
+        text10: true
         text11: true
         text12: true
-        text15: true
+        text13: true
+        text14: true
         text2: true
         text3: true
         text4: true
@@ -715,7 +730,6 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         AMCL Particles: true
         AMCL Pose: true
         Apriltags: true
@@ -741,6 +755,7 @@ Visualization Manager:
         Perception Debug Image: true
         Perception Markers: true
         Pointer Goal: true
+        PoseWithCovariance: true
         RobotModel: false
         Sinistra LaserScan: true
         TF: false
@@ -885,7 +900,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 9.949448585510254
+      Distance: 15.322607040405273
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -893,17 +908,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 11.014554023742676
-        Y: 5.412396430969238
-        Z: 2.86102294921875e-06
+        X: 14.997090339660645
+        Y: 5.256130695343018
+        Z: 7.62939453125e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5953981876373291
+      Pitch: 1.3853981494903564
       Target Frame: <Fixed Frame>
-      Yaw: 3.1085827350616455
+      Yaw: 0.4385828971862793
     Saved: ~
 Window Geometry:
   Apriltags Camera:
