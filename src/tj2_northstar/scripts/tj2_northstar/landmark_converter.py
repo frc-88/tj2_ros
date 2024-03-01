@@ -23,14 +23,14 @@ class LandmarkConverter:
         self.map_frame = str(rospy.get_param("~map_frame", "map"))
         self.max_tag_distance = float(rospy.get_param("~max_tag_distance", 1000.0))
         self.time_covariance_filter_k = float(rospy.get_param("~time_covariance_filter_k", 0.5))
-        base_covariance = rospy.get_param("~covariance", np.eye(6, dtype=np.float64).flatten().tolist())
-        self.min_visible_tags = rospy.get_param("~min_visible_tags", 0)
-        self.min_x = rospy.get_param("~min_x", 0.0)
-        self.min_y = rospy.get_param("~min_y", 0.0)
-        self.min_z = rospy.get_param("~min_z", -0.25)
-        self.max_x = rospy.get_param("~max_x", 16.46)
-        self.max_y = rospy.get_param("~max_y", 8.23)
-        self.max_z = rospy.get_param("~max_z", 0.5)
+        base_covariance: list[float] = rospy.get_param("~covariance", np.eye(6, dtype=np.float64).flatten().tolist())
+        self.min_visible_tags = int(rospy.get_param("~min_visible_tags", 0))
+        self.min_x = float(rospy.get_param("~min_x", 0.0))
+        self.min_y = float(rospy.get_param("~min_y", 0.0))
+        self.min_z = float(rospy.get_param("~min_z", -0.25))
+        self.max_x = float(rospy.get_param("~max_x", 16.46))
+        self.max_y = float(rospy.get_param("~max_y", 8.23))
+        self.max_z = float(rospy.get_param("~max_z", 0.5))
         assert len(base_covariance) == 36, f"Invalid covariance. Length is {len(base_covariance)}: {base_covariance}"
         self.base_covariance = np.array(base_covariance).reshape((6, 6))
 
@@ -47,30 +47,33 @@ class LandmarkConverter:
     def tags_callback(self, msg: AprilTagDetectionArray) -> None:
         assert msg.detections is not None
         landmark_poses: Dict[TagBundleId, PoseStamped] = {}
-        individual_measurements = []
+        individual_measurements: Dict[TagBundleId, List[PoseStamped]] = {}
         for detection in msg.detections:
             ids = frozenset(detection.id)
             detection_pose = PoseStamped()
             detection_pose.header = detection.pose.header
             detection_pose.pose = detection.pose.pose.pose
             if len(ids) == 1:
-                individual_measurements.append(detection_pose)
+                if ids not in individual_measurements:
+                    individual_measurements[ids] = []
+                individual_measurements[ids].append(detection_pose)
             else:
                 landmark_poses[ids] = detection_pose
 
-        for landmark_pose in landmark_poses.values():
-            if len(individual_measurements) == 0:
+        for ids, landmark_pose in landmark_poses.items():
+            sub_measurements = individual_measurements.get(ids, [])
+            if len(sub_measurements) == 0:
                 continue
             inverted_pose = self.invert_transform_pose(landmark_pose)
             if inverted_pose is None:
                 continue
-            if not self.should_publish(individual_measurements, inverted_pose):
+            if not self.should_publish(sub_measurements, inverted_pose):
                 continue
 
             landmark = PoseWithCovarianceStamped()
             landmark.header = inverted_pose.header
             landmark.pose.pose = inverted_pose.pose
-            landmark.pose.covariance = self.get_covariance(individual_measurements, landmark_pose)
+            landmark.pose.covariance = self.get_covariance(sub_measurements, landmark_pose)
             self.landmark_pub.publish(landmark)
 
     def should_publish(self, tag_poses: List[PoseStamped], landmark_pose: PoseStamped) -> bool:
