@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import math
-from typing import Dict, FrozenSet, List, Optional
+from typing import Dict, FrozenSet, List, Optional, Tuple
 
 import numpy as np
 import rospy
@@ -13,6 +13,9 @@ from tj2_tools.robot_state import SimpleFilter
 from tj2_tools.transforms import lookup_transform
 
 TagBundleId = FrozenSet[int]
+BundlePoses = Dict[TagBundleId, PoseStamped]
+SingleTagPoses = Dict[int, PoseStamped]
+GroupedTagPoses = Dict[TagBundleId, List[PoseStamped]]
 
 
 class LandmarkConverter:
@@ -44,38 +47,52 @@ class LandmarkConverter:
         self.tag_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.tags_callback, queue_size=10)
         self.landmark_pub = rospy.Publisher("landmark", PoseWithCovarianceStamped, queue_size=10)
 
-    def tags_callback(self, msg: AprilTagDetectionArray) -> None:
+    def split_bundles_and_tags(self, msg: AprilTagDetectionArray) -> Tuple[BundlePoses, SingleTagPoses]:
         assert msg.detections is not None
-        landmark_poses: Dict[TagBundleId, PoseStamped] = {}
-        individual_measurements: Dict[TagBundleId, List[PoseStamped]] = {}
+        bundle_poses: BundlePoses = {}
+        single_poses: SingleTagPoses = {}
         for detection in msg.detections:
             ids = frozenset(detection.id)
             detection_pose = PoseStamped()
             detection_pose.header = detection.pose.header
             detection_pose.pose = detection.pose.pose.pose
             if len(ids) == 1:
-                if ids not in individual_measurements:
-                    individual_measurements[ids] = []
-                individual_measurements[ids].append(detection_pose)
+                single_id = next(iter(ids))
+                if single_id in single_poses:
+                    rospy.logwarn(f"Duplicate single tag {single_id}. Overwriting previous pose.")
+                single_poses[single_id] = detection_pose
             else:
-                landmark_poses[ids] = detection_pose
+                bundle_poses[ids] = detection_pose
+        return bundle_poses, single_poses
 
-        for ids, landmark_pose in landmark_poses.items():
-            sub_measurements = individual_measurements.get(ids, [])
-            if len(sub_measurements) == 0:
+    def group_measurements(self, bundle_poses: BundlePoses, single_poses: SingleTagPoses) -> GroupedTagPoses:
+        grouped_single_tags: GroupedTagPoses = {bundle_id: [] for bundle_id in bundle_poses.keys()}
+        for bundle_id, single_tags in grouped_single_tags.items():
+            for single_id, pose in single_poses.items():
+                if single_id in bundle_id:
+                    single_tags.append(pose)
+        return grouped_single_tags
+
+    def tags_callback(self, msg: AprilTagDetectionArray) -> None:
+        bundle_poses, single_poses = self.split_bundles_and_tags(msg)
+        grouped_single_tags = self.group_measurements(bundle_poses, single_poses)
+
+        for bundle_id, bundle_pose in bundle_poses.items():
+            single_measurements = grouped_single_tags.get(bundle_id, [])
+            if len(single_measurements) == 0:
                 continue
-            inverted_pose = self.invert_transform_pose(landmark_pose)
+            inverted_pose = self.invert_transform_pose(bundle_pose)
             if inverted_pose is None:
                 continue
-            if not self.should_publish(sub_measurements, inverted_pose):
+            if not self.should_publish(single_measurements, inverted_pose):
                 continue
 
             landmark = PoseWithCovarianceStamped()
             landmark.header = inverted_pose.header
             landmark.pose.pose = inverted_pose.pose
-            prev_landmark = self.prev_landmarks.get(ids, inverted_pose)
-            landmark.pose.covariance = self.get_covariance(sub_measurements, landmark_pose, prev_landmark)
-            self.prev_landmarks[ids] = inverted_pose
+            prev_landmark = self.prev_landmarks.get(bundle_id, inverted_pose)
+            landmark.pose.covariance = self.get_covariance(single_measurements, bundle_pose, prev_landmark)
+            self.prev_landmarks[bundle_id] = inverted_pose
             self.landmark_pub.publish(landmark)
 
     def should_publish(self, tag_poses: List[PoseStamped], landmark_pose: PoseStamped) -> bool:
@@ -143,7 +160,7 @@ class LandmarkConverter:
 
     def num_tags_covariance_scale(self, num_tags: int) -> float:
         if num_tags == 0:
-            raise ValueError("Can't compute covariance with no measurements!")
+            raise ValueError("Can't compute covariance with no poses!")
         # 1 -> 5
         elif num_tags == 1:
             scale = 10
