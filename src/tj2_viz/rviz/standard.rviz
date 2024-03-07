@@ -7,12 +7,13 @@ Panels:
         - /Global Options1
         - /Status1
         - /TF1
-        - /LaserScan1
+        - /TF1/Frames1
         - /ZED1
         - /ZED Depth1/Auto Size1
         - /ZED Depth1/Occlusion Compensation1
-      Splitter Ratio: 0.740240216255188
-    Tree Height: 573
+        - /Apriltags Camera1
+      Splitter Ratio: 0.6117216348648071
+    Tree Height: 672
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -30,7 +31,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: ZED
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -82,44 +83,22 @@ Visualization Manager:
         base_link:
           Value: true
         base_tilt_link:
-          Value: false
-        camera_armature_link:
-          Value: false
-        camera_link:
-          Value: false
-        camera_tilt_link:
-          Value: false
-        imu:
           Value: true
-        laser:
-          Value: true
+        camera_0:
+          Value: false
+        camera_1:
+          Value: false
+        camera_2:
+          Value: false
         map:
           Value: true
         odom:
           Value: true
-        zed2_baro_link:
-          Value: false
-        zed2_base_link:
-          Value: false
-        zed2_camera_center:
-          Value: false
-        zed2_imu_link:
-          Value: false
-        zed2_left_camera_frame:
-          Value: false
-        zed2_left_camera_optical_frame:
-          Value: false
-        zed2_mag_link:
-          Value: false
-        zed2_right_camera_frame:
-          Value: false
-        zed2_right_camera_optical_frame:
-          Value: false
-        zed2_temp_left_link:
-          Value: false
-        zed2_temp_right_link:
-          Value: false
-        zed_handheld:
+        optical_camera_0:
+          Value: true
+        optical_camera_1:
+          Value: true
+        optical_camera_2:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -130,33 +109,16 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            zed_handheld:
-              base_link:
-                base_tilt_link:
-                  camera_tilt_link:
-                    camera_armature_link:
-                      camera_link:
-                        zed2_base_link:
-                          zed2_camera_center:
-                            zed2_baro_link:
-                              {}
-                            zed2_left_camera_frame:
-                              zed2_imu_link:
-                                {}
-                              zed2_left_camera_optical_frame:
-                                {}
-                              zed2_temp_left_link:
-                                {}
-                            zed2_mag_link:
-                              {}
-                            zed2_right_camera_frame:
-                              zed2_right_camera_optical_frame:
-                                {}
-                              zed2_temp_right_link:
-                                {}
-                  imu:
+            base_link:
+              base_tilt_link:
+                camera_0:
+                  optical_camera_0:
                     {}
-                  laser:
+                camera_1:
+                  optical_camera_1:
+                    {}
+                camera_2:
+                  optical_camera_2:
                     {}
       Update Interval: 0
       Value: true
@@ -354,7 +316,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: AMCL Pose
@@ -364,14 +326,14 @@ Visualization Manager:
       Shape: Arrow
       Topic: /amcl_pose
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Arrow Length: 0.30000001192092896
       Axes Length: 0.30000001192092896
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
       Color: 213; 142; 0
-      Enabled: true
+      Enabled: false
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
       Name: AMCL Particles
@@ -381,7 +343,7 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /particlecloud
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Class: rviz/Polygon
       Color: 25; 255; 0
@@ -392,7 +354,7 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Camera
-      Enabled: true
+      Enabled: false
       Image Rendering: background and overlay
       Image Topic: /tj2_zed/left/image_rect_color
       Name: ZED
@@ -400,7 +362,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: compressed
       Unreliable: false
-      Value: true
+      Value: false
       Visibility:
         AMCL Particles: false
         AMCL Pose: false
@@ -428,6 +390,7 @@ Visualization Manager:
         Perception Debug Image: true
         Perception Markers: true
         Pointer Goal: true
+        PoseWithCovariance: true
         RobotModel: false
         Sinistra LaserScan: true
         TF: false
@@ -561,105 +524,85 @@ Visualization Manager:
       Name: Apriltags
       Namespaces:
         cube1: true
+        cube10: true
+        cube11: true
+        cube12: true
+        cube13: true
+        cube14: true
         cube2: true
         cube3: true
+        cube4: true
+        cube5: true
         cubefield: true
         cubefield-1: true
-        cubefield-10: true
-        cubefield-11: true
-        cubefield-12: true
-        cubefield-13: true
         cubefield-14: true
-        cubefield-15: true
-        cubefield-16: true
-        cubefield-2: true
         cubefield-3: true
         cubefield-4: true
         cubefield-5: true
-        cubefield-6: true
-        cubefield-7: true
-        cubefield-8: true
-        cubefield-9: true
         posx1: true
+        posx10: true
+        posx11: true
+        posx12: true
+        posx13: true
+        posx14: true
         posx2: true
         posx3: true
+        posx4: true
+        posx5: true
         posxfield: true
         posxfield-1: true
-        posxfield-10: true
-        posxfield-11: true
-        posxfield-12: true
-        posxfield-13: true
         posxfield-14: true
-        posxfield-15: true
-        posxfield-16: true
-        posxfield-2: true
         posxfield-3: true
         posxfield-4: true
         posxfield-5: true
-        posxfield-6: true
-        posxfield-7: true
-        posxfield-8: true
-        posxfield-9: true
         posy1: true
+        posy10: true
+        posy11: true
+        posy12: true
+        posy13: true
+        posy14: true
         posy2: true
         posy3: true
+        posy4: true
+        posy5: true
         posyfield: true
         posyfield-1: true
-        posyfield-10: true
-        posyfield-11: true
-        posyfield-12: true
-        posyfield-13: true
         posyfield-14: true
-        posyfield-15: true
-        posyfield-16: true
-        posyfield-2: true
         posyfield-3: true
         posyfield-4: true
         posyfield-5: true
-        posyfield-6: true
-        posyfield-7: true
-        posyfield-8: true
-        posyfield-9: true
         posz1: true
+        posz10: true
+        posz11: true
+        posz12: true
+        posz13: true
+        posz14: true
         posz2: true
         posz3: true
+        posz4: true
+        posz5: true
         poszfield: true
         poszfield-1: true
-        poszfield-10: true
-        poszfield-11: true
-        poszfield-12: true
-        poszfield-13: true
         poszfield-14: true
-        poszfield-15: true
-        poszfield-16: true
-        poszfield-2: true
         poszfield-3: true
         poszfield-4: true
         poszfield-5: true
-        poszfield-6: true
-        poszfield-7: true
-        poszfield-8: true
-        poszfield-9: true
         text1: true
+        text10: true
+        text11: true
+        text12: true
+        text13: true
+        text14: true
         text2: true
         text3: true
+        text4: true
+        text5: true
         textfield: true
         textfield-1: true
-        textfield-10: true
-        textfield-11: true
-        textfield-12: true
-        textfield-13: true
         textfield-14: true
-        textfield-15: true
-        textfield-16: true
-        textfield-2: true
         textfield-3: true
         textfield-4: true
         textfield-5: true
-        textfield-6: true
-        textfield-7: true
-        textfield-8: true
-        textfield-9: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -783,7 +726,7 @@ Visualization Manager:
       Name: Apriltags Camera
       Overlay Alpha: 0.5
       Queue Size: 2
-      Transport Hint: raw
+      Transport Hint: compressed
       Unreliable: false
       Value: false
       Visibility:
@@ -812,6 +755,7 @@ Visualization Manager:
         Perception Debug Image: true
         Perception Markers: true
         Pointer Goal: true
+        PoseWithCovariance: true
         RobotModel: false
         Sinistra LaserScan: true
         TF: false
@@ -844,7 +788,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: Landmark Pose
@@ -854,7 +798,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /northstar/landmark
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -875,7 +819,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: Landmark Forwarded
@@ -885,7 +829,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /northstar/landmark/forwarded
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Class: rviz/PointStamped
       Color: 204; 41; 204
@@ -895,6 +839,37 @@ Visualization Manager:
       Queue Size: 10
       Radius: 0.05000000074505806
       Topic: /tj2/pointer/goal
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/PoseWithCovariance
+      Color: 255; 25; 0
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: PoseWithCovariance
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /northstar/filter/pose
       Unreliable: false
       Value: true
   Enabled: true
@@ -925,7 +900,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 18.933839797973633
+      Distance: 15.322607040405273
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -933,29 +908,29 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 5.911494731903076
-        Y: 1.2664529085159302
-        Z: 1.110606717702467e-06
-      Focal Shape Fixed Size: true
+        X: 14.997090339660645
+        Y: 5.256130695343018
+        Z: 7.62939453125e-06
+      Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0697963237762451
+      Pitch: 1.3853981494903564
       Target Frame: <Fixed Frame>
-      Yaw: 4.79754638671875
+      Yaw: 0.4385828971862793
     Saved: ~
 Window Geometry:
   Apriltags Camera:
     collapsed: false
   Displays:
     collapsed: false
-  Height: 1368
+  Height: 1016
   Hide Left Dock: false
-  Hide Right Dock: true
+  Hide Right Dock: false
   Perception Debug Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000029c00000484fc0200000021fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000007000fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000046000002d9000000f500fffffffb000000200041007000720069006c0074006100670073002000430061006d0065007200610000000248000001570000001700fffffffb00000012005200650061006c00530065006e0073006500000004bc0000028e0000000000000000fb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000002c00500065007200630065007000740069006f006e00200044006500620075006700200049006d006100670065000000025d000001ab0000001700fffffffb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000fb00000006005a004500440100000326000001a40000001700fffffffb0000000c00430061006d0065007200610000000491000002b90000000000000000fb0000000e004f007600650072006c006100790000000467000002e30000000000000000fb0000000c00430061006d0065007200610000000365000002810000000000000000fb0000000a0049006d0061006700650000000393000001310000000000000000fb0000000a0049006d006100670065010000030a000001ba0000000000000000fb0000000a0049006d0061006700650100000311000001b30000000000000000fb0000000c00430061006d00650072006100000003ec000000d80000000000000000fb0000000c00430061006d00650072006100000003ec000000d80000000000000000fb0000000c00430061006d00650072006101000003850000013f0000000000000000fb0000000c00430061006d006500720061020000066500000228000004f1000002b8fb0000000c00430061006d00650072006100000003ec000000d80000000000000000fb0000000c00430061006d00650072006101000003b4000001100000000000000000000000010000024e00000478fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc0000004c000004780000000000fffffffa000000000100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730000000d4c000001b40000010200fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000009dc00000068fc0100000002fb0000000800540069006d00650100000000000009dc000003cf00fffffffb0000000800540069006d00650100000000000004500000000000000000000007390000048400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000028600000334fc0200000021fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000319000002010000046700000237fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b00000334000000c700fffffffb000000200041007000720069006c0074006100670073002000430061006d0065007200610000000282000000ed0000001600fffffffb00000012005200650061006c00530065006e0073006500000004bc0000028e0000000000000000fb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000002c00500065007200630065007000740069006f006e00200044006500620075006700200049006d006100670065000000025d000001ab0000001600fffffffb0000000c00430061006d00650072006101000003280000024f0000000000000000fb0000000c00430061006d0065007200610100000583000001fd0000000000000000fb0000000c00430061006d00650072006101000005120000026e0000000000000000fb0000000c00430061006d00650072006100000004f7000002530000000000000000fb0000000a0049006d0061006700650000000569000001e10000000000000000fb0000000c00430061006d00650072006101000005cf000001b10000000000000000fb0000000a0049006d00610067006500000005540000022c0000000000000000fb0000000a0049006d00610067006500000005710000020f0000000000000000fb0000000a0049006d00610067006500000004a3000002a70000000000000000fb00000006005a00450044000000019c000001d30000001600fffffffb0000000c00430061006d0065007200610000000491000002b90000000000000000fb0000000e004f007600650072006c006100790000000467000002e30000000000000000fb0000000c00430061006d0065007200610000000365000002810000000000000000fb0000000a0049006d0061006700650000000393000001310000000000000000fb0000000a0049006d006100670065010000030a000001ba0000000000000000fb0000000a0049006d0061006700650100000311000001b30000000000000000fb0000000c00430061006d00650072006100000003ec000000d80000000000000000fb0000000c00430061006d00650072006100000003ec000000d80000000000000000fb0000000c00430061006d00650072006101000003850000013f0000000000000000fb0000000c00430061006d006500720061020000066500000228000004f1000002b8fb0000000c00430061006d00650072006100000003ec000000d80000000000000000fb0000000c00430061006d00650072006101000003b4000001100000000000000000000000010000010000000334fc0200000007fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fc0000003b00000334000000a000fffffffa000000010100000002fb0000000a0049006d0061006700650100000000ffffffff0000000000000000fb0000000a005600690065007700730100000d4c000001b40000010000fffffffb0000000a0049006d006100670065010000049e000002e20000000000000000fb0000000c00430061006d00650072006101000004140000036c0000000000000000fb0000000a0049006d00610067006500000005ca000001b60000000000000000fb0000000a0049006d0061006700650100000482000002fe0000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073800000068fc0100000002fb0000000800540069006d00650100000000000007380000030700fffffffb0000000800540069006d00650100000000000004500000000000000000000003a60000033400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -963,9 +938,9 @@ Window Geometry:
   Tool Properties:
     collapsed: false
   Views:
-    collapsed: true
-  Width: 2524
+    collapsed: false
+  Width: 1848
   X: 72
-  Y: 35
+  Y: 27
   ZED:
     collapsed: false

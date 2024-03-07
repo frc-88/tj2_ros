@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 import os
 import threading
-from typing import Tuple
-import cv2
-import rospy
-from queue import Queue
-import numpy as np
 from dataclasses import dataclass, field
+from queue import Queue
+from typing import Tuple
+
+import cv2
+import numpy as np
+import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
@@ -40,9 +41,7 @@ def detection_task(data: AppData, in_queue: Queue, out_queue: Queue):
         success, corners = cv2.findChessboardCorners(
             frame,
             chessboard,
-            cv2.CALIB_CB_ADAPTIVE_THRESH
-            + cv2.CALIB_CB_FAST_CHECK
-            + cv2.CALIB_CB_NORMALIZE_IMAGE,
+            cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK + cv2.CALIB_CB_NORMALIZE_IMAGE,
         )
         out_queue.put((success, corners))
 
@@ -50,34 +49,29 @@ def detection_task(data: AppData, in_queue: Queue, out_queue: Queue):
 def main():
     rospy.init_node("record_calibration")
 
-    camera_num = rospy.get_param("~camera_num", 0)
+    serial = rospy.get_param("~serial", "UC621")
     directory = rospy.get_param("~directory", "")
-    name_prefix = rospy.get_param("~prefix", "camera")
     board_width = rospy.get_param("~board_width", 5)
     board_height = rospy.get_param("~board_height", 8)
 
-    write_directory = os.path.join(directory, f"{name_prefix}_{camera_num}")
-    chessboard = (board_width, board_height)
+    write_directory = os.path.join(directory, serial)
+    checkerboard = (board_width, board_height)
     window_name = "calibration"
 
     if not os.path.isdir(write_directory):
         os.makedirs(write_directory)
         print("Making directory:", write_directory)
 
-    data = AppData(window_name, CvBridge(), threading.Lock(), chessboard)
+    data = AppData(window_name, CvBridge(), threading.Lock(), checkerboard)
     in_queue = Queue()
     out_queue = Queue()
-    detection_thread = threading.Thread(
-        target=detection_task, args=(data, in_queue, out_queue)
-    )
+    detection_thread = threading.Thread(target=detection_task, args=(data, in_queue, out_queue))
     detection_thread.daemon = True
     detection_thread.start()
 
     cv2.namedWindow(window_name)
 
-    subscriber = rospy.Subscriber(
-        "image_raw", Image, lambda msg: image_callback(data, msg), queue_size=1
-    )
+    subscriber = rospy.Subscriber("image_raw", Image, lambda msg: image_callback(data, msg), queue_size=1)
     image_count = 0
 
     found_corners = None
@@ -102,10 +96,11 @@ def main():
                 debug = frame
             if found_corners is not None:
                 corners_image = np.copy(debug)
-                cv2.drawChessboardCorners(
-                    corners_image, chessboard, found_corners, True
-                )
+                cv2.drawChessboardCorners(corners_image, checkerboard, found_corners, True)
                 debug = np.concatenate((debug, corners_image), axis=1)
+
+            debug_height, debug_width = debug.shape[0:2]
+            debug = cv2.resize(debug, (debug_width // 2, debug_height // 2))
 
             cv2.imshow(window_name, debug)
             key = chr(cv2.waitKey(1) & 0xFF)

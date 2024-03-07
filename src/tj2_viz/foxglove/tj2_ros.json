@@ -74,23 +74,121 @@
       "showFullMessageForDiff": false,
       "topicPath": "/tj2/match_time.data"
     },
-    "ImageViewPanel!2jyz9oj": {
-      "cameraTopic": "/tj2_zed/left/image_rect_color/compressed",
-      "enabledMarkerTopics": [],
-      "mode": "fit",
-      "pan": {
-        "x": 0,
-        "y": 0
+    "Image!d19ix7": {
+      "cameraState": {
+        "distance": 20,
+        "perspective": true,
+        "phi": 60,
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOffset": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "thetaOffset": 45,
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
       },
-      "rotation": 0,
-      "synchronize": false,
-      "transformMarkers": false,
-      "zoom": 1
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {
+        "/northstar/filter/pose": {
+          "visible": false
+        },
+        "/map": {
+          "visible": true,
+          "colorMode": "map",
+          "alpha": 0.5
+        }
+      },
+      "layers": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {
+        "imageTopic": "/northstar/camera_0/image_raw/compressed",
+        "calibrationTopic": "/northstar/camera_0/camera_info",
+        "synchronize": false,
+        "rotation": 180,
+        "annotations": {}
+      }
+    },
+    "Image!1sajz6k": {
+      "cameraState": {
+        "distance": 20,
+        "perspective": true,
+        "phi": 60,
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOffset": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "thetaOffset": 45,
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {
+        "/map": {
+          "visible": true,
+          "colorMode": "map",
+          "alpha": 0.5
+        }
+      },
+      "layers": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {
+        "imageTopic": "/northstar/camera_1/image_raw/compressed",
+        "synchronize": false,
+        "rotation": 180,
+        "annotations": {},
+        "calibrationTopic": "/northstar/camera_1/camera_info"
+      }
     },
     "Gauge!krtawi": {
       "path": "/tj2/ping.data",
       "minValue": 0,
-      "maxValue": 0.1,
+      "maxValue": 0.2,
       "colorMap": "red-yellow-green",
       "colorMode": "colormap",
       "gradient": [
@@ -135,18 +233,19 @@
         }
       },
       "cameraState": {
-        "distance": 4.078136514903717,
         "perspective": true,
-        "phi": 40.87341974373938,
+        "distance": 8.3624067043572,
+        "phi": 58.35758357686749,
+        "thetaOffset": 2.758349062971446,
+        "targetOffset": [
+          8.419812782942548,
+          2.6546839936182143,
+          3.4747116675177923e-16
+        ],
         "target": [
           0,
           0,
           0
-        ],
-        "targetOffset": [
-          1.4140364075157728,
-          3.253320038440563,
-          3.0311714814452643e-16
         ],
         "targetOrientation": [
           0,
@@ -154,7 +253,6 @@
           0,
           1
         ],
-        "thetaOffset": -7.00846661612806,
         "fovy": 45,
         "near": 0.5,
         "far": 5000
@@ -177,7 +275,8 @@
           "visible": true
         },
         "/map": {
-          "visible": true
+          "visible": true,
+          "colorMode": "map"
         },
         "/laser/scan_filtered": {
           "visible": true,
@@ -253,6 +352,20 @@
         },
         "/particlecloud": {
           "visible": false
+        },
+        "/northstar/landmark": {
+          "visible": false,
+          "axisScale": 0.21,
+          "showCovariance": false
+        },
+        "/northstar/filter/pose": {
+          "visible": true,
+          "showCovariance": false,
+          "type": "arrow"
+        },
+        "/northstar/landmark/forwarded": {
+          "visible": false,
+          "type": "arrow"
         }
       },
       "publish": {
@@ -302,14 +415,18 @@
           "title": "3D View",
           "layout": {
             "first": {
-              "first": "ImageViewPanel!2jyz9oj",
+              "first": {
+                "first": "Image!d19ix7",
+                "second": "Image!1sajz6k",
+                "direction": "row"
+              },
               "second": "Gauge!krtawi",
               "direction": "row",
               "splitPercentage": 86.29171733332906
             },
             "second": "3D!18i6zy7",
             "direction": "column",
-            "splitPercentage": 26.746621600032068
+            "splitPercentage": 45.25025536261491
           }
         }
       ]

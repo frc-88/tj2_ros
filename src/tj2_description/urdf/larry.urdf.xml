@@ -1,0 +1,92 @@
+<robot name="larry">
+    <material name="base_color">
+        <color rgba="0.4902 0.0863 0.5569 1" />
+    </material>
+
+    <material name="wheel_color">
+        <color rgba="0.0627 0.2667 0.4902 1" />
+    </material>
+
+
+    <link name="base_tilt_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/larry/base.stl" />
+            </geometry>
+            <material name="base_color" />
+        </visual>
+    </link>
+
+    <link name="swerve_wheel_0">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/larry/wheel.stl" />
+            </geometry>
+            <material name="wheel_color" />
+        </visual>
+    </link>
+
+    <link name="swerve_wheel_1">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/larry/wheel.stl" />
+            </geometry>
+            <material name="wheel_color" />
+        </visual>
+    </link>
+
+    <link name="swerve_wheel_2">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/larry/wheel.stl" />
+            </geometry>
+            <material name="wheel_color" />
+        </visual>
+    </link>
+
+    <link name="swerve_wheel_3">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://tj2_description/meshes/larry/wheel.stl" />
+            </geometry>
+            <material name="wheel_color" />
+        </visual>
+    </link>
+
+    <!-- Joint definitions -->
+
+    <!-- Wheel joints -->
+
+    <joint name="base_link_to_wheel_0_joint" type="continuous">
+        <parent link="base_tilt_link" />
+        <child link="swerve_wheel_0" />
+        <origin xyz="0.27623  0.27623  0.05079" />
+        <axis xyz="0 0 1" />
+    </joint>
+
+    <joint name="base_link_to_wheel_1_joint" type="continuous">
+        <parent link="base_tilt_link" />
+        <child link="swerve_wheel_1" />
+        <origin xyz="-0.27623  0.27623  0.05079" />
+        <axis xyz="0 0 1" />
+    </joint>
+
+    <joint name="base_link_to_wheel_2_joint" type="continuous">
+        <parent link="base_tilt_link" />
+        <child link="swerve_wheel_2" />
+        <origin xyz="-0.27623  -0.27623  0.05079" />
+        <axis xyz="0 0 1" />
+    </joint>
+
+    <joint name="base_link_to_wheel_3_joint" type="continuous">
+        <parent link="base_tilt_link" />
+        <child link="swerve_wheel_3" />
+        <origin xyz="0.27623  -0.27623  0.05079" />
+        <axis xyz="0 0 1" />
+    </joint>
+</robot>

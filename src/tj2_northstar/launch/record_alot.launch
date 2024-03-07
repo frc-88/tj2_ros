@@ -7,9 +7,6 @@
         /initialpose
         /joint_states
         /joy
-        /laser/scan_filtered
-        /tj2_zed/rgb/camera_info
-        /tj2_zed/rgb/image_rect_color
         /northstar/tag_markers
         /northstar/landmark
         /northstar/landmark/forwarded
