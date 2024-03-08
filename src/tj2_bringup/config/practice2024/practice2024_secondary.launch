@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+    <!-- the name of this robot -->
+    <arg name="robot" default="$(env ROBOT)" />
+
+    <!-- Laser localization map name -->
+    <arg name="map_name" default="$(env ROS_MAP_NAME)" />
+
     <!-- ZED 2 camera -->
     <!-- <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
         <arg name="serial_number" value="37015368" />
