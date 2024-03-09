@@ -20,6 +20,8 @@ docker-compose.gpu.yaml
 
 .bash_history
 
+src/tj2_data/data/preferences/*
+
 # models
 *.pkl
 *.pt
