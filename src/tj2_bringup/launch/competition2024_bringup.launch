@@ -86,5 +86,14 @@
     <node name="static_map_server" pkg="map_server" type="map_server" output="screen"
         args="$(find tj2_bringup)/config/shared/maps/$(arg map_name).yaml">
         <param name="frame_id" value="map" />
-    </node>
+    </node>    
+    
+    <!-- Delayed app start -->
+    <include file="$(find tj2_power_mode)/launch/power_mode.launch">
+        <arg name="default_power_mode" value="LOW_POWER" />
+        <arg name="bypass" value="true" />
+        <arg name="launch_path"
+            value="$(find tj2_bringup)/config/practice2024/competition2024_secondary.launch" />
+    </include>
+
 </launch>

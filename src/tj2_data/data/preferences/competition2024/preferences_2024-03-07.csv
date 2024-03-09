@@ -1,0 +1,95 @@
+/Preferences/Aiming Offset,float,1,0.14
+/Preferences/Tipping Roll Threashold,float,1,8.0
+/Preferences/Tipping Pitch Threashold,float,1,15.0
+/Preferences/Tipping Threashold,float,1,8.0
+/Preferences/.type,str,1,RobotPreferences
+/Preferences/Elevator/Podium,float,1,66.0
+/Preferences/Elevator/Flat,float,1,90.0
+/Preferences/Elevator/PivotAmp,float,1,110.0
+/Preferences/Elevator/ElevatorAmp,float,1,43.0
+/Preferences/Elevator/PivotMotionMagicVelocity,float,1,100.0
+/Preferences/Elevator/PivotMotionMagicAcceleration,float,1,200.0
+/Preferences/Elevator/PivotMotionMagicJerk,float,1,10000.0
+/Preferences/Elevator/ElevatorMotionMagicVelocity,float,1,100.0
+/Preferences/Elevator/ElevatorMotionMagicAcceleration,float,1,200.0
+/Preferences/Elevator/ElevatorMotionMagicJerk,float,1,10000.0
+/Preferences/Elevator/Gravity,float,1,0.75
+/Preferences/Elevator/PivotStowSpeed,float,1,0.05
+/Preferences/Elevator/ElevatorStowSpeed,float,1,0.075
+/Preferences/Elevator/ElevatorClimbPosition,float,1,47.0
+/Preferences/Elevator/ElevatorPrepPosition,float,1,32.0
+/Preferences/Elevator/PivotPID kP,float,1,50.0
+/Preferences/Elevator/PivotPID kI,float,1,0.0
+/Preferences/Elevator/PivotPID kD,float,1,0.0
+/Preferences/Elevator/PivotPID kF,float,1,0.1
+/Preferences/Elevator/PivotPID kS,float,1,0.0
+/Preferences/Elevator/PivotPID iZone,float,1,0.0
+/Preferences/Elevator/PivotPID iMax,float,1,0.0
+/Preferences/Elevator/PivotPID tolerance,float,1,0.0
+/Preferences/Elevator/ElevatorPID kP,float,1,10.0
+/Preferences/Elevator/ElevatorPID kI,float,1,0.0
+/Preferences/Elevator/ElevatorPID kD,float,1,0.2
+/Preferences/Elevator/ElevatorPID kF,float,1,0.14
+/Preferences/Elevator/ElevatorPID kS,float,1,0.0
+/Preferences/Elevator/ElevatorPID iZone,float,1,0.0
+/Preferences/Elevator/ElevatorPID iMax,float,1,0.0
+/Preferences/Elevator/ElevatorPID tolerance,float,1,0.0
+/Preferences/Elevator/MotionMagicAcceleration,float,1,200.0
+/Preferences/Elevator/MotionMagicJerk,float,1,10000.0
+/Preferences/Elevator/MotionMagicVelocity,float,1,100.0
+/Preferences/Elevator/PID iMax,float,1,0.0
+/Preferences/Elevator/PID iZone,float,1,0.0
+/Preferences/Elevator/PID kD,float,1,0.0
+/Preferences/Elevator/PID kF,float,1,0.0
+/Preferences/Elevator/PID kI,float,1,0.0
+/Preferences/Elevator/PID kP,float,1,50.0
+/Preferences/Elevator/PID kS,float,1,0.0
+/Preferences/Elevator/PID tolerance,float,1,0.0
+/Preferences/Elevator/PivotTarget,float,1,0.0
+/Preferences/Elevator/Stow,float,1,0.0
+/Preferences/Elevator/StowSpeed,float,1,0.05
+/Preferences/Arm/MotionMagicVelocity,float,1,100.0
+/Preferences/Arm/MotionMagicAcceleration,float,1,1000.0
+/Preferences/Arm/MotionMagicJerk,float,1,100000.0
+/Preferences/Arm/ArmTarget,float,1,0.0
+/Preferences/Arm/ArmStowSpeed,float,1,0.05
+/Preferences/Arm/ArmSoftLandingSpeed,float,1,0.25
+/Preferences/Arm/ArmPrepPosition,float,1,-45.0
+/Preferences/Arm/ArmClimbPosition,float,1,108.0
+/Preferences/Arm/PID kP,float,1,10.0
+/Preferences/Arm/PID kI,float,1,0.0
+/Preferences/Arm/PID kD,float,1,0.3
+/Preferences/Arm/PID kF,float,1,0.12
+/Preferences/Arm/PID kS,float,1,0.0
+/Preferences/Arm/PID iZone,float,1,0.0
+/Preferences/Arm/PID iMax,float,1,0.0
+/Preferences/Arm/PID tolerance,float,1,0.0
+/Preferences/Arm/LeftTarget,float,1,-174.0
+/Preferences/Arm/RightTarget,float,1,170.0
+/Preferences/Arm/Speed,float,1,-0.5
+/Preferences/Arm/TagrgetPosition,float,1,0.0
+/Preferences/Intake/IntakeRollerSpeed,float,1,1.0
+/Preferences/Intake/GuideRollerSpeed,float,1,1.0
+/Preferences/Intake/IndexRollerSpeed,float,1,0.25
+/Preferences/Intake/IndexerShootSetup,float,1,1.0
+/Preferences/Runtime/Teleop,float,1,5741.791955
+/Preferences/Runtime/Auto,float,1,42.1892
+/Preferences/shooter/indexer/speed,float,1,0.0
+/Preferences/shooter/shooter/Leftspeed,float,1,5600.0
+/Preferences/shooter/shooter/Rightspeed,float,1,5000.0
+/Preferences/shooter/shooter/idleControl,float,1,1500.0
+/Preferences/shooter/shooter/slowspeed,float,1,500.0
+/Preferences/shooter/shooter/AmpTrap,float,1,2000.0
+/Preferences/shooter/shooter/motor_kP,float,1,0.02
+/Preferences/shooter/shooter/motor_kI,float,1,0.0
+/Preferences/shooter/shooter/motor_kD,float,1,0.0
+/Preferences/shooter/shooter/motor_kV,float,1,0.129
+/Preferences/shooter/shooter/motor_kS,float,1,0.0
+/Preferences/shooter/shooter/idleSpeed,float,1,0.0
+/Preferences/shooter/shooter/speed,float,1,0.0
+/Preferences/shooter/shooter/velocityControl,float,1,200.0
+/Preferences/swervedrive/BackLeft/Offset,float,1,0.070557
+/Preferences/swervedrive/FrontLeft/Offset,float,1,-0.056152
+/Preferences/swervedrive/FrontRight/Offset,float,1,-0.415527
+/Preferences/swervedrive/BackRight/Offset,float,1,0.112793
+/Preferences/Auto/AutoCloseAim,float,1,63.0
