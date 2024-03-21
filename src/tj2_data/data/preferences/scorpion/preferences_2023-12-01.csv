@@ -1,0 +1,338 @@
+/Preferences/Danger Angle,float,1,5.0
+/Preferences/Number of LEDs,float,1,73.0
+/Preferences/.type,str,1,RobotPreferences
+/Preferences/Intake/Speeds/Outgest/Outer,float,1,-0.08
+/Preferences/Intake/Speeds/Outgest/Inner,float,1,-1.0
+/Preferences/Intake/Speeds/Outgest/Inner Cone,float,1,-1.0
+/Preferences/Intake/Speeds/Outgest/Outer Cone,float,1,-1.0
+/Preferences/Intake/Speeds/Outgest/Inner Cube,float,1,-1.0
+/Preferences/Intake/Speeds/Outgest/Outer Cube,float,1,-0.1
+/Preferences/Intake/Speeds/Intake/Inner Cone,float,1,1.0
+/Preferences/Intake/Speeds/Intake/Outer Cone,float,1,1.0
+/Preferences/Intake/Speeds/Intake/Inner Cube,float,1,-0.5
+/Preferences/Intake/Speeds/Intake/Outer Cube,float,1,1.0
+/Preferences/Intake/Speeds/Hold/Inner Cone,float,1,0.25
+/Preferences/Intake/Speeds/Hold/Outer Cone,float,1,0.75
+/Preferences/Intake/Speeds/Hold/Inner Cube,float,1,0.1
+/Preferences/Intake/Speeds/Hold/Outer Cube,float,1,0.1
+/Preferences/Intake/Arm/Down Stall Speed,float,1,0.03
+/Preferences/Intake/Arm/Up Stall Speed,float,1,-0.03
+/Preferences/Intake/Arm/Down Move Speed,float,1,0.35
+/Preferences/Intake/Arm/Up Move Speed,float,1,-0.35
+/Preferences/Intake/IR/Min,float,1,0.491
+/Preferences/Intake/IR/Max,float,1,0.698
+/Preferences/Intake/IR/Cone Min,float,1,0.38
+/Preferences/Intake/IR/Cone Max,float,1,0.7
+/Preferences/Intake/IR/Cube Min,float,1,0.28
+/Preferences/Intake/IR/Cube Max,float,1,0.8
+/Preferences/Intake/IR/Has Piece,float,1,0.25
+/Preferences/Auto/vxPID/ kP,float,1,1.0
+/Preferences/Auto/vxPID/ kI,float,1,0.0
+/Preferences/Auto/vxPID/ kD,float,1,0.1
+/Preferences/Auto/vxPID/ kF,float,1,0.0
+/Preferences/Auto/vxPID/ iZone,float,1,0.0
+/Preferences/Auto/vxPID/ iMax,float,1,0.0
+/Preferences/Auto/vxPID/ tolerance,float,1,0.0
+/Preferences/Auto/theta/Max Velocity,float,1,3.141592653589793
+/Preferences/Auto/theta/Max Acceleration,float,1,3.141592653589793
+/Preferences/Auto/theta/PID/ kP,float,1,3.0
+/Preferences/Auto/theta/PID/ kI,float,1,0.0
+/Preferences/Auto/theta/PID/ kD,float,1,0.0
+/Preferences/Auto/theta/PID/ kF,float,1,0.0
+/Preferences/Auto/theta/PID/ iZone,float,1,0.0
+/Preferences/Auto/theta/PID/ iMax,float,1,0.0
+/Preferences/Auto/theta/PID/ tolerance,float,1,0.05
+/Preferences/Auto/vyPID/ kP,float,1,1.0
+/Preferences/Auto/vyPID/ kI,float,1,0.0
+/Preferences/Auto/vyPID/ kD,float,1,0.1
+/Preferences/Auto/vyPID/ kF,float,1,0.0
+/Preferences/Auto/vyPID/ iZone,float,1,0.0
+/Preferences/Auto/vyPID/ iMax,float,1,0.0
+/Preferences/Auto/vyPID/ tolerance,float,1,0.0
+/Preferences/Auto/Tolerance/x,float,1,0.1
+/Preferences/Auto/Tolerance/y,float,1,0.1
+/Preferences/Auto/Tolerance/theta,float,1,0.3
+/Preferences/Auto/Tolerance/roll rate,float,1,1.0
+/Preferences/Auto/Balance/Roll Offset,float,1,-1.56
+/Preferences/Auto/Balance/Level Theshold,float,1,4.0
+/Preferences/Auto/Balance/Moving Theshold,float,1,0.2
+/Preferences/Auto/Balance/Lock Min,float,1,10.0
+/Preferences/Auto/Balance/Climb Speed,float,1,0.5
+/Preferences/Auto/Balance/Climb Max,float,1,1.5
+/Preferences/Auto/Balance/PID/ kP,float,1,0.03
+/Preferences/Auto/Balance/PID/ kI,float,1,0.0
+/Preferences/Auto/Balance/PID/ kD,float,1,0.002
+/Preferences/Auto/Balance/PID/ kF,float,1,0.0
+/Preferences/Auto/Balance/PID/ iZone,float,1,0.0
+/Preferences/Auto/Balance/PID/ iMax,float,1,0.0
+/Preferences/Auto/Balance/PID/ tolerance,float,1,0.0
+/Preferences/Grabber/Roller/Grab Cube Speed,float,1,1.0
+/Preferences/Grabber/Roller/Trigger Duration,float,1,0.002
+/Preferences/Grabber/Roller/Continuous Current,float,1,10.0
+/Preferences/Grabber/Roller/Trigger Current,float,1,60.0
+/Preferences/Grabber/Roller/Grab Cone Speed,float,1,-1.0
+/Preferences/Grabber/Roller/Drop Cube Speed,float,1,-1.0
+/Preferences/Grabber/Roller/Drop Cone Speed,float,1,1.0
+/Preferences/Grabber/Roller/Hold Cube Speed,float,1,0.1
+/Preferences/Grabber/Roller/Hold Cone Speed,float,1,-0.1
+/Preferences/Grabber/Roller/Debounce,float,1,0.01
+/Preferences/Grabber/Pivot/ iMax,float,1,0.0
+/Preferences/Grabber/Pivot/Max Acceleration,float,1,1080.0
+/Preferences/Grabber/Pivot/Max Velocity,float,1,340.0
+/Preferences/Grabber/Pivot/ kP,float,1,0.08
+/Preferences/Grabber/Pivot/Offset,float,1,30.849609375
+/Preferences/Grabber/Pivot/ kI,float,1,0.0
+/Preferences/Grabber/Pivot/ kF,float,1,0.0
+/Preferences/Grabber/Pivot/ tolerance,float,1,3.0
+/Preferences/Grabber/Pivot/ iZone,float,1,0.0
+/Preferences/Grabber/Pivot/ kD,float,1,0.0
+/Preferences/Aiming/Height,float,1,7.0
+/Preferences/Aiming/AdjustY,float,1,-4.0
+/Preferences/Aiming/AdjustYLimelight,float,1,0.0
+/Preferences/Aiming/HeightMid,float,1,7.0
+/Preferences/Aiming/HeightHigh,float,1,3.5
+/Preferences/Arm/Wrist/ iMax,float,1,0.0
+/Preferences/Arm/Wrist/Trigger Duration,float,1,0.002
+/Preferences/Arm/Wrist/Trigger Current,float,1,120.0
+/Preferences/Arm/Wrist/Offset,float,1,131.748046875
+/Preferences/Arm/Wrist/ tolerance,float,1,3.0
+/Preferences/Arm/Wrist/ kF,float,1,0.057
+/Preferences/Arm/Wrist/Max Acceleration,float,1,300.0
+/Preferences/Arm/Wrist/ kP,float,1,0.5
+/Preferences/Arm/Wrist/Gravity Compensation,float,1,0.0
+/Preferences/Arm/Wrist/ iZone,float,1,0.0
+/Preferences/Arm/Wrist/Max Velocity,float,1,250.0
+/Preferences/Arm/Wrist/Continuous Current,float,1,80.0
+/Preferences/Arm/Wrist/ kD,float,1,0.25
+/Preferences/Arm/Wrist/ kI,float,1,0.0
+/Preferences/Arm/States/Get Cone From Intake 2/Shoulder Angle,float,1,60.0
+/Preferences/Arm/States/Get Cone From Intake 2/Elbow Angle,float,1,-141.0
+/Preferences/Arm/States/Get Cone From Intake 2/Wrist Angle,float,1,0.0
+/Preferences/Arm/States/Get Cone From Intake 2/Acceleration,float,1,400.0
+/Preferences/Arm/States/Get Cone From Chute/Shoulder Angle,float,1,44.4
+/Preferences/Arm/States/Get Cone From Chute/Elbow Angle,float,1,-66.8
+/Preferences/Arm/States/Get Cone From Chute/Wrist Angle,float,1,79.0
+/Preferences/Arm/States/Get Cone From Chute/Acceleration,float,1,450.0
+/Preferences/Arm/States/Get Cone From Chute/Deploy Tolerance,float,1,2.0
+/Preferences/Arm/States/Get Cone From Chute/Retract Tolerance,float,1,8.0
+/Preferences/Arm/States/Get Cone From Chute/Deploy 1/Shoulder Angle,float,1,100.0
+/Preferences/Arm/States/Get Cone From Chute/Deploy 1/Elbow Angle,float,1,-20.0
+/Preferences/Arm/States/Get Cone From Chute/Deploy 1/Wrist Angle,float,1,90.0
+/Preferences/Arm/States/Get Cone From Chute/Deploy 1/Acceleration,float,1,300.0
+/Preferences/Arm/States/Get Cone From Chute/Retract 1/Shoulder Angle,float,1,110.0
+/Preferences/Arm/States/Get Cone From Chute/Retract 1/Elbow Angle,float,1,-40.0
+/Preferences/Arm/States/Get Cone From Chute/Retract 1/Wrist Angle,float,1,90.0
+/Preferences/Arm/States/Get Cone From Chute/Retract 1/Acceleration,float,1,300.0
+/Preferences/Arm/States/Get Cube From Shelf/Elbow Angle,float,1,-265.0
+/Preferences/Arm/States/Get Cube From Shelf/Shoulder Angle,float,1,9.0
+/Preferences/Arm/States/Get Cube From Shelf/Wrist Angle,float,1,39.0
+/Preferences/Arm/States/Get Cube From Shelf/Deploy Tolerance,float,1,50.0
+/Preferences/Arm/States/Get Cube From Shelf/Retract Tolerance,float,1,40.0
+/Preferences/Arm/States/Get Cube From Shelf/Acceleration,float,1,500.0
+/Preferences/Arm/States/Get Cube From Shelf/Deploy 1/Shoulder Angle,float,1,90.0
+/Preferences/Arm/States/Get Cube From Shelf/Deploy 1/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Get Cube From Shelf/Deploy 1/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Get Cube From Shelf/Deploy 1/Acceleration,float,1,300.0
+/Preferences/Arm/States/Get Cube From Shelf/Deploy 2/Shoulder Angle,float,1,120.0
+/Preferences/Arm/States/Get Cube From Shelf/Deploy 2/Elbow Angle,float,1,-7.6
+/Preferences/Arm/States/Get Cube From Shelf/Deploy 2/Wrist Angle,float,1,39.7
+/Preferences/Arm/States/Get Cube From Shelf/Deploy 2/Acceleration,float,1,300.0
+/Preferences/Arm/States/Get Cube From Shelf/Retract 2/Shoulder Angle,float,1,120.0
+/Preferences/Arm/States/Get Cube From Shelf/Retract 2/Elbow Angle,float,1,0.0
+/Preferences/Arm/States/Get Cube From Shelf/Retract 2/Wrist Angle,float,1,87.8
+/Preferences/Arm/States/Get Cube From Shelf/Retract 2/Acceleration,float,1,300.0
+/Preferences/Arm/States/Get Cube From Shelf/Retract 1/Shoulder Angle,float,1,90.0
+/Preferences/Arm/States/Get Cube From Shelf/Retract 1/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Get Cube From Shelf/Retract 1/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Get Cube From Shelf/Retract 1/Acceleration,float,1,300.0
+/Preferences/Arm/States/Score Cone Low/Shoulder Angle,float,1,56.3
+/Preferences/Arm/States/Score Cone Low/Elbow Angle,float,1,-87.4
+/Preferences/Arm/States/Score Cone Low/Wrist Angle,float,1,156.8
+/Preferences/Arm/States/Score Cone Low/Acceleration,float,1,600.0
+/Preferences/Arm/States/Stow With Piece/Shoulder Angle,float,1,22.0
+/Preferences/Arm/States/Stow With Piece/Elbow Angle,float,1,-150.0
+/Preferences/Arm/States/Stow With Piece/Wrist Angle,float,1,55.0
+/Preferences/Arm/States/Stow With Piece/Acceleration,float,1,600.0
+/Preferences/Arm/States/Score Cube Middle Front/Shoulder Angle,float,1,80.0
+/Preferences/Arm/States/Score Cube Middle Front/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Score Cube Middle Front/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Score Cube Middle Front/Acceleration,float,1,300.0
+/Preferences/Arm/States/Stow For Handoff/Shoulder Angle,float,1,49.9
+/Preferences/Arm/States/Stow For Handoff/Elbow Angle,float,1,-173.3
+/Preferences/Arm/States/Stow For Handoff/Wrist Angle,float,1,2.2
+/Preferences/Arm/States/Stow For Handoff/Acceleration,float,1,600.0
+/Preferences/Arm/States/Get Cone From Intake/Elbow Angle,float,1,-125.5
+/Preferences/Arm/States/Get Cone From Intake/Wrist Angle,float,1,0.0
+/Preferences/Arm/States/Get Cone From Intake/Shoulder Angle,float,1,65.6
+/Preferences/Arm/States/Get Cone From Intake/Deploy Tolerance,float,1,8.0
+/Preferences/Arm/States/Get Cone From Intake/Deploy 1/Shoulder Angle,float,1,40.0
+/Preferences/Arm/States/Get Cone From Intake/Deploy 1/Elbow Angle,float,1,-180.8
+/Preferences/Arm/States/Get Cone From Intake/Deploy 1/Wrist Angle,float,1,0.0
+/Preferences/Arm/States/Get Cone From Intake 1/Shoulder Angle,float,1,60.0
+/Preferences/Arm/States/Get Cone From Intake 1/Elbow Angle,float,1,-141.0
+/Preferences/Arm/States/Get Cone From Intake 1/Wrist Angle,float,1,0.0
+/Preferences/Arm/States/Get Cone From Intake 1/Acceleration,float,1,600.0
+/Preferences/Arm/States/Flat/Shoulder Angle,float,1,10.0
+/Preferences/Arm/States/Flat/Elbow Angle,float,1,-180.0
+/Preferences/Arm/States/Flat/Wrist Angle,float,1,10.0
+/Preferences/Arm/States/Flat/Acceleration,float,1,400.0
+/Preferences/Arm/States/Get Cube From Intake/Wrist Angle,float,1,0.0
+/Preferences/Arm/States/Get Cube From Intake/Elbow Angle,float,1,-120.3
+/Preferences/Arm/States/Get Cube From Intake/Shoulder Angle,float,1,53.2
+/Preferences/Arm/States/Get Cube From Intake/Deploy Tolerance,float,1,12.0
+/Preferences/Arm/States/Get Cube From Intake/Deploy 1/Shoulder Angle,float,1,80.0
+/Preferences/Arm/States/Get Cube From Intake/Deploy 1/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Get Cube From Intake/Deploy 1/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Get Cube From Chute/Acceleration,float,1,300.0
+/Preferences/Arm/States/Get Cube From Chute/Deploy Tolerance,float,1,2.0
+/Preferences/Arm/States/Get Cube From Chute/Shoulder Angle,float,1,37.6
+/Preferences/Arm/States/Get Cube From Chute/Elbow Angle,float,1,-63.7
+/Preferences/Arm/States/Get Cube From Chute/Wrist Angle,float,1,85.0
+/Preferences/Arm/States/Get Cube From Chute/Retract Tolerance,float,1,2.0
+/Preferences/Arm/States/Get Cube From Chute/Deploy 1/Shoulder Angle,float,1,90.0
+/Preferences/Arm/States/Get Cube From Chute/Deploy 1/Elbow Angle,float,1,-50.0
+/Preferences/Arm/States/Get Cube From Chute/Deploy 1/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Get Cube From Chute/Deploy 1/Acceleration,float,1,300.0
+/Preferences/Arm/States/Get Cube From Chute/Retract 1/Shoulder Angle,float,1,90.0
+/Preferences/Arm/States/Get Cube From Chute/Retract 1/Elbow Angle,float,1,-55.0
+/Preferences/Arm/States/Get Cube From Chute/Retract 1/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Get Cube From Chute/Retract 1/Acceleration,float,1,300.0
+/Preferences/Arm/States/Score Cone Low Front/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Score Cone Low Front/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Score Cone Low Front/Shoulder Angle,float,1,80.0
+/Preferences/Arm/States/Score Cone Low Front/Acceleration,float,1,300.0
+/Preferences/Arm/States/Auto Prep Score Cone/Shoulder Angle,float,1,17.0
+/Preferences/Arm/States/Auto Prep Score Cone/Elbow Angle,float,1,-180.0
+/Preferences/Arm/States/Auto Prep Score Cone/Wrist Angle,float,1,75.0
+/Preferences/Arm/States/Auto Prep Score Cone/Acceleration,float,1,300.0
+/Preferences/Arm/States/Score Cube Middle/Elbow Angle,float,1,-100.0
+/Preferences/Arm/States/Score Cube Middle/Wrist Angle,float,1,110.2
+/Preferences/Arm/States/Score Cube Middle/Shoulder Angle,float,1,105.0
+/Preferences/Arm/States/Score Cube Middle/Acceleration,float,1,500.0
+/Preferences/Arm/States/Unused State/Shoulder Angle,float,1,80.0
+/Preferences/Arm/States/Unused State/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Unused State/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Unused State/Acceleration,float,1,600.0
+/Preferences/Arm/States/Get Cube From Intake 2/Shoulder Angle,float,1,13.4
+/Preferences/Arm/States/Get Cube From Intake 2/Elbow Angle,float,1,-234.3
+/Preferences/Arm/States/Get Cube From Intake 2/Wrist Angle,float,1,-51.4
+/Preferences/Arm/States/Get Cube From Intake 2/Acceleration,float,1,600.0
+/Preferences/Arm/States/Stow For HP/Shoulder Angle,float,1,90.0
+/Preferences/Arm/States/Stow For HP/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Stow For HP/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Stow For HP/Acceleration,float,1,600.0
+/Preferences/Arm/States/Score Cone Middle/Shoulder Angle,float,1,80.0
+/Preferences/Arm/States/Score Cone Middle/Elbow Angle,float,1,-140.0
+/Preferences/Arm/States/Score Cone Middle/Wrist Angle,float,1,143.0
+/Preferences/Arm/States/Score Cone Middle/Deploy Tolerance,float,1,2.0
+/Preferences/Arm/States/Score Cone Middle/Retract Tolerance,float,1,100.0
+/Preferences/Arm/States/Score Cone Middle/Acceleration,float,1,500.0
+/Preferences/Arm/States/Score Cone Middle/Deploy 1/Shoulder Angle,float,1,64.2
+/Preferences/Arm/States/Score Cone Middle/Deploy 1/Elbow Angle,float,1,-186.9
+/Preferences/Arm/States/Score Cone Middle/Deploy 1/Wrist Angle,float,1,140.0
+/Preferences/Arm/States/Score Cone Middle/Retract 1/Shoulder Angle,float,1,50.9
+/Preferences/Arm/States/Score Cone Middle/Retract 1/Elbow Angle,float,1,-213.4
+/Preferences/Arm/States/Score Cone Middle/Retract 1/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Stow/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Stow/Shoulder Angle,float,1,80.0
+/Preferences/Arm/States/Stow/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Stow Flat/Shoulder Angle,float,1,22.0
+/Preferences/Arm/States/Stow Flat/Elbow Angle,float,1,-150.0
+/Preferences/Arm/States/Stow Flat/Wrist Angle,float,1,48.0
+/Preferences/Arm/States/Stow Flat/Acceleration,float,1,600.0
+/Preferences/Arm/States/Score Cube Low Front/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Score Cube Low Front/Shoulder Angle,float,1,80.0
+/Preferences/Arm/States/Score Cube Low Front/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Score Cube Low Front/Acceleration,float,1,300.0
+/Preferences/Arm/States/Score Cube High/Wrist Angle,float,1,137.0
+/Preferences/Arm/States/Score Cube High/Shoulder Angle,float,1,131.0
+/Preferences/Arm/States/Score Cube High/Elbow Angle,float,1,-210.0
+/Preferences/Arm/States/Score Cube High/Deploy Tolerance,float,1,8.0
+/Preferences/Arm/States/Score Cube High/Retract Tolerance,float,1,45.0
+/Preferences/Arm/States/Score Cube High/Acceleration,float,1,330.0
+/Preferences/Arm/States/Score Cube High/Deploy 1/Shoulder Angle,float,1,17.0
+/Preferences/Arm/States/Score Cube High/Deploy 1/Elbow Angle,float,1,-180.0
+/Preferences/Arm/States/Score Cube High/Deploy 1/Wrist Angle,float,1,30.0
+/Preferences/Arm/States/Score Cube High/Deploy 1/Acceleration,float,1,250.0
+/Preferences/Arm/States/Score Cube High/Retract 1/Shoulder Angle,float,1,121.0
+/Preferences/Arm/States/Score Cube High/Retract 1/Elbow Angle,float,1,-170.0
+/Preferences/Arm/States/Score Cube High/Retract 1/Wrist Angle,float,1,11.7
+/Preferences/Arm/States/Score Cube Low/Wrist Angle,float,1,160.7
+/Preferences/Arm/States/Score Cube Low/Elbow Angle,float,1,-96.0
+/Preferences/Arm/States/Score Cube Low/Shoulder Angle,float,1,60.0
+/Preferences/Arm/States/Score Cube Low/Acceleration,float,1,600.0
+/Preferences/Arm/States/Score Cone Middle Front/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Score Cone Middle Front/Shoulder Angle,float,1,80.0
+/Preferences/Arm/States/Score Cone Middle Front/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Score Cone Middle Front/Acceleration,float,1,300.0
+/Preferences/Arm/States/Score Cone High/Shoulder Angle,float,1,115.0
+/Preferences/Arm/States/Score Cone High/Wrist Angle,float,1,144.0
+/Preferences/Arm/States/Score Cone High/Elbow Angle,float,1,-208.0
+/Preferences/Arm/States/Score Cone High/Deploy Tolerance,float,1,5.0
+/Preferences/Arm/States/Score Cone High/Retract Tolerance,float,1,40.0
+/Preferences/Arm/States/Score Cone High/Acceleration,float,1,330.0
+/Preferences/Arm/States/Score Cone High/Deploy 1/Shoulder Angle,float,1,17.0
+/Preferences/Arm/States/Score Cone High/Deploy 1/Elbow Angle,float,1,-180.0
+/Preferences/Arm/States/Score Cone High/Deploy 1/Wrist Angle,float,1,30.0
+/Preferences/Arm/States/Score Cone High/Deploy 1/Acceleration,float,1,200.0
+/Preferences/Arm/States/Score Cone High/Retract 1/Shoulder Angle,float,1,80.0
+/Preferences/Arm/States/Score Cone High/Retract 1/Elbow Angle,float,1,-237.3
+/Preferences/Arm/States/Score Cone High/Retract 1/Wrist Angle,float,1,149.2
+/Preferences/Arm/States/Get Cube From Intake 1/Shoulder Angle,float,1,13.4
+/Preferences/Arm/States/Get Cube From Intake 1/Elbow Angle,float,1,-234.3
+/Preferences/Arm/States/Get Cube From Intake 1/Wrist Angle,float,1,-51.4
+/Preferences/Arm/States/Get Cube From Intake 1/Acceleration,float,1,400.0
+/Preferences/Arm/States/Get Cone From Shelf/Shoulder Angle,float,1,16.0
+/Preferences/Arm/States/Get Cone From Shelf/Wrist Angle,float,1,38.0
+/Preferences/Arm/States/Get Cone From Shelf/Elbow Angle,float,1,-260.0
+/Preferences/Arm/States/Get Cone From Shelf/Acceleration,float,1,500.0
+/Preferences/Arm/States/Get Cone From Shelf/Deploy Tolerance,float,1,50.0
+/Preferences/Arm/States/Get Cone From Shelf/Retract Tolerance,float,1,2.0
+/Preferences/Arm/States/Get Cone From Shelf/Deploy 1/Shoulder Angle,float,1,90.0
+/Preferences/Arm/States/Get Cone From Shelf/Deploy 1/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Get Cone From Shelf/Deploy 1/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Get Cone From Shelf/Deploy 1/Acceleration,float,1,300.0
+/Preferences/Arm/States/Get Cone From Shelf/Deploy 2/Shoulder Angle,float,1,120.0
+/Preferences/Arm/States/Get Cone From Shelf/Deploy 2/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Get Cone From Shelf/Deploy 2/Wrist Angle,float,1,80.0
+/Preferences/Arm/States/Get Cone From Shelf/Deploy 2/Acceleration,float,1,300.0
+/Preferences/Arm/States/Get Cone From Shelf/Retract 2/Shoulder Angle,float,1,120.0
+/Preferences/Arm/States/Get Cone From Shelf/Retract 2/Elbow Angle,float,1,15.0
+/Preferences/Arm/States/Get Cone From Shelf/Retract 2/Wrist Angle,float,1,43.0
+/Preferences/Arm/States/Get Cone From Shelf/Retract 2/Acceleration,float,1,300.0
+/Preferences/Arm/States/Get Cone From Shelf/Retract 1/Shoulder Angle,float,1,90.0
+/Preferences/Arm/States/Get Cone From Shelf/Retract 1/Elbow Angle,float,1,-80.0
+/Preferences/Arm/States/Get Cone From Shelf/Retract 1/Wrist Angle,float,1,70.0
+/Preferences/Arm/States/Get Cone From Shelf/Retract 1/Acceleration,float,1,300.0
+/Preferences/Arm/Elbow/Trigger Current,float,1,120.0
+/Preferences/Arm/Elbow/ kF,float,1,0.057
+/Preferences/Arm/Elbow/ iMax,float,1,0.0
+/Preferences/Arm/Elbow/ kP,float,1,0.5
+/Preferences/Arm/Elbow/Offset,float,1,-248.02734375
+/Preferences/Arm/Elbow/ kD,float,1,0.25
+/Preferences/Arm/Elbow/Trigger Duration,float,1,0.002
+/Preferences/Arm/Elbow/Max Acceleration,float,1,300.0
+/Preferences/Arm/Elbow/Continuous Current,float,1,80.0
+/Preferences/Arm/Elbow/ kI,float,1,0.0
+/Preferences/Arm/Elbow/ tolerance,float,1,3.0
+/Preferences/Arm/Elbow/ iZone,float,1,0.0
+/Preferences/Arm/Elbow/Max Velocity,float,1,250.0
+/Preferences/Arm/Elbow/Gravity Compensation,float,1,0.0
+/Preferences/Arm/Shoulder/Max Acceleration,float,1,300.0
+/Preferences/Arm/Shoulder/ kI,float,1,0.0
+/Preferences/Arm/Shoulder/Trigger Duration,float,1,0.002
+/Preferences/Arm/Shoulder/ kF,float,1,0.057
+/Preferences/Arm/Shoulder/Continuous Current,float,1,80.0
+/Preferences/Arm/Shoulder/Gravity Compensation,float,1,0.0
+/Preferences/Arm/Shoulder/ iZone,float,1,0.0
+/Preferences/Arm/Shoulder/ kD,float,1,0.25
+/Preferences/Arm/Shoulder/ iMax,float,1,0.0
+/Preferences/Arm/Shoulder/Offset,float,1,41.572265625
+/Preferences/Arm/Shoulder/ tolerance,float,1,3.0
+/Preferences/Arm/Shoulder/ kP,float,1,0.5
+/Preferences/Arm/Shoulder/Max Velocity,float,1,250.0
+/Preferences/Arm/Shoulder/Trigger Current,float,1,120.0
+/Preferences/Drive/Offsets/Front Right,float,1,58.4
+/Preferences/Drive/Offsets/Front Left,float,1,274.5
+/Preferences/Drive/Offsets/Back Left,float,1,354.8
+/Preferences/Drive/Offsets/Back Right,float,1,321.9

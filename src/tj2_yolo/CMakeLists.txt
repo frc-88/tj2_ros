@@ -4,6 +4,7 @@ project(tj2_yolo)
 # Set to C++14
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_TYPE Debug)
 
 # check c++14 / c++0x
 include(CheckCXXCompilerFlag)

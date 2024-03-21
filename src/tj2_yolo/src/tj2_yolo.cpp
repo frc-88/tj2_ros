@@ -1,9 +1,8 @@
 #include "tj2_yolo.h"
 
-TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
-    nh(*nodehandle),
-    _image_transport(nh),
-    tfListener(tfBuffer)
+TJ2Yolo::TJ2Yolo(ros::NodeHandle *nodehandle) : nh(*nodehandle),
+                                                _image_transport(nh),
+                                                tfListener(tfBuffer)
 {
     ros::param::param<std::string>("~model_path", _model_path, "best.pt");
     ros::param::param<std::string>("~classes_path", _classes_path, "coco.names");
@@ -32,14 +31,18 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     _marker_persistance = ros::Duration(_marker_persistance_s);
 
     torch::DeviceType device_type;
-    if (torch::cuda::is_available()) {
+    if (torch::cuda::is_available())
+    {
         device_type = torch::kCUDA;
-    } else {
+    }
+    else
+    {
         device_type = torch::kCPU;
         ROS_WARN("Using CPU to run inference!");
     }
     _class_names = Detector::LoadNames(_classes_path);
-    if (_class_names.empty()) {
+    if (_class_names.empty())
+    {
         std::cerr << "Error loading class names!\n";
         std::exit(EXIT_FAILURE);
     }
@@ -48,13 +51,13 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     erode_element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2 * _erosion_size + 1, 2 * _erosion_size + 1));
 
     _box_point_permutations = {
-        {-1, -1,  1},
-        { 1,  1,  1},
-        { 1, -1,  1},
-        {-1, -1,  1},
+        {-1, -1, 1},
+        {1, 1, 1},
+        {1, -1, 1},
+        {-1, -1, 1},
         {-1, -1, -1},
-        { 1,  1, -1},
-        { 1, -1, -1},
+        {1, 1, -1},
+        {1, -1, -1},
         {-1, -1, -1},
     };
 
@@ -63,8 +66,9 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle* nodehandle) :
     ROS_INFO("Warming up detector with (%dx%d)", _image_width, _image_height);
     cv::Mat warmup_img = cv::Mat::zeros(_image_height, _image_width, CV_8UC3);
     cv::randu(warmup_img, cv::Scalar(0), cv::Scalar(255));
-    for (size_t count = 0; count < 2; count++) {
-        _detector->Run(warmup_img, _conf_threshold, _iou_threshold);        
+    for (size_t count = 0; count < 2; count++)
+    {
+        _detector->Run(warmup_img, _conf_threshold, _iou_threshold);
     }
 
     // Subscribers
@@ -97,14 +101,13 @@ void TJ2Yolo::dynamic_callback(tj2_yolo::YoloDetectionConfig &config, uint32_t l
     _report_loop_times = config.report_loop_times;
 
     ROS_INFO("Setting config to:\n\tconfidence_threshold: %0.2f\n\tnms_iou_threshold: %0.2f\n\tpublish_overlay: %d\n\treport_loop_times: %d",
-        _conf_threshold,
-        _iou_threshold,
-        _publish_overlay,
-        _report_loop_times
-    );
+             _conf_threshold,
+             _iou_threshold,
+             _publish_overlay,
+             _report_loop_times);
 }
 
-void TJ2Yolo::camera_info_callback(const sensor_msgs::CameraInfoConstPtr& camera_info)
+void TJ2Yolo::camera_info_callback(const sensor_msgs::CameraInfoConstPtr &camera_info)
 {
     _camera_info = *camera_info;
     _camera_model.fromCameraInfo(camera_info);
@@ -114,46 +117,51 @@ void TJ2Yolo::camera_info_callback(const sensor_msgs::CameraInfoConstPtr& camera
 
 double TJ2Yolo::get_depth_conversion(std::string encoding)
 {
-  switch (sensor_msgs::image_encodings::bitDepth(encoding)) {
+    switch (sensor_msgs::image_encodings::bitDepth(encoding))
+    {
     case 8:
     case 16:
-      return 0.001;
+        return 0.001;
     case 32:
     case 64:
     default:
-      return 1.0;
-  };
+        return 1.0;
+    };
 }
 
-void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const sensor_msgs::ImageConstPtr& depth_image)
+void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr &color_image, const sensor_msgs::ImageConstPtr &depth_image)
 {
     ros::Time now = ros::Time::now();
     ros::Duration color_transport_delay = now - color_image->header.stamp;
     double color_transport_delay_ms = color_transport_delay.toSec() * 1000.0;
     ros::Duration depth_transport_delay = now - depth_image->header.stamp;
     double depth_transport_delay_ms = depth_transport_delay.toSec() * 1000.0;
-    if (color_transport_delay_ms >= _message_delay_warning_ms) {
+    if (color_transport_delay_ms >= _message_delay_warning_ms)
+    {
         ROS_WARN_THROTTLE(0.5, "Color image has a large delay: %0.4f ms", color_transport_delay_ms);
     }
-    if (depth_transport_delay_ms >= _message_delay_warning_ms) {
+    if (depth_transport_delay_ms >= _message_delay_warning_ms)
+    {
         ROS_WARN_THROTTLE(0.5, "Depth image has a large delay: %0.4f ms", depth_transport_delay_ms);
     }
 
     cv_bridge::CvImagePtr color_ptr;
-    try {
+    try
+    {
         color_ptr = cv_bridge::toCvCopy(color_image, sensor_msgs::image_encodings::BGR8);
     }
-    catch (cv_bridge::Exception& e)
+    catch (cv_bridge::Exception &e)
     {
         ROS_ERROR("Failed to convert color image: %s", e.what());
         return;
     }
 
     cv_bridge::CvImagePtr depth_ptr;
-    try {
-        depth_ptr = cv_bridge::toCvCopy(depth_image);  // encoding: passthrough
+    try
+    {
+        depth_ptr = cv_bridge::toCvCopy(depth_image); // encoding: passthrough
     }
-    catch (cv_bridge::Exception& e)
+    catch (cv_bridge::Exception &e)
     {
         ROS_ERROR("Failed to convert depth image: %s", e.what());
         return;
@@ -162,35 +170,39 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
     cv::Mat color_cv_image = color_ptr->image;
     cv::Mat depth_cv_image = depth_ptr->image;
 
-    if (color_cv_image.cols == 0 || color_cv_image.rows == 0) {
+    if (color_cv_image.cols == 0 || color_cv_image.rows == 0)
+    {
         ROS_ERROR("Color image has a zero width dimension!");
         return;
     }
-    if (depth_cv_image.cols == 0 || depth_cv_image.rows == 0) {
+    if (depth_cv_image.cols == 0 || depth_cv_image.rows == 0)
+    {
         ROS_ERROR("Depth image has a zero width dimension!");
         return;
     }
 
     auto t_start = std::chrono::high_resolution_clock::now();
     auto result = _detector->Run(color_cv_image, _conf_threshold, _iou_threshold);
-    if (_report_loop_times) {
-        ROS_INFO_THROTTLE(0.5, "----- %lu detections -----\nColor delay: %0.4f ms\nDepth delay: %0.4f ms\n%s", 
-            result.size(),
-            color_transport_delay_ms,
-            depth_transport_delay_ms,
-            _detector->GetTimingReport().c_str()
-        );
+    if (_report_loop_times)
+    {
+        ROS_INFO_THROTTLE(0.5, "----- %lu detections -----\nColor delay: %0.4f ms\nDepth delay: %0.4f ms\n%s",
+                          result.size(),
+                          color_transport_delay_ms,
+                          depth_transport_delay_ms,
+                          _detector->GetTimingReport().c_str());
     }
     vision_msgs::Detection3DArray detection_3d_arr_msg;
     detection_3d_arr_msg.header = color_image->header;
 
-    if (result.empty()) {
+    if (result.empty())
+    {
         _detection_pub.publish(detection_3d_arr_msg);
         return;
     }
     auto t0 = std::chrono::high_resolution_clock::now();
     auto detection_time_s = std::chrono::duration<double>(t0 - t_start);
-    if (detection_time_s.count() > 1.0) {
+    if (detection_time_s.count() > 1.0)
+    {
         ROS_INFO("Detector is warming up");
         return;
     }
@@ -207,23 +219,26 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
     depth_cv_image *= conversion;
 
     cv::Mat debug_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
-    for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++) {
+    for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++)
+    {
         vision_msgs::Detection2D detection_2d_msg = detection_2d_arr_msg.detections[index];
         detection_2d_msg.header = color_image->header;
-        
+
         double z_min, z_max;
         cv::Mat detection_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
         get_depth_from_detection(depth_cv_image, detection_2d_msg, detection_mask, z_min, z_max);
         cv::bitwise_or(debug_mask, detection_mask, debug_mask);
 
-        std_msgs::ColorRGBA obj_color = get_detection_color(color_cv_image, detection_mask);        
+        std_msgs::ColorRGBA obj_color = get_detection_color(color_cv_image, detection_mask);
         vision_msgs::Detection3D detection_3d_msg = detection_2d_to_3d(detection_2d_msg, z_min, z_max);
         add_detection_to_marker_array(marker_array, detection_3d_msg, obj_color);
 
-        if (tf_detection_pose_to_robot(detection_3d_msg)) {
+        if (tf_detection_pose_to_robot(detection_3d_msg))
+        {
             detection_3d_arr_msg.header.frame_id = _target_frame;
         }
-        else {
+        else
+        {
             return;
         }
         detection_3d_arr_msg.detections.push_back(detection_3d_msg);
@@ -235,7 +250,8 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
     auto t_end = std::chrono::high_resolution_clock::now();
 
     auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start);
-    if ((double)total_time.count() >= _long_loop_warning_ms) {
+    if ((double)total_time.count() >= _long_loop_warning_ms)
+    {
         ROS_WARN_THROTTLE(0.5, "Detection loop took a long time: %ld ms", total_time.count());
     }
 
@@ -248,15 +264,16 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const
         _overlay_pub.publish(overlay_msg);
         _overlay_info_pub.publish(_camera_info);
     }
-    if (_report_loop_times) {
+    if (_report_loop_times)
+    {
         auto detection_time = std::chrono::duration_cast<std::chrono::milliseconds>(t0 - t_start);
         auto overlay_time = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
         auto message_prep_time = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t1);
         boost::format fmt = boost::format("\tdetection: %d ms\n\toverlay: %d ms\n\tmessage: %d ms\n\ttotal: %d ms\n") %
-            detection_time.count() %
-            overlay_time.count() %
-            message_prep_time.count() %
-            total_time.count();
+                            detection_time.count() %
+                            overlay_time.count() %
+                            message_prep_time.count() %
+                            total_time.count();
         ROS_INFO_THROTTLE(0.5, "Loop report:\n%s", fmt.str().c_str());
     }
 }
@@ -275,7 +292,7 @@ std_msgs::ColorRGBA TJ2Yolo::get_detection_color(cv::Mat color_cv_image, cv::Mat
     return color;
 }
 
-void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Detection2D detection_2d_msg, cv::Mat& out_mask, double& z_min, double& z_max)
+void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Detection2D detection_2d_msg, cv::Mat &out_mask, double &z_min, double &z_max)
 {
     // assumes depth_cv_image has been converted to CV_32FC1 where 1.0 == 1 meter
     // extract pixel coordinates of bounding box
@@ -287,7 +304,16 @@ void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Dete
     // crop depth image
     cv::Rect crop(center_x - size_x / 2, center_y - size_y / 2, size_x, size_y);
     cv::Mat depth_crop = depth_cv_image(crop);
-    
+
+    out_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
+    if (depth_crop.empty())
+    {
+        ROS_WARN("Depth crop is empty!");
+        z_min = 0.0;
+        z_max = 0.0;
+        return;
+    }
+
     // create range mask
     cv::Mat min_mask = (depth_crop > _min_depth);
     cv::Mat max_mask = (depth_crop < _max_depth);
@@ -322,11 +348,13 @@ void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Dete
     cv::threshold(normalized, threshold_mask, _relative_threshold, 255, cv::THRESH_BINARY_INV);
 
     // set border to zero then apply erosion
-    for (size_t x = 0; x < depth_crop.cols; x++) {
+    for (size_t x = 0; x < depth_crop.cols; x++)
+    {
         threshold_mask.at<uchar>(0, x) = 0;
         threshold_mask.at<uchar>(depth_crop.rows - 1, x) = 0;
     }
-    for (size_t y = 0; y < depth_crop.rows; y++) {
+    for (size_t y = 0; y < depth_crop.rows; y++)
+    {
         threshold_mask.at<uchar>(y, 0) = 0;
         threshold_mask.at<uchar>(y, depth_crop.cols - 1) = 0;
     }
@@ -335,7 +363,8 @@ void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Dete
     // if the threshold removed all pixels, reset the mask to all true.
     // this way this function will always return results from the image and not zero
     bool is_mask_empty = false;
-    if (countNonZero(threshold_mask) == 0) {
+    if (countNonZero(threshold_mask) == 0)
+    {
         threshold_mask = cv::Mat::zeros(depth_crop.rows, depth_crop.cols, CV_8UC1);
         cv::rectangle(threshold_mask, cv::Point(crop.x, crop.y), cv::Point(crop.x + crop.width, crop.y + crop.height), cv::Scalar(255), cv::FILLED);
         is_mask_empty = true;
@@ -357,17 +386,21 @@ void TJ2Yolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Dete
 
     // set min/max based on mean and standard deviation
     z_min = z_dist;
-    if (is_mask_empty) {
+    if (is_mask_empty)
+    {
         z_max = z_dist + 0.001;
     }
-    else {
+    else
+    {
         z_max = z_dist + z_std * num_stddevs;
     }
 
-    out_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
-    for (size_t x = 0; x < depth_crop.cols; x++) {
-        for (size_t y = 0; y < depth_crop.rows; y++) {
-            if (threshold_mask.at<uchar>(y, x)) {
+    for (size_t x = 0; x < depth_crop.cols; x++)
+    {
+        for (size_t y = 0; y < depth_crop.rows; y++)
+        {
+            if (threshold_mask.at<uchar>(y, x))
+            {
                 out_mask.at<uchar>(y + crop.y, x + crop.x) = 255;
             }
         }
@@ -427,18 +460,19 @@ vision_msgs::Detection3D TJ2Yolo::detection_2d_to_3d(vision_msgs::Detection2D de
     return detection_3d_msg;
 }
 
-bool TJ2Yolo::tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_msg)
+bool TJ2Yolo::tf_detection_pose_to_robot(vision_msgs::Detection3D &detection_3d_msg)
 {
-    if (_target_frame.size() == 0) {
+    if (_target_frame.size() == 0)
+    {
         return true;
     }
     geometry_msgs::TransformStamped transform_camera_to_target;
 
-    try {
+    try
+    {
         transform_camera_to_target = tfBuffer.lookupTransform(
             _target_frame, detection_3d_msg.header.frame_id,
-            detection_3d_msg.header.stamp, ros::Duration(1.0)
-        );
+            detection_3d_msg.header.stamp, ros::Duration(1.0));
         geometry_msgs::PoseStamped pose_stamped;
         pose_stamped.header = detection_3d_msg.header;
         pose_stamped.pose = detection_3d_msg.bbox.center;
@@ -449,7 +483,8 @@ bool TJ2Yolo::tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_
         detection_3d_msg.results[0].pose.pose = pose_stamped.pose;
         return true;
     }
-    catch (tf2::TransformException &ex) {
+    catch (tf2::TransformException &ex)
+    {
         ROS_WARN_THROTTLE(0.5, "%s", ex.what());
         return false;
     }
@@ -470,20 +505,24 @@ int TJ2Yolo::get_class_count(int obj_id)
     return obj_id >> 16;
 }
 
-vision_msgs::Detection2DArray TJ2Yolo::detections_to_msg(const std::vector<std::vector<Detection>>& detections)
+vision_msgs::Detection2DArray TJ2Yolo::detections_to_msg(const std::vector<std::vector<Detection>> &detections)
 {
     vision_msgs::Detection2DArray detection_2d_arr_msg;
-    for (size_t index = 0; index < _obj_count.size(); index++) {
+    for (size_t index = 0; index < _obj_count.size(); index++)
+    {
         _obj_count[index] = 0;
     }
 
-    for (const auto& detection : detections[0]) {
-        const auto& box = detection.bbox;
+    for (const auto &detection : detections[0])
+    {
+        const auto &box = detection.bbox;
         float score = detection.score;
         int class_idx = detection.class_idx;
-        if (class_idx >= _obj_count.size()) {
+        if (class_idx >= _obj_count.size())
+        {
             ROS_ERROR("Class index %d is not a registered class!", class_idx);
-            continue;
+            // continue;
+            class_idx = 0;
         }
         int class_count = _obj_count[class_idx];
         _obj_count[class_idx]++;
@@ -522,7 +561,8 @@ tj2_interfaces::GameObjectsStamped TJ2Yolo::convert_to_game_objects(
     objects.width = width;
     objects.height = height;
 
-    for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++) {
+    for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++)
+    {
         vision_msgs::Detection2D detection_2d_msg = detection_2d_arr_msg.detections[index];
         vision_msgs::Detection3D detection_3d_msg = detection_3d_arr_msg.detections[index];
 
@@ -550,7 +590,8 @@ tj2_interfaces::GameObjectsStamped TJ2Yolo::convert_to_game_objects(
         double half_x = detection_3d_msg.bbox.size.x / 2.0;
         double half_y = detection_3d_msg.bbox.size.y / 2.0;
         double half_z = detection_3d_msg.bbox.size.z / 2.0;
-        for (int index = 0; index < obj.bounding_box_3d.points.size(); index++) {
+        for (int index = 0; index < obj.bounding_box_3d.points.size(); index++)
+        {
             obj.bounding_box_3d.points[index].x = _box_point_permutations[index][0] * half_x;
             obj.bounding_box_3d.points[index].y = _box_point_permutations[index][1] * half_y;
             obj.bounding_box_3d.points[index].z = _box_point_permutations[index][2] * half_z;
@@ -564,22 +605,30 @@ tj2_interfaces::GameObjectsStamped TJ2Yolo::convert_to_game_objects(
     return objects;
 }
 
-
-void TJ2Yolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>>& detections, cv::Mat debug_mask, bool label)
+void TJ2Yolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>> &detections, cv::Mat debug_mask, bool label)
 {
-    if (detections.empty()) {
+    if (detections.empty())
+    {
         return;
     }
     cv::cvtColor(debug_mask, debug_mask, cv::COLOR_GRAY2BGR);
     cv::bitwise_and(img, debug_mask, img);
-    for (const auto& detection : detections[0]) {
-        const auto& box = detection.bbox;
+    for (const auto &detection : detections[0])
+    {
+        const auto &box = detection.bbox;
         float score = detection.score;
         int class_idx = detection.class_idx;
 
         cv::rectangle(img, box, cv::Scalar(0, 0, 255), 2);
 
-        if (label) {
+        if (label)
+        {
+            if (class_idx >= _obj_count.size())
+            {
+                ROS_ERROR("Class index %d is not a registered class! Failed to draw overlay.", class_idx);
+                // continue;
+                class_idx = 0;
+            }
             std::stringstream ss;
             ss << std::fixed << std::setprecision(2) << score;
             std::string s = _class_names[class_idx] + " " + ss.str();
@@ -587,19 +636,19 @@ void TJ2Yolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>
             auto font_face = cv::FONT_HERSHEY_DUPLEX;
             auto font_scale = 1.0;
             int thickness = 1;
-            int baseline=0;
+            int baseline = 0;
             auto s_size = cv::getTextSize(s, font_face, font_scale, thickness, &baseline);
             cv::rectangle(img,
-                    cv::Point(box.tl().x, box.tl().y - s_size.height - 5),
-                    cv::Point(box.tl().x + s_size.width, box.tl().y),
-                    cv::Scalar(0, 0, 255), -1);
+                          cv::Point(box.tl().x, box.tl().y - s_size.height - 5),
+                          cv::Point(box.tl().x + s_size.width, box.tl().y),
+                          cv::Scalar(0, 0, 255), -1);
             cv::putText(img, s, cv::Point(box.tl().x, box.tl().y - 5),
-                        font_face , font_scale, cv::Scalar(255, 255, 255), thickness);
+                        font_face, font_scale, cv::Scalar(255, 255, 255), thickness);
         }
     }
 }
 
-void TJ2Yolo::add_detection_to_marker_array(visualization_msgs::MarkerArray& marker_array, vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color)
+void TJ2Yolo::add_detection_to_marker_array(visualization_msgs::MarkerArray &marker_array, vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color)
 {
     visualization_msgs::Marker cube_marker = make_marker(detection_3d_msg, color);
     visualization_msgs::Marker line_marker = make_marker(detection_3d_msg, color);
