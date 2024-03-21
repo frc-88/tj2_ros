@@ -11,7 +11,7 @@
     </include>
 
     <node name="map_server" pkg="map_server" type="map_server" output="screen"
-        args="$(find tj2_data)/data/maps/$(arg map_name).yaml">
+        args="$(find tj2_bringup)/config/shared/maps/$(arg map_name).yaml">
         <param name="frame_id" value="map" />
     </node>
 
