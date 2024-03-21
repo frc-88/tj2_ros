@@ -6,42 +6,9 @@ import os
 import cv2
 import numpy as np
 from camera_info_manager import CameraInfoManager  # type: ignore
-
-
-def write_yaml_parameters(path, parameters):
-    print(f"Wrote to {path}")
-    with open(path, "w") as file:
-        image_height = parameters["image_height"]
-        image_width = parameters["image_width"]
-        distortion_model = parameters["distortion_model"]
-        distortion_coefficients = parameters["distortion_coefficients"]
-        camera_matrix = parameters["camera_matrix"]
-        rectification_matrix = parameters["rectification_matrix"]
-        projection_matrix = parameters["projection_matrix"]
-        camera_name = parameters["camera_name"]
-        contents = f"""
-image_width: {image_width}
-image_height: {image_height}
-camera_name: {camera_name}
-camera_matrix:
-  rows: {camera_matrix["rows"]}
-  cols: {camera_matrix["cols"]}
-  data: {camera_matrix["data"]}
-distortion_model: {distortion_model}
-distortion_coefficients:
-  rows: {distortion_coefficients["rows"]}
-  cols: {distortion_coefficients["cols"]}
-  data: {distortion_coefficients["data"]}
-rectification_matrix:
-  rows: {rectification_matrix["rows"]}
-  cols: {rectification_matrix["cols"]}
-  data: {rectification_matrix["data"]}
-projection_matrix:
-  rows: {projection_matrix["rows"]}
-  cols: {projection_matrix["cols"]}
-  data: {projection_matrix["data"]}
-"""
-        file.write(contents)
+from sensor_msgs.msg import CameraInfo
+from std_msgs.msg import Header
+from tj2_tools.camera_calibration.calibration_file import write_yaml_parameters
 
 
 def get_matrix_dict(matrix):
@@ -153,6 +120,7 @@ def main():
             if len(args.output) == 0
             else args.output
         )
+        write_path = os.path.abspath(write_path)
         distortion_coeffs = dist[0]
         camera_matrix = mtx
         rectification_matrix = np.eye(3)
@@ -160,17 +128,26 @@ def main():
         projection[0:3, 0:3] = mtx
         projection_matrix = projection
 
-        parameters = {
-            "image_height": shape[0],
-            "image_width": shape[1],
-            "distortion_model": "plumb_bob",
-            "distortion_coefficients": get_matrix_dict(distortion_coeffs),
-            "camera_matrix": get_matrix_dict(camera_matrix),
-            "rectification_matrix": get_matrix_dict(rectification_matrix),
-            "projection_matrix": get_matrix_dict(projection_matrix),
-            "camera_name": camera_name,
-        }
-        write_yaml_parameters(write_path, parameters)
+        info = CameraInfo(
+            header=Header(frame_id=camera_name),
+            height=shape[0],
+            width=shape[1],
+            distortion_model="plumb_bob",
+            D=distortion_coeffs.flatten().tolist(),
+            K=camera_matrix.flatten().tolist(),
+            R=rectification_matrix.flatten().tolist(),
+            P=projection_matrix.flatten().tolist(),
+        )
+        print(f"Wrote to {write_path}")
+        write_yaml_parameters(write_path, info, camera_name)
+
+        mean_error = 0
+        for i in range(len(obj_points)):
+            imgpoints2, _ = cv2.projectPoints(obj_points[i], rvecs[i], tvecs[i], mtx, dist)
+            error = cv2.norm(img_points[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+            mean_error += error
+
+        print("total error: ", mean_error)
 
     else:
         print("Failed to compute camera parameters!")

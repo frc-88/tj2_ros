@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
+from typing import Dict, Optional
+
 import rospy
-from typing import Optional, Dict
-
-from sensor_msgs.msg import Image, CameraInfo
 from camera_info_manager import CameraInfoManager  # type: ignore
-
-from tj2_northstar.uvc_camera import UVCCamera, CaptureConfig, CameraConfig
+from sensor_msgs.msg import CameraInfo, Image
+from tj2_northstar.uvc_camera import CameraConfig, CaptureConfig, UVCCamera
 
 
 class CameraPublisher:
@@ -55,15 +54,16 @@ class UVCCameraNode:
         self.cameras: Dict[str, UVCCamera] = {}
         self.publishers: Dict[str, CameraPublisher] = {}
         for name, config in camera_configs.items():
-            camera = UVCCamera(
-                config["frame_id"], CaptureConfig.from_dict(config["capture"])
-            )
+            rospy.loginfo("Config: %s" % config)
+            if len(config["serial_number"]) == 0:
+                rospy.logwarn("Serial number supplied is empty. Skipping %s" % name)
+                continue
+            camera = UVCCamera(config["frame_id"], config["serial_number"])
             camera.set_mode(CameraConfig.from_dict(config["mode"]))
             camera.set_controls(config["controls"])
             self.cameras[name] = camera
             self.publishers[name] = CameraPublisher(name)
-
-        for name, url in info_urls.items():
+            url = info_urls[name]
             self.publishers[name].load_info(url)
 
     def run(self) -> None:
