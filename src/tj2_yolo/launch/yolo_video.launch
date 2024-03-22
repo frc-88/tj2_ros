@@ -1,21 +1,21 @@
 <launch>
-    <arg name="yolo_model_path" default="$(find tj2_yolo)/models/charged_up_2023-02-25.torchscript" />
-    <arg name="yolo_class_names_path" default="$(find tj2_yolo)/models/charged_up_2023.names" />
-    <arg name="confidence_threshold" default="0.8" />
+    <arg name="yolo_model_path" default="$(find tj2_yolo)/models/crescendo_2024-03-21.torchscript" />
+    <arg name="yolo_class_names_path" default="$(find tj2_yolo)/models/crescendo_2024.names" />
+
 
     <group ns="tj2">
         <node name="tj2_yolo" pkg="tj2_yolo" type="tj2_yolo" output="screen" required="false">
             <param name="model_path" value="$(arg yolo_model_path)" />
             <param name="classes_path" value="$(arg yolo_class_names_path)" />
 
-            <param name="confidence_threshold" value="$(arg confidence_threshold)" />
+            <param name="confidence_threshold" value="0.8" />
             <param name="nms_iou_threshold" value="0.4" />
 
             <param name="warmup_image_width" value="1280" />
             <param name="warmup_image_height" value="720" />
 
-            <param name="publish_overlay" value="false" />
-            <param name="report_loop_times" value="false" />
+            <param name="publish_overlay" value="true" />
+            <param name="report_loop_times" value="true" />
             <param name="min_depth" value="0.1" />
             <param name="max_depth" value="5.0" />
             <param name="erosion_size" value="11" />
@@ -25,6 +25,7 @@
             <param name="message_delay_warning_ms" value="500" />
             <param name="visuals_cube_opacity" value="0.75" />
             <param name="visuals_line_width" value="0.01" />
+            <param name="use_depth" value="false" />
 
             <remap from="color/image_raw" to="/tj2_zed/rgb/image_rect_color" />
             <remap from="depth/image_raw" to="/tj2_zed/depth/depth_registered" />
@@ -34,4 +35,10 @@
     <include file="$(find tj2_yolo)/launch/label_publisher.launch">
         <arg name="class_names_path" default="$(arg yolo_class_names_path)" />
     </include>
+    <node name="publish_video" pkg="tj2_yolo" type="publish_video.py" output="screen"
+        required="false">
+        <param name="path"
+            value="/home/tj2/tj2_ros/dataset_builder/data/Crescendo 2024 Durham College - GoPro 3 [4Jiatb8Pr-o].mp4" />
+        <remap from="image" to="/tj2_zed/rgb/image_rect_color" />
+    </node>
 </launch>

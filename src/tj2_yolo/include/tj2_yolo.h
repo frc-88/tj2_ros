@@ -10,10 +10,6 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-
 #include <image_geometry/pinhole_camera_model.h>
 
 #include <cv_bridge/cv_bridge.h>
@@ -48,8 +44,8 @@
 
 #include "detector.h"
 
-
-geometry_msgs::Point make_point(double x, double y, double z) {
+geometry_msgs::Point make_point(double x, double y, double z)
+{
     geometry_msgs::Point pt;
     pt.x = x;
     pt.y = y;
@@ -57,14 +53,14 @@ geometry_msgs::Point make_point(double x, double y, double z) {
     return pt;
 }
 
-
 class TJ2Yolo
 {
 public:
-    TJ2Yolo(ros::NodeHandle* nodehandle);
+    TJ2Yolo(ros::NodeHandle *nodehandle);
     int run();
+
 private:
-    ros::NodeHandle nh;  // ROS node handle
+    ros::NodeHandle nh; // ROS node handle
 
     // Parameters
     std::string _model_path;
@@ -79,35 +75,31 @@ private:
     bool _publish_overlay;
     bool _report_loop_times;
     std::string _target_frame;
-    double _marker_persistance_s;
     double _message_delay_warning_ms, _long_loop_warning_ms;
     std::map<std::string, double> _z_depth_estimations;
     int _relative_threshold;
     double _depth_num_std_devs, _empty_mask_num_std_devs;
     double _cube_opacity, _visuals_line_width;
     int _erosion_size;
+    bool _use_depth;
 
     // Members
-    Detector* _detector;
+    Detector *_detector;
+
     std::vector<std::string> _class_names;
-    image_geometry::PinholeCameraModel _camera_model;
     std::vector<int> _obj_count;
-    ros::Duration _marker_persistance;
-    sensor_msgs::CameraInfo _camera_info;
+
     cv::Mat erode_element;
     std::vector<std::vector<double>> _box_point_permutations;
 
+    image_geometry::PinholeCameraModel _camera_model;
+    sensor_msgs::CameraInfo _camera_info;
+    sensor_msgs::ImagePtr _depth_msg;
+
     // Subscribers
     ros::Subscriber _color_info_sub;
-    message_filters::Subscriber<sensor_msgs::Image> _color_sub;
-    message_filters::Subscriber<sensor_msgs::Image> _depth_sub;
-
-    // typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproxSyncPolicy;
-    typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> ExactSyncPolicy;
-
-    // typedef message_filters::Synchronizer<ApproxSyncPolicy> Sync;
-    typedef message_filters::Synchronizer<ExactSyncPolicy> Sync;
-    boost::shared_ptr<Sync> _sync;
+    ros::Subscriber _color_sub;
+    ros::Subscriber _depth_sub;
 
     // Publishers
     image_transport::ImageTransport _image_transport;
@@ -126,28 +118,26 @@ private:
     tf2_ros::TransformListener tfListener;
 
     // Callbacks
-    void camera_info_callback(const sensor_msgs::CameraInfoConstPtr& camera_info);
-    void rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const sensor_msgs::ImageConstPtr& depth_image);
+    void camera_info_callback(const sensor_msgs::CameraInfoConstPtr &camera_info);
+    void rgb_callback(const sensor_msgs::ImageConstPtr &color_image);
+    void depth_callback(const sensor_msgs::ImageConstPtr &depth_image);
 
     // Helpers
     std_msgs::ColorRGBA get_detection_color(cv::Mat color_cv_image, cv::Mat mask);
-    void get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Detection2D detection_2d_msg, cv::Mat& out_mask, double& z_min, double& z_max);
+    void get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Detection2D detection_2d_msg, cv::Mat &out_mask, double &z_min, double &z_max);
     vision_msgs::Detection3D detection_2d_to_3d(vision_msgs::Detection2D detection_2d_msg, double z_min, double z_max);
-    bool tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_msg);
+    bool tf_detection_pose_to_robot(vision_msgs::Detection3D &detection_3d_msg);
     std::string get_class_name(int obj_id);
     int get_class_index(int obj_id);
     int get_class_count(int obj_id);
-    vision_msgs::Detection2DArray detections_to_msg(const std::vector<std::vector<Detection>>& detections);
-    void draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>>& detections, cv::Mat debug_mask, bool label = true);
-    void add_detection_to_marker_array(visualization_msgs::MarkerArray& marker_array, vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color);
+    vision_msgs::Detection2DArray detections_to_msg(const std::vector<std::vector<Detection>> &detections);
+    void draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>> &detections, cv::Mat debug_mask, bool label = true);
+    void add_detection_to_marker_array(visualization_msgs::MarkerArray &marker_array, vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color);
     visualization_msgs::Marker make_marker(vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color);
     double get_depth_conversion(std::string encoding);
-    tj2_interfaces::GameObjectsStamped convert_to_game_objects(
+    tj2_interfaces::GameObjectsStamped convert_to_game_objects_2d(
         unsigned int width,
         unsigned int height,
-        vision_msgs::Detection2DArray detection_2d_arr_msg,
-        vision_msgs::Detection3DArray detection_3d_arr_msg
-    );
-
+        vision_msgs::Detection2DArray detection_2d_arr_msg);
+    void convert_to_game_objects_3d(tj2_interfaces::GameObjectsStamped objects, vision_msgs::Detection3DArray detection_3d_arr_msg);
 };
-

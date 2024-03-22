@@ -19,7 +19,8 @@ model_path = os.path.join(models_dir, "yolov5s.yaml")
 yolov5.train.run(
     data=tmp_path,
     imgsz=640,
-    epochs=500,
+    # epochs=500,
+    epochs=250,
     cfg=model_path,
     weights="",
     device=0,
@@ -27,5 +28,5 @@ yolov5.train.run(
     project=os.path.abspath("../data/outputs/crescendo_2024_train"),
     multi_scale=True,
     cache="ram",
-    # resume='../data/outputs/crescendo_2024_train/exp8/weights/last.pt'
+    resume="../data/outputs/crescendo_2024_train/exp3/weights/last.pt",
 )

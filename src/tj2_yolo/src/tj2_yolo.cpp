@@ -27,8 +27,8 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle *nodehandle) : nh(*nodehandle),
     ros::param::param<bool>("~publish_overlay", _publish_overlay, false);
     ros::param::param<bool>("~report_loop_times", _report_loop_times, true);
     ros::param::param<std::string>("~target_frame", _target_frame, "base_link");
-    ros::param::param<double>("~marker_persistance_s", _marker_persistance_s, 0.5);
-    _marker_persistance = ros::Duration(_marker_persistance_s);
+
+    ros::param::param<bool>("~use_depth", _use_depth, true);
 
     torch::DeviceType device_type;
     if (torch::cuda::is_available())
@@ -72,20 +72,18 @@ TJ2Yolo::TJ2Yolo(ros::NodeHandle *nodehandle) : nh(*nodehandle),
     }
 
     // Subscribers
-    _color_sub.subscribe(nh, "color/image_raw", 1);
-    _depth_sub.subscribe(nh, "depth/image_raw", 1);
-
-    // _sync.reset(new Sync(ApproxSyncPolicy(10), _color_sub, _depth_sub));
-    _sync.reset(new Sync(ExactSyncPolicy(10), _color_sub, _depth_sub));
-    _sync->registerCallback(boost::bind(&TJ2Yolo::rgbd_callback, this, _1, _2));
-
+    _color_sub = nh.subscribe<sensor_msgs::Image>("color/image_raw", 1, &TJ2Yolo::rgb_callback, this);
     _color_info_sub = nh.subscribe<sensor_msgs::CameraInfo>("color/camera_info", 1, &TJ2Yolo::camera_info_callback, this);
+    if (_use_depth)
+    {
+        _depth_sub = nh.subscribe<sensor_msgs::Image>("depth/image_raw", 1, &TJ2Yolo::depth_callback, this);
+    }
 
-    _detection_pub = nh.advertise<tj2_interfaces::GameObjectsStamped>("detections", 25);
-    _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("detections/markers", 25);
+    _detection_pub = nh.advertise<tj2_interfaces::GameObjectsStamped>("detections", 10);
+    _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("detections/markers", 10);
 
-    _overlay_pub = _image_transport.advertise("overlay/image_raw", 2);
-    _overlay_info_pub = nh.advertise<sensor_msgs::CameraInfo>("overlay/camera_info", 2);
+    _overlay_pub = _image_transport.advertise("overlay/image_raw", 1);
+    _overlay_info_pub = nh.advertise<sensor_msgs::CameraInfo>("overlay/camera_info", 1);
 
     _dyn_cfg_wrapped_callback = boost::bind(&TJ2Yolo::dynamic_callback, this, _1, _2);
     _dyn_cfg.setCallback(_dyn_cfg_wrapped_callback);
@@ -129,20 +127,14 @@ double TJ2Yolo::get_depth_conversion(std::string encoding)
     };
 }
 
-void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr &color_image, const sensor_msgs::ImageConstPtr &depth_image)
+void TJ2Yolo::rgb_callback(const sensor_msgs::ImageConstPtr &color_image)
 {
     ros::Time now = ros::Time::now();
     ros::Duration color_transport_delay = now - color_image->header.stamp;
     double color_transport_delay_ms = color_transport_delay.toSec() * 1000.0;
-    ros::Duration depth_transport_delay = now - depth_image->header.stamp;
-    double depth_transport_delay_ms = depth_transport_delay.toSec() * 1000.0;
     if (color_transport_delay_ms >= _message_delay_warning_ms)
     {
         ROS_WARN_THROTTLE(0.5, "Color image has a large delay: %0.4f ms", color_transport_delay_ms);
-    }
-    if (depth_transport_delay_ms >= _message_delay_warning_ms)
-    {
-        ROS_WARN_THROTTLE(0.5, "Depth image has a large delay: %0.4f ms", depth_transport_delay_ms);
     }
 
     cv_bridge::CvImagePtr color_ptr;
@@ -156,28 +148,11 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr &color_image, const
         return;
     }
 
-    cv_bridge::CvImagePtr depth_ptr;
-    try
-    {
-        depth_ptr = cv_bridge::toCvCopy(depth_image); // encoding: passthrough
-    }
-    catch (cv_bridge::Exception &e)
-    {
-        ROS_ERROR("Failed to convert depth image: %s", e.what());
-        return;
-    }
-
     cv::Mat color_cv_image = color_ptr->image;
-    cv::Mat depth_cv_image = depth_ptr->image;
 
     if (color_cv_image.cols == 0 || color_cv_image.rows == 0)
     {
         ROS_ERROR("Color image has a zero width dimension!");
-        return;
-    }
-    if (depth_cv_image.cols == 0 || depth_cv_image.rows == 0)
-    {
-        ROS_ERROR("Depth image has a zero width dimension!");
         return;
     }
 
@@ -185,20 +160,14 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr &color_image, const
     auto result = _detector->Run(color_cv_image, _conf_threshold, _iou_threshold);
     if (_report_loop_times)
     {
-        ROS_INFO_THROTTLE(0.5, "----- %lu detections -----\nColor delay: %0.4f ms\nDepth delay: %0.4f ms\n%s",
+        ROS_INFO_THROTTLE(0.5, "----- %lu detections -----\nColor delay: %0.4f ms\n%s",
                           result.size(),
                           color_transport_delay_ms,
-                          depth_transport_delay_ms,
                           _detector->GetTimingReport().c_str());
     }
-    vision_msgs::Detection3DArray detection_3d_arr_msg;
-    detection_3d_arr_msg.header = color_image->header;
+    tj2_interfaces::GameObjectsStamped objects;
+    objects.header = color_image->header;
 
-    if (result.empty())
-    {
-        _detection_pub.publish(detection_3d_arr_msg);
-        return;
-    }
     auto t0 = std::chrono::high_resolution_clock::now();
     auto detection_time_s = std::chrono::duration<double>(t0 - t_start);
     if (detection_time_s.count() > 1.0)
@@ -209,44 +178,98 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr &color_image, const
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    vision_msgs::Detection2DArray detection_2d_arr_msg = detections_to_msg(result);
+    vision_msgs::Detection2DArray detection_2d_arr_msg;
+    if (!result.empty())
+    {
+        detection_2d_arr_msg = detections_to_msg(result);
+    }
     detection_2d_arr_msg.header = color_image->header;
-
-    visualization_msgs::MarkerArray marker_array;
-
-    cv::patchNaNs(depth_cv_image, 0.0);
-    double conversion = get_depth_conversion(depth_ptr->encoding);
-    depth_cv_image *= conversion;
-
-    cv::Mat debug_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
     for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++)
     {
         vision_msgs::Detection2D detection_2d_msg = detection_2d_arr_msg.detections[index];
         detection_2d_msg.header = color_image->header;
+    }
+    objects = convert_to_game_objects_2d(color_cv_image.cols, color_cv_image.rows, detection_2d_arr_msg);
 
-        double z_min, z_max;
-        cv::Mat detection_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
-        get_depth_from_detection(depth_cv_image, detection_2d_msg, detection_mask, z_min, z_max);
-        cv::bitwise_or(debug_mask, detection_mask, debug_mask);
-
-        std_msgs::ColorRGBA obj_color = get_detection_color(color_cv_image, detection_mask);
-        vision_msgs::Detection3D detection_3d_msg = detection_2d_to_3d(detection_2d_msg, z_min, z_max);
-        add_detection_to_marker_array(marker_array, detection_3d_msg, obj_color);
-
-        if (tf_detection_pose_to_robot(detection_3d_msg))
+    bool depth_img_valid = _depth_msg != NULL && _depth_msg->header.frame_id.length() != 0;
+    bool info_valid = _camera_model.initialized();
+    cv::Mat debug_mask = cv::Mat();
+    if (_use_depth && !result.empty())
+    {
+        if (!info_valid)
         {
-            detection_3d_arr_msg.header.frame_id = _target_frame;
-        }
-        else
-        {
+            ROS_WARN("Camera model is not set!");
             return;
         }
-        detection_3d_arr_msg.detections.push_back(detection_3d_msg);
+        if (!depth_img_valid)
+        {
+            ROS_WARN("Depth image is not set!");
+            return;
+        }
+        ros::Duration depth_transport_delay = now - _depth_msg->header.stamp;
+        double depth_transport_delay_ms = depth_transport_delay.toSec() * 1000.0;
+        if (depth_transport_delay_ms >= _message_delay_warning_ms)
+        {
+            ROS_WARN_THROTTLE(0.5, "Depth image has a large delay: %0.4f ms", depth_transport_delay_ms);
+        }
+
+        cv_bridge::CvImagePtr depth_ptr;
+        try
+        {
+            depth_ptr = cv_bridge::toCvCopy(_depth_msg); // encoding: passthrough
+        }
+        catch (cv_bridge::Exception &e)
+        {
+            ROS_ERROR("Failed to convert depth image: %s", e.what());
+            return;
+        }
+        cv::Mat depth_cv_image = depth_ptr->image;
+
+        if (depth_cv_image.cols == 0 || depth_cv_image.rows == 0)
+        {
+            ROS_ERROR("Depth image has a zero width dimension!");
+            return;
+        }
+        visualization_msgs::MarkerArray marker_array;
+
+        cv::patchNaNs(depth_cv_image, 0.0);
+        double conversion = get_depth_conversion(depth_ptr->encoding);
+        depth_cv_image *= conversion;
+
+        debug_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
+
+        vision_msgs::Detection3DArray detection_3d_arr_msg;
+        detection_3d_arr_msg.header = color_image->header;
+
+        for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++)
+        {
+            vision_msgs::Detection2D detection_2d_msg = detection_2d_arr_msg.detections[index];
+            detection_2d_msg.header = color_image->header;
+
+            double z_min, z_max;
+            cv::Mat detection_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
+            get_depth_from_detection(depth_cv_image, detection_2d_msg, detection_mask, z_min, z_max);
+            cv::bitwise_or(debug_mask, detection_mask, debug_mask);
+
+            std_msgs::ColorRGBA obj_color = get_detection_color(color_cv_image, detection_mask);
+            vision_msgs::Detection3D detection_3d_msg = detection_2d_to_3d(detection_2d_msg, z_min, z_max);
+            add_detection_to_marker_array(marker_array, detection_3d_msg, obj_color);
+
+            if (tf_detection_pose_to_robot(detection_3d_msg))
+            {
+                detection_3d_arr_msg.header.frame_id = _target_frame;
+            }
+            else
+            {
+                return;
+            }
+            detection_3d_arr_msg.detections.push_back(detection_3d_msg);
+        }
+        convert_to_game_objects_3d(objects, detection_3d_arr_msg);
+        _marker_pub.publish(marker_array);
     }
-    tj2_interfaces::GameObjectsStamped objects = convert_to_game_objects(color_cv_image.cols, color_cv_image.rows, detection_2d_arr_msg, detection_3d_arr_msg);
 
     _detection_pub.publish(objects);
-    _marker_pub.publish(marker_array);
     auto t_end = std::chrono::high_resolution_clock::now();
 
     auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start);
@@ -262,7 +285,10 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr &color_image, const
         sensor_msgs::ImagePtr overlay_msg = cv_bridge::CvImage(color_image->header, sensor_msgs::image_encodings::BGR8, overlay).toImageMsg();
 
         _overlay_pub.publish(overlay_msg);
-        _overlay_info_pub.publish(_camera_info);
+        if (info_valid)
+        {
+            _overlay_info_pub.publish(_camera_info);
+        }
     }
     if (_report_loop_times)
     {
@@ -276,6 +302,11 @@ void TJ2Yolo::rgbd_callback(const sensor_msgs::ImageConstPtr &color_image, const
                             total_time.count();
         ROS_INFO_THROTTLE(0.5, "Loop report:\n%s", fmt.str().c_str());
     }
+}
+
+void TJ2Yolo::depth_callback(const sensor_msgs::ImageConstPtr &depth_image)
+{
+    *_depth_msg = *depth_image;
 }
 
 std_msgs::ColorRGBA TJ2Yolo::get_detection_color(cv::Mat color_cv_image, cv::Mat mask)
@@ -521,8 +552,7 @@ vision_msgs::Detection2DArray TJ2Yolo::detections_to_msg(const std::vector<std::
         if (class_idx >= _obj_count.size())
         {
             ROS_ERROR("Class index %d is not a registered class!", class_idx);
-            // continue;
-            class_idx = 0;
+            continue;
         }
         int class_count = _obj_count[class_idx];
         _obj_count[class_idx]++;
@@ -550,28 +580,25 @@ vision_msgs::Detection2DArray TJ2Yolo::detections_to_msg(const std::vector<std::
     return detection_2d_arr_msg;
 }
 
-tj2_interfaces::GameObjectsStamped TJ2Yolo::convert_to_game_objects(
+tj2_interfaces::GameObjectsStamped TJ2Yolo::convert_to_game_objects_2d(
     unsigned int width,
     unsigned int height,
-    vision_msgs::Detection2DArray detection_2d_arr_msg,
-    vision_msgs::Detection3DArray detection_3d_arr_msg)
+    vision_msgs::Detection2DArray detection_2d_arr_msg)
 {
     tj2_interfaces::GameObjectsStamped objects;
-    objects.header = detection_3d_arr_msg.header;
+    objects.header = detection_2d_arr_msg.header;
     objects.width = width;
     objects.height = height;
 
     for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++)
     {
         vision_msgs::Detection2D detection_2d_msg = detection_2d_arr_msg.detections[index];
-        vision_msgs::Detection3D detection_3d_msg = detection_3d_arr_msg.detections[index];
 
         tj2_interfaces::GameObject obj;
         obj.label = get_class_name(detection_2d_msg.results[0].id);
         obj.object_index = get_class_count(detection_2d_msg.results[0].id);
         obj.class_index = get_class_index(detection_2d_msg.results[0].id);
         obj.confidence = detection_2d_msg.results[0].score;
-        obj.pose = detection_3d_msg.results[0].pose.pose;
 
         int x_left = (int)(detection_2d_msg.bbox.center.x - detection_2d_msg.bbox.size_x / 2.0);
         int x_right = (int)(detection_2d_msg.bbox.center.x + detection_2d_msg.bbox.size_x / 2.0);
@@ -587,6 +614,21 @@ tj2_interfaces::GameObjectsStamped TJ2Yolo::convert_to_game_objects(
         obj.bounding_box_2d.points[3].x = x_left;
         obj.bounding_box_2d.points[3].y = y_bottom;
 
+        objects.objects.push_back(obj);
+    }
+    return objects;
+}
+void TJ2Yolo::convert_to_game_objects_3d(
+    tj2_interfaces::GameObjectsStamped objects,
+    vision_msgs::Detection3DArray detection_3d_arr_msg)
+{
+    for (size_t index = 0; index < detection_3d_arr_msg.detections.size(); index++)
+    {
+        vision_msgs::Detection3D detection_3d_msg = detection_3d_arr_msg.detections[index];
+        tj2_interfaces::GameObject obj = objects.objects[index];
+
+        obj.pose = detection_3d_msg.results[0].pose.pose;
+
         double half_x = detection_3d_msg.bbox.size.x / 2.0;
         double half_y = detection_3d_msg.bbox.size.y / 2.0;
         double half_z = detection_3d_msg.bbox.size.z / 2.0;
@@ -599,10 +641,7 @@ tj2_interfaces::GameObjectsStamped TJ2Yolo::convert_to_game_objects(
         obj.bounding_box_3d.dimensions.x = detection_3d_msg.bbox.size.x;
         obj.bounding_box_3d.dimensions.y = detection_3d_msg.bbox.size.y;
         obj.bounding_box_3d.dimensions.z = detection_3d_msg.bbox.size.z;
-
-        objects.objects.push_back(obj);
     }
-    return objects;
 }
 
 void TJ2Yolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>> &detections, cv::Mat debug_mask, bool label)
@@ -611,8 +650,11 @@ void TJ2Yolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>
     {
         return;
     }
-    cv::cvtColor(debug_mask, debug_mask, cv::COLOR_GRAY2BGR);
-    cv::bitwise_and(img, debug_mask, img);
+    if (!debug_mask.empty())
+    {
+        cv::cvtColor(debug_mask, debug_mask, cv::COLOR_GRAY2BGR);
+        cv::bitwise_and(img, debug_mask, img);
+    }
     for (const auto &detection : detections[0])
     {
         const auto &box = detection.bbox;
@@ -626,8 +668,7 @@ void TJ2Yolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>
             if (class_idx >= _obj_count.size())
             {
                 ROS_ERROR("Class index %d is not a registered class! Failed to draw overlay.", class_idx);
-                // continue;
-                class_idx = 0;
+                continue;
             }
             std::stringstream ss;
             ss << std::fixed << std::setprecision(2) << score;
@@ -701,9 +742,10 @@ visualization_msgs::Marker TJ2Yolo::make_marker(vision_msgs::Detection3D detecti
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose = detection_3d_msg.bbox.center;
     marker.header = detection_3d_msg.header;
-    marker.lifetime = _marker_persistance;
+    marker.lifetime = ros::Duration(0);
     marker.ns = label;
     marker.id = count;
+    marker.frame_locked = false;
 
     marker.scale = detection_3d_msg.bbox.size;
     marker.color = color;

@@ -1,9 +1,0 @@
-<launch>
-    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch">
-        <arg name="yolo_model_path" value="$(find tj2_yolo)/models/crescendo_2024-03-20.torchscript" />
-        <arg name="yolo_class_names_path" value="$(find tj2_yolo)/models/crescendo_2024.names" />
-    </include>
-    <!-- <include file="$(find tj2_yolo)/launch/tj2_yolo_py.launch">
-        <arg name="yolo_model_path" value="$(find tj2_yolo)/models/crescendo_2024.pt" />
-    </include> -->
-</launch>
