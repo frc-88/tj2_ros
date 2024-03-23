@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <!-- the name of this robot -->
+    <arg name="robot" default="$(env ROBOT)" />
+
+    <!-- RoboRIO networktables address -->
+    <arg name="robot_address" default="10.0.88.2" />
+
+    <!-- Laser localization map name -->
+    <arg name="map_name" default="$(env ROS_MAP_NAME)" />
+
+    <!-- Formats topics so they are usable going to and coming from the RoboRIO -->
+    <include file="$(find tj2_comm)/launch/tj2_comm.launch">
+        <arg name="publish_odom_tf" value="true" />
+        <arg name="compact_tf_ids_path"
+            value="$(find tj2_bringup)/config/$(arg robot)/frame_ids.yaml" />
+    </include>
+
+    <!-- Bridge NetworkTables and ROS topics to and from the RoboRIO -->
+    <group ns="tj2">
+        <include file="$(find ros_networktables_bridge_host)/launch/nt_host.launch"/>
+    </group>
+
+    <!-- Static transforms defining robot layout -->
+    <include file="$(find tj2_bringup)/config/$(arg robot)/static_transforms_$(arg robot).launch" />
+
+    <!-- ZED 2 camera -->
+    <!-- <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
+        <arg name="serial_number" value="37015368" />
+    </include> -->
+
+    <!-- Bag recorder -->
+    <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch" />
+
+       
+    <!-- Delayed app start -->
+    <!-- <include file="$(find tj2_power_mode)/launch/power_mode.launch">
+        <arg name="default_power_mode" value="LOW_POWER" />
+        <arg name="bypass" value="true" />
+        <arg name="launch_path"
+            value="$(find tj2_bringup)/config/competition2024/competition2024_secondary.launch" />
+    </include> -->
+
+    <include file="$(find tj2_bringup)/config/competition2024/competition2024_secondary.launch"/>
+
+</launch>
