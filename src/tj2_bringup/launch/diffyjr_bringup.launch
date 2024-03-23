@@ -149,10 +149,10 @@
     <!-- <include file="$(find tj2_calibration_pointer)/launch/tj2_calibration_pointer.launch"/> -->
 
     <!-- TJ2 Northstar -->
-    <include file="$(find tj2_northstar)/launch/tj2_northstar.launch">
+    <!-- <include file="$(find tj2_northstar)/launch/tj2_northstar.launch">
         <arg name="filter_params"
             value="$(find tj2_bringup)/config/$(arg robot)/northstar_filter.yaml" />
-    </include>
+    </include> -->
 
     <!-- 2D Occupancy map -->
     <!-- <node name="static_map_server" pkg="map_server" type="map_server" output="screen"
