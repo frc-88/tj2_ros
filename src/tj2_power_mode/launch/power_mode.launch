@@ -1,0 +1,12 @@
+<launch>
+    <arg name="default_power_mode" default="HIGH_POWER" />
+    <arg name="bypass" default="false" />
+    <arg name="launch_path" default="" />
+    <group ns="tj2">
+        <node name="tj2_power_mode" pkg="tj2_power_mode" type="power_mode_node.py" output="screen">
+            <param name="default_power_mode" value="$(arg default_power_mode)" />
+            <param name="bypass" value="$(arg bypass)" />
+            <param name="launch_path" value="$(arg launch_path)" />
+        </node>
+    </group>
+</launch>
