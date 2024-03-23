@@ -11,21 +11,53 @@ TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
 IMAGE_PREFIX=$(${BASE_DIR}/get_built_image)
 
 if [ "${IMAGE_PREFIX}" == "workstation" ]; then
-    BUILD_FLAGS='-DCATKIN_BLACKLIST_PACKAGES=tj2_yolo'
+    BUILD_FLAGS='-DCATKIN_BLACKLIST_PACKAGES=tj2_yolo;tj2_camera'
+    GPU=""
+    echo "Compiling without GPU"
 else
     BUILD_FLAGS=-DCATKIN_BLACKLIST_PACKAGES=\'\'
+    GPU="yes"
+    echo "Compiling with GPU"
+fi
+COMPOSE=$(cat <<EOF
+version: "3"
+
+volumes:
+    workstation_tj2_ros_build:
+        name: workstation_tj2_ros_build
+        external: true
+
+services:
+  build_tj2_ros:
+    image: ${IMAGE_PREFIX}_${TJ2_IMAGE_VERSION}
+    user: tj2
+    container_name: build_tj2_ros
+    restart: "no"
+    network_mode: "host"
+    privileged: true
+    stop_signal: SIGINT
+    volumes:
+      - workstation_tj2_ros_build:/home/tj2/ros_ws:rw
+      - ${TJ2_ROS_BASE}:/opt/tj2/tj2_ros:rw
+      - ${TJ2_ROS_BASE}/scripts:/opt/tj2/scripts:rw
+    command: ["/opt/tj2/scripts/build_tj2_ros.sh", "${BUILD_FLAGS}"]
+EOF
+)
+
+if [ "${GPU}" == "yes" ]; then
+COMPOSE=$(cat <<EOF
+${COMPOSE}
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+EOF
+)
 fi
 
-docker run -it \
-    --user tj2 \
-    --name workstation_build_tj2_ros \
-    --restart="no" \
-    --net="host" \
-    --privileged \
-    --stop-signal=SIGINT \
-    -v=workstation_tj2_ros_build:/home/tj2/ros_ws:rw \
-    -v=${TJ2_ROS_BASE}:/opt/tj2/tj2_ros:rw \
-    -v=${TJ2_ROS_BASE}/scripts:/opt/tj2/scripts:rw \
-    --rm \
-    ${IMAGE_PREFIX}_${TJ2_IMAGE_VERSION} \
-    /opt/tj2/scripts/build_tj2_ros.sh ${BUILD_FLAGS}
+echo "${COMPOSE}" | docker-compose -f - up 
