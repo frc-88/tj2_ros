@@ -1,62 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+    <!-- the name of this robot -->
+    <arg name="robot" default="$(env ROBOT)" />
 
- <!-- the name of this robot -->
- <arg name="robot" default="$(env ROBOT)" />
+    <!-- RoboRIO networktables address -->
+    <arg name="robot_address" default="10.0.88.2" />
 
- <!-- RoboRIO networktables address -->
- <arg name="robot_address" default="10.0.88.2" />
+    <!-- Laser localization map name -->
+    <arg name="map_name" default="$(env ROS_MAP_NAME)" />
 
- <!-- Laser localization map name -->
- <arg name="map_name" default="$(env ROS_MAP_NAME)" />
+    <!-- PreferenceConstants backup -->
+    <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
+        <arg name="nt_host" value="$(arg robot_address)" />
+        <arg name="robot" default="$(arg robot)" />
+    </include>
 
-<!-- PreferenceConstants backup -->
- <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
-    <arg name="nt_host" value="$(arg robot_address)" />
-    <arg name="robot" default="$(arg robot)" />
-</include>
+    <!-- TJ2 Northstar -->
+    <include file="$(find tj2_northstar)/launch/tj2_northstar.launch">
+        <arg name="filter_params"
+            value="$(find tj2_bringup)/config/$(arg robot)/northstar_filter.yaml" />
+    </include>
 
-<!-- TJ2 Northstar -->
-<include file="$(find tj2_northstar)/launch/tj2_northstar.launch">
-    <arg name="filter_params"
-        value="$(find tj2_bringup)/config/$(arg robot)/northstar_filter.yaml" />
-</include>
+    <!-- Arducam drivers -->
+    <include file="$(find tj2_northstar)/launch/triple_camera.launch">
+        <!-- middle camera -->
+        <arg name="camera_0_settings"
+            value="$(find tj2_bringup)/config/shared/arducam/ov2311.yaml" />
+        <arg name="camera_0_info_url"
+            value="package://tj2_bringup/config/shared/arducam/calibration/TJ2006_1600x1200.yaml" />
+        <arg name="serial_0" value="TJ2006" />
+        <!-- <arg name="serial_0" value="" /> -->
+        <arg name="name_0" value="camera_0" />
 
-<!-- Arducam drivers -->
-<include file="$(find tj2_northstar)/launch/triple_camera.launch">
-    <!-- middle camera -->
-    <arg name="camera_0_settings"
-        value="$(find tj2_bringup)/config/shared/arducam/ov2311.yaml" />
-    <arg name="camera_0_info_url"
-        value="package://tj2_bringup/config/shared/arducam/calibration/TJ2006_1600x1200.yaml" />
-    <arg name="serial_0" value="TJ2006" />
-    <!-- <arg name="serial_0" value="" /> -->
-    <arg name="name_0" value="camera_0" />
+        <!-- left camera -->
+        <arg name="camera_1_settings"
+            value="$(find tj2_bringup)/config/shared/arducam/ov2311-low-bandwidth.yaml" />
+        <arg name="camera_1_info_url"
+            value="package://tj2_bringup/config/shared/arducam/calibration/TJ2007_800x600.yaml" />
+        <arg name="serial_1" value="TJ2007" /> -->
+        <!-- <arg name="serial_1" value="" /> -->
+        <arg name="name_1" value="camera_1" />
 
-    <!-- left camera -->
-    <arg name="camera_1_settings"
-        value="$(find tj2_bringup)/config/shared/arducam/ov2311-low-bandwidth.yaml" />
-    <arg name="camera_1_info_url"
-        value="package://tj2_bringup/config/shared/arducam/calibration/TJ2007_800x600.yaml" />
-    <arg name="serial_1" value="TJ2007" /> -->
-    <!-- <arg name="serial_1" value="" /> -->
-    <arg name="name_1" value="camera_1" />
+        <!-- right camera -->
+        <arg name="camera_2_settings"
+            value="$(find tj2_bringup)/config/shared/arducam/ov2311-low-bandwidth.yaml" />
+        <arg name="camera_2_info_url"
+            value="package://tj2_bringup/config/shared/arducam/calibration/TJ2008_800x600.yaml" />
+        <arg name="serial_2" value="TJ2008" />
+        <!-- <arg name="serial_2" value="" /> -->
+        <arg name="name_2" value="camera_2" />
+    </include>
 
-    <!-- right camera -->
-    <arg name="camera_2_settings"
-        value="$(find tj2_bringup)/config/shared/arducam/ov2311-low-bandwidth.yaml" />
-    <arg name="camera_2_info_url"
-        value="package://tj2_bringup/config/shared/arducam/calibration/TJ2008_800x600.yaml" />
-    <arg name="serial_2" value="TJ2008" />
-    <!-- <arg name="serial_2" value="" /> -->
-    <arg name="name_2" value="camera_2" />
-</include>
+    <!-- AprilTag detection -->
+    <include file="$(find tj2_northstar)/launch/apriltag_triple_cam.launch">
+        <arg name="apriltag_settings"
+            value="$(find tj2_bringup)/config/shared/tags/settings.yaml" />
+        <arg name="apriltag_tags"
+            value="$(find tj2_bringup)/config/shared/tags/$(arg map_name)_tags.yaml" />
+    </include>
 
-<!-- AprilTag detection -->
-<include file="$(find tj2_northstar)/launch/apriltag_triple_cam.launch">
-    <arg name="apriltag_settings"
-        value="$(find tj2_bringup)/config/shared/tags/settings.yaml" />
-    <arg name="apriltag_tags"
-        value="$(find tj2_bringup)/config/shared/tags/$(arg map_name)_tags.yaml" />
-</include>
+    <group ns="northstar">
+        <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher"
+            required="false" output="screen">
+            <param name="bundles_param" value="apriltag_camera_0/tag_bundles" />
+        </node>
+    </group>
+
+    <!-- 2D Occupancy map -->
+    <node name="static_map_server" pkg="map_server" type="map_server" output="screen"
+        args="$(find tj2_bringup)/config/shared/maps/$(arg map_name).yaml">
+        <param name="frame_id" value="map" />
+    </node>
 </launch>

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import math
-from typing import Dict, FrozenSet, List, Optional
+from typing import Dict, FrozenSet, List, Optional, Tuple
 
 import numpy as np
 import rospy
@@ -13,6 +13,9 @@ from tj2_tools.robot_state import SimpleFilter
 from tj2_tools.transforms import lookup_transform
 
 TagBundleId = FrozenSet[int]
+BundlePoses = Dict[TagBundleId, PoseStamped]
+SingleTagPoses = Dict[int, PoseStamped]
+GroupedTagPoses = Dict[TagBundleId, List[PoseStamped]]
 
 
 class LandmarkConverter:
@@ -23,18 +26,18 @@ class LandmarkConverter:
         self.map_frame = str(rospy.get_param("~map_frame", "map"))
         self.max_tag_distance = float(rospy.get_param("~max_tag_distance", 1000.0))
         self.time_covariance_filter_k = float(rospy.get_param("~time_covariance_filter_k", 0.5))
-        base_covariance = rospy.get_param("~covariance", np.eye(6, dtype=np.float64).flatten().tolist())
-        self.min_visible_tags = rospy.get_param("~min_visible_tags", 0)
-        self.min_x = rospy.get_param("~min_x", 0.0)
-        self.min_y = rospy.get_param("~min_y", 0.0)
-        self.min_z = rospy.get_param("~min_z", -0.25)
-        self.max_x = rospy.get_param("~max_x", 16.46)
-        self.max_y = rospy.get_param("~max_y", 8.23)
-        self.max_z = rospy.get_param("~max_z", 0.5)
+        base_covariance: list[float] = rospy.get_param("~covariance", np.eye(6, dtype=np.float64).flatten().tolist())
+        self.min_visible_tags = int(rospy.get_param("~min_visible_tags", 0))
+        self.min_x = float(rospy.get_param("~min_x", 0.0))
+        self.min_y = float(rospy.get_param("~min_y", 0.0))
+        self.min_z = float(rospy.get_param("~min_z", -0.25))
+        self.max_x = float(rospy.get_param("~max_x", 16.46))
+        self.max_y = float(rospy.get_param("~max_y", 8.23))
+        self.max_z = float(rospy.get_param("~max_z", 0.5))
         assert len(base_covariance) == 36, f"Invalid covariance. Length is {len(base_covariance)}: {base_covariance}"
         self.base_covariance = np.array(base_covariance).reshape((6, 6))
 
-        self.prev_landmark = PoseStamped()
+        self.prev_landmarks: Dict[TagBundleId, PoseStamped] = {}
 
         self.time_covariance_filter = SimpleFilter(self.time_covariance_filter_k)
 
@@ -44,33 +47,52 @@ class LandmarkConverter:
         self.tag_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.tags_callback, queue_size=10)
         self.landmark_pub = rospy.Publisher("landmark", PoseWithCovarianceStamped, queue_size=10)
 
-    def tags_callback(self, msg: AprilTagDetectionArray) -> None:
+    def split_bundles_and_tags(self, msg: AprilTagDetectionArray) -> Tuple[BundlePoses, SingleTagPoses]:
         assert msg.detections is not None
-        landmark_poses: Dict[TagBundleId, PoseStamped] = {}
-        individual_measurements = []
+        bundle_poses: BundlePoses = {}
+        single_poses: SingleTagPoses = {}
         for detection in msg.detections:
             ids = frozenset(detection.id)
             detection_pose = PoseStamped()
             detection_pose.header = detection.pose.header
             detection_pose.pose = detection.pose.pose.pose
             if len(ids) == 1:
-                individual_measurements.append(detection_pose)
+                single_id = next(iter(ids))
+                if single_id in single_poses:
+                    rospy.logwarn(f"Duplicate single tag {single_id}. Overwriting previous pose.")
+                single_poses[single_id] = detection_pose
             else:
-                landmark_poses[ids] = detection_pose
+                bundle_poses[ids] = detection_pose
+        return bundle_poses, single_poses
 
-        for landmark_pose in landmark_poses.values():
-            if len(individual_measurements) == 0:
+    def group_measurements(self, bundle_poses: BundlePoses, single_poses: SingleTagPoses) -> GroupedTagPoses:
+        grouped_single_tags: GroupedTagPoses = {bundle_id: [] for bundle_id in bundle_poses.keys()}
+        for bundle_id, single_tags in grouped_single_tags.items():
+            for single_id, pose in single_poses.items():
+                if single_id in bundle_id:
+                    single_tags.append(pose)
+        return grouped_single_tags
+
+    def tags_callback(self, msg: AprilTagDetectionArray) -> None:
+        bundle_poses, single_poses = self.split_bundles_and_tags(msg)
+        grouped_single_tags = self.group_measurements(bundle_poses, single_poses)
+
+        for bundle_id, bundle_pose in bundle_poses.items():
+            single_measurements = grouped_single_tags.get(bundle_id, [])
+            if len(single_measurements) == 0:
                 continue
-            inverted_pose = self.invert_transform_pose(landmark_pose)
+            inverted_pose = self.invert_transform_pose(bundle_pose)
             if inverted_pose is None:
                 continue
-            if not self.should_publish(individual_measurements, inverted_pose):
+            if not self.should_publish(single_measurements, inverted_pose):
                 continue
 
             landmark = PoseWithCovarianceStamped()
             landmark.header = inverted_pose.header
             landmark.pose.pose = inverted_pose.pose
-            landmark.pose.covariance = self.get_covariance(individual_measurements, landmark_pose)
+            prev_landmark = self.prev_landmarks.get(bundle_id, inverted_pose)
+            landmark.pose.covariance = self.get_covariance(single_measurements, bundle_pose, prev_landmark)
+            self.prev_landmarks[bundle_id] = inverted_pose
             self.landmark_pub.publish(landmark)
 
     def should_publish(self, tag_poses: List[PoseStamped], landmark_pose: PoseStamped) -> bool:
@@ -138,7 +160,7 @@ class LandmarkConverter:
 
     def num_tags_covariance_scale(self, num_tags: int) -> float:
         if num_tags == 0:
-            raise ValueError("Can't compute covariance with no measurements!")
+            raise ValueError("Can't compute covariance with no poses!")
         # 1 -> 5
         elif num_tags == 1:
             scale = 10
@@ -152,7 +174,7 @@ class LandmarkConverter:
     def pose_distance_covariance_scale(self, distance: float) -> float:
         if distance < 0.2:
             return 10.0
-        return 0.25 * distance**2.0
+        return 0.25 * distance**2.0 + 1.0
 
     def get_pose_distance(self, pose: PoseStamped) -> float:
         return float(
@@ -185,19 +207,17 @@ class LandmarkConverter:
         filtered_delta = self.time_covariance_filter.update(time_delta)
         if filtered_delta < time_delta:
             time_delta = filtered_delta
-        return time_delta * 2.0
+        return time_delta * 2.0 + 1.0
 
-    def get_covariance(self, tag_poses: List[PoseStamped], overall_pose: PoseStamped) -> List[float]:
+    def get_covariance(
+        self, tag_poses: List[PoseStamped], landmark: PoseStamped, prev_landmark: PoseStamped
+    ) -> List[float]:
         distances = [self.get_pose_distance(pose) for pose in tag_poses]
         aggregate_distance = float(np.median(distances))
 
         covariance = self.base_covariance * self.num_tags_covariance_scale(len(tag_poses))
         covariance *= self.pose_distance_covariance_scale(aggregate_distance)
 
-        covariance *= self.delta_pose_covariance_scale(overall_pose, self.prev_landmark)
-        covariance *= self.time_covariance_scale(overall_pose, self.prev_landmark)
-
-        self.prev_landmark = overall_pose
         return covariance.flatten().tolist()
 
     def run(self) -> None:

@@ -31,7 +31,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -67,6 +67,58 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        base_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pointer_end_effector_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pointer_end_effector_tip:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        pointer_pan_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pointer_pan_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        pointer_tilt_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pointer_tilt_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        swerve_wheel_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        swerve_wheel_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        swerve_wheel_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        swerve_wheel_3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -88,8 +140,16 @@ Visualization Manager:
           Value: false
         camera_1:
           Value: false
-        camera_2:
-          Value: false
+        camera_armature_link:
+          Value: true
+        camera_link:
+          Value: true
+        camera_tilt_link:
+          Value: true
+        imu:
+          Value: true
+        laser:
+          Value: true
         map:
           Value: true
         odom:
@@ -98,7 +158,45 @@ Visualization Manager:
           Value: true
         optical_camera_1:
           Value: true
-        optical_camera_2:
+        pointer_end_effector_base:
+          Value: true
+        pointer_end_effector_tip:
+          Value: true
+        pointer_pan_base:
+          Value: true
+        pointer_pan_link:
+          Value: true
+        pointer_tilt_base:
+          Value: true
+        pointer_tilt_link:
+          Value: true
+        swerve_wheel_0:
+          Value: true
+        swerve_wheel_1:
+          Value: true
+        swerve_wheel_2:
+          Value: true
+        swerve_wheel_3:
+          Value: true
+        zed2_baro_link:
+          Value: true
+        zed2_base_link:
+          Value: true
+        zed2_camera_center:
+          Value: true
+        zed2_left_camera_frame:
+          Value: true
+        zed2_left_camera_optical_frame:
+          Value: true
+        zed2_mag_link:
+          Value: true
+        zed2_right_camera_frame:
+          Value: true
+        zed2_right_camera_optical_frame:
+          Value: true
+        zed2_temp_left_link:
+          Value: true
+        zed2_temp_right_link:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -117,9 +215,44 @@ Visualization Manager:
                 camera_1:
                   optical_camera_1:
                     {}
-                camera_2:
-                  optical_camera_2:
-                    {}
+                camera_tilt_link:
+                  camera_armature_link:
+                    camera_link:
+                      zed2_base_link:
+                        zed2_camera_center:
+                          zed2_baro_link:
+                            {}
+                          zed2_left_camera_frame:
+                            zed2_left_camera_optical_frame:
+                              {}
+                            zed2_temp_left_link:
+                              {}
+                          zed2_mag_link:
+                            {}
+                          zed2_right_camera_frame:
+                            zed2_right_camera_optical_frame:
+                              {}
+                            zed2_temp_right_link:
+                              {}
+                imu:
+                  {}
+                laser:
+                  {}
+                pointer_pan_base:
+                  pointer_pan_link:
+                    pointer_tilt_base:
+                      pointer_tilt_link:
+                        pointer_end_effector_base:
+                          pointer_end_effector_tip:
+                            {}
+                swerve_wheel_0:
+                  {}
+                swerve_wheel_1:
+                  {}
+                swerve_wheel_2:
+                  {}
+                swerve_wheel_3:
+                  {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -523,86 +656,7 @@ Visualization Manager:
       Marker Topic: /northstar/tag_markers
       Name: Apriltags
       Namespaces:
-        cube1: true
-        cube10: true
-        cube11: true
-        cube12: true
-        cube13: true
-        cube14: true
-        cube2: true
-        cube3: true
-        cube4: true
-        cube5: true
-        cubefield: true
-        cubefield-1: true
-        cubefield-14: true
-        cubefield-3: true
-        cubefield-4: true
-        cubefield-5: true
-        posx1: true
-        posx10: true
-        posx11: true
-        posx12: true
-        posx13: true
-        posx14: true
-        posx2: true
-        posx3: true
-        posx4: true
-        posx5: true
-        posxfield: true
-        posxfield-1: true
-        posxfield-14: true
-        posxfield-3: true
-        posxfield-4: true
-        posxfield-5: true
-        posy1: true
-        posy10: true
-        posy11: true
-        posy12: true
-        posy13: true
-        posy14: true
-        posy2: true
-        posy3: true
-        posy4: true
-        posy5: true
-        posyfield: true
-        posyfield-1: true
-        posyfield-14: true
-        posyfield-3: true
-        posyfield-4: true
-        posyfield-5: true
-        posz1: true
-        posz10: true
-        posz11: true
-        posz12: true
-        posz13: true
-        posz14: true
-        posz2: true
-        posz3: true
-        posz4: true
-        posz5: true
-        poszfield: true
-        poszfield-1: true
-        poszfield-14: true
-        poszfield-3: true
-        poszfield-4: true
-        poszfield-5: true
-        text1: true
-        text10: true
-        text11: true
-        text12: true
-        text13: true
-        text14: true
-        text2: true
-        text3: true
-        text4: true
-        text5: true
-        textfield: true
-        textfield-1: true
-        textfield-14: true
-        textfield-3: true
-        textfield-4: true
-        textfield-5: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -900,7 +954,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 15.322607040405273
+      Distance: 15.510879516601562
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -908,17 +962,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 14.997090339660645
-        Y: 5.256130695343018
-        Z: 7.62939453125e-06
+        X: 8.241395950317383
+        Y: 2.0606250762939453
+        Z: 6.67572021484375e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3853981494903564
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 0.4385828971862793
+      Yaw: 4.776767253875732
     Saved: ~
 Window Geometry:
   Apriltags Camera:
