@@ -21,5 +21,10 @@
             <remap from="initialpose" to="/initialpose" />
             <param name="cooldown_time" value="1.0" />
         </node>
+
+        <node pkg="tj2_northstar" type="frame_request_manager.py" name="frame_request_manager"
+            required="false" output="screen">
+            <remap from="request_frames" to="/tj2_zed/request_frames" />
+        </node>
     </group>
 </launch>
