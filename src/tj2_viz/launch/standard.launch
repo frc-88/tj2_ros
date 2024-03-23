@@ -3,10 +3,10 @@
     <node name="rviz" pkg="rviz" type="rviz"
         args="-d /home/tj2/tj2_ros/src/tj2_viz/rviz/standard.rviz" output="screen" required="true" />
 
-    <group ns="northstar">
+    <!-- <group ns="northstar">
         <node pkg="tj2_camera" type="tag_marker_publisher.py" name="tag_marker_publisher"
             required="false" output="screen">
             <param name="bundles_param" value="apriltag_camera_0/tag_bundles" />
         </node>
-    </group>
+    </group> -->
 </launch>
