@@ -45,7 +45,7 @@ class UVCCameraNode:
 
         camera_configs = rospy.get_param("~cameras", default={})
         info_urls = rospy.get_param("~info_urls", default={})
-        self.frame_timeout = rospy.get_param("~frame_timeout", default=1.0)
+        self.frame_timeout = rospy.get_param("~frame_timeout", default=0.1)
         self.tick_rate = rospy.get_param("~tick_rate", default=0.0)
 
         if len(camera_configs) == 0:
@@ -74,8 +74,9 @@ class UVCCameraNode:
         while not rospy.is_shutdown():
             for name, camera in self.cameras.items():
                 frame = camera.get_frame(self.frame_timeout)
-                if frame is not None:
-                    self.publishers[name].publish(frame)
+                if frame is None:
+                    continue
+                self.publishers[name].publish(frame)
             if self.rate is not None:
                 self.rate.sleep()
         for camera in self.cameras.values():
