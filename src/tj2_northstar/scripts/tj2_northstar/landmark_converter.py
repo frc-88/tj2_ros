@@ -218,9 +218,6 @@ class LandmarkConverter:
         covariance = self.base_covariance * self.num_tags_covariance_scale(len(tag_poses))
         covariance *= self.pose_distance_covariance_scale(aggregate_distance)
 
-        covariance *= self.delta_pose_covariance_scale(landmark, prev_landmark)
-        covariance *= self.time_covariance_scale(landmark, prev_landmark)
-
         return covariance.flatten().tolist()
 
     def run(self) -> None:

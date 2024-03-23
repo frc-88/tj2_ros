@@ -59,7 +59,7 @@ standalone_tags:
 #     ...
 #   ]
 tag_bundles:
-[
+  [
     {
       name: 'field-section-0',
       layout:
