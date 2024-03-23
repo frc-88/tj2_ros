@@ -19,8 +19,7 @@ model_path = os.path.join(models_dir, "yolov5s.yaml")
 yolov5.train.run(
     data=tmp_path,
     imgsz=640,
-    # epochs=500,
-    epochs=250,
+    epochs=500,
     cfg=model_path,
     weights="",
     device=0,

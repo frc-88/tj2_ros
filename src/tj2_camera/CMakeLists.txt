@@ -21,8 +21,13 @@ find_package(catkin REQUIRED COMPONENTS
     image_geometry
     cv_bridge
     tf2_ros
+    zed_interfaces
 )
 find_package(OpenCV REQUIRED)
+option(LINK_SHARED_ZED "Link with the ZED SDK shared executable" ON)
+find_package(ZED 3 REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(CUDA ${ZED_CUDA_VERSION} REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -126,6 +131,7 @@ catkin_package(
         image_geometry
         cv_bridge
         tf2_ros
+        zed_interfaces
     DEPENDS OpenCV
 )
 
@@ -139,13 +145,21 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
+    ${CUDA_INCLUDE_DIRS}
+    ${ZED_INCLUDE_DIRS}
 )
+
 link_directories(${catkin_LIBRARY_DIRS})
 
 ## Declare a C++ library
 add_executable(tj2_depth_converter
     include/tj2_depth_converter.h
     src/tj2_depth_converter.cpp
+)
+
+add_executable(zed_request_camera
+    include/zed_request_camera.h
+    src/zed_request_camera.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -164,15 +178,23 @@ add_executable(tj2_depth_converter
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
+if (LINK_SHARED_ZED)
+    SET(ZED_LIBS ${ZED_LIBRARIES} ${CUDA_CUDA_LIBRARY} ${CUDA_CUDART_LIBRARY})
+else()
+    SET(ZED_LIBS ${ZED_STATIC_LIBRARIES} ${CUDA_CUDA_LIBRARY} ${CUDA_LIBRARY})
+endif()
+
 ## Specify libraries to link a library or executable target against
 target_link_libraries(tj2_depth_converter
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
+    ${ZED_LIBS}
 )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(tj2_depth_converter ${tj2_depth_converter_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(zed_request_camera ${zed_request_camera_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -197,6 +219,11 @@ add_dependencies(tj2_depth_converter ${tj2_depth_converter_EXPORTED_TARGETS} ${c
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
 install(TARGETS tj2_depth_converter
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+install(TARGETS zed_request_camera
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}

@@ -1,5 +1,5 @@
 <launch>
-    <arg name="yolo_model_path" default="$(find tj2_yolo)/models/crescendo_2024-03-21.torchscript" />
+    <arg name="yolo_model_path" default="$(find tj2_yolo)/models/crescendo_2024-03-22.torchscript" />
     <arg name="yolo_class_names_path" default="$(find tj2_yolo)/models/crescendo_2024.names" />
 
 
@@ -8,7 +8,7 @@
             <param name="model_path" value="$(arg yolo_model_path)" />
             <param name="classes_path" value="$(arg yolo_class_names_path)" />
 
-            <param name="confidence_threshold" value="0.8" />
+            <param name="confidence_threshold" value="0.6" />
             <param name="nms_iou_threshold" value="0.4" />
 
             <param name="warmup_image_width" value="1280" />
