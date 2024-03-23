@@ -4,7 +4,7 @@
     <arg name="confidence_threshold" default="0.8" />
 
     <group ns="tj2">
-        <node name="tj2_yolo" pkg="tj2_yolo" type="tj2_yolo" output="screen" required="false">
+        <node name="tj2_yolo" pkg="tj2_yolo" type="tj2_yolo" output="screen" required="false" launch-prefix="gdb -ex run --args">
             <param name="model_path" value="$(arg yolo_model_path)" />
             <param name="classes_path" value="$(arg yolo_class_names_path)" />
 

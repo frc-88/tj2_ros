@@ -1,19 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <arg name="robot_address" default="10.0.88.2" />
-    <arg name="enable_driver_station" value="true" />
-    <arg name="yolo_class_names" value="$(find tj2_yolo)/models/charged_up_2023.names" />
-    <arg name="yolo_model_path" value="$(find tj2_yolo)/models/charged_up_2023-02-25.torchscript" />
-    <arg name="laser_scan_topic" value="/laser/scan_filtered" />
-    <arg name="map_name" default="$(env ROS_MAP_NAME)" />
+    <!-- the name of this robot -->
     <arg name="robot" default="$(env ROBOT)" />
 
+    <!-- RoboRIO networktables address -->
+    <arg name="robot_address" default="10.0.88.2" />
+
+    <!-- Laser localization map name -->
+    <arg name="map_name" default="$(env ROS_MAP_NAME)" />
+
+    <!-- Enable onboard Jetson driver station -->
+    <arg name="enable_driver_station" value="true" />
+
+    <!-- Neural net model -->
+    <arg name="yolo_class_names" value="$(find tj2_yolo)/models/crescendo_2024.names" />
+    <arg name="yolo_model_path" value="$(find tj2_yolo)/models/crescendo_2024-03-22.torchscript" />
+
+    <!-- Laser topic -->
+    <arg name="laser_scan_topic" value="/laser/scan_filtered" />
+
+    
+    <!-- Formats topics so they are usable going to and coming from the RoboRIO -->
     <include file="$(find tj2_comm)/launch/tj2_comm.launch">
         <arg name="publish_odom_tf" value="true" />
         <arg name="compact_tf_ids_path"
             value="$(find tj2_bringup)/config/$(arg robot)/frame_ids.yaml" />
     </include>
 
+    <!-- Mux autonomous and teleop joystick commands -->
     <include file="$(find tj2_comm)/launch/twist_mux.launch" />
     <group ns="tj2">
         <include file="$(find ros_networktables_bridge_host)/launch/nt_client.launch">
@@ -21,31 +35,39 @@
         </include>
     </group>
 
+    <!-- Static transforms defining robot layout -->
     <include file="$(find tj2_bringup)/config/$(arg robot)/static_transforms_$(arg robot).launch" />
 
+    <!-- Detect robot tilt -->
     <include file="$(find tj2_description)/launch/imu_joint.launch">
         <arg name="camera_imu_topic" value="/tj2_zed/imu/data" />
         <arg name="base_imu_topic" value="/tj2/imu" />
     </include>
 
+    <!-- Robot URDF -->
     <include file="$(find tj2_description)/launch/tj2_description.launch">
         <arg name="model" value="$(find tj2_description)/urdf/$(arg robot).urdf.xml" />
         <arg name="joint_names" value="$(find tj2_bringup)/config/$(arg robot)/joints.yaml" />
     </include>
 
-    <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
-        <arg name="yolo_model_path" value="$(arg yolo_model_path)" />
-        <arg name="yolo_class_names_path" value="$(arg yolo_class_names)" />
+    <!-- ZED 2 camera -->
+    <!-- <include file="$(find tj2_camera)/launch/tj2_zed2.launch">
         <arg name="serial_number" value="25556416" />
+    </include> -->
+    <include file="$(find tj2_camera)/launch/zed_request_camera.launch">
+        <arg name="serial_number"           value="25556416" />
     </include>
-    <!-- <include file="$(find tj2_yolo)/launch/tj2_yolo.launch">
+
+    <!-- YOLO neural net -->
+    <include file="$(find tj2_yolo)/launch/tj2_yolo.launch">
         <arg name="yolo_model_path"           value="$(arg yolo_model_path)" />
         <arg name="yolo_class_names_path"     value="$(arg yolo_class_names)" />    
-    </include> -->
-    <!-- <include file="$(find tj2_charged_up)/launch/charged_up_perception.launch"/> -->
+    </include>
 
+    <!-- Bag recorder -->
     <include file="$(find tj2_match_watcher)/launch/tj2_match_watcher.launch" />
 
+    <!-- LIDAR driver -->
     <group ns="laser">
         <include file="$(find tj2_rplidar)/launch/tj2_rplidar_a2.launch">
             <arg name="serial_port"
@@ -60,11 +82,13 @@
         </node>
     </group>
 
+    <!-- Driver station and joystick -->
     <include if="$(arg enable_driver_station)"
         file="$(find tj2_driver_station)/launch/tj2_driver_station.launch" />
     <include if="$(arg enable_driver_station)"
         file="$(find tj2_debug_joystick)/launch/tj2_debug_joystick.launch" />
 
+    <!-- Autonomous driving -->
     <!-- <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
         <remap from="/cmd_vel" to="/tj2/cmd_vel_nav"/>
         <remap from="/odom" to="/tj2/odom"/>
@@ -93,6 +117,7 @@
     command="load" ns="global_costmap"/>
     </node> -->
 
+    <!-- Laser SLAM -->
     <include file="$(find tj2_laser_slam)/launch/tj2_laser_slam.launch">
         <arg name="mode" value="localize" />
         <arg name="map_name" value="$(arg map_name)" />
@@ -101,35 +126,42 @@
         <arg name="amcl_config" value="$(find tj2_bringup)/config/$(arg robot)/amcl.yaml" />
     </include>
 
+    <!-- Map waypoints -->
     <!-- <include file="$(find tj2_waypoints)/launch/tj2_waypoints.launch">
         <arg name="waypoints_path" value="$(find tj2_bringup)/config/shared/waypoints/$(arg map_name)"/>
     </include> -->
 
+    <!-- Map zones -->
     <!-- <include file="$(find tj2_zones)/launch/tj2_zones.launch">
         <arg name="zones_path" value="$(find tj2_bringup)/config/shared/zones/$(arg map_name).bin"/>
     </include> -->
 
+    <!-- PreferenceConstants backup -->
     <include file="$(find tj2_nt_backup)/launch/nt_backup.launch">
         <arg name="nt_host" value="$(arg robot_address)" />
         <arg name="robot" value="$(arg robot)" />
     </include>
 
+    <!-- Web server -->
     <!-- <include file="$(find tj2_webapp)/launch/rosbridge_server.launch"/> -->
-    <!-- <include file="$(find tj2_charged_up)/launch/grid_tracker.launch"/> -->
+
+    <!-- Laser pointer demo -->
     <!-- <include file="$(find tj2_calibration_pointer)/launch/tj2_calibration_pointer.launch"/> -->
 
+    <!-- TJ2 Northstar -->
     <include file="$(find tj2_northstar)/launch/tj2_northstar.launch">
         <arg name="filter_params"
             value="$(find tj2_bringup)/config/$(arg robot)/northstar_filter.yaml" />
-        <arg name="tag_params"
-            value="$(find tj2_bringup)/config/$(arg robot)/tags/$(arg map_name)_tags.yaml" />
     </include>
+
+    <!-- 2D Occupancy map -->
     <!-- <node name="static_map_server" pkg="map_server" type="map_server" output="screen"
     args="$(find tj2_bringup)/config/shared/maps/$(arg map_name).yaml">
         <param name="frame_id" value="map"/>
     </node> -->
 
-    <include file="$(find tj2_northstar)/launch/dual_camera.launch">
+    <!-- Arducam drivers -->
+    <!-- <include file="$(find tj2_northstar)/launch/dual_camera.launch">
         <arg name="common_camera_params"
             value="$(find tj2_bringup)/config/shared/arducam/ov2311.yaml" />
         <arg name="camera_0_info_url"
@@ -148,10 +180,13 @@
             value="$(find tj2_bringup)/config/$(arg robot)/tags/settings.yaml" />
         <arg name="apriltag_tags"
             value="$(find tj2_bringup)/config/$(arg robot)/tags/$(arg map_name)_tags.yaml" />
-    </include>
+    </include> -->
 
-    <!-- <include file="$(find tj2_northstar)/launch/cuda_apriltag_dual_cam.launch">
+    <!-- AprilTag detection -->
+    <!-- <include file="$(find tj2_northstar)/launch/apriltag_triple_cam.launch">
         <arg name="apriltag_settings"
-            value="$(find tj2_bringup)/config/$(arg robot)/tags/cuda_tags.yaml" />
+            value="$(find tj2_bringup)/config/shared/tags/settings.yaml" />
+        <arg name="apriltag_tags"
+            value="$(find tj2_bringup)/config/shared/tags/$(arg map_name)_tags.yaml" />
     </include> -->
 </launch>

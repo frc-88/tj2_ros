@@ -14,14 +14,13 @@ ZedRequestCamera::ZedRequestCamera(ros::NodeHandle *nodehandle) : nh(*nodehandle
     _image_frame_id = camera_name + "_left_camera_optical_frame";
 
     _init_parameters.coordinate_system = sl::COORDINATE_SYSTEM::RIGHT_HANDED_Z_UP_X_FWD;
-    _init_parameters.async_grab_camera_recovery = true;
     _init_parameters.sdk_verbose = false;
     _init_parameters.sdk_gpu_id = 0;
     _init_parameters.camera_image_flip = sl::FLIP_MODE::OFF;
     _init_parameters.coordinate_units = sl::UNIT::METER;
 
     std::string resolution_key;
-    ros::param::param<std::string>("~resolution", resolution_key, "");
+    ros::param::param<std::string>("~resolution", resolution_key, "HD720");
 
     sl::RESOLUTION resolution;
     int fps;
@@ -48,12 +47,11 @@ ZedRequestCamera::ZedRequestCamera(ros::NodeHandle *nodehandle) : nh(*nodehandle
     }
     else
     {
-        ROS_WARN("Not valid 'general.grab_resolution' value: '%s'. Using 'AUTO' setting.", resolution_key.c_str());
-        resolution = sl::RESOLUTION::AUTO;
-        fps = 15;
+        ROS_ERROR("Not valid 'resolution' value: '%s'. Using 'HD720' setting.", resolution_key.c_str());
+        resolution = sl::RESOLUTION::HD720;
+        fps = 60;
     }
     _init_parameters.camera_fps = fps;
-    _init_parameters.grab_compute_capping_fps = static_cast<float>(fps);
     _init_parameters.camera_resolution = resolution;
     _init_parameters.input.setFromSerialNumber(serial_number);
 
@@ -92,14 +90,16 @@ ZedRequestCamera::ZedRequestCamera(ros::NodeHandle *nodehandle) : nh(*nodehandle
     _init_parameters.depth_maximum_distance = max_depth;
     _init_parameters.open_timeout_sec = 1.0f;
     _init_parameters.enable_image_enhancement = true; // Always active
+    _camera_info = boost::make_shared<sensor_msgs::CameraInfo>();
 
     _depth_pub = _image_transport.advertiseCamera("depth/image", 1);
     _image_pub = _image_transport.advertiseCamera("color/image", 1);
-    _request_sub = nh.subscribe<tj2_interfaces::RequestFrames>("request", 1, &ZedRequestCamera::request_callback, this);
+    _request_sub = nh.subscribe<tj2_interfaces::RequestFrames>("request_frames", 1, &ZedRequestCamera::request_callback, this);
 }
 
 void ZedRequestCamera::request_callback(const tj2_interfaces::RequestFrames::ConstPtr &msg)
 {
+    ROS_INFO("Request received. Publishing for %f seconds.", msg->request_duration.toSec());
     _request_time = ros::Time::now();
     _request_duration = msg->request_duration;
 }
@@ -210,6 +210,7 @@ int ZedRequestCamera::run()
         clock_rate.sleep();
         if (ros::Time::now() - _request_time < _request_duration)
         {
+            ROS_INFO("Polling camera");
             if (!poll())
             {
                 return 1;
