@@ -1,12 +1,26 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(tj2_camera)
 
+# SET(CMAKE_BUILD_TYPE Debug)
+
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+
+function(checkPackage package customMessage)
+    set(varName "${package}_FOUND")
+    if (NOT "${${varName}}")
+        string(REPLACE "_" "-" aptPackage ${package})
+        if("${customMessage}" STREQUAL "")
+            message(FATAL_ERROR "\n\n ${package} is missing, please try to install it with:\n sudo apt-get install ros-$(rosversion -d)-${aptPackage}\n\n")
+        else()
+            message(FATAL_ERROR "\n\n ${customMessage} \n\n")
+        endif()
+    endif()
+endfunction(checkPackage)
 
 find_package(catkin REQUIRED COMPONENTS
     rospy
@@ -21,8 +35,19 @@ find_package(catkin REQUIRED COMPONENTS
     image_geometry
     cv_bridge
     tf2_ros
+    tj2_interfaces
 )
-find_package(OpenCV REQUIRED)
+find_package(ZED 3 REQUIRED)
+find_package(CUDA ${ZED_CUDA_VERSION} REQUIRED)
+checkPackage("CUDA" "CUDA not found, install it from:\n https://developer.nvidia.com/cuda-downloads")
+
+find_package(OpenMP)
+checkPackage("OpenMP" "OpenMP not found, please install it to improve performances: 'sudo apt install libomp-dev'")
+if (OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -114,8 +139,6 @@ catkin_python_setup()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    INCLUDE_DIRS include
-    LIBRARIES tj2_depth_converter
     CATKIN_DEPENDS
         camera_info_manager
         roscpp
@@ -126,26 +149,26 @@ catkin_package(
         image_geometry
         cv_bridge
         tf2_ros
-    DEPENDS OpenCV
+        tj2_interfaces
 )
 
 ###########
 ## Build ##
 ###########
 
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
-    ${OpenCV_INCLUDE_DIRS}
+link_directories(
+    ${ZED_LIBRARY_DIR}
+    ${CUDA_LIBRARY_DIRS}
+    ${catkin_LIBRARY_DIRS}
 )
-link_directories(${catkin_LIBRARY_DIRS})
 
-## Declare a C++ library
-add_executable(tj2_depth_converter
-    include/tj2_depth_converter.h
-    src/tj2_depth_converter.cpp
+## Declare a C++ exec
+add_executable(zed_request_camera
+    include/zed_request_camera.h
+    src/zed_request_camera.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -165,14 +188,25 @@ add_executable(tj2_depth_converter
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(tj2_depth_converter
+target_include_directories(
+    zed_request_camera
+    PRIVATE
+    include
+    ${catkin_INCLUDE_DIRS}
+    ${CUDA_INCLUDE_DIRS}
+    ${ZED_INCLUDE_DIRS}
+)
+target_link_libraries(zed_request_camera
     ${catkin_LIBRARIES}
-    ${OpenCV_LIBRARIES}
+    ${ZED_LIBRARIES}
+    ${CUDA_LIBRARIES}
+    ${CUDA_CUDA_LIBRARY}
+    ${CUDA_CUDART_LIBRARY}
 )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(tj2_depth_converter ${tj2_depth_converter_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(zed_request_camera ${zed_request_camera_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -196,7 +230,7 @@ add_dependencies(tj2_depth_converter ${tj2_depth_converter_EXPORTED_TARGETS} ${c
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS tj2_depth_converter
+install(TARGETS zed_request_camera
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}

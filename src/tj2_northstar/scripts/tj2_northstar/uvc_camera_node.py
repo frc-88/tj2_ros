@@ -4,7 +4,8 @@ from typing import Dict, Optional
 import rospy
 from camera_info_manager import CameraInfoManager  # type: ignore
 from sensor_msgs.msg import CameraInfo, Image
-from tj2_northstar.uvc_camera import CameraConfig, CaptureConfig, UVCCamera
+from std_msgs.msg import Bool
+from tj2_northstar.uvc_camera import CameraConfig, UVCCamera
 
 
 class CameraPublisher:
@@ -47,10 +48,13 @@ class UVCCameraNode:
         info_urls = rospy.get_param("~info_urls", default={})
         self.frame_timeout = rospy.get_param("~frame_timeout", default=0.1)
         self.tick_rate = rospy.get_param("~tick_rate", default=0.0)
+        self.enabled = rospy.get_param("~enabled_by_default", default=True)
+        rospy.loginfo("Camera enabled: %s" % self.enabled)
 
         if len(camera_configs) == 0:
             raise ValueError("No cameras specified in the camera config")
 
+        self.enable_sub = rospy.Subscriber("enable", Bool, self.enable_callback, queue_size=1)
         self.cameras: Dict[str, UVCCamera] = {}
         self.publishers: Dict[str, CameraPublisher] = {}
         for name, config in camera_configs.items():
@@ -66,12 +70,19 @@ class UVCCameraNode:
             url = info_urls[name]
             self.publishers[name].load_info(url)
 
+    def enable_callback(self, msg: Bool) -> None:
+        self.enabled = msg.data
+        rospy.loginfo("Camera enabled: %s" % self.enabled)
+
     def run(self) -> None:
         if self.tick_rate > 0.0:
             self.rate = rospy.Rate(self.tick_rate)
         else:
             self.rate = None
         while not rospy.is_shutdown():
+            if not self.enabled:
+                rospy.sleep(0.1)
+                continue
             for name, camera in self.cameras.items():
                 frame = camera.get_frame(self.frame_timeout)
                 if frame is None:

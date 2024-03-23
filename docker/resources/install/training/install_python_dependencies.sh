@@ -13,6 +13,6 @@ git clone https://github.com/ultralytics/yolov5.git
 cd yolov5
 python -m pip install -r requirements.txt --no-cache-dir
 
-python -m pip install --no-cache-dir numpy==1.19.5
+python -m pip install --no-cache-dir numpy==1.24.4
 
 echo "Installed python dependencies"
