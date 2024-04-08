@@ -19,6 +19,5 @@ git apply /opt/tj2/install/ros/fix-imu-tools.patch --reject --whitespace=fix
 
 cd ${DEP_ROS_WS_SRC}/zed-ros-wrapper/
 git submodule update --init --recursive
-touch rviz-plugin-zed-od/CATKIN_IGNORE
 
 echo "Patched ROS packages"

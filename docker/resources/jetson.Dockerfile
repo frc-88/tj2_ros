@@ -1,10 +1,28 @@
-FROM dustynv/ros:noetic-pytorch-l4t-r32.6.1
+ARG L4T_MAJOR_VERSION
+ARG L4T_MINOR_VERSION
+ARG L4T_PATCH_VERSION
+ARG ZED_SDK_MAJOR
+ARG ZED_SDK_MINOR
+ARG PYTHON_VERSION_MAJOR
+ARG PYTHON_VERSION_MINOR
 
-ENV L4T_MAJOR_VERSION=32 \
-    L4T_MINOR_VERSION=6 \
-    L4T_PATCH_VERSION=1 \
-    ZED_SDK_MAJOR=3 \
-    ZED_SDK_MINOR=8 \
+FROM dustynv/ros:noetic-pytorch-l4t-r${L4T_MAJOR_VERSION}.${L4T_MINOR_VERSION}.${L4T_PATCH_VERSION}
+
+ARG L4T_MAJOR_VERSION
+ARG L4T_MINOR_VERSION
+ARG L4T_PATCH_VERSION
+ARG ZED_SDK_MAJOR
+ARG ZED_SDK_MINOR
+ARG PYTHON_VERSION_MAJOR
+ARG PYTHON_VERSION_MINOR
+
+ENV L4T_MAJOR_VERSION=${L4T_MAJOR_VERSION} \
+    L4T_MINOR_VERSION=${L4T_MINOR_VERSION} \
+    L4T_PATCH_VERSION=${L4T_PATCH_VERSION} \
+    ZED_SDK_MAJOR=${ZED_SDK_MAJOR} \
+    ZED_SDK_MINOR=${ZED_SDK_MINOR} \
+    PYTHON_VERSION_MAJOR=${PYTHON_VERSION_MAJOR} \
+    PYTHON_VERSION_MINOR=${PYTHON_VERSION_MINOR} \
     DEBIAN_FRONTEND=noninteractive \
     SHELL=/bin/bash
 SHELL ["/bin/bash", "-c"] 
@@ -41,8 +59,8 @@ RUN bash /opt/tj2/install/upgrade_cmake_aarch64.sh
 # PyTorch CMake
 # ---
 
-ENV LD_LIBRARY_PATH=/usr/local/lib/python3.6/dist-packages/torch/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} \
-    CMAKE_PREFIX_PATH=/usr/local/lib/python3.6/dist-packages/torch/share/cmake/Torch${CMAKE_PREFIX_PATH:+:${CMAKE_PREFIX_PATH}}
+ENV LD_LIBRARY_PATH=/usr/local/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/dist-packages/torch/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} \
+    CMAKE_PREFIX_PATH=/usr/local/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/dist-packages/torch/share/cmake/Torch${CMAKE_PREFIX_PATH:+:${CMAKE_PREFIX_PATH}}
 
 # ---
 # ZED
@@ -59,14 +77,12 @@ RUN bash /opt/tj2/install/zed_jetson_install.sh
 # Basic dependencies
 # ---
 
-COPY --chown=1000:1000 \
-    ./install/jetson/install_apt_packages.sh \
-    ./install/jetson/install_python_dependencies.sh \
-    ./install/jetson/install_libraries.sh \
-    /opt/tj2/install/basic/
-RUN bash /opt/tj2/install/basic/install_apt_packages.sh && \
-    bash /opt/tj2/install/basic/install_python_dependencies.sh && \
-    bash /opt/tj2/install/basic/install_libraries.sh
+COPY --chown=1000:1000 ./install/jetson/install_apt_packages.sh /opt/tj2/install/basic/
+RUN bash /opt/tj2/install/basic/install_apt_packages.sh
+COPY --chown=1000:1000 ./install/jetson/install_python_dependencies.sh /opt/tj2/install/basic/
+RUN bash /opt/tj2/install/basic/install_python_dependencies.sh
+COPY --chown=1000:1000 ./install/jetson/install_libraries.sh /opt/tj2/install/basic/
+RUN bash /opt/tj2/install/basic/install_libraries.sh
 
 # ---
 # ROS dependency workspace

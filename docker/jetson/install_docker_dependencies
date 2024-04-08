@@ -28,7 +28,7 @@ udevadm control --reload-rules && udevadm trigger
 
 #Install Docker Compose
 export DOCKER_COMPOSE_INSTALL_PATH=/usr/local/lib/docker/cli-plugins
-export DOCKER_COMPOSE_URL=https://github.com/docker/compose/releases/download/v2.14.0/docker-compose-linux-armv7
+export DOCKER_COMPOSE_URL=https://github.com/docker/compose/releases/download/v2.26.1/docker-compose-linux-armv7
 
 mkdir -p ${DOCKER_COMPOSE_INSTALL_PATH}
 curl -SL ${DOCKER_COMPOSE_URL} -o ${DOCKER_COMPOSE_INSTALL_PATH}/docker-compose
