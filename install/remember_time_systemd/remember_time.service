@@ -1,0 +1,14 @@
+[Unit]
+After=basic.target
+Description=Remember time
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+Group=root
+ExecStart=/usr/local/bin/remember_time
+
+[Install]
+WantedBy=multi-user.target

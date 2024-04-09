@@ -31,7 +31,6 @@ echo "Enabling systemd services"
 systemctl daemon-reload
 loginctl enable-linger $USER
 systemctl enable ${SERVICE_NAME}
-
 systemctl restart ${SERVICE_NAME}
 
 echo "tj2_ros docker systemd service installation complete"

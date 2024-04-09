@@ -1,0 +1,19 @@
+#!/bin/bash
+PRIMARY=/media/storage/last_date.txt
+SECONDARY=/media/storage/last_date.txt.bak
+if [ -f ${PRIMARY} ] && [ -s ${PRIMARY} ]; then
+    last_time=$(cat ${PRIMARY})
+elif [ -f ${SECONDARY} ] && [ -s ${SECONDARY} ]; then
+    last_time=$(cat ${SECONDARY})
+else
+    echo 'failed to set systemd time!'
+    return 1
+fi
+echo last time was ${last_time}
+timedatectl set-time "${last_time}"
+
+while true; do
+    echo $(date '+%Y-%m-%d %H:%M:%S') > ${PRIMARY}
+    cp ${PRIMARY} ${SECONDARY}
+    sleep 1
+done
