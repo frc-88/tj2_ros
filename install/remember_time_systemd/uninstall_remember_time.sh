@@ -6,13 +6,11 @@ fi
 
 echo "Running remember_time systemd service uninstall script"
 
-BASE_DIR=$(realpath "$(dirname $0)")
-
 systemctl disable remember_time.service
 systemctl stop remember_time.service
 
-rm ${BASE_DIR}/remember_time.service /etc/systemd/system/
-rm ${BASE_DIR}/remember_time /usr/local/bin/
+rm /etc/systemd/system/remember_time.service
+rm /usr/local/bin/remember_time
 
 systemctl daemon-reload
 

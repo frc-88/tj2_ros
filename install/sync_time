@@ -15,3 +15,4 @@ fi
 SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
 
 ${SSH_COMMAND} -t "sudo timedatectl set-time \"`date '+%Y-%m-%d %H:%M:%S'`\""
+${SSH_COMMAND} -t "sudo hwclock -w -f /dev/rtc"
