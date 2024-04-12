@@ -174,7 +174,7 @@ class LandmarkConverter:
     def pose_distance_covariance_scale(self, distance: float) -> float:
         if distance < 0.2:
             return 10.0
-        return 0.25 * distance**2.0 + 1.0
+        return 1.25 * distance**2.0 + 1.0
 
     def get_pose_distance(self, pose: PoseStamped) -> float:
         return float(
@@ -213,7 +213,7 @@ class LandmarkConverter:
         self, tag_poses: List[PoseStamped], landmark: PoseStamped, prev_landmark: PoseStamped
     ) -> List[float]:
         distances = [self.get_pose_distance(pose) for pose in tag_poses]
-        aggregate_distance = float(np.median(distances))
+        aggregate_distance = float(np.max(distances))
 
         covariance = self.base_covariance * self.num_tags_covariance_scale(len(tag_poses))
         covariance *= self.pose_distance_covariance_scale(aggregate_distance)
