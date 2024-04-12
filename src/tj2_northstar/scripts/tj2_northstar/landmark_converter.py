@@ -174,7 +174,7 @@ class LandmarkConverter:
     def pose_distance_covariance_scale(self, distance: float) -> float:
         if distance < 0.2:
             return 10.0
-        return 2.5 * distance**2.0 + 1.0
+        return 1.25 * distance**2.0 + 1.0
 
     def get_pose_distance(self, pose: PoseStamped) -> float:
         return float(
