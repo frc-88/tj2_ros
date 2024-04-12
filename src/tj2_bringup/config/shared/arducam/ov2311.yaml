@@ -1,10 +1,10 @@
 mode:
   width: 1600
   height: 1200
-  fps: 50
+  fps: 23
   format: MJPG
 controls:
   "Auto Exposure Mode": 1
-  "Absolute Exposure Time": 30
-  "Gain": 15
+  "Absolute Exposure Time": 20
+  "Gain": 10
   "Sharpness": 3
