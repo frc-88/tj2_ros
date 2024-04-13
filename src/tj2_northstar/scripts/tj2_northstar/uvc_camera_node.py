@@ -3,8 +3,10 @@ from typing import Dict, Optional
 
 import rospy
 from camera_info_manager import CameraInfoManager  # type: ignore
+from diagnostic_msgs.msg import DiagnosticStatus, KeyValue
 from sensor_msgs.msg import CameraInfo, Image
-from tj2_northstar.uvc_camera import CameraConfig, CaptureConfig, UVCCamera
+
+from tj2_northstar.uvc_camera import CameraConfig, UVCCamera
 
 
 class CameraPublisher:
@@ -12,10 +14,14 @@ class CameraPublisher:
         assert "/" not in name, "Camera name cannot contain a slash"
         self.name = name
         self.info_manager: Optional[CameraInfoManager] = None
+        self.diagnostic_map = {}
+        self.diagnostics = DiagnosticStatus()
         image_topic = self.name + "/image_raw"
         info_topic = self.name + "/camera_info"
+        diagnostics_topic = self.name + "/diagnostics"
         self.image_pub = rospy.Publisher(image_topic, Image, queue_size=1)
         self.info_pub = rospy.Publisher(info_topic, CameraInfo, queue_size=1)
+        self.diagnostics_pub = rospy.Publisher(diagnostics_topic, DiagnosticStatus, queue_size=1)
 
     def load_info(self, url: str) -> None:
         namespace = rospy.get_namespace() + "/" + self.name + "/"
@@ -24,13 +30,25 @@ class CameraPublisher:
         namespace = "/" + namespace
         self.info_manager = CameraInfoManager(self.name, url=url, namespace=namespace)
         self.info_manager.loadCameraInfo()
+        self.diagnostics.name = self.name
 
     def publish(self, image: Image) -> None:
+        self.diagnostics.values = [KeyValue(key, value) for key, value in self.diagnostic_map.items()]
         if self.info_manager is not None:
             info = self.info_manager.getCameraInfo()
             info.header = image.header
             self.info_pub.publish(info)
         self.image_pub.publish(image)
+        self.diagnostics_pub.publish(self.diagnostics)
+
+    def set_diagnostic_field(self, key: str, value: str) -> None:
+        self.diagnostic_map[key] = value
+
+    def set_diagnostic_id(self, hardware_id: str) -> None:
+        self.diagnostics.hardware_id = hardware_id
+
+    def set_diagnostic_level(self, is_ok: bool) -> None:
+        self.diagnostics.level = DiagnosticStatus.OK if is_ok else DiagnosticStatus.ERROR
 
 
 class UVCCameraNode:
@@ -67,14 +85,34 @@ class UVCCameraNode:
             self.publishers[name].load_info(url)
 
     def run(self) -> None:
+        rospy.sleep(2.0)  # wait for cameras to come online
         if self.tick_rate > 0.0:
             self.rate = rospy.Rate(self.tick_rate)
         else:
             self.rate = None
+        for name, camera in self.cameras.items():
+            publisher = self.publishers[name]
+            publisher.set_diagnostic_id(camera.serial_number)
+            publisher.set_diagnostic_level(True)
+            for control in camera.get_controls():
+                publisher.set_diagnostic_field(
+                    control.display_name,
+                    "value: %s, unit: %s, min: %s, max: %s, step: %s"
+                    % (control.value, control.unit, control.min_val, control.max_val, control.step),
+                )
+            mode = camera.get_mode()
+            publisher.set_diagnostic_field("width", str(mode.width))
+            publisher.set_diagnostic_field("height", str(mode.height))
+            publisher.set_diagnostic_field("fps", str(mode.fps))
+            publisher.set_diagnostic_field("format_native", str(mode.format_native))
+            publisher.set_diagnostic_field("format_name", str(mode.format_name))
+            publisher.set_diagnostic_field("supported", str(mode.supported))
+
         while not rospy.is_shutdown():
             for name, camera in self.cameras.items():
                 frame = camera.get_frame(self.frame_timeout)
                 if frame is None:
+                    publisher.set_diagnostic_level(False)
                     continue
                 self.publishers[name].publish(frame)
             if self.rate is not None:
