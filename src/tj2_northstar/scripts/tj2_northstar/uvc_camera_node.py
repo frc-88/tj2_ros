@@ -47,8 +47,9 @@ class CameraPublisher:
     def set_diagnostic_id(self, hardware_id: str) -> None:
         self.diagnostics.hardware_id = hardware_id
 
-    def set_diagnostic_level(self, is_ok: bool) -> None:
+    def set_diagnostic_level(self, is_ok: bool, message: str) -> None:
         self.diagnostics.level = DiagnosticStatus.OK if is_ok else DiagnosticStatus.ERROR
+        self.diagnostics.message = message
 
 
 class UVCCameraNode:
@@ -93,7 +94,7 @@ class UVCCameraNode:
         for name, camera in self.cameras.items():
             publisher = self.publishers[name]
             publisher.set_diagnostic_id(camera.serial_number)
-            publisher.set_diagnostic_level(True)
+            publisher.set_diagnostic_level(True, "")
             for control in camera.get_controls():
                 publisher.set_diagnostic_field(
                     control.display_name,
@@ -112,8 +113,9 @@ class UVCCameraNode:
             for name, camera in self.cameras.items():
                 frame = camera.get_frame(self.frame_timeout)
                 if frame is None:
-                    publisher.set_diagnostic_level(False)
+                    publisher.set_diagnostic_level(False, camera.error_status)
                     continue
+                publisher.set_diagnostic_level(True, "")
                 self.publishers[name].publish(frame)
             if self.rate is not None:
                 self.rate.sleep()

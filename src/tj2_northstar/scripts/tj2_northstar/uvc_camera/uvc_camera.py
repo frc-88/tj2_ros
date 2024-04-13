@@ -106,6 +106,7 @@ class UVCCamera:
     def __init__(self, frame_id: str, serial_number: str) -> None:
         self.serial_number = serial_number
         self.frame_id = frame_id
+        self.error_status = ""
         info = self.get_capture_info(self.serial_number)
         if info.uid in UVCCamera.opened_uids:
             raise ConnectionError(f"Camera is already opened: {info}. Supplied serial: {self.serial_number}")
@@ -171,12 +172,17 @@ class UVCCamera:
         modes = find_match(capture.available_modes, camera_config, self.is_mode_match)
         return modes[0]
 
+    def get_error(self) -> str:
+        return self.error_status
+
     def get_frame(self, timeout: float = 1.0) -> Optional[Image]:
         try:
             frame = self.capture.get_frame(timeout=timeout)
         except TimeoutError as e:
-            rospy.logerr("Camera %s timed out." % self.serial_number, exc_info=e)
+            self.error_status = "%s: Camera %s timed out." % (str(e), self.serial_number)
+            rospy.logerr(self.error_status, exc_info=e)
             return None
+        self.error_status = ""
         is_bgr = hasattr(frame, "bgr")
         data = frame.bgr if is_bgr else frame.gray
         encoding = "bgr8" if is_bgr else "mono8"
@@ -187,6 +193,7 @@ class UVCCamera:
                 header=Header(frame_id=self.frame_id, stamp=rospy.Time.now()),
             )
         else:
+            self.error_status = "Image not fully received."
             return None
 
     def close(self) -> None:
