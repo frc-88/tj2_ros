@@ -8,8 +8,9 @@ import uvc
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header
-from tj2_northstar.uvc_camera.helper import find_match
 from uvc.uvc_bindings import CameraMode
+
+from tj2_northstar.uvc_camera.helper import find_match
 
 
 class CameraFormat(Enum):
@@ -115,8 +116,11 @@ class UVCCamera:
     def get_modes(self) -> List[CameraMode]:
         return self.capture.available_modes
 
+    def get_mode(self) -> CameraMode:
+        return self.capture.frame_mode
+
     def set_mode(self, camera_config: CameraConfig) -> None:
-        self.capture.frame_mode = self.get_mode(self.capture, camera_config)
+        self.capture.frame_mode = self.select_mode(self.capture, camera_config)
 
     def get_controls(self) -> Controls:
         return self.capture.controls
@@ -161,7 +165,9 @@ class UVCCamera:
             + int(config.format.value == mode.format_name)
         )
 
-    def get_mode(self, capture: uvc.Capture, camera_config: CameraConfig) -> CameraMode:
+    def select_mode(self, capture: uvc.Capture, camera_config: CameraConfig) -> CameraMode:
+        for mode in capture.available_modes:
+            rospy.loginfo("Available mode: %s" % str(mode))
         modes = find_match(capture.available_modes, camera_config, self.is_mode_match)
         return modes[0]
 
