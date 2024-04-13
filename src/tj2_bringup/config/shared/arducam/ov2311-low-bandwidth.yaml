@@ -5,6 +5,6 @@ mode:
   format: MJPG
 controls:
   "Auto Exposure Mode": 1
-  "Absolute Exposure Time": 30
-  "Gain": 15
+  "Absolute Exposure Time": 60
+  "Gain": 20
   "Sharpness": 3
