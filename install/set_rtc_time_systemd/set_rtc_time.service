@@ -1,0 +1,13 @@
+[Unit]
+After=basic.target
+Description=Set time to RTC
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+RemainAfterExit=no
+ExecStart=/usr/local/bin/set_rtc_time
+
+[Install]
+WantedBy=multi-user.target

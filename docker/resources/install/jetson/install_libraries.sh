@@ -29,7 +29,7 @@ sudo make install
 cd /tmp
 git clone https://github.com/orocos/orocos_kinematics_dynamics.git
 cd orocos_kinematics_dynamics
-git checkout 5541147d4a220cab97d0ae1efa1aa860557d5c32
+git checkout v1.5.1
 git submodule update --init
 cd orocos_kdl
 mkdir build
@@ -42,9 +42,9 @@ sudo make install
 mkdir -p mkdir ../../python_orocos_kdl/build || true
 cd /tmp/orocos_kinematics_dynamics/python_orocos_kdl/build
 cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
-    -D PYTHON_INCLUDE_DIR=/usr/include/python3.6 \
-    -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.6m.so \
-    -D PYBIND11_PYTHON_VERSION=3 ..
+    -D PYTHON_INCLUDE_DIR=/usr/include/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} \
+    -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}m.so \
+    -D PYBIND11_PYTHON_VERSION=${PYTHON_VERSION_MAJOR} ..
 make -j4
 sudo make install
 
@@ -52,16 +52,16 @@ sudo make install
 cd /tmp
 git clone https://github.com/FRC-Utilities/LibDS.git
 cd LibDS
-git checkout 14cac0a7f3b911b3f1c661c3b5f455522ae6638b
+git checkout 71a8067b54a3a0fc24a80241ca33b8eab58a744b
 qmake -qt=qt5
 make -j4
 sudo make install
 
 # CmakeWpilib
 cd /tmp
-git clone --recursive https://github.com/ThadHouse/CmakeWpilib.git
+git clone https://github.com/frc-88/CmakeWpilib.git
 cd CmakeWpilib
-git checkout d5bbeb949de35a4c576838e598493779bcf6a328
+git checkout 00ab2a87f65ced4c26bc270a9244c509a4beee67
 mkdir build
 cd /tmp/CmakeWpilib/build
 cmake .. -DWITHOUT_CSCORE=ON -DWITHOUT_JAVA=ON
@@ -83,7 +83,7 @@ sudo make install
 cd /tmp
 git clone https://github.com/pupil-labs/pyuvc --recursive
 cd pyuvc
-git checkout v1.0.0rc1
+git checkout v1.0.0
 cd ..
 export FORCE_LOCAL_LIBUVC_BUILD=ON
 python -m pip install ./pyuvc

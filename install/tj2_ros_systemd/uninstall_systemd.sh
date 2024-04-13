@@ -26,8 +26,8 @@ rm ${BIN_INSTALL_DIR}/${SCRIPT_NAME}
 rm ${BIN_INSTALL_DIR}/${STOP_SCRIPT_NAME}
 
 echo "Disabling systemd services"
-systemctl daemon-reload
 systemctl stop ${SERVICE_NAME}
 systemctl disable ${SERVICE_NAME}
+systemctl daemon-reload
 
 echo "tj2_ros systemd service uninstallation complete"

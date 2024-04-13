@@ -9,12 +9,10 @@ sudo apt-get install -y \
     libsdl-image1.2-dev \
     libsdl-dev \
     libyaml-cpp-dev \
-    libpcl-dev  \
     libvtk6-qt-dev  \
     libspnav-dev  \
     joystick  \
-    liborocos-kdl-dev  \
-    liborocos-kdl1.3  \
+    liborocos-kdl*  \
     libnetpbm10-dev  \
     libogg-dev  \
     libtheora-dev  \

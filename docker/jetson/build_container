@@ -10,4 +10,12 @@ ${BASE_DIR}/stop_all_containers
 ${BASE_DIR}/../../scripts/prioritize_wifi
 TJ2_IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
 cd ${BASE_DIR}/../resources
-docker build -f ./jetson.Dockerfile -t ${TJ2_IMAGE_VERSION} .
+docker build -f ./jetson.Dockerfile \
+    --build-arg L4T_MAJOR_VERSION=35 \
+    --build-arg L4T_MINOR_VERSION=3 \
+    --build-arg L4T_PATCH_VERSION=1 \
+    --build-arg ZED_SDK_MAJOR=4 \
+    --build-arg ZED_SDK_MINOR=1 \
+    --build-arg PYTHON_VERSION_MAJOR=3 \
+    --build-arg PYTHON_VERSION_MINOR=8 \
+    -t ${TJ2_IMAGE_VERSION} .
