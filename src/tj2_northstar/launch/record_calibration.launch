@@ -1,8 +1,8 @@
 <launch>
-    <arg name="name" default="camera_0" />
-    <arg name="serial" default="UC621" />
-    <arg name="board_width" default="5" />
-    <arg name="board_height" default="8" />
+    <arg name="name" default="camera_1" />
+    <arg name="serial" default="TJ2007" />
+    <arg name="board_width" default="7" />
+    <arg name="board_height" default="7" />
 
     <group ns="northstar">
         <node name="decompress_arducam" pkg="image_transport" type="republish" output="screen"

@@ -92,11 +92,11 @@ def main():
             img_points.append(refined_corners)
         else:
             print(f"Failed to find checkerboard in {filename}")
-        if args.debug:
-            cv2.imshow("image", image)
-            key = chr(cv2.waitKey(-1) & 0xFF)
-            if key == "q":
-                return
+        # if args.debug:
+        #     cv2.imshow("image", image)
+        #     key = chr(cv2.waitKey(-1) & 0xFF)
+        #     if key == "q":
+        #         return
 
     assert gray is not None
     assert shape is not None
